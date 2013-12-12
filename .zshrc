@@ -40,7 +40,7 @@ export UPDATE_ZSH_DAYS=13
 # Which plugins would you like to load? (plugins can be found in ~/.oh-my-zsh/plugins/*)
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
-plugins=(git git-flow git-extras repo wd brew)
+plugins=(git git-flow git-extras repo wd brew sublime)
 
 source $ZSH/oh-my-zsh.sh
 source $ZSH/custom/git-flow-completion.zsh
@@ -67,4 +67,7 @@ bindkey "^[[8~" end-of-line
 
 autoload -Uz compinit
 compinit
+
+# Generic Colouriser
+source "`brew --prefix`/etc/grc.bashrc"
 
