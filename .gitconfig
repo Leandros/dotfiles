@@ -1,0 +1,36 @@
+[user]
+	name = Leandros Linux
+	email = dev@arvid-g.de
+[color]
+	ui = auto
+[review "gerrit.aokp.co"]
+	username = Leandros
+	email = dev@arvid-g.de
+[review "gerrit.sudoservers.com"]
+	username = Leandros
+	email = dev@arvid-g.de
+[credential]
+	helper = cache --timeout=3600
+
+[alias]
+	st = status -sb
+	co = checkout
+	df = difftool
+	lg = log --pretty=format:'%Cred%h%Creset -%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'
+	standup = log --pretty=format:'%Cred%h%Creset -%Creset %s %Cgreen(%cD) %C(bold blue)<%an>%Creset' --since yesterday --author 'Leandros Linux'
+	ignored = ls-files --others -i --exclude-standard
+
+[mergetool]
+	keepBackup = true
+	prompt = false
+[difftool "Kaleidoscope"]
+	cmd = ksdiff --partial-changeset --relative-path \"$MERGED\" -- \"$LOCAL\" \"$REMOTE\"
+[diff]
+	tool = Kaleidoscope
+[difftool]
+	prompt = false
+[mergetool "Kaleidoscope"]
+	cmd = ksdiff --merge --output \"$MERGED\" --base \"$BASE\" -- \"$LOCAL\" --snapshot \"$REMOTE\" --snapshot
+	trustExitCode = true
+[merge]
+	tool = Kaleidoscope
