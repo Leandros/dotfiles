@@ -51,9 +51,8 @@ PATH=$PATH:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin:/usr/bin/core_perl
 PATH=$PATH:/Users/leandros/android-sdk/tools
 PATH=$PATH:/Users/leandros/android-sdk/platform-tools
 PATH=$PATH:/Users/leandros/bin
-
-# Ruby Gems
 PATH=$PATH:/usr/local/opt/ruby/bin
+PATH=$PATH:$HOME/.rvm/bin
 
 # Default Editor
 export EDITOR=mvim
