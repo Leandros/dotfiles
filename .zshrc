@@ -64,6 +64,9 @@ export FLAGS_GETOPT_CMD="$(brew --prefix gnu-getopt)/bin/getopt"
 bindkey "^[[7~" beginning-of-line
 bindkey "^[[8~" end-of-line
 
+# Set Locale. LOL
+export LC_ALL="en_US.UTF-8"
+
 autoload -Uz compinit
 compinit
 
