@@ -1,3 +1,6 @@
+set nocompatible
+filetype off
+
 execute pathogen#infect()
 
 syntax enable
@@ -13,8 +16,9 @@ let g:solarized_contrast="low"
 
 colorscheme solarized
 
-
+" Vundle Stuff
 set rtp+=~/.vim/bundle/vundle/
 call vundle#rc()
 
+Bundle 'gmarik/vundle'
 Bundle 'Valloric/YouCompleteMe'
