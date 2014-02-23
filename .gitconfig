@@ -32,3 +32,5 @@
 	trustExitCode = true
 [merge]
 	tool = Kaleidoscope
+[core]
+	editor = vim
