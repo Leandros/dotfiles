@@ -12,9 +12,9 @@ set shiftwidth=4
 set expandtab
 
 if has('gui_running')
-    let g:solarized_termcolors=256
-    let g:solarized_contrast="low"
-    
+    let g:solarized_contrast="low" 
+    colorscheme solarized
+else
     colorscheme solarized
 endif
 
