@@ -2,8 +2,16 @@
 set nocompatible
 filetype off
 
-" Pathogen. Just for solarized.
-execute pathogen#infect()
+" Vundle Stuff
+set rtp+=~/.vim/bundle/vundle/
+call vundle#rc()
+
+Bundle 'gmarik/vundle'
+Bundle 'altercation/vim-colors-solarized'
+Bundle 'Valloric/YouCompleteMe'
+Bundle 'xuhdev/SingleCompile'
+Bundle 'tpope/vim-fugitive'
+Bundle 'Gundo'
 
 " General
 set hidden          " Hide buffer, instead of closing it.
@@ -39,16 +47,6 @@ else
     let g:solarized_termtrans=1
     colorscheme solarized
 endif
-
-" Vundle Stuff
-set rtp+=~/.vim/bundle/vundle/
-call vundle#rc()
-
-Bundle 'gmarik/vundle'
-Bundle 'Valloric/YouCompleteMe'
-Bundle 'xuhdev/SingleCompile'
-Bundle 'tpope/vim-fugitive'
-Bundle 'Gundo'
 
 " Compile and Run code. The primitive way.
 " autocmd Filetype java nnoremap <D-r> :w <bar> exec '!javac '.shellescape('%').' && java '.shellescape('%:r')<CR>
