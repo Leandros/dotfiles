@@ -59,6 +59,12 @@ export EDITOR=mvim
 export HOME='/Users/leandros'
 export ANDROID_HOME='/Users/leandros/android-sdk'
 export FLAGS_GETOPT_CMD="$(brew --prefix gnu-getopt)/bin/getopt"
+export GREP_OPTIONS='--color=always'
+export GREP_COLOR='1;35;40'
+
+# Theos Environment Variables
+export THEOS='/Users/leandros/Workspace/iOS/Jailbreak/theos'
+export THEOS_MAKE_PATH='/Users/leandros/Workspace/iOS/Jailbreak/theos/makefiles'
 
 # Bind Pos1 and Ende
 bindkey "^[[7~" beginning-of-line
@@ -67,8 +73,10 @@ bindkey "^[[8~" end-of-line
 # Set Locale. LOL
 export LC_ALL="en_US.UTF-8"
 
+# Completions
 autoload -Uz compinit
 compinit
+fpath=(/usr/local/share/zsh-completions $fpath)
 
 # Generic Colouriser
 source "`brew --prefix`/etc/grc.bashrc"
