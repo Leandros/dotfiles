@@ -15,6 +15,7 @@ if has('gui_running')
     let g:solarized_contrast="low" 
     colorscheme solarized
 else
+    let g:solarized_termtrans=1
     colorscheme solarized
 endif
 
