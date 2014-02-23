@@ -11,10 +11,12 @@ set tabstop=4
 set shiftwidth=4
 set expandtab
 
-let g:solarized_termcolors=256
-let g:solarized_contrast="low"
-
-colorscheme solarized
+if has('gui_running')
+    let g:solarized_termcolors=256
+    let g:solarized_contrast="low"
+    
+    colorscheme solarized
+endif
 
 " Vundle Stuff
 set rtp+=~/.vim/bundle/vundle/
