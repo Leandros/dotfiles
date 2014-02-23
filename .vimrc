@@ -7,10 +7,12 @@ syntax enable
 set background=dark
 set number
 
+" Indentation is 4 spaces, and not a tab
 set tabstop=4
 set shiftwidth=4
 set expandtab
 
+" Solarized Theme
 if has('gui_running')
     let g:solarized_contrast="low" 
     colorscheme solarized
@@ -25,3 +27,6 @@ call vundle#rc()
 
 Bundle 'gmarik/vundle'
 Bundle 'Valloric/YouCompleteMe'
+
+" Compile and Run C++ code
+autocmd filetype cpp nnoremap <D-r> :w <bar> exec '!clang++ '.shellescape('%').' -o '.shellescape('%:r').' && ./'.shellescape('%:r')<CR>
