@@ -14,6 +14,12 @@ Bundle 'tpope/vim-fugitive'
 Bundle 'Gundo'
 
 " General
+set shell=$SHELL    " Set the default shell
+set termencoding=utf-8 " Set the default encodings just in case $LANG isn't set
+set encoding=utf-8  " Set the default encodings just in case $LANG isn't set
+set cursorline      " Hightlight current selected line.
+set ttyfast         " Set that we have a fast terminal
+
 set hidden          " Hide buffer, instead of closing it.
 syntax enable
 set number          " Always show line numbers.
@@ -37,6 +43,30 @@ set copyindent      " Copy the previous indent on autoindenting.
 set shiftwidth=4    " Number of spaces used for autoindent.
 set expandtab
 set smarttab        " Insert 'tabs' on start of line, according to shiftwidth instead of tabstop.
+
+" Set mapping and key timeouts
+set timeout
+set timeoutlen=1000
+set ttimeoutlen=100
+
+" Write undo tree to a file to resume from next time the file is opened.
+if has("persistent_undo")
+  set undolevels=2000            " The number of undo items to remember
+  set undofile                   " Save undo history to files locally
+  set undodir=$HOME/.vimundo     " Set the directory of the undofile
+  if !isdirectory(expand(&undodir))
+    call mkdir(expand(&undodir), "p")
+  endif
+endif
+
+" When running as diff.
+if &diff
+  set modifiable
+  set noreadonly
+  if tabpagenr('$') == 1
+    nnoremap ZZ :wqall<cr>
+  endif
+endif
 
 " Solarized Theme
 set background=dark " Solarized Dark.
@@ -64,6 +94,14 @@ set pastetoggle=<F2>
 
 " Unhighlight searches
 nmap <silent> <D-d> :nohlsearch<CR>
+
+" Reselect visual blocks after movement
+vnoremap < <gv
+vnoremap > >gv
+
+" Keep search matches in the middle of the window.
+nnoremap n nzzzv
+nnoremap N Nzzzv
 
 " Never mess when file opened without sudo.
 cmap w!! w !sudo tee % >/dev/null
