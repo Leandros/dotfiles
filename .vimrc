@@ -15,7 +15,7 @@ Bundle 'Gundo'
 
 " General
 set hidden          " Hide buffer, instead of closing it.
-syntax on
+syntax enable
 set number          " Always show line numbers.
 set hlsearch        " Hightlight found searches.
 set incsearch       " Show matched searches as you type.
