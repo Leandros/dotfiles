@@ -35,6 +35,7 @@ set visualbell      " Don't beep.
 set noerrorbells    " Don't beep.
 
 set nobackup        " Disable backup. set noswapfile can disable the .swp file.
+set noswapfile
 
 " Indentation is 4 spaces, and not a tab
 set tabstop=4       " A tab is 4 spaces.
@@ -104,28 +105,28 @@ nnoremap y nzzzv
 nnoremap Y Nzzzv
 
 " Key map optimizations for Bone 2 Layout
+" Normal Mode remaps.
 nnoremap b h
 nnoremap n k
 nnoremap r j
 nnoremap s l
+nnoremap <Up> <NOP>
+nnoremap <Down> <NOP>
+nnoremap <Left> <NOP>
+nnoremap <Right> <NOP>
+
+" Visual and Select Mode remaps.
 vnoremap b h
 vnoremap n k
 vnoremap r j 
 vnoremap s l
+vnoremap <Up> <NOP>
+vnoremap <Down> <NOP>
+vnoremap <Left> <NOP>
+vnoremap <Right> <NOP>
 
 " Insert new line with Shift-Enter
 nmap <S-Enter> o<Esc>
-
-" Fuck you Arrow Keys!
-noremap <Up> <NOP>
-noremap <Down> <NOP>
-noremap <Left> <NOP>
-noremap <Right> <NOP>
-inoremap <Up> <NOP>
-inoremap <Down> <NOP>
-inoremap <Left> <NOP>
-inoremap <Right> <NOP>
-
 
 " Never mess when file opened without sudo.
 cmap w!! w !sudo tee % >/dev/null
