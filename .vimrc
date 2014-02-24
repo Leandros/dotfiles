@@ -100,8 +100,32 @@ vnoremap < <gv
 vnoremap > >gv
 
 " Keep search matches in the middle of the window.
-nnoremap n nzzzv
-nnoremap N Nzzzv
+nnoremap y nzzzv
+nnoremap Y Nzzzv
+
+" Key map optimizations for Bone 2 Layout
+nnoremap b h
+nnoremap n k
+nnoremap r j
+nnoremap s l
+vnoremap b h
+vnoremap n k
+vnoremap r j 
+vnoremap s l
+
+" Insert new line with Shift-Enter
+nmap <S-Enter> o<Esc>
+
+" Fuck you Arrow Keys!
+noremap <Up> <NOP>
+noremap <Down> <NOP>
+noremap <Left> <NOP>
+noremap <Right> <NOP>
+inoremap <Up> <NOP>
+inoremap <Down> <NOP>
+inoremap <Left> <NOP>
+inoremap <Right> <NOP>
+
 
 " Never mess when file opened without sudo.
 cmap w!! w !sudo tee % >/dev/null
