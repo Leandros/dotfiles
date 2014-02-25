@@ -15,9 +15,9 @@
 	st = status -sb
 	co = checkout
 	df = difftool
-	lg = log --pretty=format:'%Cred%h%Creset -%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'
 	standup = log --pretty=format:'%Cred%h%Creset -%Creset %s %Cgreen(%cD) %C(bold blue)<%an>%Creset' --since yesterday --author 'Leandros Linux'
 	ignored = ls-files --others -i --exclude-standard
+	lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr)%C(bold blue)<%an>%Creset' --abbrev-commit
 [mergetool]
 	keepBackup = true
 	prompt = false
