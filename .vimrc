@@ -12,6 +12,7 @@ Bundle 'Valloric/YouCompleteMe'
 Bundle 'xuhdev/SingleCompile'
 Bundle 'tpope/vim-fugitive'
 Bundle 'Gundo'
+Bundle 'scrooloose/nerdtree'
 
 " General
 set shell=$SHELL    " Set the default shell
@@ -106,24 +107,30 @@ nnoremap Y Nzzzv
 
 " Key map optimizations for Bone 2 Layout
 " Normal Mode remaps.
-nnoremap b h
-nnoremap n k
-nnoremap r j
-nnoremap s l
-nnoremap <Up> <NOP>
-nnoremap <Down> <NOP>
-nnoremap <Left> <NOP>
-nnoremap <Right> <NOP>
+"nnoremap b h
+"nnoremap n k
+"nnoremap r j
+"nnoremap s l
+nnoremap b <Left>
+nnoremap n <Up>
+nnoremap r <Down>
+nnoremap s <Right>
 
 " Visual and Select Mode remaps.
-vnoremap b h
-vnoremap n k
-vnoremap r j 
-vnoremap s l
-vnoremap <Up> <NOP>
-vnoremap <Down> <NOP>
-vnoremap <Left> <NOP>
-vnoremap <Right> <NOP>
+"vnoremap b h
+"vnoremap n k
+"vnoremap r j 
+"vnoremap s l
+vnoremap b <Left>
+vnoremap n <Up>
+vnoremap r <Down>
+vnoremap s <Right>
+
+" ReMap NERDTree Keys.
+let NERDTreeMapRefresh='<D-r>'
+
+" Open NERDTree when no files specified.
+autocmd vimenter * if !argc() | NERDTree | endif
 
 " Insert new line with Shift-Enter
 nmap <S-Enter> o<Esc>
