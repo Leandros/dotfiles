@@ -137,3 +137,6 @@ nmap <S-Enter> o<Esc>
 
 " Never mess when file opened without sudo.
 cmap w!! w !sudo tee % >/dev/null
+
+" Use Tabs in Makefiles
+autocmd FileType make setlocal noexpandtab
