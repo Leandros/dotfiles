@@ -4,7 +4,7 @@ HISTSIZE=10000
 SAVEHIST=1000
 bindkey -v
 
-zstyle :compinstall filename '/Users/leandros/.zshrc'
+zstyle :compinstall filename $HOME'/.zshrc'
 
 # Path to your oh-my-zsh configuration.
 ZSH=$HOME/.oh-my-zsh
@@ -15,10 +15,6 @@ ZSH=$HOME/.oh-my-zsh
 # time that oh-my-zsh is loaded.
 ZSH_THEME="blinks"
 
-# Example aliases
-# alias zshconfig="mate ~/.zshrc"
-# alias ohmyzsh="mate ~/.oh-my-zsh"
-
 # Set to this to use case-sensitive completion
 # CASE_SENSITIVE="true"
 
@@ -26,58 +22,75 @@ ZSH_THEME="blinks"
 # DISABLE_AUTO_UPDATE="true"
 
 # Change this value to set how frequently ZSH updates¬
-export UPDATE_ZSH_DAYS=13
-
-# Uncomment following line if you want to disable colors in ls
-# DISABLE_LS_COLORS="true"
-
-# Uncomment following line if you want to disable autosetting terminal title.
-# DISABLE_AUTO_TITLE="true"
+export UPDATE_ZSH_DAYS=7
 
 # Uncomment following line if you want red dots to be displayed while waiting for completion
 # COMPLETION_WAITING_DOTS="true"
 
 # Which plugins would you like to load? (plugins can be found in ~/.oh-my-zsh/plugins/*)
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
-# Example format: plugins=(rails git textmate ruby lighthouse)
-plugins=(git git-flow git-extras repo wd brew sublime)
+plugins=(git git-flow git-extras repo wd brew sublime osx pod terminalapp colored-man cp colorize history)
 
 source $ZSH/oh-my-zsh.sh
 source $ZSH/custom/git-flow-completion.zsh
 
-# Path
-PATH=/usr/local/bin:$PATH
-PATH=$PATH:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin:/usr/bin/core_perl
-PATH=$PATH:/Users/leandros/android-sdk/tools
-PATH=$PATH:/Users/leandros/android-sdk/platform-tools
-PATH=$PATH:/Users/leandros/bin
-PATH=$PATH:/usr/local/opt/ruby/bin
-PATH=$PATH:$HOME/.rvm/bin
+# Aliases
+alias git=hub
+alias g=git
+alias copy="noeol | pbcopy"
 
 # Default Editor
 export EDITOR=mvim
-export HOME='/Users/leandros'
-export ANDROID_HOME='/Users/leandros/android-sdk'
+
+# Home
+export HOME=/Users/arvidgerstmann
+export ANDROID_HOME=$HOME/android-sdk
+export NDK_HOME=$HOME/android-ndk-r10
+
+
+# Terminal Colors
 export FLAGS_GETOPT_CMD="$(brew --prefix gnu-getopt)/bin/getopt"
 export GREP_OPTIONS='--color=always'
 export GREP_COLOR='1;35;40'
+source "`brew --prefix`/etc/grc.bashrc"
 
-# Theos Environment Variables
-export THEOS='/Users/leandros/Workspace/iOS/Jailbreak/theos'
-export THEOS_MAKE_PATH='/Users/leandros/Workspace/iOS/Jailbreak/theos/makefiles'
 
 # Bind Pos1 and Ende
 bindkey "^[[7~" beginning-of-line
 bindkey "^[[8~" end-of-line
 
+
 # Set Locale. LOL
 export LC_ALL="en_US.UTF-8"
+
 
 # Completions
 autoload -Uz compinit
 compinit
 fpath=(/usr/local/share/zsh-completions $fpath)
 
-# Generic Colouriser
-source "`brew --prefix`/etc/grc.bashrc"
+
+# Add environment variable COCOS_CONSOLE_ROOT for cocos2d-x
+export COCOS_CONSOLE_ROOT=$HOME/cocos2d-x-3.2/tools/cocos2d-console/bin
+export ANDROID_SDK_ROOT=$ANDROID_HOME
+export NDK_ROOT=$NDK_HOME
+export ANT_ROOT=/usr/local/Cellar/ant/1.9.4/libexec/bin
+
+
+#PATH
+PATH=/usr/local/bin:$PATH
+PATH=$PATH:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin:/usr/bin/core_perl
+PATH=$PATH:$ANDROID_HOME/tools
+PATH=$PATH:$ANDROID_HOME/platform-tools
+PATH=$PATH:$ANDROID_HOME/build-tools/android-4.4W
+PATH=$PATH:$HOME/bin
+PATH=$PATH:/usr/local/opt/ruby/bin
+PATH=$PATH:$HOME/.rvm/bin
+PATH=$PATH:$HOME/pebble-dev/PebbleSDK-current/bin
+
+PATH=$PATH:$COCOS_CONSOLE_ROOT
+PATH=$PATH:$ANDROID_SDK_ROOT
+PATH=$PATH:$NDK_ROOT
+PATH=$PATH:$ANT_ROOT
+export PATH
 
