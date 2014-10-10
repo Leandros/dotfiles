@@ -3,8 +3,8 @@ set nocompatible
 filetype off
 
 " Vundle Stuff
-set rtp+=~/.vim/bundle/vundle/
-call vundle#rc()
+set rtp+=~/.vim/bundle/Vundle.vim
+call vundle#begin()
 
 Bundle 'gmarik/vundle'
 Bundle 'altercation/vim-colors-solarized'
@@ -13,6 +13,8 @@ Bundle 'xuhdev/SingleCompile'
 Bundle 'tpope/vim-fugitive'
 Bundle 'Gundo'
 Bundle 'scrooloose/nerdtree'
+Bundle 'rizzatti/funcoo.vim'
+Bundle 'rizzatti/dash.vim'
 
 " General
 set shell=$SHELL    " Set the default shell
@@ -45,6 +47,9 @@ set copyindent      " Copy the previous indent on autoindenting.
 set shiftwidth=4    " Number of spaces used for autoindent.
 set expandtab
 set smarttab        " Insert 'tabs' on start of line, according to shiftwidth instead of tabstop.
+
+" Enable FileType plugin
+filetype plugin on
 
 " Set mapping and key timeouts
 set timeout
@@ -112,8 +117,8 @@ nnoremap Y Nzzzv
 "nnoremap r j
 "nnoremap s l
 nnoremap b <Left>
-nnoremap n <Up>
-nnoremap r <Down>
+nnoremap r <Up>
+nnoremap n <Down>
 nnoremap s <Right>
 
 " Visual and Select Mode remaps.
@@ -122,9 +127,14 @@ nnoremap s <Right>
 "vnoremap r j 
 "vnoremap s l
 vnoremap b <Left>
-vnoremap n <Up>
-vnoremap r <Down>
+vnoremap r <Up>
+vnoremap n <Down>
 vnoremap s <Right>
+
+nnoremap <C-B> <C-W><C-H>
+nnoremap <C-N> <C-W><C-J>
+nnoremap <C-R> <C-W><C-K>
+nnoremap <C-S> <C-W><C-L>
 
 " ReMap NERDTree Keys.
 let NERDTreeMapRefresh='<D-r>'
@@ -140,3 +150,6 @@ cmap w!! w !sudo tee % >/dev/null
 
 " Use Tabs in Makefiles
 autocmd FileType make setlocal noexpandtab
+
+" File Type specific
+"autocmd FileType javascript setlocal shiftwidth=2 tabstop=2
