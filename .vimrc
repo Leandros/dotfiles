@@ -16,6 +16,9 @@ Bundle 'scrooloose/nerdtree'
 Bundle 'rizzatti/funcoo.vim'
 Bundle 'rizzatti/dash.vim'
 
+call vundle#end()
+filetype plugin indent on
+
 " General
 set shell=$SHELL    " Set the default shell
 set termencoding=utf-8 " Set the default encodings just in case $LANG isn't set
@@ -47,9 +50,6 @@ set copyindent      " Copy the previous indent on autoindenting.
 set shiftwidth=4    " Number of spaces used for autoindent.
 set expandtab
 set smarttab        " Insert 'tabs' on start of line, according to shiftwidth instead of tabstop.
-
-" Enable FileType plugin
-filetype plugin on
 
 " Set mapping and key timeouts
 set timeout
@@ -153,3 +153,8 @@ autocmd FileType make setlocal noexpandtab
 
 " File Type specific
 "autocmd FileType javascript setlocal shiftwidth=2 tabstop=2
+
+" Unfold all
+if has("autocmd")
+    au BufWinEnter * normal zR
+endif
