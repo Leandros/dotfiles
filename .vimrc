@@ -6,15 +6,16 @@ filetype off
 set rtp+=~/.vim/bundle/Vundle.vim
 call vundle#begin()
 
-Bundle 'gmarik/vundle'
-Bundle 'altercation/vim-colors-solarized'
-Bundle 'Valloric/YouCompleteMe'
-Bundle 'xuhdev/SingleCompile'
-Bundle 'tpope/vim-fugitive'
-Bundle 'Gundo'
-Bundle 'scrooloose/nerdtree'
-Bundle 'rizzatti/funcoo.vim'
-Bundle 'rizzatti/dash.vim'
+" Let Vundle manage itself.
+Plugin 'gmarik/Vundle.vim'
+
+" Plugins
+Plugin 'altercation/vim-colors-solarized'
+Plugin 'Valloric/YouCompleteMe'
+Plugin 'scrooloose/syntastic'
+Plugin 'xuhdev/SingleCompile'
+Plugin 'tpope/vim-fugitive'
+Plugin 'rizzatti/dash.vim'
 
 call vundle#end()
 filetype plugin indent on
@@ -31,7 +32,7 @@ syntax enable
 set number          " Always show line numbers.
 set hlsearch        " Hightlight found searches.
 set incsearch       " Show matched searches as you type.
-set showmatch       " Show maching braces.
+set showmatch       " Show matching braces.
 set ignorecase      " Ignore case when searching.
 set smartcase       " Ignore case if search pattern is all lowercase, case-sensitive otherwise.
 
@@ -112,20 +113,12 @@ nnoremap Y Nzzzv
 
 " Key map optimizations for Bone 2 Layout
 " Normal Mode remaps.
-"nnoremap b h
-"nnoremap n k
-"nnoremap r j
-"nnoremap s l
 nnoremap b <Left>
 nnoremap r <Up>
 nnoremap n <Down>
 nnoremap s <Right>
 
 " Visual and Select Mode remaps.
-"vnoremap b h
-"vnoremap n k
-"vnoremap r j 
-"vnoremap s l
 vnoremap b <Left>
 vnoremap r <Up>
 vnoremap n <Down>
@@ -136,11 +129,17 @@ nnoremap <C-N> <C-W><C-J>
 nnoremap <C-R> <C-W><C-K>
 nnoremap <C-S> <C-W><C-L>
 
+" Split switching
+map <C-n> <C-W>j
+map <C-r> <C-W>k
+map <C-b> <C-W>h
+map <C-s> <C-W>l
+
 " ReMap NERDTree Keys.
-let NERDTreeMapRefresh='<D-r>'
+" let NERDTreeMapRefresh='<D-r>'
 
 " Open NERDTree when no files specified.
-autocmd vimenter * if !argc() | NERDTree | endif
+" autocmd vimenter * if !argc() | NERDTree | endif
 
 " Insert new line with Shift-Enter
 nmap <S-Enter> o<Esc>
@@ -151,10 +150,25 @@ cmap w!! w !sudo tee % >/dev/null
 " Use Tabs in Makefiles
 autocmd FileType make setlocal noexpandtab
 
-" File Type specific
-"autocmd FileType javascript setlocal shiftwidth=2 tabstop=2
-
 " Unfold all
 if has("autocmd")
     au BufWinEnter * normal zR
 endif
+
+" Set 80 column limit.
+if exists('+colorcolumn')
+  set colorcolumn=80
+  highlight ColorColumn guibg=#004653
+else
+  au BufWinEnter * let w:m2=matchadd('ErrorMsg', '\%>80v.\+', -1)
+endif
+
+" Syntactic Settings
+set statusline+=%#warningmsg#
+set statusline+=%{SyntasticStatuslineFlag()}
+set statusline+=%*
+
+let g:syntastic_always_populate_loc_list = 1
+let g:syntastic_auto_loc_list = 1
+let g:syntastic_check_on_open = 1
+let g:syntastic_check_on_wq = 0
