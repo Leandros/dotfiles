@@ -172,3 +172,11 @@ let g:syntastic_always_populate_loc_list = 1
 let g:syntastic_auto_loc_list = 1
 let g:syntastic_check_on_open = 1
 let g:syntastic_check_on_wq = 0
+
+" Minifier functions
+fun! MinifyJson()
+  %s/\ //g
+  %s/\n//g
+endfunction
+
+command! JsonMinify call MinifyJson()
