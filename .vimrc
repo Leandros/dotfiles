@@ -173,6 +173,23 @@ let g:syntastic_auto_loc_list = 1
 let g:syntastic_check_on_open = 1
 let g:syntastic_check_on_wq = 0
 
+let g:syntastic_cpp_config_file = '.syntastic_cpp_config'
+let g:syntastic_cpp_check_header = 1
+let g:syntastic_cpp_remove_include_errors = 1
+
+" YouCompleteMe Settings
+let g:ycm_confirm_extra_conf = 0
+
+" Strip trailing whitespace
+fun! <SID>StripTrailingWhitespaces()
+    let l = line(".")
+    let c = col(".")
+    %s/\s\+$//e
+    call cursor(l, c)
+endfun
+
+autocmd BufWritePre <buffer> :call <SID>StripTrailingWhitespaces()
+
 " Minifier functions
 fun! MinifyJson()
   %s/\ //g
