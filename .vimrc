@@ -11,11 +11,14 @@ Plugin 'gmarik/Vundle.vim'
 
 " Plugins
 Plugin 'altercation/vim-colors-solarized'
-Plugin 'Valloric/YouCompleteMe'
 Plugin 'scrooloose/syntastic'
 Plugin 'xuhdev/SingleCompile'
 Plugin 'tpope/vim-fugitive'
 Plugin 'rizzatti/dash.vim'
+Plugin 'bling/vim-airline'
+
+" Enable if really desired.
+" Plugin 'Valloric/YouCompleteMe'
 
 call vundle#end()
 filetype plugin indent on
@@ -54,8 +57,11 @@ set smarttab        " Insert 'tabs' on start of line, according to shiftwidth in
 
 " Set mapping and key timeouts
 set timeout
-set timeoutlen=1000
+set timeoutlen=100
 set ttimeoutlen=100
+
+" Correct backspace
+set backspace=indent,eol,start
 
 " Write undo tree to a file to resume from next time the file is opened.
 if has("persistent_undo")
@@ -79,7 +85,7 @@ endif
 " Solarized Theme
 set background=dark " Solarized Dark.
 if has('gui_running')
-    let g:solarized_contrast="low" 
+    let g:solarized_contrast="low"
     colorscheme solarized
 else
     let g:solarized_termtrans=1
@@ -162,6 +168,9 @@ if exists('+colorcolumn')
 else
   au BufWinEnter * let w:m2=matchadd('ErrorMsg', '\%>80v.\+', -1)
 endif
+
+" Airline Settings
+set laststatus=2
 
 " Syntactic Settings
 set statusline+=%#warningmsg#
