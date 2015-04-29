@@ -40,6 +40,7 @@ alias g=git
 alias copy="noeol | pbcopy"
 alias fuck='sudo $(history -p \!\!)'
 alias lsfiles='for f in *; do [[ -f "$f" ]] && ls -- "$f"; done'
+alias lsfilesrec="tree -if --noreport . | sed 's/^\.\///g'"
 
 # Default Editor
 export EDITOR=mvim
