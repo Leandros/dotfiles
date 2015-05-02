@@ -23,6 +23,7 @@
 	ps = "!f() { git stash -u; git pull --rebase origin master; git stash apply stash@{0}; git stash drop stash@{0}; }; f"
 [core]
 	editor = vim
+	filemode = false
 [filter "media"]
 	clean = git-media-clean %f
 	smudge = git-media-smudge %f
