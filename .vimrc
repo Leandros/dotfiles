@@ -63,6 +63,12 @@ set ttimeoutlen=100
 " Correct backspace
 set backspace=indent,eol,start
 
+" Cygwin cursor fix.
+let &t_ti.="\e[1 q"
+let &t_SI.="\e[5 q"
+let &t_EI.="\e[1 q"
+let &t_te.="\e[0 q"
+
 " Write undo tree to a file to resume from next time the file is opened.
 if has("persistent_undo")
   set undolevels=2000            " The number of undo items to remember
