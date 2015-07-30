@@ -9,6 +9,8 @@ bindkey -v
 # ====================
 export HOME=/Users/arvidgerstmann
 export EDITOR=mvim
+export CC=clang
+export CXX=clang++
 
 
 # System Specifics: OS X
@@ -118,6 +120,13 @@ netinfo () {
 }
 
 # ====================
+# General Config
+# ====================
+# Set Locale. LOL
+export LC_ALL="en_US.UTF-8"
+
+
+# ====================
 # Aliases
 # ====================
 alias g=git
@@ -128,35 +137,31 @@ alias lsfilesrec="tree -if --noreport . | sed 's/^\.\///g'"
 alias untargz='tar -xzf'
 alias untarbz='tar -xjf'
 
-# Home Variables
-export ANDROID_HOME=$HOME/android-sdk
-export NDK_HOME=$HOME/android-ndk-r10e
-
-# Set Locale. LOL
-export LC_ALL="en_US.UTF-8"
-
-# Android NDK Config
+# Android SDK / NDK
+export ANDROID_ROOT=$HOME/android-sdk
+export NDK_ROOT=$HOME/android-ndk-r10e
 export NDK_TOOLCHAIN_VERSION=clang
-export USE_CCACHE=1
 export NDK_CCACHE=/usr/local/bin/ccache
+export USE_CCACHE=1
 
 # PATH
 PATH=/usr/local/bin:$PATH
 PATH=$PATH:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin:/usr/bin/core_perl
-PATH=$PATH:$ANDROID_HOME/tools
-PATH=$PATH:$ANDROID_HOME/platform-tools
 PATH=$PATH:$HOME/bin
 PATH=$PATH:$HOME/bin/awscli/eb/macosx/python2.7
 PATH=$PATH:$HOME/bin/drmemory/bin
 PATH=$PATH:$HOME/.rvm/bin
 
-PATH=$PATH:$ANDROID_SDK_ROOT
+PATH=$PATH:$ANDROID_ROOT
+PATH=$PATH:$ANDROID_ROOT/tools
+PATH=$PATH:$ANDROID_ROOT/platform-tools
 PATH=$PATH:$NDK_ROOT
 PATH=$PATH:$NDK_CCACHE
 
 # Cross Compiling Toolchains
 PATH=$PATH:/usr/local/sh-elf/bin
 PATH=$PATH:/usr/local/sh-coff/bin
+PATH=$PATH:/usr/local/m68k-elf/bin
 
 export PATH
 
