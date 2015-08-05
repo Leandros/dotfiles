@@ -136,6 +136,8 @@ alias lsfiles='for f in *; do [[ -f "$f" ]] && ls -- "$f"; done'
 alias lsfilesrec="tree -if --noreport . | sed 's/^\.\///g'"
 alias untargz='tar -xzf'
 alias untarbz='tar -xjf'
+alias targz='tar -czf'
+alias tarbz='tar -cjf'
 
 # Android SDK / NDK
 export ANDROID_ROOT=$HOME/android-sdk
