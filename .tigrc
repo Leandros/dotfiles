@@ -1,0 +1,21 @@
+# my weird keyboard binds
+bind generic N next
+bind generic R previous
+bind generic r move-up
+bind generic n move-down
+
+# rebind keys unbind above
+bind generic a view-refs
+
+# Amend last commit
+bind status + !git commit --amend
+
+# Disable the default mapping for running git-gc
+bind generic G none
+
+# Save the current commit as patch
+bind main S !git format-patch -1 %(commit)
+
+# Add keybinding to quickly jump to the next diff chunk in the stage view
+bind stage <Enter> :/^@@
+
