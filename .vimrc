@@ -178,6 +178,12 @@ endif
 " Airline Settings
 set laststatus=2
 
+" Setup Airline font
+if has('gui_running')
+    set guifont=Menlo\ for\ Powerline:h11
+endif
+let g:airline_powerline_fonts = 1
+
 " Syntactic Settings
 set statusline+=%#warningmsg#
 set statusline+=%{SyntasticStatuslineFlag()}
