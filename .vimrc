@@ -88,15 +88,10 @@ if &diff
   endif
 endif
 
-" Solarized Theme
-set background=dark " Solarized Dark.
-if has('gui_running')
-    let g:solarized_contrast="low"
-    colorscheme solarized
-else
-    let g:solarized_termtrans=1
-    colorscheme solarized
-endif
+" Theme
+set background=dark
+colorscheme solarized
+
 
 " Compile and Run code. The primitive way.
 " autocmd Filetype java nnoremap <D-r> :w <bar> exec '!javac '.shellescape('%').' && java '.shellescape('%:r')<CR>

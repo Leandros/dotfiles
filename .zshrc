@@ -11,6 +11,7 @@ export HOME=/Users/arvidgerstmann
 export EDITOR=mvim
 export CC=clang
 export CXX=clang++
+export DEFAULT_USER=arvidgerstmann
 
 
 # System Specifics: OS X
@@ -45,9 +46,14 @@ fpath=(/usr/local/share/zsh-completions $fpath)
 # OH-MY-ZSH
 # ====================
 ZSH=$HOME/.oh-my-zsh
-ZSH_THEME="blinks"
 COMPLETION_WAITING_DOTS="true"
 export UPDATE_ZSH_DAYS=7
+
+# powerlevel9k theme
+ZSH_THEME="powerlevel9k/powerlevel9k"
+POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(context dir vcs)
+POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status)
+POWERLEVEL9K_PROMPT_ON_NEWLINE=true
 
 plugins=(git git-flow git-extras repo wd brew sublime osx pod terminalapp colored-man cp colorize history)
 
@@ -123,13 +129,16 @@ netinfo () {
 # General Config
 # ====================
 # Set Locale. LOL
-export LC_ALL="en_US.UTF-8"
+export LC_ALL=en_US.UTF-8
+export LANG=en_US.UTF-8
 
 
 # ====================
 # Aliases
 # ====================
 alias g=git
+alias ti='tig status'
+alias tigs='tig status'
 alias copy='noeol | pbcopy'
 alias fuck='sudo $(history -p \!\!)'
 alias lsfiles='for f in *; do [[ -f "$f" ]] && ls -- "$f"; done'
