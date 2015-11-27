@@ -6,6 +6,11 @@ filetype off
 set rtp+=~/.vim/bundle/Vundle.vim
 call vundle#begin()
 
+" Set mapleader before plugin loads
+nnoremap <SPACE> <Nop>
+let mapleader=" "
+let maplocalleader=" "
+
 " Let Vundle manage itself.
 Plugin 'gmarik/Vundle.vim'
 
@@ -16,6 +21,14 @@ Plugin 'xuhdev/SingleCompile'
 Plugin 'tpope/vim-fugitive'
 Plugin 'rizzatti/dash.vim'
 Plugin 'bling/vim-airline'
+Plugin 'Raimondi/delimitMate'
+Plugin 'ervandew/supertab'
+Plugin 'tpope/vim-surround'
+Plugin 'tpope/vim-repeat'
+Plugin 'easymotion/vim-easymotion'
+Plugin 'tpope/vim-commentary'
+Plugin 'kien/ctrlp.vim'
+Plugin 'rking/ag.vim'
 
 " Enable if really desired.
 " Plugin 'Valloric/YouCompleteMe'
@@ -57,8 +70,11 @@ set smarttab        " Insert 'tabs' on start of line, according to shiftwidth in
 
 " Set mapping and key timeouts
 set timeout
-set timeoutlen=100
-set ttimeoutlen=100
+set timeoutlen=1000
+set ttimeoutlen=1000
+
+" Show if leader key is pressed
+set showcmd
 
 " Correct backspace
 set backspace=indent,eol,start
@@ -104,11 +120,14 @@ nmap <D-r> :SCCompileRun<CR>
 " Warn about doing the wrong undo (U instead of u).
 nnoremap U :echo " < < ===== C H E C K C A P S L O C K ===== > > "<CR>
 
+" Map redo to r instead of C-r
+nnoremap j <C-r>
+
 " Convenient pasting.
 set pastetoggle=<F2>
 
 " Unhighlight searches
-nmap <silent> <D-d> :nohlsearch<CR>
+nnoremap <esc> :noh<return><esc>
 
 " Reselect visual blocks after movement
 vnoremap < <gv
@@ -195,6 +214,20 @@ let g:syntastic_cpp_remove_include_errors = 1
 
 " YouCompleteMe Settings
 let g:ycm_confirm_extra_conf = 0
+
+" Easy Motion Settings
+map <Leader> <Plug>(easymotion-prefix)
+map <Leader>s <Plug>(easymotion-lineforward)
+map <Leader>n <Plug>(easymotion-j)
+map <Leader>r <Plug>(easymotion-k)
+map <Leader>b <Plug>(easymotion-linebackward)
+nmap t <Plug>(easymotion-s2)
+
+let g:EasyMotion_smartcase = 1
+let g:EasyMotion_startofline = 0 " keep cursor column when JK motion"
+
+" ag.vim Settings.
+let g:ag_working_path_mode="r"
 
 " Strip trailing whitespace
 fun! <SID>StripTrailingWhitespaces()
