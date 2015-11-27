@@ -71,8 +71,8 @@ set smarttab        " Insert 'tabs' on start of line, according to shiftwidth in
 
 " Set mapping and key timeouts
 set timeout
-set timeoutlen=1000
-set ttimeoutlen=1000
+set timeoutlen=1000 " timeout for leader key
+set ttimeoutlen=10  " timeout for esc key
 
 " Show if leader key is pressed
 set showcmd
@@ -128,7 +128,8 @@ nnoremap j <C-r>
 set pastetoggle=<F2>
 
 " Unhighlight searches
-nnoremap <esc> :noh<return><esc>
+" using <esc> for this, behaves weird
+nnoremap <C-d> :noh<return>
 
 " Reselect visual blocks after movement
 vnoremap < <gv
