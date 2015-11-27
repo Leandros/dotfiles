@@ -1,0 +1,11 @@
+#env
+LESS = -i -R
+
+#command
+b      left-scroll
+s      right-scroll
+n      forw-line
+r      back-line
+
+N      forw-screen
+R      back-screen
