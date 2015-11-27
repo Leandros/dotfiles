@@ -14,6 +14,7 @@ fi
 #   - git
 #   - tmux
 #   - vim
+#   - the_silver_searcher (a.k.a ag)
 
 # Copy all files over:
 cp .astylerc $HOME/
