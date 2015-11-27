@@ -1,0 +1,36 @@
+--style=allman
+--indent=spaces=4
+--convert-tabs
+
+--attach-extern-c
+
+--indent-switches
+--indent-preproc-block
+--indent-preproc-define
+--indent-col1-comments
+
+--pad-oper
+--pad-header
+
+--unpad-paren
+
+# doesn't seem to preserve any lines, will just remove any empty lines!
+# --delete-empty-lines
+
+--align-pointer=type
+--align-reference=type
+
+--keep-one-line-blocks
+--keep-one-line-statements
+--add-one-line-brackets
+
+--max-code-length=80
+--break-after-logical
+
+
+# objective-c options
+--align-method-colon
+--pad-method-prefix
+--pad-method-colon=none
+
+

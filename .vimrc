@@ -29,6 +29,7 @@ Plugin 'easymotion/vim-easymotion'
 Plugin 'tpope/vim-commentary'
 Plugin 'kien/ctrlp.vim'
 Plugin 'rking/ag.vim'
+Plugin 'Chiel92/vim-autoformat'
 
 " Enable if really desired.
 " Plugin 'Valloric/YouCompleteMe'
@@ -228,6 +229,18 @@ let g:EasyMotion_startofline = 0 " keep cursor column when JK motion"
 
 " ag.vim Settings.
 let g:ag_working_path_mode="r"
+
+" vim-autoformat Settings.
+noremap <F3> :Autoformat<CR> "
+let g:formatdef_astyle_c = '"astyle --mode=c"'
+let g:formatters_c = ['astyle_c']
+let g:formatdef_astyle_cpp = '"astyle --mode=c"'
+let g:formatters_cpp = ['astyle_cpp']
+let g:formatdef_astyle_objc = 'astyle --mode=c'
+let g:formatters_objc = ['astyle_objc']
+let g:formatdef_jsbeautify = 'js-beautify -f -'
+let g:formatters_javascript = ['jsbeautify']
+
 
 " Strip trailing whitespace
 fun! <SID>StripTrailingWhitespaces()
