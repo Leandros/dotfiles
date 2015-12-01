@@ -19,7 +19,7 @@ Plugin 'altercation/vim-colors-solarized'
 Plugin 'scrooloose/syntastic'
 Plugin 'xuhdev/SingleCompile'
 Plugin 'tpope/vim-fugitive'
-Plugin 'rizzatti/dash.vim'
+" Plugin 'rizzatti/dash.vim' " the dash vim plugin has quite a high load time.
 Plugin 'bling/vim-airline'
 Plugin 'Raimondi/delimitMate'
 Plugin 'ervandew/supertab'
@@ -30,9 +30,13 @@ Plugin 'tpope/vim-commentary'
 Plugin 'kien/ctrlp.vim'
 Plugin 'rking/ag.vim'
 Plugin 'Chiel92/vim-autoformat'
+Plugin 'jeffkreeftmeijer/vim-numbertoggle'
 
 " Enable if really desired.
 " Plugin 'Valloric/YouCompleteMe'
+
+" Dash plugin has quite a high load time.
+" Plugin 'rizzatti/dash.vim'
 
 call vundle#end()
 filetype plugin indent on
@@ -126,6 +130,10 @@ nnoremap j <C-r>
 
 " Convenient pasting.
 set pastetoggle=<F2>
+
+" Convenient copy to clipboard.
+vnoremap <C-c> :w !pbcopy<CR><CR>
+noremap <C-v> :r !pbpaste<CR><CR>
 
 " Unhighlight searches
 " using <esc> for this, behaves weird
@@ -260,3 +268,4 @@ fun! MinifyJson()
 endfunction
 
 command! JsonMinify call MinifyJson()
+
