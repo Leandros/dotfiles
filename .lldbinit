@@ -1,0 +1,3 @@
+command alias uikit expr @import UIKit
+
+settings set target.x86-disassembly-flavor intel
