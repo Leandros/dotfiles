@@ -21,7 +21,7 @@ Plugin 'xuhdev/SingleCompile'
 Plugin 'tpope/vim-fugitive'
 " Plugin 'rizzatti/dash.vim' " the dash vim plugin has quite a high load time.
 Plugin 'bling/vim-airline'
-Plugin 'Raimondi/delimitMate'
+Plugin 'jiangmiao/auto-pairs'
 Plugin 'ervandew/supertab'
 Plugin 'tpope/vim-surround'
 Plugin 'tpope/vim-repeat'
@@ -34,9 +34,6 @@ Plugin 'jeffkreeftmeijer/vim-numbertoggle'
 
 " Enable if really desired.
 " Plugin 'Valloric/YouCompleteMe'
-
-" Dash plugin has quite a high load time.
-" Plugin 'rizzatti/dash.vim'
 
 call vundle#end()
 filetype plugin indent on
@@ -268,4 +265,19 @@ fun! MinifyJson()
 endfunction
 
 command! JsonMinify call MinifyJson()
+
+" Highlight whitespace
+if version >= 704 && has('patch712')
+    set listchars=tab:--,trail:~,extends:>,precedes:<,space:·
+    set nolist
+
+    " Highlight whitespace color config
+    hi Conceal ctermfg=NONE ctermbg=NONE guifg=NONE guibg=NONE
+endif
+
+" SuperTab config
+runtime! plugin/supertab.vim
+inoremap <s-tab> <tab>
+"let g:SuperTabMappingTabLiteral = '<s-tab>'
+"inoremap <s-tab> <C-v><Tab>
 
