@@ -31,6 +31,8 @@ Plugin 'kien/ctrlp.vim'
 Plugin 'rking/ag.vim'
 Plugin 'Chiel92/vim-autoformat'
 Plugin 'jeffkreeftmeijer/vim-numbertoggle'
+Plugin 'xolox/vim-misc'
+Plugin 'xolox/vim-lua-ftplugin'
 
 " Enable if really desired.
 " Plugin 'Valloric/YouCompleteMe'
@@ -141,8 +143,8 @@ vnoremap < <gv
 vnoremap > >gv
 
 " Keep search matches in the middle of the window.
-nnoremap y nzzzv
-nnoremap Y Nzzzv
+nnoremap ( nzzzv
+nnoremap ) Nzzzv
 
 " Key map optimizations for Bone 2 Layout
 " Normal Mode remaps.
@@ -161,6 +163,15 @@ nnoremap <C-B> <C-W><C-H>
 nnoremap <C-N> <C-W><C-J>
 nnoremap <C-R> <C-W><C-K>
 nnoremap <C-S> <C-W><C-L>
+
+" Move page up / down
+nnoremap <S-n> <PageDown>
+nnoremap <S-r> <PageUp>
+
+" Insert newline
+nnoremap <CR> o<Esc>
+inoremap <C-O> <Esc>o
+" inoremap  <Esc>o
 
 " Split switching
 map <C-n> <C-W>j
@@ -274,6 +285,9 @@ if version >= 704 && has('patch712')
     " Highlight whitespace color config
     hi Conceal ctermfg=NONE ctermbg=NONE guifg=NONE guibg=NONE
 endif
+
+" vim-ftplugin config
+let g:lua_compiler_name = '/usr/local/bin/luac'
 
 " SuperTab config
 runtime! plugin/supertab.vim

@@ -7,11 +7,11 @@ bindkey -v
 # ====================
 # Config
 # ====================
-export HOME=/Users/arvidgerstmann
+export HOME=/Users/leandros
 export EDITOR=mvim
 export CC=clang
 export CXX=clang++
-export DEFAULT_USER=arvidgerstmann
+export DEFAULT_USER=leandros
 
 
 # System Specifics: OS X
@@ -124,6 +124,23 @@ netinfo () {
     echo "${myip}"
     echo "---------------------------------------------------"
 }
+man() {
+    env \
+        LESS_TERMCAP_mb=$(printf "\e[1;31m") \
+        LESS_TERMCAP_md=$(printf "\e[1;31m") \
+        LESS_TERMCAP_me=$(printf "\e[0m") \
+        LESS_TERMCAP_se=$(printf "\e[0m") \
+        LESS_TERMCAP_so=$(printf "\e[1;44;33m") \
+        LESS_TERMCAP_ue=$(printf "\e[0m") \
+        LESS_TERMCAP_us=$(printf "\e[1;32m") \
+            man "$@"
+}
+
+# ====================
+# Programs
+# ====================
+export LESS="-R"
+export LESSOPEN="|~/.lessfilter %s"
 
 # ====================
 # General Config
@@ -150,8 +167,9 @@ alias tarbz='tar -cjf'
 
 # Android SDK / NDK
 export ANDROID_ROOT=$HOME/android-sdk
+export ANDROID_HOME=$ANDROID_ROOT
 export NDK_ROOT=$HOME/android-ndk-r10e
-export NDK_TOOLCHAIN_VERSION=clang
+export NDK_TOOLCHAIN_VERSION=4.9
 export NDK_CCACHE=/usr/local/bin/ccache
 export USE_CCACHE=1
 
