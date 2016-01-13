@@ -143,8 +143,8 @@ vnoremap < <gv
 vnoremap > >gv
 
 " Keep search matches in the middle of the window.
-nnoremap ( nzzzv
-nnoremap ) Nzzzv
+nnoremap ? nzzzv
+nnoremap - Nzzzv
 
 " Key map optimizations for Bone 2 Layout
 " Normal Mode remaps.
@@ -165,8 +165,12 @@ nnoremap <C-R> <C-W><C-K>
 nnoremap <C-S> <C-W><C-L>
 
 " Move page up / down
-nnoremap <S-n> <PageDown>
-nnoremap <S-r> <PageUp>
+nnoremap ( <PageDown>
+nnoremap ) <PageUp>
+
+" Move line up down
+nnoremap <S-n> <C-e>
+nnoremap <S-r> <C-y>
 
 " Insert newline
 nnoremap <CR> o<Esc>
@@ -294,4 +298,7 @@ runtime! plugin/supertab.vim
 inoremap <s-tab> <tab>
 "let g:SuperTabMappingTabLiteral = '<s-tab>'
 "inoremap <s-tab> <C-v><Tab>
+
+" NumberToggle config
+let g:NumberToggleTrigger="<C-i>"
 
