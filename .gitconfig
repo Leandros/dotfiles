@@ -12,34 +12,55 @@
 [credential]
 	helper = cache --timeout=3600
 [alias]
+    # One letter short aliases
+    a = add -p
+    c = commit
+    f = fetch -p
+    p = push
+    r = reset
+
+    # Two letter short aliases
 	st = status -sb
 	co = checkout
-	df = difftool
-	standup = log --pretty=format:'%Cred%h%Creset -%Creset %s %Cgreen(%cD) %C(bold blue)<%an>%Creset' --since yesterday --author 'Leandros Linux'
-	ignored = ls-files --others -i --exclude-standard
-	lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr)%C(bold blue)<%an>%Creset' --abbrev-commit
-    pa = push --all
-    po = push origin master
-    pd = push origin dev
-    change = log --pretty=\"- \"%s --first-parent --color
-    ours = "!f() { git co --ours $@ && git add $@; }; f"
-    theirs = "!f() { git co --theirs $@ && git add $@; }; f"
-    ps = "!f() { git stash -u; git pull --rebase origin master; git stash apply stash@{0}; git stash drop stash@{0}; }; f"
-    cp = cherry-pick
-    cl = clone
-    ci = commit
-    br = branch
+    df = difftool
     dc = diff --cached
+    cp = cherry-pick
+
+    # Reset aliases
     r = reset
     r1 = reset HEAD^
     r2 = reset HEAD^^
     rh = reset --hard
     rh1 = reset HEAD^ --hard
     rh2 = reset HEAD^^ --hard
+
+    # Stash aliases
     sl = stash list
     sa = stash apply
     ss = stash save
+
+    # Log aliases
     fl = log -u
+
+    # Push aliases
+    pa = push --all
+    po = push origin master
+    pd = push origin dev
+
+    # Log aliases
+    lg = log --color --graph --date=iso --pretty=format:'%C(yellow)%h%C(reset) %C(green)%ai%x08%x08%x08%x08%x08%x08%x08%x08%x08%C(reset) %<(20)%C(blue)%an%C(reset) %C(red)%d%C(reset) %s' --abbrev-commit
+    llog = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr)%C(bold blue)<%an>%Creset' --abbrev-commit
+    plog = log --graph --pretty='format:%C(red)%d%C(reset) %C(yellow)%h%C(reset) %ar %C(green)%aN%C(reset) %s'
+    tlog = log --stat --color --graph --pretty=oneline --abbrev-commit --date=relative
+
+	standup = log --pretty=format:'%Cred%h%Creset -%Creset %s %Cgreen(%cD) %C(bold blue)<%an>%Creset' --since yesterday --author 'Leandros Linux'
+	ignored = ls-files --others -i --exclude-standard
+    change = log --pretty=\"- \"%s --first-parent --color
+    ours = "!f() { git co --ours $@ && git add $@; }; f"
+    theirs = "!f() { git co --theirs $@ && git add $@; }; f"
+    ps = "!f() { git stash -u; git pull --rebase origin master; git stash apply stash@{0}; git stash drop stash@{0}; }; f"
+    rank = shortlog -sn --no-merges
+    bdm = "!git branch --merged | grep -v '*' | xargs -n 1 git branch -d"
 [core]
 	editor = vim
 [filter "media"]
@@ -62,3 +83,9 @@
 	user = leandros
 [ghi]
 	token = !security find-internet-password -a leandros -s github.com -l 'ghi token' -w
+[difftool "sourcetree"]
+	cmd = /usr/local/bin/ksdiff -w \"$LOCAL\" \"$REMOTE\"
+	path =
+[mergetool "sourcetree"]
+	cmd = /usr/local/bin/ksdiff --merge --output \"$MERGED\" --base \"$BASE\" -- \"$LOCAL\" --snapshot \"$REMOTE\" --snapshot
+	trustExitCode = true
