@@ -19,7 +19,6 @@ Plugin 'altercation/vim-colors-solarized'
 Plugin 'scrooloose/syntastic'
 Plugin 'xuhdev/SingleCompile'
 Plugin 'tpope/vim-fugitive'
-" Plugin 'rizzatti/dash.vim' " the dash vim plugin has quite a high load time.
 Plugin 'bling/vim-airline'
 Plugin 'jiangmiao/auto-pairs'
 Plugin 'ervandew/supertab'
@@ -33,6 +32,8 @@ Plugin 'Chiel92/vim-autoformat'
 Plugin 'jeffkreeftmeijer/vim-numbertoggle'
 Plugin 'xolox/vim-misc'
 Plugin 'xolox/vim-lua-ftplugin'
+Plugin 'Yggdroot/indentLine'
+Plugin 'tmux-plugins/vim-tmux-focus-events'
 
 " Enable if really desired.
 " Plugin 'Valloric/YouCompleteMe'
@@ -159,10 +160,11 @@ vnoremap r <Up>
 vnoremap n <Down>
 vnoremap s <Right>
 
-nnoremap <C-B> <C-W><C-H>
-nnoremap <C-N> <C-W><C-J>
-nnoremap <C-R> <C-W><C-K>
-nnoremap <C-S> <C-W><C-L>
+" No clue???
+" nnoremap <C-B> <C-W><C-H>
+" nnoremap <C-N> <C-W><C-J>
+" nnoremap <C-R> <C-W><C-K>
+" nnoremap <C-S> <C-W><C-L>
 
 " Move page up / down
 nnoremap ( <PageDown>
@@ -178,10 +180,13 @@ inoremap <C-O> <Esc>o
 " inoremap  <Esc>o
 
 " Split switching
-map <C-n> <C-W>j
-map <C-r> <C-W>k
-map <C-b> <C-W>h
-map <C-s> <C-W>l
+nnoremap <C-n> <C-W>j
+nnoremap <C-r> <C-W>k
+nnoremap <C-b> <C-W>h
+nnoremap <C-s> <C-W>l
+
+nnoremap <C-i> :vnew<CR>
+nnoremap <C-t> :new<CR>
 
 " ReMap NERDTree Keys.
 " let NERDTreeMapRefresh='<D-r>'
@@ -213,6 +218,8 @@ endif
 
 " Airline Settings
 set laststatus=2
+let g:airline#extensions#tabline#enabled = 1
+let g:airline#extensions#whitespace#mixed_indent_algo = 0
 
 " Setup Airline font
 if has('gui_running')
@@ -300,5 +307,12 @@ inoremap <s-tab> <tab>
 "inoremap <s-tab> <C-v><Tab>
 
 " NumberToggle config
-let g:NumberToggleTrigger="<C-i>"
+let g:NumberToggleTrigger="<C-o>"
+
+" Indent Line settings
+let g:indentLine_enabled = 1
+let g:indentLine_color_term = 239
+let g:indentLine_char = '' " default: '│'
+let g:indentLine_concealcursor = 'inc' " (default 'inc')
+let g:indentLine_conceallevel = 2 " (default 2)
 
