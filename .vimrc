@@ -169,10 +169,14 @@ vnoremap s <Right>
 " Move page up / down
 nnoremap ( <PageDown>
 nnoremap ) <PageUp>
+vnoremap ) <PageDown>
+vnoremap ) <PageUp>
 
 " Move line up down
 nnoremap <S-n> <C-e>
 nnoremap <S-r> <C-y>
+vnoremap <S-n> <C-e>
+vnoremap <S-r> <C-y>
 
 " Insert newline
 nnoremap <CR> o<Esc>
@@ -312,7 +316,7 @@ let g:NumberToggleTrigger="<C-o>"
 " Indent Line settings
 let g:indentLine_enabled = 1
 let g:indentLine_color_term = 239
-let g:indentLine_char = '' " default: '│'
+let g:indentLine_char = '│' " ''  default: '│'
 let g:indentLine_concealcursor = 'inc' " (default 'inc')
 let g:indentLine_conceallevel = 2 " (default 2)
 
