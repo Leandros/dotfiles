@@ -20,6 +20,9 @@ if [[ "Darwin" == "`uname`" ]]; then
     bindkey "^[[7~" beginning-of-line
     bindkey "^[[8~" end-of-line
 
+    # LOL! Free C-s
+    stty -ixon -ixoff
+
     # Terminal Colors
     export FLAGS_GETOPT_CMD="$(brew --prefix gnu-getopt)/bin/getopt"
     export GREP_OPTIONS='--color=always'
