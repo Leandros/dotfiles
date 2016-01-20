@@ -34,6 +34,9 @@ Plugin 'xolox/vim-misc'
 Plugin 'xolox/vim-lua-ftplugin'
 Plugin 'Yggdroot/indentLine'
 Plugin 'tmux-plugins/vim-tmux-focus-events'
+Plugin 'scrooloose/nerdtree'
+Plugin 'Xuyuanp/nerdtree-git-plugin'
+"Plugin 'jistr/vim-nerdtree-tabs'
 
 " Enable if really desired.
 " Plugin 'Valloric/YouCompleteMe'
@@ -169,7 +172,7 @@ vnoremap s <Right>
 " Move page up / down
 nnoremap ( <PageDown>
 nnoremap ) <PageUp>
-vnoremap ) <PageDown>
+vnoremap ( <PageDown>
 vnoremap ) <PageUp>
 
 " Move line up down
@@ -189,14 +192,52 @@ nnoremap <C-r> <C-W>k
 nnoremap <C-b> <C-W>h
 nnoremap <C-s> <C-W>l
 
+" Split resizing
+nnoremap ! 5<C-W>-
+nnoremap = 5<C-W>+
+nnoremap < 5<C-W><
+nnoremap > 5<C-W>>
+
+" Split Creating
 nnoremap <C-i> :vnew<CR>
 nnoremap <C-t> :new<CR>
 
 " ReMap NERDTree Keys.
-" let NERDTreeMapRefresh='<D-r>'
+let NERDTreeMapRefresh='<D-r>'
+
+" Open NERDTree with C-n
+" map <C-n> :NERDTreeToggle<CR>
+
+" Show dotfiles in NERDTree by default
+let NERDTreeShowHidden = 1
 
 " Open NERDTree when no files specified.
-" autocmd vimenter * if !argc() | NERDTree | endif
+autocmd StdinReadPre * let s:std_in=1
+autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
+
+" Close VIM if only tab left is NERDTree
+autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
+
+" NERDTress File highlighting
+function! NERDTreeHighlightFile(extension, fg, bg, guifg, guibg)
+ exec 'autocmd filetype nerdtree highlight ' . a:extension .' ctermbg='. a:bg .' ctermfg='. a:fg .' guibg='. a:guibg .' guifg='. a:guifg
+ exec 'autocmd filetype nerdtree syn match ' . a:extension .' #^\s\+.*'. a:extension .'$#'
+endfunction
+
+call NERDTreeHighlightFile('jade', 'green', 'none', 'green', '#151515')
+call NERDTreeHighlightFile('ini', 'yellow', 'none', 'yellow', '#151515')
+call NERDTreeHighlightFile('md', 'blue', 'none', '#3366FF', '#151515')
+call NERDTreeHighlightFile('yml', 'yellow', 'none', 'yellow', '#151515')
+call NERDTreeHighlightFile('config', 'yellow', 'none', 'yellow', '#151515')
+call NERDTreeHighlightFile('conf', 'yellow', 'none', 'yellow', '#151515')
+call NERDTreeHighlightFile('json', 'yellow', 'none', 'yellow', '#151515')
+call NERDTreeHighlightFile('html', 'yellow', 'none', 'yellow', '#151515')
+call NERDTreeHighlightFile('styl', 'cyan', 'none', 'cyan', '#151515')
+call NERDTreeHighlightFile('css', 'cyan', 'none', 'cyan', '#151515')
+call NERDTreeHighlightFile('coffee', 'Red', 'none', 'red', '#151515')
+call NERDTreeHighlightFile('js', 'Red', 'none', '#ffa500', '#151515')
+call NERDTreeHighlightFile('php', 'Magenta', 'none', '#ff00ff', '#151515')
+
 
 " Insert new line with Shift-Enter
 nmap <S-Enter> o<Esc>
@@ -316,7 +357,7 @@ let g:NumberToggleTrigger="<C-o>"
 " Indent Line settings
 let g:indentLine_enabled = 1
 let g:indentLine_color_term = 239
-let g:indentLine_char = ''
+let g:indentLine_char = '' " default: '│'
 let g:indentLine_concealcursor = 'inc' " (default 'inc')
 let g:indentLine_conceallevel = 2 " (default 2)
 
