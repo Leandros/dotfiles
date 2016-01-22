@@ -62,7 +62,6 @@ plugins=(git git-flow git-extras repo wd brew sublime osx pod terminalapp colore
 
 # External Scripts
 source $ZSH/oh-my-zsh.sh
-#source $HOME/.rvm/scripts/rvm
 
 
 # ====================
@@ -202,8 +201,4 @@ export PATH
 
 # Start ssh-agent on startup
 eval `ssh-agent -s` > /dev/null 2>&1
-
-
-# added by travis gem
-[ -f /Users/arvidgerstmann/.travis/travis.sh ] && source /Users/arvidgerstmann/.travis/travis.sh
 
