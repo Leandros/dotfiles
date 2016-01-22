@@ -7,11 +7,11 @@ bindkey -v
 # ====================
 # Config
 # ====================
-export HOME=/Users/leandros
-export EDITOR=mvim
+export HOME=/Users/arvidgerstmann
+export EDITOR=vim
 export CC=clang
 export CXX=clang++
-export DEFAULT_USER=leandros
+export DEFAULT_USER=arvidgerstmann
 
 
 # System Specifics: OS X
@@ -62,7 +62,7 @@ plugins=(git git-flow git-extras repo wd brew sublime osx pod terminalapp colore
 
 # External Scripts
 source $ZSH/oh-my-zsh.sh
-source $HOME/.rvm/scripts/rvm
+#source $HOME/.rvm/scripts/rvm
 
 
 # ====================
@@ -152,6 +152,9 @@ export LESSOPEN="|~/.lessfilter %s"
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 
+# tmux current working dir
+PS1="$PS1"'$([ -n "$TMUX"  ] && tmux setenv TMUXPWD_$(tmux display -p "#D" | tr -d %) "$PWD")'
+
 
 # ====================
 # Aliases
@@ -171,7 +174,7 @@ alias tarbz='tar -cjf'
 # Android SDK / NDK
 export ANDROID_ROOT=$HOME/android-sdk
 export ANDROID_HOME=$ANDROID_ROOT
-export NDK_ROOT=$HOME/android-ndk-r10e
+export NDK_ROOT=$HOME/android-ndk-r9b
 export NDK_TOOLCHAIN_VERSION=4.9
 export NDK_CCACHE=/usr/local/bin/ccache
 export USE_CCACHE=1
@@ -199,4 +202,8 @@ export PATH
 
 # Start ssh-agent on startup
 eval `ssh-agent -s` > /dev/null 2>&1
+
+
+# added by travis gem
+[ -f /Users/arvidgerstmann/.travis/travis.sh ] && source /Users/arvidgerstmann/.travis/travis.sh
 

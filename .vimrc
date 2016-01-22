@@ -36,6 +36,7 @@ Plugin 'Yggdroot/indentLine'
 Plugin 'tmux-plugins/vim-tmux-focus-events'
 Plugin 'scrooloose/nerdtree'
 Plugin 'Xuyuanp/nerdtree-git-plugin'
+Plugin 'elzr/vim-json'
 "Plugin 'jistr/vim-nerdtree-tabs'
 
 " Enable if really desired.
@@ -268,7 +269,7 @@ let g:airline#extensions#whitespace#mixed_indent_algo = 0
 
 " Setup Airline font
 if has('gui_running')
-    set guifont=Menlo\ for\ Powerline:h11
+    set guifont=Menlo\ Patched:h11
 endif
 let g:airline_powerline_fonts = 1
 
@@ -356,8 +357,16 @@ let g:NumberToggleTrigger="<C-o>"
 
 " Indent Line settings
 let g:indentLine_enabled = 1
+" let g:indentLine_leadingSpaceEnabled = 1
 let g:indentLine_color_term = 239
-let g:indentLine_char = '' " default: '│'
-let g:indentLine_concealcursor = 'inc' " (default 'inc')
+" let g:indentLine_char = ''
+let g:indentLine_char = '┊'
+let g:indentLine_leadingSpaceChar = '·'
+let g:indentLine_concealcursor = '' " (default 'inc')
 let g:indentLine_conceallevel = 2 " (default 2)
+let g:indentLine_noConcealCursor = 1
+let g:indentLine_faster = 1
+
+" Fix JSON conceal level Yggdroot/indentLine#140
+let g:vim_json_syntax_conceal = 0
 
