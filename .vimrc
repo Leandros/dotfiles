@@ -23,20 +23,20 @@ Plugin 'bling/vim-airline'
 Plugin 'jiangmiao/auto-pairs'
 " Plugin 'ervandew/supertab'
 Plugin 'tpope/vim-surround'
-" Plugin 'tpope/vim-repeat'
+Plugin 'tpope/vim-repeat'
 Plugin 'easymotion/vim-easymotion'
 Plugin 'tpope/vim-commentary'
-" Plugin 'ctrlpvim/ctrlp.vim'
+Plugin 'ctrlpvim/ctrlp.vim'
 " Plugin 'rking/ag.vim'
 Plugin 'Chiel92/vim-autoformat'
-" Plugin 'jeffkreeftmeijer/vim-numbertoggle'
-" Plugin 'xolox/vim-misc'
-" Plugin 'xolox/vim-lua-ftplugin'
+Plugin 'jeffkreeftmeijer/vim-numbertoggle'
+Plugin 'xolox/vim-misc'
+Plugin 'xolox/vim-lua-ftplugin'
 " Plugin 'Yggdroot/indentLine'
 Plugin 'tmux-plugins/vim-tmux-focus-events'
 Plugin 'scrooloose/nerdtree'
-" Plugin 'Xuyuanp/nerdtree-git-plugin'
-" Plugin 'elzr/vim-json'
+Plugin 'Xuyuanp/nerdtree-git-plugin'
+Plugin 'elzr/vim-json'
 "Plugin 'jistr/vim-nerdtree-tabs'
 
 " Enable if really desired.
@@ -87,6 +87,10 @@ set showcmd
 
 " Correct backspace
 set backspace=indent,eol,start
+
+" Improve performance
+set ttyfast
+set lazyredraw
 
 " Cygwin cursor fix.
 let &t_ti.="\e[1 q"
@@ -349,8 +353,6 @@ let g:lua_compiler_name = '/usr/local/bin/luac'
 " SuperTab config
 runtime! plugin/supertab.vim
 inoremap <s-tab> <tab>
-"let g:SuperTabMappingTabLiteral = '<s-tab>'
-"inoremap <s-tab> <C-v><Tab>
 
 " NumberToggle config
 let g:NumberToggleTrigger="<C-o>"
@@ -358,8 +360,8 @@ let g:NumberToggleTrigger="<C-o>"
 " Indent Line settings
 let g:indentLine_enabled = 1
 " let g:indentLine_leadingSpaceEnabled = 1
-let g:indentLine_color_term = 239
 " let g:indentLine_char = ''
+let g:indentLine_color_term = 239
 let g:indentLine_char = '┊'
 let g:indentLine_leadingSpaceChar = '·'
 let g:indentLine_concealcursor = '' " (default 'inc')
