@@ -7,5 +7,9 @@ s      right-scroll
 n      forw-line
 r      back-line
 
-N      forw-screen
-R      back-screen
+(      forw-screen
+)      back-screen
+
+?      repeat-search
+-      reverse-search
+
