@@ -177,6 +177,10 @@ vnoremap > >gv
 nnoremap ? nzzzv
 nnoremap - Nzzzv
 
+" Move by words
+" nnoremap B B
+nnoremap S W
+
 " Key map optimizations for Bone 2 Layout
 " Normal Mode remaps.
 nnoremap b <Left>
