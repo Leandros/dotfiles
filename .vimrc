@@ -92,6 +92,28 @@ set backspace=indent,eol,start
 set ttyfast
 set lazyredraw
 
+" Improve :b switch menu
+set wildchar=<Tab> wildmenu wildmode=full
+
+" Buffer switching
+nnoremap <Leader>1 :1b<CR>
+nnoremap <Leader>2 :2b<CR>
+nnoremap <Leader>3 :3b<CR>
+nnoremap <Leader>4 :4b<CR>
+nnoremap <Leader>5 :5b<CR>
+nnoremap <Leader>6 :6b<CR>
+nnoremap <Leader>7 :7b<CR>
+nnoremap <Leader>8 :8b<CR>
+nnoremap <Leader>9 :9b<CR>
+nnoremap <Leader>0 :10b<CR>
+
+" Jump to buffers with Ngb
+let c = 1
+while c <= 99
+  execute "nnoremap " . c . "gb :" . c . "b\<CR>"
+  let c += 1
+endwhile
+
 " Cygwin cursor fix.
 let &t_ti.="\e[1 q"
 let &t_SI.="\e[5 q"
@@ -207,6 +229,9 @@ nnoremap > 5<C-W>>
 nnoremap <C-i> :vnew<CR>
 nnoremap <C-t> :new<CR>
 
+" Split killing
+nnoremap <C-q> :bdelete<CR>
+
 " ReMap NERDTree Keys.
 let NERDTreeMapRefresh='<D-r>'
 
@@ -269,6 +294,7 @@ endif
 " Airline Settings
 set laststatus=2
 let g:airline#extensions#tabline#enabled = 1
+let g:airline#extensions#tabline#buffer_nr_show = 1
 let g:airline#extensions#whitespace#mixed_indent_algo = 0
 
 " Setup Airline font
