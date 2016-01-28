@@ -163,10 +163,25 @@ bindkey -v
 # Just if dots appear again
 # bindkey "^I" expand-or-complete
 
+# Normal bindings
 bindkey -M vicmd "s" forward-char
 bindkey -M vicmd "b" backward-char
-bindkey -M vicmd "n" down-line-or-history
-bindkey -M vicmd "r" up-line-or-history
+bindkey -M vicmd "n" down-line-or-beginning-search
+bindkey -M vicmd "r" up-line-or-beginning-search
+bindkey -M vicmd "B" backward-word
+bindkey -M vicmd "S" forward-word
+bindkey -M vicmd "$" end-of-line
+bindkey -M vicmd "0" beginning-of-line
+bindkey -M vicmd "y" yank
+
+# Bind Up and Down keys again
+bindkey -M vicmd "OA" up-line-or-beginning-search
+bindkey -M vicmd "OB" down-line-or-beginning-search
+bindkey -M viins "OA" up-line-or-beginning-search
+bindkey -M viins "OB" down-line-or-beginning-search
+
+# Insert mode bindings
+bindkey -M viins "" backward-delete-char
 
 export KEYTIMEOUT=1
 
