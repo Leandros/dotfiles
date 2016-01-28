@@ -2,7 +2,6 @@
 HISTFILE=~/.histfile
 HISTSIZE=10000
 SAVEHIST=1000
-bindkey -v
 
 # ====================
 # Config
@@ -49,13 +48,13 @@ fpath=(/usr/local/share/zsh-completions $fpath)
 # OH-MY-ZSH
 # ====================
 ZSH=$HOME/.oh-my-zsh
-COMPLETION_WAITING_DOTS="true"
+ENABLE_CORRECTION="false"
 export UPDATE_ZSH_DAYS=7
 
 # powerlevel9k theme
 ZSH_THEME="powerlevel9k/powerlevel9k"
 POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(context dir vcs)
-POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(status)
+POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(vi_mode status)
 POWERLEVEL9K_PROMPT_ON_NEWLINE=true
 
 plugins=(git git-flow git-extras repo wd brew sublime osx pod terminalapp colored-man cp colorize history)
@@ -153,6 +152,23 @@ export LANG=en_US.UTF-8
 
 # tmux current working dir
 PS1="$PS1"'$([ -n "$TMUX"  ] && tmux setenv TMUXPWD_$(tmux display -p "#D" | tr -d %) "$PWD")'
+
+# ====================
+# Vi Mode
+# ====================
+
+# Enable Vi mode
+bindkey -v
+
+# Just if dots appear again
+# bindkey "^I" expand-or-complete
+
+bindkey -M vicmd "s" forward-char
+bindkey -M vicmd "b" backward-char
+bindkey -M vicmd "n" down-line-or-history
+bindkey -M vicmd "r" up-line-or-history
+
+export KEYTIMEOUT=1
 
 
 # ====================
