@@ -173,7 +173,16 @@ bindkey -M vicmd "B" backward-word
 bindkey -M vicmd "S" forward-word
 bindkey -M vicmd "$" end-of-line
 bindkey -M vicmd "0" beginning-of-line
-bindkey -M vicmd "y" yank
+bindkey -M vicmd "u" undo
+bindkey -M vicmd "j" redo
+bindkey -M vicmd "gg" beginning-of-buffer-or-history
+bindkey -M vicmd "G" end-of-buffer-or-history
+bindkey -M vicmd "v" visual-mode
+bindkey -M vicmd "f" edit-command-line
+bindkey -M vicmd "?" vi-repeat-search
+bindkey -M vicmd ":" vi-rev-repeat-search # was execute-named-cmd
+#bindkey -M vicmd "y" yank
+# bindkey -M vicmd " " magic-space
 
 # Bind Up and Down keys again
 bindkey -M vicmd "OA" up-line-or-beginning-search
@@ -183,6 +192,41 @@ bindkey -M viins "OB" down-line-or-beginning-search
 
 # Insert mode bindings
 bindkey -M viins "" backward-delete-char
+
+# Copy & Paste
+x-yank() {
+    zle copy-region-as-kill
+    print -rn -- $CUTBUFFER | pbcopy
+    zle visual-mode
+}
+zle -N x-yank
+
+x-cut() {
+    zle kill-region
+    print -rn -- $CUTBUFFER | pbcopy
+}
+zle -N x-cut
+
+# x-paste-right() {
+#     RBUFFER=$(pbpaste)$RBUFFER
+# }
+# x-paste-left() {
+#     LBUFFER=$LBUFFER$(pbpaste)
+# }
+# zle -N x-paste-right
+# zle -N x-paste-left
+
+x-paste() {
+    CUTBUFFER=$(pbpaste)
+    zle yank
+}
+zle -N x-paste
+
+bindkey -M vicmd "y" x-yank
+bindkey -M vicmd "Y" x-cut
+bindkey -M vicmd "p" x-paste
+# bindkey -M vicmd "p" x-paste-left
+# bindkey -M vicmd "P" x-paste-right
 
 export KEYTIMEOUT=1
 
