@@ -63,6 +63,7 @@
     bdm = "!git branch --merged | grep -v '*' | xargs -n 1 git branch -d"
 [core]
 	editor = vim
+	excludesfile = ~/.gitignore_global
 [filter "media"]
 	clean = git-media-clean %f
 	smudge = git-media-smudge %f
@@ -78,17 +79,11 @@
 [difftool]
 	prompt = false
 [diff]
-	tool = Kaleidoscope
+	tool = vimdiff
 [github]
 	user = leandros
 [ghi]
 	token = !security find-internet-password -a leandros -s github.com -l 'ghi token' -w
-[difftool "sourcetree"]
-	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
-	path =
-[mergetool "sourcetree"]
-	cmd = /Applications/SourceTree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
-	trustExitCode = true
 [pull]
 	rebase = true
 [rebase]
