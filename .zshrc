@@ -128,6 +128,14 @@ bindkey -M vicmd "OB" down-line-or-beginning-search
 bindkey -M viins "OA" up-line-or-beginning-search
 bindkey -M viins "OB" down-line-or-beginning-search
 
+# Move physical line up and down
+_physical_up_line()   { zle backward-char -n $COLUMNS }
+_physical_down_line() { zle forward-char  -n $COLUMNS }
+zle -N physical-up-line _physical_up_line
+zle -N physical-down-line _physical_down_line
+bindkey -M vicmd "R" physical-up-line
+bindkey -M vicmd "N" physical-down-line
+
 # Insert mode bindings
 bindkey -M viins "" backward-delete-char
 

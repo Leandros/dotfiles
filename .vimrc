@@ -187,12 +187,16 @@ nnoremap b <Left>
 nnoremap r <Up>
 nnoremap n <Down>
 nnoremap s <Right>
+nnoremap gn gj
+nnoremap gr gk
 
 " Visual and Select Mode remaps.
 vnoremap b <Left>
 vnoremap r <Up>
 vnoremap n <Down>
 vnoremap s <Right>
+vnoremap gn gj
+vnoremap gr gk
 
 " No clue???
 " nnoremap <C-B> <C-W><C-H>
