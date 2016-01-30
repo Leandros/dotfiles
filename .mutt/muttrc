@@ -7,6 +7,15 @@ set send_charset    = "us-ascii:utf-8"
 set sort            = threads
 set sort_aux        = last-date-received
 set sig_on_top      = no
+set include         = no        # quote message when replying
+set quit            = yes       # ask before quitting
+set delete          = yes       # ask before deleting
+set abort_nosubject = no        # Abort, if message has no subject.
+set abort_unmodified= yes       # Abort, if message wasn't edited.
+set autoedit                    # start editor without asking for to, subject,...
+set fast_reply                  # do not ask for to, subject,... when replying.
+unset metoo                     # should we keep ourselves in group replies?
+set menu_scroll                 # scroll on last line of menu (set) or do a nextpage?
 # set tmpdir          = ~/.tmp
 
 # Editing
@@ -43,10 +52,14 @@ bind index n next-entry
 bind index r previous-entry
 bind index N next-thread
 bind index R previous-thread
-bind index h next-unread
-bind index l previous-unread
-bind index H next-new
-bind index L previous-new
+bind index b next-unread
+bind index s previous-unread
+bind index B next-new
+bind index S previous-new
+
+bind index M middle-page
+bind index H top-page
+bind index L bottom-page
 
 bind index gg first-entry
 bind index G last-entry
@@ -54,8 +67,8 @@ bind index G last-entry
 bind index s collapse-thread
 bind index z collapse-all
 
-bind index S save-message
-bind index B toggle-new
+bind index l save-message
+bind index h toggle-new
 bind index F flag-message
 
 bind index Z imap-fetch-mail
