@@ -89,8 +89,8 @@ set showcmd
 set backspace=indent,eol,start
 
 " Improve performance
-set ttyfast
-set lazyredraw
+"set ttyfast
+"set lazyredraw
 
 " Improve :b switch menu
 set wildchar=<Tab> wildmenu wildmode=full
@@ -291,6 +291,9 @@ endif
 if exists('+colorcolumn')
   set colorcolumn=80
   highlight ColorColumn guibg=#004653
+
+  " except for mail
+  autocmd FileType mail set colorcolumn=72
 else
   au BufWinEnter * let w:m2=matchadd('ErrorMsg', '\%>80v.\+', -1)
 endif

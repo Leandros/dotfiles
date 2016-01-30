@@ -1,0 +1,135 @@
+# Colors
+source ~/.mutt/colors-solarized-dark-16.muttrc
+
+# General
+set charset         = "us-ascii:utf-8"
+set send_charset    = "us-ascii:utf-8"
+set sort            = threads
+set sort_aux        = last-date-received
+# set tmpdir          = ~/.tmp
+
+# Editing
+set editor          = "vim -c 'set spell spelllang=de,en' -c 'set tw=70'"
+set edit_headers    = yes
+set markers         = no
+set smart_wrap
+
+# General Binds
+bind index,pager f bounce-message # Forwarding
+bind index,pager c mail
+bind index,pager d delete-message
+bind index D delete-pattern
+bind index,pager e reply
+bind index,pager i group-reply
+
+bind index,pager / search
+bind index,pager w search-reverse
+bind index,pager ? search-next
+bind index,pager - search-opposite
+
+bind generic n next-entry
+bind generic r previous-entry
+bind generic < next-line
+bind generic > previous-line
+bind generic M middle-page
+bind generic H top-page
+bind generic L bottom-page
+bind generic ( next-page
+bind generic ) previous-page
+
+# Index Keybinds
+bind index n next-entry
+bind index r previous-entry
+bind index N next-thread
+bind index R previous-thread
+bind index h next-unread
+bind index l previous-unread
+bind index H next-new
+bind index L previous-new
+
+bind index gg first-entry
+bind index G last-entry
+
+bind index s collapse-thread
+bind index z collapse-all
+
+bind index S save-message
+bind index B toggle-new
+bind index F flag-message
+
+bind index Z imap-fetch-mail
+
+# Pager Keybinds
+bind pager n next-line
+bind pager r previous-line
+
+bind pager gg top
+bind pager G bottom
+
+# Compose
+bind compose a attach-file
+bind compose A attach-message
+bind compose p pgp-menu
+bind compose P postpone-message
+bind compose e edit-message
+bind compose j attach-key
+bind compose D detach-file
+bind compose C copy-file
+bind compose n next-entry
+bind compose r previous-entry
+
+# Postpone
+bind postpone d delete-entry
+bind postpone u undelete-entry
+
+# Pgp
+bind pgp % view-name
+bind pgp c verify-key
+
+# Fix backspace
+bind index,pager  previous-line
+
+# Disable printing
+bind index p noop
+bind pager p noop
+
+# Fix space in names
+bind editor <space> noop
+
+# Sidebar
+set sidebar_width       = 30
+set sidebar_visible     = yes
+set sidebar_delim       = '|'
+set sidebar_sort        = no
+set sidebar_shortpath   = yes
+bind index  sidebar-prev
+bind index  sidebar-next
+bind index  sidebar-open
+bind pager  sidebar-prev
+bind pager  sidebar-next
+bind pager  sidebar-open
+macro index o ‘<enter-command>toggle sidebar_visible<enter><refresh>’
+macro pager o ‘<enter-command>toggle sidebar_visible<enter><redraw-screen>’
+
+# Color
+color sidebar_new yellow default
+
+# Html viewing
+auto_view text/html
+alternative_order text/plain text/enriched text/html
+macro attach 'V' "<pipe-entry>cat >~/.cache/mutt/mail.html && $BROWSER ~/.cache/mutt/mail.html && rm ~/.cache/mutt/mail.html<enter>"
+set mailcap_path    = ~/.mutt/mailcap
+
+# Setup folders
+folder-hook 'arvid.io' 'source ~/.mutt/account.private'
+folder-hook 'appico.com' 'source ~/.mutt/account.appico'
+folder-hook 'voonygames.com' 'source ~/.mutt/account.voonygames'
+
+# Change between folders
+macro index 1 '<sync-mailbox><enter-command>source ~/.mutt/account.private<enter><change-folder>!<enter>'
+macro index 2 '<sync-mailbox><enter-command>source ~/.mutt/account.appico<enter><change-folder>!<enter>'
+macro index 3 '<sync-mailbox><enter-command>source ~/.mutt/account.voonygames<enter><change-folder>!<enter>'
+
+# switch to default account on startup
+source ~/.mutt/account.private
+

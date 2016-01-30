@@ -1,0 +1,43 @@
+# Private account
+
+# Passwords
+source ~/.mutt/mutt.passwords
+
+# Imap
+set folder          = imaps://imap.gmail.com:993/
+set imap_user       = arvid@voonygames.com
+set imap_pass       = $my_pw_voonygames
+set spoolfile       = +INBOX
+mailboxes           = +INBOX +[Gmail]/Drafts
+
+# Smtp
+set realname        = "Arvid Gerstmann"
+set from            = arvid@voonygames.com
+set use_from        = yes
+set smtp_url        = smtp://arvid@voonygames.com@smtp.gmail.com:587/
+set smtp_pass       = $my_pw_voonygames
+set smtp_authenticators = "gssapi:login"
+set ssl_force_tls   = yes
+set ssl_starttls    = yes
+
+# Caching
+set header_cache    = ~/.mutt/cache/headers
+set message_cachedir= ~/.mutt/cache/bodies
+set certificate_file= ~/.mutt/certificates
+
+# Labels
+set postponed       = +[Gmail]/Drafts
+#set trash           = +[Gmail]/Trash
+unset record
+
+# General
+unset imap_passive
+set imap_check_subscribed
+set move            = no
+set copy            = no
+set imap_keepalive  = 900
+set mail_check      = 30
+set timeout         = 10
+set net_inc         = 5
+set signature       ~/.mutt/signature.voonygames
+
