@@ -6,11 +6,12 @@ SAVEHIST=1000
 # ====================
 # Config
 # ====================
-export HOME=/Users/arvidgerstmann
+export HOME=/Users/leandros
 export EDITOR=vim
 export CC=clang
 export CXX=clang++
-export DEFAULT_USER=arvidgerstmann
+export DEFAULT_USER=leandros
+export BROWSER=/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome
 
 
 # System Specifics: OS X
@@ -60,83 +61,20 @@ POWERLEVEL9K_PROMPT_ON_NEWLINE=true
 
 plugins=(git git-flow git-extras repo wd brew sublime osx pod terminalapp colored-man cp colorize history)
 
-# External Scripts
 source $ZSH/oh-my-zsh.sh
 
-
 # ====================
-# Functions
+# External Scripts
 # ====================
-if [[ "Darwin" == "`uname`" ]]; then
-    man-preview () {
-        man -t "$@" | open -f -a /Applications/Preview.app
-    }
-    alias pman='man-preview'
-fi
+source $ZSH/oh-my-zsh.sh
 
-man-pdf () {
-    man -t "$@" | pstopdf -i -o "$@.pdf"
-}
-duf () {
-    du -sk "$@" | sort -n | \
-        while read size fname
-            do for unit in k M G T P E Z Y
-                do if [ $size -lt 1024 ]; then
-                    echo -e "${size}${unit}\t${fname}"
-                    break
-                fi
-            size=$((size/1024))
-            done
-        done
-}
-dirsize () {
-    du -shx * .[a-zA-Z0-9_]* 2> /dev/null | \
-    egrep '^ *[0-9.]*[MG]' | sort -n > /tmp/list
-    egrep '^ *[0-9.]*M' /tmp/list
-    egrep '^ *[0-9.]*G' /tmp/list
-    rm -rf /tmp/list
-}
-extract () {
-    if [ -f $1 ]; then
-        case $1 in
-            *.tar.bz2)   tar xjf $1;;
-            *.tar.gz)    tar xzf $1;;
-            *.bz2)       bunzip2 $1;;
-            *.rar)       rar x $1;;
-            *.gz)        gunzip $1;;
-            *.tar)       tar xf $1;;
-            *.tbz2)      tar xjf $1;;
-            *.tgz)       tar xzf $1;;
-            *.zip)       unzip $1;;
-            *.Z)         uncompress $1;;
-            *.7z)        7z x $1;;
-            *)           echo "'$1' cannot be extracted via extract()";;
-        esac
-        else
-            echo "'$1' is not a valid file"
-    fi
-}
-netinfo () {
-    echo "--------------- Network Information ---------------"
-    /sbin/ifconfig | awk /'inet addr/ {print $2}'
-    /sbin/ifconfig | awk /'Bcast/ {print $3}'
-    /sbin/ifconfig | awk /'inet addr/ {print $4}'
-    /sbin/ifconfig | awk /'HWaddr/ {print $4,$5}'
-    myip=`lynx -dump -hiddenlinks=ignore -nolist http://checkip.dyndns.org:8245/ | sed '/^$/d; s/^[ ]*//g; s/[ ]*$//g' `
-    echo "${myip}"
-    echo "---------------------------------------------------"
-}
-man() {
-    env \
-        LESS_TERMCAP_mb=$(printf "\e[1;31m") \
-        LESS_TERMCAP_md=$(printf "\e[1;31m") \
-        LESS_TERMCAP_me=$(printf "\e[0m") \
-        LESS_TERMCAP_se=$(printf "\e[0m") \
-        LESS_TERMCAP_so=$(printf "\e[1;44;33m") \
-        LESS_TERMCAP_ue=$(printf "\e[0m") \
-        LESS_TERMCAP_us=$(printf "\e[1;32m") \
-            man "$@"
-}
+# Glob all other scripts
+for file in $HOME/.zsh/scripts/* ; do
+  if [ -f "$file" ] ; then
+    source "$file"
+  fi
+done
+
 
 # ====================
 # Programs
@@ -182,7 +120,7 @@ bindkey -M vicmd "f" edit-command-line
 bindkey -M vicmd "?" vi-repeat-search
 bindkey -M vicmd ":" vi-rev-repeat-search # was execute-named-cmd
 #bindkey -M vicmd "y" yank
-# bindkey -M vicmd " " magic-space
+#bindkey -M vicmd " " magic-space
 
 # Bind Up and Down keys again
 bindkey -M vicmd "OA" up-line-or-beginning-search
@@ -194,12 +132,12 @@ bindkey -M viins "OB" down-line-or-beginning-search
 bindkey -M viins "" backward-delete-char
 
 # Copy & Paste
-x-yank() {
+x-copy() {
     zle copy-region-as-kill
     print -rn -- $CUTBUFFER | pbcopy
     zle visual-mode
 }
-zle -N x-yank
+zle -N x-copy
 
 x-cut() {
     zle kill-region
@@ -207,26 +145,16 @@ x-cut() {
 }
 zle -N x-cut
 
-# x-paste-right() {
-#     RBUFFER=$(pbpaste)$RBUFFER
-# }
-# x-paste-left() {
-#     LBUFFER=$LBUFFER$(pbpaste)
-# }
-# zle -N x-paste-right
-# zle -N x-paste-left
-
 x-paste() {
-    CUTBUFFER=$(pbpaste)
-    zle yank
+    PASTE=$(pbpaste)
+    LBUFFER="$LBUFFER${RBUFFER:0:1}"
+    RBUFFER="$PASTE${RBUFFER:1:${#RBUFFER}}"
 }
 zle -N x-paste
 
-bindkey -M vicmd "y" x-yank
+bindkey -M vicmd "y" x-copy
 bindkey -M vicmd "Y" x-cut
 bindkey -M vicmd "p" x-paste
-# bindkey -M vicmd "p" x-paste-left
-# bindkey -M vicmd "P" x-paste-right
 
 export KEYTIMEOUT=1
 
@@ -258,6 +186,7 @@ export USE_CCACHE=1
 PATH=/usr/local/bin:$PATH
 PATH=$PATH:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin:/usr/bin/core_perl
 PATH=$PATH:$HOME/bin
+PATH=$PATH:$HOME/.zsh/bin
 PATH=$PATH:$HOME/bin/awscli/eb/macosx/python2.7
 PATH=$PATH:$HOME/bin/drmemory/bin
 PATH=$PATH:$HOME/.rvm/bin

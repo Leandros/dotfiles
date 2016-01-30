@@ -1,0 +1,43 @@
+#!/bin/sh
+# com [-n] [FILE...] - compile anything
+
+##% echo this is com % \#
+##% echo $FILE $STEM
+
+# Inspired by a tool of Tom Duff (http://www.iq0.com/duffgram/com.c).
+#
+# com looks for the sequence ##% (without preceding whitespace)
+# in each file, and sends the rest of the line off to the shell.  The
+# variable $FILE is set to the filename, and $STEM is set to the
+# filename without suffix.  Used to allow information about how to
+# compile a program to be stored with the program.  The -n flag causes
+# com not to act, but to print out the action it would have taken.
+#
+# Public domain, 14apr2015  +chris+
+
+CMD="sh -e -u -x"
+if [ "$1" = -n ]; then
+  CMD=cat
+  shift
+fi
+
+if [ $# -eq 0 ]; then
+  if [ -r .comfile ]; then
+    set -- $(cat .comfile)
+  else
+    echo "Usage: $0 [-n] [FILE...]" 1>&2
+    exit 1
+  fi
+elif [ "$CMD" != cat ]; then
+  echo "$@" >.comfile
+fi
+
+export FILE STEM
+for FILE; do
+  STEM=${FILE%.*}
+  if ! grep -q '^[^ ]*##%' "$FILE"; then
+    echo "File '$FILE' contains no ##% instructions."
+    exit 1
+  fi
+  sed -n '/^[^ ]*##%/s:^[^ ]*##% *::gp' "$FILE" |$CMD
+done
