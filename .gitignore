@@ -1,1 +1,20 @@
+# Rubbish
 .DS_Store
+cache
+certificates
+
+# Make sure they never ever get submitted
+pw
+.pw
+*.pw
+pws
+.pws
+*.pws
+passwords
+.passwords
+*.passwords
+
+# And while at it
+id_rsa
+id_rsa*
+*id_rsa*
