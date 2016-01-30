@@ -6,6 +6,7 @@ set charset         = "us-ascii:utf-8"
 set send_charset    = "us-ascii:utf-8"
 set sort            = threads
 set sort_aux        = last-date-received
+set sig_on_top      = no
 # set tmpdir          = ~/.tmp
 
 # Editing
