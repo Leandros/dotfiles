@@ -190,6 +190,15 @@ export NDK_TOOLCHAIN_VERSION=4.9
 export NDK_CCACHE=/usr/local/bin/ccache
 export USE_CCACHE=1
 
+# MANPATH
+if command_exists brew ; then
+    HOMEBREW_PREFIX=$(brew --prefix)
+else
+    HOMEBREW_PREFIX=/usr/local
+fi
+MANPATH=$HOMEBREW_PREFIX/opt/coreutils/libexec/gnuman:$MANPATH
+export MANPATH
+
 # PATH
 PATH=$(brew --prefix coreutils)/libexec/gnubin:$PATH
 PATH=/usr/local/bin:$PATH
