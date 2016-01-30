@@ -1,12 +1,12 @@
 # Private account
 
-# Passwords
-source ~/.mutt/mutt.passwords
+# Password
+set my_pw = `security find-generic-password -a 'arvid.gerstmann@gmail.com' -l 'gmail.com' -w`
 
 # Imap
 set folder          = imaps://imap.gmail.com:993/
 set imap_user       = arvid.gerstmann@gmail.com
-set imap_pass       = $my_pw_private
+set imap_pass       = $my_pw
 set spoolfile       = +INBOX
 mailboxes           = +INBOX +[Gmail]/Drafts
 
@@ -15,7 +15,7 @@ set realname        = "Arvid Gerstmann"
 set from            = ag@arvid.io
 set use_from        = yes
 set smtp_url        = smtp://arvid.gerstmann@gmail.com@smtp.gmail.com:587/
-set smtp_pass       = $my_pw_private
+set smtp_pass       = $my_pw
 set smtp_authenticators = "gssapi:login"
 set ssl_force_tls   = yes
 set ssl_starttls    = yes

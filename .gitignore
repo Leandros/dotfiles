@@ -3,18 +3,7 @@
 cache
 certificates
 
-# Make sure they never ever get submitted
-pw
-.pw
-*.pw
-pws
-.pws
-*.pws
-passwords
-.passwords
-*.passwords
-
-# And while at it
+# Better be safe, than sorry.
 id_rsa
 id_rsa*
 *id_rsa*

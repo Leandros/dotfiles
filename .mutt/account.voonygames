@@ -1,7 +1,7 @@
 # Private account
 
-# Passwords
-source ~/.mutt/mutt.passwords
+# Password
+set my_pw = `security find-generic-password -a 'arvid@voonygames.com' -l 'gmail.com' -w`
 
 # Imap
 set folder          = imaps://imap.gmail.com:993/
