@@ -183,6 +183,7 @@ export NDK_CCACHE=/usr/local/bin/ccache
 export USE_CCACHE=1
 
 # PATH
+PATH=$(brew --prefix coreutils)/libexec/gnubin:$PATH
 PATH=/usr/local/bin:$PATH
 PATH=$PATH:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin:/usr/bin/core_perl
 PATH=$PATH:$HOME/bin
