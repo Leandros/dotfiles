@@ -1,7 +1,7 @@
 # File listing
 
 # List files recursively and match a pattern
-l() {
+lf() {
   local p=$argv[-1]
   [[ -d $p ]] && { argv[-1]=(); } || p='.'
   find $p ! -type d | sed 's:^./::' | egrep "${@:-.}"
