@@ -7,7 +7,7 @@ set send_charset    = "us-ascii:utf-8"
 set sort            = threads
 set sort_aux        = last-date-received
 set sig_on_top      = no
-set include         = no        # quote message when replying
+set include         = yes       # quote message when replying
 set quit            = yes       # ask before quitting
 set delete          = yes       # ask before deleting
 set abort_nosubject = no        # Abort, if message has no subject.
@@ -25,18 +25,6 @@ set markers         = no
 set smart_wrap
 
 # General Binds
-bind index,pager f bounce-message # Forwarding
-bind index,pager c mail
-bind index,pager d delete-message
-bind index D delete-pattern
-bind index,pager e reply
-bind index,pager i group-reply
-
-bind index,pager / search
-bind index,pager w search-reverse
-bind index,pager ? search-next
-bind index,pager - search-opposite
-
 bind generic,index,pager,alias,query,attach,compose,postpone,browser n next-entry
 bind generic,index,pager,alias,query,attach,compose,postpone,browser r previous-entry
 bind generic,index,pager,alias,query,attach,compose,postpone,browser < next-line
@@ -47,7 +35,20 @@ bind generic,index,alias,query,attach,compose,postpone,browser L bottom-page
 bind generic,index,pager,alias,query,attach,compose,postpone,browser ( next-page
 bind generic,index,pager,alias,query,attach,compose,postpone,browser ) previous-page
 
-# Index Keybinds
+bind index,pager / search
+bind index,pager w search-reverse
+bind index,pager ? search-next
+bind index,pager - search-opposite
+
+bind index,pager f forward-message
+bind index,pager m mail
+bind index,pager d delete-message
+bind index D delete-pattern
+bind index,pager e reply
+bind index,pager i group-reply
+
+
+# Index (main mail page) binds
 bind index n next-entry
 bind index r previous-entry
 bind index N next-thread
@@ -64,21 +65,25 @@ bind index L bottom-page
 bind index gg first-entry
 bind index G last-entry
 
-bind index s collapse-thread
-bind index z collapse-all
-
 bind index l save-message
 bind index h toggle-new
 bind index F flag-message
 
 bind index Z imap-fetch-mail
 
-# Pager Keybinds
+
+# Pager (view mail) binds
+bind pager <space> noop
 bind pager n next-line
 bind pager r previous-line
+bind pager N next-entry
+bind pager R previous-entry
+bind pager ( next-page
+bind pager ) previous-page
 
 bind pager gg top
 bind pager G bottom
+
 
 # Compose
 bind compose a attach-file
@@ -92,13 +97,16 @@ bind compose C copy-file
 bind compose n next-entry
 bind compose r previous-entry
 
+
 # Postpone
 bind postpone d delete-entry
 bind postpone u undelete-entry
 
+
 # Pgp
 bind pgp % view-name
 bind pgp c verify-key
+
 
 # Fix backspace
 bind index,pager  previous-line
@@ -108,7 +116,7 @@ bind index p noop
 bind pager p noop
 
 # Fix space in names
-bind editor <space> noop
+# bind editor <space> noop
 
 # Sidebar
 set sidebar_width       = 30
