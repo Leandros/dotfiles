@@ -3,6 +3,9 @@ HISTFILE=~/.histfile
 HISTSIZE=10000
 SAVEHIST=1000
 
+# This needs to be run earlier than compinit
+bindkey -v
+
 # ====================
 # Config
 # ====================
@@ -40,8 +43,20 @@ fi
 # ZSH
 # ====================
 zstyle :compinstall filename $HOME'/.zshrc'
-autoload -Uz compinit
-compinit
+zmodload zsh/complist
+autoload -Uz compinit && compinit
+
+zstyle ':completion:*' squeeze-slashes true
+zstyle ':completion:*' special-dirs ..
+zstyle ':completion:*' use-ip true
+zstyle ':completion::complete:*' use-cache on
+zstyle ':completion::complete:*' rehash true
+
+# ls(1) like colors
+export LS_COLORS='rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32'
+zstyle ':completion:*' list-colors ''
+zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
+
 fpath=(/usr/local/share/zsh-completions $fpath)
 
 
@@ -88,6 +103,40 @@ export LESSOPEN="|~/.lessfilter %s"
 # Set Locale. LOL
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
+
+# Make use of the dirstack
+_mydirstack() {
+  local -a lines list
+  for d in $dirstack; do
+    lines+="$(($#lines+1)) -- $d"
+    list+="$#lines"
+  done
+  _wanted -V directory-stack expl 'directory stack' \
+    compadd "$@" -ld lines -S']/' -Q -a list
+}
+zsh_directory_name() {
+  case $1 in
+    c) _mydirstack;;
+    n) case $2 in
+         <0-9>) reply=($dirstack[$2]);;
+         *) reply=($dirstack[(r)*$2*]);;
+       esac;;
+    d) false;;
+  esac
+}
+
+# Also, persist dirstack through restarts
+DIRSTACKSIZE=9
+DIRSTACKFILE=~/.zdirs
+touch $DIRSTACKFILE
+if [[ $#dirstack -eq 0 ]]; then
+  dirstack=( ${(f)"$(< $DIRSTACKFILE)"} )
+  [[ -d $dirstack[1] ]] && cd $dirstack[1] && cd $OLDPWD
+fi
+chpwd_dirstack() {
+  local -a dirs; dirs=( "$PWD" ${(f)"$(< $DIRSTACKFILE)"} )
+  print -l ${${(u)dirs}[0,$DIRSTACKSIZE]} >$DIRSTACKFILE
+}
 
 # tmux current working dir
 PS1="$PS1"'$([ -n "$TMUX"  ] && tmux setenv TMUXPWD_$(tmux display -p "#D" | tr -d %) "$PWD")'
@@ -163,6 +212,20 @@ zle -N x-paste
 bindkey -M vicmd "y" x-copy
 bindkey -M vicmd "Y" x-cut
 bindkey -M vicmd "p" x-paste
+
+autoload -Uz narrow-to-region
+function _history-incremental-preserving-pattern-search-backward {
+    local state
+    MARK=CURSOR  # magick, else multiple ^R don't work
+    narrow-to-region -p "$LBUFFER${BUFFER:+>>}" -P "${BUFFER:+<<}$RBUFFER" -S state
+    zle end-of-history
+    zle history-incremental-pattern-search-backward
+    narrow-to-region -R state
+}
+zle -N _history-incremental-preserving-pattern-search-backward
+bindkey -M viins "" _history-incremental-preserving-pattern-search-backward
+bindkey -M vicmd "" _history-incremental-preserving-pattern-search-backward
+bindkey -M isearch "" history-incremental-pattern-search-backward
 
 export KEYTIMEOUT=1
 
