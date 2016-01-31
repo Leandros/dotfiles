@@ -37,15 +37,15 @@ bind index,pager w search-reverse
 bind index,pager ? search-next
 bind index,pager - search-opposite
 
-bind generic n next-entry
-bind generic r previous-entry
-bind generic < next-line
-bind generic > previous-line
-bind generic M middle-page
-bind generic H top-page
-bind generic L bottom-page
-bind generic ( next-page
-bind generic ) previous-page
+bind generic,index,pager,alias,query,attach,compose,postpone,browser n next-entry
+bind generic,index,pager,alias,query,attach,compose,postpone,browser r previous-entry
+bind generic,index,pager,alias,query,attach,compose,postpone,browser < next-line
+bind generic,index,pager,alias,query,attach,compose,postpone,browser > previous-line
+bind generic,index,alias,query,attach,compose,postpone,browser M middle-page
+bind generic,index,alias,query,attach,compose,postpone,browser H top-page
+bind generic,index,alias,query,attach,compose,postpone,browser L bottom-page
+bind generic,index,pager,alias,query,attach,compose,postpone,browser ( next-page
+bind generic,index,pager,alias,query,attach,compose,postpone,browser ) previous-page
 
 # Index Keybinds
 bind index n next-entry
@@ -135,15 +135,15 @@ macro attach 'V' "<pipe-entry>cat >~/.cache/mutt/mail.html && $BROWSER ~/.cache/
 set mailcap_path    = ~/.mutt/mailcap
 
 # Setup folders
-folder-hook 'arvid.io' 'source ~/.mutt/account.private'
-folder-hook 'appico.com' 'source ~/.mutt/account.appico'
-folder-hook 'voonygames.com' 'source ~/.mutt/account.voonygames'
+folder-hook 'account.gmail.private' 'source ~/.mutt/account.gmail.private'
+folder-hook 'account.gmail.appico' 'source ~/.mutt/account.gmail.appico'
+folder-hook 'account.gmail.voonygames' 'source ~/.mutt/account.gmail.voonygames'
 
 # Change between folders
-macro index 1 '<sync-mailbox><enter-command>source ~/.mutt/account.private<enter><change-folder>!<enter>'
-macro index 2 '<sync-mailbox><enter-command>source ~/.mutt/account.appico<enter><change-folder>!<enter>'
-macro index 3 '<sync-mailbox><enter-command>source ~/.mutt/account.voonygames<enter><change-folder>!<enter>'
+macro index 1 '<sync-mailbox><refresh><enter-command>source ~/.mutt/account.gmail.private<enter><change-folder>!<enter>'
+macro index 2 '<sync-mailbox><refresh><enter-command>source ~/.mutt/account.gmail.appico<enter><change-folder>!<enter>'
+macro index 3 '<sync-mailbox><refresh><enter-command>source ~/.mutt/account.gmail.voonygames<enter><change-folder>!<enter>'
 
 # switch to default account on startup
-source ~/.mutt/account.private
+source ~/.mutt/account.gmail.private
 

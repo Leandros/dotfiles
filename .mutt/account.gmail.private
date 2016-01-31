@@ -1,29 +1,32 @@
 # Private account
 
 # Password
-set my_pw = `security find-generic-password -a 'arvid.gerstmann@appico.com' -l 'gmail.com' -w`
+set my_pw = `security find-generic-password -a 'arvid.gerstmann@gmail.com' -l 'gmail.com' -w`
 
 # Imap
 set folder          = imaps://imap.gmail.com:993/
-set imap_user       = arvid.gerstmann@appico.com
+set imap_user       = arvid.gerstmann@gmail.com
 set imap_pass       = $my_pw
 set spoolfile       = +INBOX
-mailboxes           = +INBOX +[Gmail]/Drafts
+
+# unmailboxes         *
+unset               imap_passive
+set                 imap_check_subscribed
 
 # Smtp
 set realname        = "Arvid Gerstmann"
-set from            = ag@appico.com
+set from            = ag@arvid.io
 set use_from        = yes
-set smtp_url        = smtp://arvid.gerstmann@appico.com@smtp.gmail.com:587/
+set smtp_url        = smtp://arvid.gerstmann@gmail.com@smtp.gmail.com:587/
 set smtp_pass       = $my_pw
 set smtp_authenticators = "gssapi:login"
 set ssl_force_tls   = yes
 set ssl_starttls    = yes
 
 # Caching
-set header_cache    = ~/.mutt/cache/headers
-set message_cachedir= ~/.mutt/cache/bodies
-set certificate_file= ~/.mutt/certificates
+set header_cache    = ~/.mutt/com.gmail.private/cache/headers
+set message_cachedir= ~/.mutt/com.gmail.private/cache/bodies
+set certificate_file= ~/.mutt/com.gmail.private/certificates
 
 # Labels
 set postponed       = +[Gmail]/Drafts
@@ -31,13 +34,11 @@ set postponed       = +[Gmail]/Drafts
 unset record
 
 # General
-unset imap_passive
-set imap_check_subscribed
 set move            = no
 set copy            = no
 set imap_keepalive  = 900
 set mail_check      = 30
 set timeout         = 10
 set net_inc         = 5
-set signature       = ~/.mutt/signature.appico
+set signature       = ~/.mutt/signature.private
 
