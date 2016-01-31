@@ -263,7 +263,9 @@ MANPATH=$HOMEBREW_PREFIX/opt/coreutils/libexec/gnuman:$MANPATH
 export MANPATH
 
 # PATH
-PATH=$(brew --prefix coreutils)/libexec/gnubin:$PATH
+if command_exists brew ; then
+    PATH=$(brew --prefix coreutils)/libexec/gnubin:$PATH
+fi
 PATH=/usr/local/bin:$PATH
 PATH=$PATH:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin:/usr/bin/core_perl
 PATH=$PATH:$HOME/bin
