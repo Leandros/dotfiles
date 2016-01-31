@@ -11,8 +11,8 @@ bindkey -v
 # ====================
 export HOME=/Users/leandros
 export EDITOR=vim
-export CC=clang
-export CXX=clang++
+export CC=gcc
+export CXX=g++
 export DEFAULT_USER=leandros
 export BROWSER=/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome
 
