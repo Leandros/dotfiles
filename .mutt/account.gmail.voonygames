@@ -40,5 +40,5 @@ set imap_keepalive  = 900
 set mail_check      = 30
 set timeout         = 10
 set net_inc         = 5
-set signature       ~/.mutt/signature.voonygames
+set signature       = ~/.mutt/signature.voonygames
 
