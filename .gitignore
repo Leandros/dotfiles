@@ -1,7 +1,5 @@
 # Rubbish
 .DS_Store
-cache
-certificates
 
 # Better be safe, than sorry.
 id_rsa
