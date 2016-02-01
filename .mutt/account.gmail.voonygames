@@ -29,7 +29,7 @@ set message_cachedir= ~/.mutt/com.gmail.voonygames/cache/bodies
 set certificate_file= ~/.mutt/com.gmail.voonygames/certificates
 
 # Labels
-set postponed       = +[Gmail]/Drafts
+set postponed       = +[Google\ Mail]/Drafts
 #set trash           = +[Gmail]/Trash
 unset record
 

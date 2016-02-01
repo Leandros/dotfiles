@@ -168,10 +168,6 @@ bind pgp c verify-key
 # Fix backspace
 bind index,pager  previous-line
 
-# Disable printing
-bind index p noop
-bind pager p noop
-
 # Fix space in names
 # bind editor <space> noop
 
