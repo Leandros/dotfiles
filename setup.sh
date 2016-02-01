@@ -79,6 +79,7 @@ if [[ "$SKIPINSTALL" -eq 0 ]]; then
             update_or_install valgrind
             update_or_install vim --override-system-vi
             update_or_install unzip
+            update_or_install urlview
             update_or_install watch
             update_or_install wdiff --with-gettext
             update_or_install weechat
