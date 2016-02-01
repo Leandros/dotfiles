@@ -17,6 +17,7 @@ set menu_scroll                 # scroll on last line of menu (set) or do a next
 set mark_old        = no        # red/new is enough
 set pipe_decode     = yes       # strip headers and eval mimes when piping
 set thorough_search = yes       # strip headers and eval mimes
+set beep_new        = yes       # beep on new mails
 
 # Status Bar
 set status_chars  = " *%A"

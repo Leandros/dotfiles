@@ -9,7 +9,7 @@ set imap_user       = arvid@voonygames.com
 set imap_pass       = $my_pw
 set spoolfile       = +INBOX
 
-# unmailboxes         *
+unmailboxes         *
 unset               imap_passive
 set                 imap_check_subscribed
 
