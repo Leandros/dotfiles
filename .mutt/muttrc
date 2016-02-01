@@ -4,25 +4,72 @@ source ~/.mutt/colors-solarized-dark-16.muttrc
 # General
 set charset         = "us-ascii:utf-8"
 set send_charset    = "us-ascii:utf-8"
-set sort            = threads
-set sort_aux        = last-date-received
-set sig_on_top      = no
-set include         = yes       # quote message when replying
-set quit            = yes       # ask before quitting
-set delete          = yes       # ask before deleting
+set wait_key        = no        # shut up, mutt :)
+set quit            = yes       # don't ask before quitting
+set delete          = yes       # don't ask before deleting
+set confirmappend   = no        # don't ask before appending
 set abort_nosubject = no        # Abort, if message has no subject.
 set abort_unmodified= yes       # Abort, if message wasn't edited.
 set autoedit                    # start editor without asking for to, subject,...
 set fast_reply                  # do not ask for to, subject,... when replying.
 unset metoo                     # should we keep ourselves in group replies?
 set menu_scroll                 # scroll on last line of menu (set) or do a nextpage?
-# set tmpdir          = ~/.tmp
+set mark_old        = no        # red/new is enough
+set pipe_decode     = yes       # strip headers and eval mimes when piping
+set thorough_search = yes       # strip headers and eval mimes
+
+# Status Bar
+set status_chars  = " *%A"
+set status_format = "───[ Folder: %f  ]───[%r%m messages%?n? (%n new)?%?d? (%d to delete)?%?t? (%t tagged)? ]───%>─%?p?( %p postponed  )?───"
+
+# Headers
+ignore *                                # ignore all headers
+unignore from: to: cc: date: subject:   # show only these
+unhdr_order *                           # some distros order things by default
+hdr_order from: to: cc: date: subject:  # and in this order
+
+# Index View Options
+set date_format     = "%m/%d"
+set index_format    = "[%Z]  %D  %-20.20F  %s"
+set sort            = threads                           # like gmail
+set sort_aux        = reverse-last-date-received        # like gmail
+set uncollapse_jump                                     # don't collapse on an unread message
+set sort_re                                             # thread based on regex
+set reply_regexp    = "^(([Rr][Ee]?(\[[0-9]+\])?: *)?(\[[^]]+\] *)?)*"
+
+# Pager View Options
+set pager_index_lines   = 10        # number of index lines to show
+set pager_context       = 3         # number of context lines to show
+set pager_stop                      # don't go to next message automatically
+set menu_scroll                     # scroll in menus
+set tilde                           # show tildes like in vim
+set markers             = no        # no ugly plus signs
+
+set quote_regexp = "^( {0,4}[>|:#%]| {0,4}[a-z0-9]+[>|]+)+"
+alternative_order text/plain text/enriched text/html
 
 # Editing
 set editor          = "vim -c 'set spell spelllang=de,en' -c 'set tw=70'"
 set edit_headers    = yes
-set markers         = no
 set smart_wrap
+
+# Compose View Options
+set realname = "Arvid Gerstmann"          # who am i?
+set envelope_from       = yes        # which from?
+set sig_dashes          = no         # dashes before sig
+set edit_headers        = yes        # show headers when composing
+set fast_reply          = yes        # skip to compose when replying
+set askcc               = yes        # ask for CC:
+set fcc_attach          = yes        # save attachments with the body
+unset mime_forward                   # forward attachments as part of body
+set forward_format      = "Fwd: %s"  # format of subject when forwarding
+set forward_decode      = yes        # decode when forwarding
+set attribution         = "On %d, %n wrote:" # format of quoting header
+set reply_to            = yes        # reply to Reply to: field
+set reverse_name        = yes        # reply as whomever it was to
+set include             = yes        # include message in replies
+set forward_quote       = yes        # include message in forwards
+set sig_on_top          = no         # bad things will happen
 
 # General Binds
 bind generic,index,pager,alias,query,attach,compose,postpone,browser n next-entry
@@ -70,6 +117,9 @@ bind index h toggle-new
 bind index F flag-message
 
 bind index Z imap-fetch-mail
+bind index <tab> sync-mailbox
+bind index <space> collapse-thread
+bind index p recall-message
 
 
 # Pager (view mail) binds
@@ -84,12 +134,14 @@ bind pager ) previous-page
 bind pager gg top
 bind pager G bottom
 
+macro pager \Cu "|urlview<enter>" "call urlview to open links"
+
 
 # Compose
 bind compose a attach-file
 bind compose A attach-message
-bind compose p pgp-menu
-bind compose P postpone-message
+bind compose P pgp-menu
+bind compose p postpone-message
 bind compose e edit-message
 bind compose j attach-key
 bind compose D detach-file
@@ -101,6 +153,10 @@ bind compose r previous-entry
 # Postpone
 bind postpone d delete-entry
 bind postpone u undelete-entry
+
+
+# Attachments
+bind attach <return> view-mailcap
 
 
 # Pgp
@@ -119,22 +175,23 @@ bind pager p noop
 # bind editor <space> noop
 
 # Sidebar
-set sidebar_width       = 30
-set sidebar_visible     = yes
-set sidebar_delim       = '|'
-set sidebar_sort        = no
-set sidebar_shortpath   = yes
-bind index  sidebar-prev
-bind index  sidebar-next
-bind index  sidebar-open
-bind pager  sidebar-prev
-bind pager  sidebar-next
-bind pager  sidebar-open
-macro index o ‘<enter-command>toggle sidebar_visible<enter><refresh>’
-macro pager o ‘<enter-command>toggle sidebar_visible<enter><redraw-screen>’
+# Disable it, since it's not exactly great with multi accounts.
+# set sidebar_width       = 30
+# set sidebar_visible     = yes
+# set sidebar_delim       = '|'
+# set sidebar_sort        = no
+# set sidebar_shortpath   = yes
+# bind index  sidebar-prev
+# bind index  sidebar-next
+# bind index  sidebar-open
+# bind pager  sidebar-prev
+# bind pager  sidebar-next
+# bind pager  sidebar-open
+# macro index o ‘<enter-command>toggle sidebar_visible<enter><refresh>’
+# macro pager o ‘<enter-command>toggle sidebar_visible<enter><redraw-screen>’
 
-# Color
-color sidebar_new yellow default
+# # Color
+# color sidebar_new yellow default
 
 # Html viewing
 auto_view text/html
