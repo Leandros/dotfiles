@@ -138,6 +138,13 @@ chpwd_dirstack() {
   print -l ${${(u)dirs}[0,$DIRSTACKSIZE]} >$DIRSTACKFILE
 }
 
+mutt() {
+    local cwd=$(pwd)
+    cd ~/
+    command mutt
+    cd $cwd
+}
+
 # tmux current working dir
 PS1="$PS1"'$([ -n "$TMUX"  ] && tmux setenv TMUXPWD_$(tmux display -p "#D" | tr -d %) "$PWD")'
 
