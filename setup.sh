@@ -13,19 +13,26 @@ update_or_install() {
     fi
 }
 
-echo -e "Enter username:"
-read NEWUSER
-
-echo -e "\nEnter home directory:"
-read NEWHOME
-
-echo -e "\nEnter editor:"
-read NEWEDITOR
-
 # Poor mans input parsing.
 SKIPINSTALL=0
 if [[ "$1" == "--skip-install" ]]; then
     SKIPINSTALL=1
+fi
+
+SKIPCOPY=0
+if [[ "$1" == "--skip-copy" ]]; then
+    SKIPCOPY=1
+fi
+
+if [[ "$SKIPCOPY" -eq 0 ]]; then
+    echo -e "Enter username:"
+    read NEWUSER
+
+    echo -e "\nEnter home directory:"
+    read NEWHOME
+
+    echo -e "\nEnter editor:"
+    read NEWEDITOR
 fi
 
 if [[ "$SKIPINSTALL" -eq 0 ]]; then
@@ -94,31 +101,33 @@ if [[ "$SKIPINSTALL" -eq 0 ]]; then
     fi
 fi
 
-sed -e 's,##NEWHOME##,'"$NEWHOME"',g' .zshrc > .zshrc.tmp && mv .zshrc.tmp .zshrc
-sed -e 's,##NEWUSER##,'"$NEWUSER"',g' .zshrc > .zshrc.tmp && mv .zshrc.tmp .zshrc
-sed -e 's,##NEWEDITOR##,'"$NEWEDITOR"',g' .zshrc > .zshrc.tmp && mv .zshrc.tmp .zshrc
+if [[ "$SKIPCOPY" -eq 0 ]]; then
+    sed -e 's,##NEWHOME##,'"$NEWHOME"',g' .zshrc > .zshrc.tmp && mv .zshrc.tmp .zshrc
+    sed -e 's,##NEWUSER##,'"$NEWUSER"',g' .zshrc > .zshrc.tmp && mv .zshrc.tmp .zshrc
+    sed -e 's,##NEWEDITOR##,'"$NEWEDITOR"',g' .zshrc > .zshrc.tmp && mv .zshrc.tmp .zshrc
 
-# Copy all files over:
-cp .astylerc $NEWHOME/
-cp -r .config $NEWHOME/
-cp .gitconfig $NEWHOME/
-cp .jsbeautifyrc $NEWHOME/
-cp .jshintrc $NEWHOME/
-cp .lessfilter $NEWHOME/
-cp .lesskey $NEWHOME/
-cp .lldbinit $NEWHOME/
-cp -r .mutt $NEWHOME/
-cp -r .oh-my-zsh $NEWHOME/
-cp .passwords.sh $NEWHOME/
-cp .tigrc $NEWHOME/
-cp -r .tmux $NEWHOME/
-cp .tmux.conf $NEWHOME/
-cp -r .vim $NEWHOME/
-cp .vimrc $NEWHOME/
-cp .ycm_extra_conf.py $NEWHOME/
-cp -r .zsh $NEWHOME/
-cp .zshrc $NEWHOME/
+    # Copy all files over:
+    cp .astylerc $NEWHOME/
+    cp -r .config $NEWHOME/
+    cp .gitconfig $NEWHOME/
+    cp .jsbeautifyrc $NEWHOME/
+    cp .jshintrc $NEWHOME/
+    cp .lessfilter $NEWHOME/
+    cp .lesskey $NEWHOME/
+    cp .lldbinit $NEWHOME/
+    cp -r .mutt $NEWHOME/
+    cp -r .oh-my-zsh $NEWHOME/
+    cp .passwords.sh $NEWHOME/
+    cp .tigrc $NEWHOME/
+    cp -r .tmux $NEWHOME/
+    cp .tmux.conf $NEWHOME/
+    cp -r .vim $NEWHOME/
+    cp .vimrc $NEWHOME/
+    cp .ycm_extra_conf.py $NEWHOME/
+    cp -r .zsh $NEWHOME/
+    cp .zshrc $NEWHOME/
 
-# Reset .zshrc
-git checkout -- .zshrc
+    # Reset .zshrc
+    git checkout -- .zshrc
+fi
 
