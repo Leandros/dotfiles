@@ -19,6 +19,7 @@ Plugin 'altercation/vim-colors-solarized'
 Plugin 'scrooloose/syntastic'
 " Plugin 'xuhdev/SingleCompile'
 " Plugin 'tpope/vim-fugitive'
+" Plugin 'airblate/vim-gitgutter'
 Plugin 'bling/vim-airline'
 Plugin 'jiangmiao/auto-pairs'
 " Plugin 'ervandew/supertab'
@@ -37,7 +38,9 @@ Plugin 'tmux-plugins/vim-tmux-focus-events'
 Plugin 'scrooloose/nerdtree'
 Plugin 'Xuyuanp/nerdtree-git-plugin'
 Plugin 'elzr/vim-json'
-"Plugin 'jistr/vim-nerdtree-tabs'
+Plugin 'qpkorr/vim-bufkill'
+Plugin 'xolox/vim-easytags'
+Plugin 'majutsushi/tagbar'
 
 " Enable if really desired.
 " Plugin 'Valloric/YouCompleteMe'
@@ -238,13 +241,21 @@ nnoremap <C-i> :vnew<CR>
 nnoremap <C-t> :new<CR>
 
 " Split killing
-nnoremap <C-q> :bdelete<CR>
+nnoremap <C-q> :BD<CR>
+nnoremap <C-Q> :bd<CR>
+
+" Tagbar
+nmap <Leader>c :TagbarToggle<CR>
+
+" CtrlP
+let g:ctrlp_map = '<Leader>o'
 
 " ReMap NERDTree Keys.
 let NERDTreeMapRefresh='<D-r>'
+let NERDTreeAutoDeleteBuffer = 1
 
-" Open NERDTree with C-n
-" map <C-n> :NERDTreeToggle<CR>
+" Open NERDTree
+map <Leader>e :NERDTreeToggle<CR>
 
 " Show dotfiles in NERDTree by default
 let NERDTreeShowHidden = 1
@@ -254,6 +265,7 @@ autocmd StdinReadPre * let s:std_in=1
 autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
 
 " Close VIM if only tab left is NERDTree
+" Nope. Closing buffers is getting harder with that.
 autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
 
 " NERDTress File highlighting
