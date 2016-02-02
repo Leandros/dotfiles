@@ -2,8 +2,9 @@
 source ~/.mutt/colors-solarized-dark-16.muttrc
 
 # General
-set charset         = "us-ascii:utf-8"
-set send_charset    = "us-ascii:utf-8"
+set charset         = "utf-8"
+set send_charset    = "utf-8"
+set assumed_charset = "utf-8"
 set wait_key        = no        # shut up, mutt :)
 set quit            = yes       # don't ask before quitting
 set delete          = yes       # don't ask before deleting
@@ -134,6 +135,9 @@ bind pager ) previous-page
 
 bind pager gg top
 bind pager G bottom
+
+bind pager j edit
+bind pager J edit-type
 
 macro pager \Cu "|urlview<enter>" "call urlview to open links"
 
