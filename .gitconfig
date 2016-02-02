@@ -88,3 +88,5 @@
 	rebase = true
 [rebase]
 	autoStash = true
+[push]
+	default = simple
