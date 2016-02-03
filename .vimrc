@@ -421,3 +421,31 @@ let g:indentLine_faster = 1
 " Fix JSON conceal level Yggdroot/indentLine#140
 let g:vim_json_syntax_conceal = 0
 
+" easytags async
+let g:easytags_async = 1
+let g:easytags_always_enabled = 1
+let g:easytags_events = ['BufWinEnter', 'BufWritePost']
+
+" tagbar
+let g:tagbar_autoclose = 1
+let g:tagbar_autofocus = 1
+let g:tagbar_sort = 0
+let g:tagbar_autopreview = 0
+let g:tagbar_map_toggleautoclose = 't'
+
+" CtrlP
+let g:ctrlp_map = '<Leader>o'
+let g:ctrlp_prompt_mappings = {
+            \    'PrtSelectMove("j")': ['<c-n>'],
+            \    'PrtSelectMove("k")': ['<c-r>'],
+            \    'PrtCurLeft()': ['<c-b>'],
+            \    'PrtCurRight()': ['<c-s>'],
+            \    'ToggleRegex()': ['<c-a>'],
+            \    'CreateNewFile()': ['<c-y>'],
+            \    'MarkToOpen()': ['<c-z>'],
+            \    'OpenMulti()': ['<c-o>'],
+            \    'PrtHistory(-1)': [],
+            \    'ToggleType(-1)': [],
+            \    'AcceptSelection("h")': []
+            \ }
+
