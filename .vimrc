@@ -41,6 +41,7 @@ Plugin 'elzr/vim-json'
 Plugin 'qpkorr/vim-bufkill'
 Plugin 'xolox/vim-easytags'
 Plugin 'majutsushi/tagbar'
+Plugin 'jelera/vim-javascript-syntax'
 
 " Enable if really desired.
 " Plugin 'Valloric/YouCompleteMe'
