@@ -243,7 +243,7 @@ nnoremap <C-t> :new<CR>
 
 " Split killing
 nnoremap <C-q> :BD<CR>
-"nnoremap <C-Q> :bd<CR>
+nnoremap <C-w> :bd<CR>
 
 " Tagbar
 nmap <Leader>c :TagbarToggle<CR>
