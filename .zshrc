@@ -2,6 +2,7 @@
 HISTFILE=~/.histfile
 HISTSIZE=10000
 SAVEHIST=1000
+setopt HIST_IGNORE_SPACE
 
 # This needs to be run earlier than compinit
 bindkey -v
@@ -251,6 +252,10 @@ alias untargz='tar -xzf'
 alias untarbz='tar -xjf'
 alias targz='tar -czf'
 alias tarbz='tar -cjf'
+
+# Ignore these commands in history
+alias cd=' cd'
+alias ls=' ls --color=auto'
 
 # Android SDK / NDK
 export ANDROID_ROOT=$HOME/android-sdk
