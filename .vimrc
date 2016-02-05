@@ -259,9 +259,15 @@ nmap <Leader>c :TagbarToggle<CR>
 let g:ctrlp_map = '<Leader>o'
 
 " ReMap NERDTree Keys.
-let NERDTreeMapRefresh='<D-r>'
+let NERDTreeMapRefresh='<C-a>'
+let NERDTreeMapRefreshRoot=''
 let NERDTreeMapOpenSplit='t'
 let NERDTreeMapOpenVSplit='i'
+
+let NERDTreeMapChdir='C'
+let NERDTreeMapUpdir='u'
+" let NERDTreeMapNextSibling='N'
+" let NERDTreeMapPrevSibling='R'
 
 
 " Open NERDTree
