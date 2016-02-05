@@ -209,10 +209,17 @@ vnoremap gr gk
 " nnoremap <C-S> <C-W><C-L>
 
 " Move page up / down
-nnoremap ( <PageDown>
-nnoremap ) <PageUp>
-vnoremap ( <PageDown>
-vnoremap ) <PageUp>
+"nnoremap ( <PageDown>
+"nnoremap ) <PageUp>
+"vnoremap ( <PageDown>
+"vnoremap ) <PageUp>
+
+" Move half page up / down
+nnoremap ( <C-D>
+nnoremap ) <C-U>
+vnoremap ( <C-D>
+vnoremap ) <C-U>
+
 
 " Move line up down
 nnoremap <S-n> <C-e>
@@ -253,13 +260,19 @@ let g:ctrlp_map = '<Leader>o'
 
 " ReMap NERDTree Keys.
 let NERDTreeMapRefresh='<D-r>'
-let NERDTreeAutoDeleteBuffer = 1
+let NERDTreeMapOpenSplit='t'
+let NERDTreeMapOpenVSplit='i'
+
 
 " Open NERDTree
 map <Leader>e :NERDTreeToggle<CR>
 
-" Show dotfiles in NERDTree by default
+" NERDTree options
 let NERDTreeShowHidden = 1
+let NERDTreeQuitOnOpen = 1
+let NERDTreeMinimalUI = 1
+let NERDTreeAutoDeleteBuffer = 1
+
 
 " Open NERDTree when no files specified.
 autocmd StdinReadPre * let s:std_in=1
@@ -436,6 +449,7 @@ let g:tagbar_map_toggleautoclose = 't'
 
 " CtrlP
 let g:ctrlp_map = '<Leader>o'
+let g:ctrlp_show_hidden = 1
 let g:ctrlp_prompt_mappings = {
             \    'PrtSelectMove("j")': ['<c-n>'],
             \    'PrtSelectMove("k")': ['<c-r>'],
