@@ -4,8 +4,8 @@ LESS = -i -R
 #command
 b      left-scroll
 s      right-scroll
-n      forw-line
-r      back-line
+n      forw-line-force
+r      back-line-force
 
 (      forw-screen
 )      back-screen
