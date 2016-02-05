@@ -255,9 +255,6 @@ nnoremap <C-w> :bd<CR>
 " Tagbar
 nmap <Leader>c :TagbarToggle<CR>
 
-" CtrlP
-let g:ctrlp_map = '<Leader>o'
-
 " ReMap NERDTree Keys.
 let NERDTreeMapRefresh='<C-a>'
 let NERDTreeMapRefreshRoot=''
