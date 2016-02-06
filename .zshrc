@@ -15,7 +15,7 @@ export EDITOR=##NEWEDITOR##
 export CC=gcc
 export CXX=g++
 export DEFAULT_USER=##NEWUSER##
-export BROWSER=/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome
+export BROWSER="/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome"
 
 
 # System Specifics: OS X
