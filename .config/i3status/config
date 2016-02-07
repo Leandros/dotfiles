@@ -1,0 +1,24 @@
+general {
+    interval        =   5
+
+    colors          =   true
+    color_good      =   "#859900"
+    color_degraded  =   "#cb4b16"
+    color_bad       =   "#dc322f"
+}
+
+order += "volume master"
+order += "cpu_usage"
+order += "time"
+
+volume master {
+    format      = "♪: %volume"
+    format_muted = "♪: muted (%volume)"
+    device      = "default"
+    mixer       = "Master"
+    mixer_idx   = 0
+}
+
+time {
+    format      = "%H:%M - %a %d.%m.%y"
+}
