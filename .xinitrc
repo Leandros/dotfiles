@@ -1,5 +1,7 @@
-! Window manager
-exec i3
+#!/bin/sh
 
 ! Custom keyboard layout
-xmodmap ~/.Xmodmap
+xmodmap $HOME/.Xmodmap
+
+! Window manager, always last
+exec i3
