@@ -36,7 +36,9 @@ fi
 
 # System Specifics: Linux
 if [[ "Linux" == "`uname`" ]]; then
+    alias startx='startx -- -dpi 144'
 
+    stty -ixon -ixoff
 fi
 
 
