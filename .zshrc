@@ -255,12 +255,18 @@ alias untarbz='tar -xjf'
 alias targz='tar -czf'
 alias tarbz='tar -cjf'
 
+# Highlight current day
+cal() {
+    /usr/bin/cal $* | grep --color -EC6 "\b$(date +%e | sed "s/ //g")"
+}
+
 # Ignore these commands in history
 alias cd=' cd'
 alias ls=' ls --color=auto'
 
 # Android SDK / NDK
 export ANDROID_ROOT=$HOME/android-sdk
+export ANDROID_SDK_ROOT=$ANDROID_ROOT
 export ANDROID_HOME=$ANDROID_ROOT
 export NDK_ROOT=$HOME/android-ndk-r9b
 export NDK_TOOLCHAIN_VERSION=4.9
