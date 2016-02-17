@@ -23,7 +23,7 @@ Plugin 'scrooloose/syntastic'
 Plugin 'vim-airline/vim-airline'
 Plugin 'vim-airline/vim-airline-themes'
 Plugin 'jiangmiao/auto-pairs'
-" Plugin 'ervandew/supertab'
+Plugin 'ervandew/supertab'
 Plugin 'tpope/vim-surround'
 Plugin 'tpope/vim-repeat'
 Plugin 'easymotion/vim-easymotion'
@@ -52,6 +52,7 @@ filetype plugin indent on
 
 " General
 set shell=$SHELL    " Set the default shell
+set fileencoding=utf-8 " Set the encoding written to file
 set termencoding=utf-8 " Set the default encodings just in case $LANG isn't set
 set encoding=utf-8  " Set the default encodings just in case $LANG isn't set
 set cursorline      " Hightlight current selected line.
