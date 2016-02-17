@@ -63,6 +63,9 @@ zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
 
 fpath=(/usr/local/share/zsh-completions $fpath)
 
+# zmv is awesome
+alias mmv='noglob zmv -W'
+
 
 # ====================
 # OH-MY-ZSH
