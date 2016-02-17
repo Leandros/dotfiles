@@ -48,6 +48,7 @@ fi
 zstyle :compinstall filename $HOME'/.zshrc'
 zmodload zsh/complist
 autoload -Uz compinit && compinit
+autoload -U zmv
 
 zstyle ':completion:*' squeeze-slashes true
 zstyle ':completion:*' special-dirs ..
