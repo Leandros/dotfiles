@@ -36,3 +36,20 @@ imv() {
     [[ $src != $dst ]] && mkdir -p $dst:h && mv -n $src $dst
   done
 }
+
+countdown() {
+    local target=$(($(date +%s) + $1))
+    while [ "$target" -ge `date +%s` ]; do
+        echo -ne "$(date -u --date @$(($target - `date +%s`)) +%H:%M:%S)\r"
+        sleep 0.1
+    done
+}
+
+function stopwatch(){
+  date1=`date +%s`;
+   while true; do
+    echo -ne "$(date -u --date @$((`date +%s` - $date1)) +%H:%M:%S)\r";
+    sleep 0.1
+   done
+}
+
