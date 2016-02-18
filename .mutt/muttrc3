@@ -1,0 +1,7 @@
+
+# Load default muttrc
+source ~/.mutt/muttrc
+
+# Switch to default account
+source ~/.mutt/account.gmail.voonygames
+

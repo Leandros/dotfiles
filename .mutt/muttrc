@@ -122,6 +122,7 @@ bind index Z imap-fetch-mail
 bind index <tab> sync-mailbox
 bind index <space> collapse-thread
 bind index p recall-message
+# bind index y <lists mailboxes>
 
 
 # Pager (view mail) binds
@@ -211,5 +212,5 @@ macro index 2 '<sync-mailbox><refresh><enter-command>source ~/.mutt/account.gmai
 macro index 3 '<sync-mailbox><refresh><enter-command>source ~/.mutt/account.gmail.voonygames<enter><change-folder>!<enter>'
 
 # switch to default account on startup
-source ~/.mutt/account.gmail.private
+# source ~/.mutt/account.gmail.private
 

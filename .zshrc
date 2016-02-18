@@ -148,7 +148,7 @@ chpwd_dirstack() {
 mutt() {
     local cwd=$(pwd)
     cd ~/
-    command mutt
+    command mutt $@
     cd $cwd
 }
 
@@ -258,6 +258,13 @@ alias untargz='tar -xzf'
 alias untarbz='tar -xjf'
 alias targz='tar -czf'
 alias tarbz='tar -cjf'
+alias m='mutt -F ~/.mutt/muttrc1'
+alias m1='mutt -F ~/.mutt/muttrc1'
+alias m2='mutt -F ~/.mutt/muttrc2'
+alias m3='mutt -F ~/.mutt/muttrc3'
+alias mutt1='mutt -F ~/.mutt/muttrc1'
+alias mutt2='mutt -F ~/.mutt/muttrc2'
+alias mutt3='mutt -F ~/.mutt/muttrc3'
 
 # Highlight current day
 cal() {
