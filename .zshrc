@@ -47,8 +47,10 @@ fi
 # ====================
 zstyle :compinstall filename $HOME'/.zshrc'
 zmodload zsh/complist
+zmodload zsh/mathfunc
 autoload -Uz compinit && compinit
 autoload -U zmv
+autoload -U zcalc
 
 zstyle ':completion:*' squeeze-slashes true
 zstyle ':completion:*' special-dirs ..
@@ -247,6 +249,7 @@ export KEYTIMEOUT=1
 # ====================
 # Aliases
 # ====================
+alias l=' ls -lah'
 alias g=git
 alias ti='tig status'
 alias tigs='tig status'
@@ -294,11 +297,12 @@ MANPATH=$HOMEBREW_PREFIX/opt/coreutils/libexec/gnuman:$MANPATH
 export MANPATH
 
 # PATH
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 if command_exists brew ; then
     PATH=$(brew --prefix coreutils)/libexec/gnubin:$PATH
 fi
-PATH=/usr/local/bin:$PATH
-PATH=$PATH:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin:/usr/bin/core_perl
+
+PATH=$PATH:/usr/bin/core_perl
 PATH=$PATH:$HOME/bin
 PATH=$PATH:$HOME/.zsh/bin
 PATH=$PATH:$HOME/bin/awscli/eb/macosx/python2.7
