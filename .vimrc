@@ -149,6 +149,9 @@ endif
 set background=dark
 colorscheme solarized
 
+" Custom Filetypes
+au BufRead,BufNewFile *.ds set filetype=rgbds
+
 
 " Compile and Run code. The primitive way.
 " autocmd Filetype java nnoremap <D-r> :w <bar> exec '!javac '.shellescape('%').' && java '.shellescape('%:r')<CR>
@@ -371,7 +374,7 @@ map <Leader>b <Plug>(easymotion-linebackward)
 nmap t <Plug>(easymotion-s2)
 
 let g:EasyMotion_smartcase = 1
-let g:EasyMotion_startofline = 0 " keep cursor column when JK motion"
+let g:EasyMotion_startofline = 0 " keep cursor column when JK motion
 
 " ag.vim Settings.
 let g:ag_working_path_mode="r"
