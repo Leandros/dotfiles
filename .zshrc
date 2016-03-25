@@ -24,6 +24,9 @@ if [[ "Darwin" == "`uname`" ]]; then
     bindkey "^[[7~" beginning-of-line
     bindkey "^[[8~" end-of-line
 
+    # Browser
+    export BROWSER="/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome"
+
     # LOL! Free C-s
     stty -ixon -ixoff
 
@@ -37,7 +40,13 @@ fi
 # System Specifics: Linux
 if [[ "Linux" == "`uname`" ]]; then
     alias startx='startx -- -dpi 144'
+    alias pbpaste='xclip -o'
+    alias pbcopy='xclip -i'
 
+    # Browser
+    export BROWSER="/usr/bin/google-chrome-stable"
+
+    # LOL! Free C-s
     stty -ixon -ixoff
 fi
 

@@ -37,6 +37,13 @@ URxvt.perl-ext-common:  default,matcher
 URxvt.url-launcher:     /usr/bin/chromium
 URxvt.matcher.button:   1
 
+! Copy paste
+URxvt.perl-ext-common: default,clipboard
+URxvt.iso14755: False
+URxvt.keysym.Shift-Control-C: perl:clipboard:copy
+URxvt.keysym.Shift-Control-V: perl:clipboard:paste
+URxvt.clipboard.copycmd:  xclip -i
+URxvt.clipboard.pastecmd: xclip -o
 
 ! =============================================================================
 ! Font Settings
@@ -47,7 +54,7 @@ URxvt.allow_bold:       true
 URxvt.letterSpace:      -1
 
 ! Xft
-Xft.dpi:                96
+Xft.dpi:                144
 Xft.antialias:          true
 Xft.rgba:               rgb
 Xft.hinting:            true
