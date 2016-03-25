@@ -48,6 +48,10 @@ if [[ "Linux" == "`uname`" ]]; then
 
     # LOL! Free C-s
     stty -ixon -ixoff
+
+    if [[ "$TERM" == "rxvt-unicode" ]]; then
+        export TERM="xterm-256color"
+    fi
 fi
 
 # System Specifics: cygwin

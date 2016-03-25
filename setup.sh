@@ -119,11 +119,14 @@ if [[ "$SKIPCOPY" -eq 0 ]]; then
     mv $NEWHOME/.lessfilter $NEWHOME/.dotbackup/
     mv $NEWHOME/.lesskey $NEWHOME/.dotbackup/
     mv $NEWHOME/.lldbinit $NEWHOME/.dotbackup/
-    mv $NEWHOME/.mutt $NEWHOME/.dotbackup/
-    mv $NEWHOME/.oh-my-zsh $NEWHOME/.dotbackup/
+    # Do not "backup" .mutt either, or mail cache is lost
+    # mv $NEWHOME/.mutt $NEWHOME/.dotbackup/
+    # Do not "backup" .oh-my-zsh either, or the oh-my-zsh installation is lost
+    # mv $NEWHOME/.oh-my-zsh $NEWHOME/.dotbackup/
     mv $NEWHOME/.passwords.sh $NEWHOME/.dotbackup/
     mv $NEWHOME/.tigrc $NEWHOME/.dotbackup/
-    mv $NEWHOME/.tmux $NEWHOME/.dotbackup/
+    # do not backup .tmux, or plugins are lost
+    # mv $NEWHOME/.tmux $NEWHOME/.dotbackup/
     mv $NEWHOME/.tmux.conf $NEWHOME/.dotbackup/
     # Do not "backup" .vim directory either, or all plugins have to re-installed
     # mv $NEWHOME/.vim $NEWHOME/.dotbackup/
