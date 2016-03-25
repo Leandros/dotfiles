@@ -95,6 +95,7 @@ alias mmv='noglob zmv -W'
 # ====================
 ZSH=$HOME/.oh-my-zsh
 ENABLE_CORRECTION="false"
+COMPLETION_WAITING_DOTS=false
 export UPDATE_ZSH_DAYS=7
 
 # powerlevel9k theme
