@@ -41,6 +41,14 @@ if [[ "Linux" == "`uname`" ]]; then
     stty -ixon -ixoff
 fi
 
+# System Specifics: cygwin
+if [[ "Cygwin" == "`uname -o`" ]]; then
+    export TERM="xterm-256color"
+
+    pbcopy() { read data; echo "$data" > /dev/clipboard }
+    pbpaste() { cat /dev/clipboard }
+fi
+
 
 # ====================
 # ZSH
