@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
 
 command_exists () {
     type "$1" &> /dev/null ;
@@ -108,8 +110,9 @@ if [[ "$SKIPCOPY" -eq 0 ]]; then
 
     rm -rf $NEWHOME/.dotbackup
     mkdir -p $NEWHOME/.dotbackup
-    mv $NEWHOME/.astylerc $HEWHOME/.dotbackup/
-    mv $NEWHOME/.config $NEWHOME/.dotbackup/
+    mv $NEWHOME/.astylerc $NEWHOME/.dotbackup/
+    # Do not "backup" .config, or a lot of stuff might be lost
+    # mv $NEWHOME/.config $NEWHOME/.dotbackup/
     mv $NEWHOME/.gitconfig $NEWHOME/.dotbackup/
     mv $NEWHOME/.jsbeautifyrc $NEWHOME/.dotbackup/
     mv $NEWHOME/.jshintrc $NEWHOME/.dotbackup/
@@ -122,7 +125,8 @@ if [[ "$SKIPCOPY" -eq 0 ]]; then
     mv $NEWHOME/.tigrc $NEWHOME/.dotbackup/
     mv $NEWHOME/.tmux $NEWHOME/.dotbackup/
     mv $NEWHOME/.tmux.conf $NEWHOME/.dotbackup/
-    mv $NEWHOME/.vim $NEWHOME/.dotbackup/
+    # Do not "backup" .vim directory either, or all plugins have to re-installed
+    # mv $NEWHOME/.vim $NEWHOME/.dotbackup/
     mv $NEWHOME/.vimrc $NEWHOME/.dotbackup/
     mv $NEWHOME/.xbindkeysrc $NEWHOME/.dotbackup/
     mv $NEWHOME/.Xdefaults $NEWHOME/.dotbackup/
