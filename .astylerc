@@ -66,7 +66,7 @@
 --pad-header
 
 # and remove all not requested padding
---unpad-parent
+--unpad-paren
 
 # doesn't seem to preserve any lines, will just remove any empty lines!
 # --delete-empty-lines
