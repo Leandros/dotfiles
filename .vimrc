@@ -22,7 +22,7 @@ Plugin 'scrooloose/syntastic'
 " Plugin 'airblate/vim-gitgutter'
 Plugin 'vim-airline/vim-airline'
 Plugin 'vim-airline/vim-airline-themes'
-Plugin 'jiangmiao/auto-pairs'
+" Plugin 'jiangmiao/auto-pairs'
 Plugin 'ervandew/supertab'
 Plugin 'tpope/vim-surround'
 Plugin 'tpope/vim-repeat'
@@ -392,14 +392,14 @@ let g:formatters_javascript = ['jsbeautify']
 
 
 " Strip trailing whitespace
-fun! <SID>StripTrailingWhitespaces()
+fun! StripTrailingWhitespaces()
     let l = line(".")
     let c = col(".")
     %s/\s\+$//e
     call cursor(l, c)
 endfun
 
-autocmd BufWritePre <buffer> :call <SID>StripTrailingWhitespaces()
+autocmd BufWritePre * :call StripTrailingWhitespaces()
 
 " Minifier functions
 fun! MinifyJson()
@@ -446,7 +446,9 @@ let g:vim_json_syntax_conceal = 0
 " easytags async
 let g:easytags_async = 1
 let g:easytags_always_enabled = 1
-let g:easytags_events = ['BufWinEnter', 'BufWritePost']
+let g:easytags_on_cursorhold = 1
+let g:easytags_auto_update = 1
+" let g:easytags_events = ['BufWinEnter', 'BufWritePost']
 
 " tagbar
 let g:tagbar_autoclose = 1

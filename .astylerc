@@ -32,7 +32,7 @@
 #         return 0;
 #     }
 # }
---style=bsd
+--style=kr
 
 # Indent with 4 spaces, convert tabs to spaces
 --indent=spaces=4
@@ -64,7 +64,7 @@
 --pad-oper
 --pad-header
 
-# Do I like this?
+# Do I like this? No, I don't.
 # Pad parens, and remove all not requested padding
 #--pad-paren-in
 #--unpad-paren
