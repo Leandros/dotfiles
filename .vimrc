@@ -188,7 +188,11 @@ nnoremap - Nzzzv
 
 " Move by words
 " nnoremap B B
-nnoremap S W
+" nnoremap S W
+nnoremap <S-b> B
+nnoremap <S-s> W
+vnoremap <S-b> B
+vnoremap <S-s> W
 
 " Key map optimizations for Bone 2 Layout
 " Normal Mode remaps.
@@ -380,7 +384,7 @@ let g:EasyMotion_startofline = 0 " keep cursor column when JK motion
 let g:ag_working_path_mode="r"
 
 " vim-autoformat Settings.
-noremap <F3> :Autoformat<CR> "
+noremap <F3> :Autoformat<CR>
 let g:formatdef_astyle_c = '"astyle --mode=c"'
 let g:formatters_c = ['astyle_c']
 let g:formatdef_astyle_cpp = '"astyle --mode=c"'
@@ -429,16 +433,16 @@ inoremap <s-tab> <tab>
 let g:NumberToggleTrigger="<C-o>"
 
 " Indent Line settings
-let g:indentLine_enabled = 1
-" let g:indentLine_leadingSpaceEnabled = 1
-" let g:indentLine_char = ''
-let g:indentLine_color_term = 239
-let g:indentLine_char = '┊'
-let g:indentLine_leadingSpaceChar = '·'
-let g:indentLine_concealcursor = '' " (default 'inc')
-let g:indentLine_conceallevel = 2 " (default 2)
-let g:indentLine_noConcealCursor = 1
-let g:indentLine_faster = 1
+" let g:indentLine_enabled = 1
+" " let g:indentLine_leadingSpaceEnabled = 1
+" " let g:indentLine_char = ''
+" let g:indentLine_color_term = 239
+" let g:indentLine_char = '┊'
+" let g:indentLine_leadingSpaceChar = '·'
+" let g:indentLine_concealcursor = '' " (default 'inc')
+" let g:indentLine_conceallevel = 2 " (default 2)
+" let g:indentLine_noConcealCursor = 1
+" let g:indentLine_faster = 1
 
 " Fix JSON conceal level Yggdroot/indentLine#140
 let g:vim_json_syntax_conceal = 0
@@ -448,6 +452,7 @@ let g:easytags_async = 1
 let g:easytags_always_enabled = 1
 let g:easytags_on_cursorhold = 1
 let g:easytags_auto_update = 1
+let g:easytags_syntax_keyword = 'always'
 " let g:easytags_events = ['BufWinEnter', 'BufWritePost']
 
 " tagbar
@@ -455,7 +460,13 @@ let g:tagbar_autoclose = 1
 let g:tagbar_autofocus = 1
 let g:tagbar_sort = 0
 let g:tagbar_autopreview = 0
+let g:tagbar_show_linenumbers='-1'
 let g:tagbar_map_toggleautoclose = 't'
+let g:tagbar_map_help='^'
+let g:tagbar_map_closefold='w'
+let g:tagbar_map_zoomwin='e'
+let g:tagbar_map_preview='b'
+
 
 " CtrlP
 let g:ctrlp_map = '<Leader>o'
