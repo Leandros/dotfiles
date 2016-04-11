@@ -453,6 +453,7 @@ let g:easytags_always_enabled = 1
 let g:easytags_on_cursorhold = 1
 let g:easytags_auto_update = 1
 let g:easytags_syntax_keyword = 'always'
+let g:easytags_python_enabled = 0
 " let g:easytags_events = ['BufWinEnter', 'BufWritePost']
 
 " tagbar
