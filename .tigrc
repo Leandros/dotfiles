@@ -3,6 +3,12 @@ bind generic N next
 bind generic R previous
 bind generic r move-up
 bind generic n move-down
+bind generic ) move-page-up
+bind generic ( move-page-down
+bind generic R scroll-line-up
+bind generic N scroll-line-down
+bind generic ? find-next
+bind generic - find-prev
 
 # rebind keys unbind above
 bind generic a view-refs
