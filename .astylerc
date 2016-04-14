@@ -45,8 +45,7 @@
 --attach-namespaces
 
 
-# Indent swiches, preprocessor blocks, and defines
---indent-switches
+# Indent preprocessor blocks, and defines
 --indent-preproc-block
 --indent-preproc-define
 
