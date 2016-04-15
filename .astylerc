@@ -73,8 +73,8 @@
 # --delete-empty-lines
 
 # Pointer alignment
---align-pointer=type
---align-reference=type
+--align-pointer=name
+--align-reference=name
 
 # Break elseifs / closing brackets
 # might be useful with style=kr
