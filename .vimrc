@@ -17,12 +17,10 @@ Plugin 'gmarik/Vundle.vim'
 " Plugins
 Plugin 'altercation/vim-colors-solarized'
 Plugin 'scrooloose/syntastic'
-" Plugin 'xuhdev/SingleCompile'
 " Plugin 'tpope/vim-fugitive'
 " Plugin 'airblate/vim-gitgutter'
 Plugin 'vim-airline/vim-airline'
 Plugin 'vim-airline/vim-airline-themes'
-" Plugin 'jiangmiao/auto-pairs'
 Plugin 'ervandew/supertab'
 Plugin 'tpope/vim-surround'
 Plugin 'tpope/vim-repeat'
@@ -154,12 +152,9 @@ au BufRead,BufNewFile *.ds set filetype=rgbds
 
 
 " Compile and Run code. The primitive way.
-" autocmd Filetype java nnoremap <D-r> :w <bar> exec '!javac '.shellescape('%').' && java '.shellescape('%:r')<CR>
-" autocmd filetype c nnoremap <D-r> :w <bar> exec '!clang '.shellescape('%').' -o '.shellescape('%:r').' && ./'.shellescape('%:r')<CR>
-" autocmd filetype cpp nnoremap <D-r> :w <bar> exec '!clang++ '.shellescape('%').' -o '.shellescape('%:r').' && ./'.shellescape('%:r')<CR>
-
-" Compile and Run code. The easy way.
-nmap <D-r> :SCCompileRun<CR>
+autocmd Filetype java nnoremap <F5> :w <bar> exec '!javac '.shellescape('%').' && java '.shellescape('%:r')<CR>
+autocmd filetype c nnoremap <F5> :w <bar> exec '!clang '.shellescape('%').' -o '.shellescape('%:r').' && ./'.shellescape('%:r')<CR>
+autocmd filetype cpp nnoremap <F5> :w <bar> exec '!clang++ '.shellescape('%').' -o '.shellescape('%:r').' && ./'.shellescape('%:r')<CR>
 
 " Warn about doing the wrong undo (U instead of u).
 nnoremap U :echo " < < ===== C H E C K C A P S L O C K ===== > > "<CR>
