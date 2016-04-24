@@ -152,9 +152,21 @@ au BufRead,BufNewFile *.ds set filetype=rgbds
 
 
 " Compile and Run code. The primitive way.
-autocmd Filetype java nnoremap <F5> :w <bar> exec '!javac '.shellescape('%').' && java '.shellescape('%:r')<CR>
-autocmd filetype c nnoremap <F5> :w <bar> exec '!clang '.shellescape('%').' -o '.shellescape('%:r').' && ./'.shellescape('%:r')<CR>
-autocmd filetype cpp nnoremap <F5> :w <bar> exec '!clang++ '.shellescape('%').' -o '.shellescape('%:r').' && ./'.shellescape('%:r')<CR>
+command! -nargs=1 Silent execute ':silent !'.<q-args> | execute ':redraw!'
+function CompileC()
+:   w
+:   exec '!clang '.shellescape('%').' -o '.shellescape('%:r').' && ./'.shellescape('%:r')
+:   exec 'Silent rm '.shellescape('%:r')
+endfunction
+function CompileCC()
+:   w
+:   exec '!clang++ '.shellescape('%').' -o '.shellescape('%:r').' && ./'.shellescape('%:r')
+:   exec 'Silent rm '.shellescape('%:r')
+endfunction
+autocmd filetype c nnoremap <F5> :call CompileC()<CR>
+autocmd filetype cpp nnoremap <F5> :call CompileCC()<CR>
+autocmd filetype c nnoremap <C-r> :call CompileC()<CR>
+autocmd filetype cpp nnoremap <C-r> :call CompileCC()<CR>
 
 " Warn about doing the wrong undo (U instead of u).
 nnoremap U :echo " < < ===== C H E C K C A P S L O C K ===== > > "<CR>
