@@ -307,19 +307,19 @@ function! NERDTreeHighlightFile(extension, fg, bg, guifg, guibg)
  exec 'autocmd filetype nerdtree syn match ' . a:extension .' #^\s\+.*'. a:extension .'$#'
 endfunction
 
-call NERDTreeHighlightFile('jade', 'green', 'none', 'green', '#151515')
-call NERDTreeHighlightFile('ini', 'yellow', 'none', 'yellow', '#151515')
-call NERDTreeHighlightFile('md', 'blue', 'none', '#3366FF', '#151515')
-call NERDTreeHighlightFile('yml', 'yellow', 'none', 'yellow', '#151515')
-call NERDTreeHighlightFile('config', 'yellow', 'none', 'yellow', '#151515')
-call NERDTreeHighlightFile('conf', 'yellow', 'none', 'yellow', '#151515')
-call NERDTreeHighlightFile('json', 'yellow', 'none', 'yellow', '#151515')
-call NERDTreeHighlightFile('html', 'yellow', 'none', 'yellow', '#151515')
-call NERDTreeHighlightFile('styl', 'cyan', 'none', 'cyan', '#151515')
-call NERDTreeHighlightFile('css', 'cyan', 'none', 'cyan', '#151515')
-call NERDTreeHighlightFile('coffee', 'Red', 'none', 'red', '#151515')
-call NERDTreeHighlightFile('js', 'Red', 'none', '#ffa500', '#151515')
-call NERDTreeHighlightFile('php', 'Magenta', 'none', '#ff00ff', '#151515')
+" source files
+call NERDTreeHighlightFile('.c', '11', 'NONE', 'NONE', 'NONE')
+call NERDTreeHighlightFile('h', '3', 'NONE', 'NONE', 'NONE')
+call NERDTreeHighlightFile('cc', '5', 'NONE', 'NONE', 'NONE')
+call NERDTreeHighlightFile('mm', '4', 'NONE', 'NONE', 'NONE')
+" shell scripts
+call NERDTreeHighlightFile('sh', '2', 'NONE', 'NONE', 'NONE')
+call NERDTreeHighlightFile('bash', '2', 'NONE', 'NONE', 'NONE')
+call NERDTreeHighlightFile('zsh', '2', 'NONE', 'NONE', 'NONE')
+" makefiles
+call NERDTreeHighlightFile('mk', '13', 'NONE', 'NONE', 'NONE')
+call NERDTreeHighlightFile('makefile', '13', 'NONE', 'NONE', 'NONE')
+call NERDTreeHighlightFile('Makefile', '13', 'NONE', 'NONE', 'NONE')
 
 
 " Insert new line with Shift-Enter
@@ -391,11 +391,7 @@ let g:EasyMotion_startofline = 0 " keep cursor column when JK motion
 let g:ag_working_path_mode="r"
 
 " vim-autoformat Settings.
-noremap <F3> :Autoformat<CR>
-let g:formatdef_astyle_c = '"astyle --mode=c"'
-let g:formatters_c = ['astyle_c']
-let g:formatdef_astyle_cpp = '"astyle --mode=c"'
-let g:formatters_cpp = ['astyle_cpp']
+noremap <C-f> :Autoformat<CR>
 let g:formatdef_astyle_objc = 'astyle --mode=c'
 let g:formatters_objc = ['astyle_objc']
 let g:formatdef_jsbeautify = 'js-beautify -f -'
