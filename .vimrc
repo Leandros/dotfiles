@@ -14,35 +14,44 @@ let maplocalleader=" "
 " Let Vundle manage itself.
 Plugin 'gmarik/Vundle.vim'
 
-" Plugins
+" Visual Plugins
 Plugin 'altercation/vim-colors-solarized'
-Plugin 'scrooloose/syntastic'
-" Plugin 'tpope/vim-fugitive'
-" Plugin 'airblate/vim-gitgutter'
 Plugin 'vim-airline/vim-airline'
 Plugin 'vim-airline/vim-airline-themes'
-Plugin 'ervandew/supertab'
-Plugin 'tpope/vim-surround'
+
+" Must-Have
 Plugin 'tpope/vim-repeat'
-Plugin 'easymotion/vim-easymotion'
 Plugin 'tpope/vim-commentary'
-Plugin 'ctrlpvim/ctrlp.vim'
-" Plugin 'rking/ag.vim'
+Plugin 'ervandew/supertab'
+Plugin 'easymotion/vim-easymotion'
 Plugin 'Chiel92/vim-autoformat'
+Plugin 'qpkorr/vim-bufkill'
+
+" General
+Plugin 'scrooloose/syntastic'
+Plugin 'ctrlpvim/ctrlp.vim'
 Plugin 'jeffkreeftmeijer/vim-numbertoggle'
-Plugin 'xolox/vim-misc'
-Plugin 'xolox/vim-lua-ftplugin'
-" Plugin 'Yggdroot/indentLine'
 Plugin 'tmux-plugins/vim-tmux-focus-events'
+Plugin 'majutsushi/tagbar'
+
+" NERDTree
 Plugin 'scrooloose/nerdtree'
 Plugin 'Xuyuanp/nerdtree-git-plugin'
-Plugin 'elzr/vim-json'
-Plugin 'qpkorr/vim-bufkill'
-Plugin 'xolox/vim-easytags'
-Plugin 'majutsushi/tagbar'
-Plugin 'jelera/vim-javascript-syntax'
 
-" Enable if really desired.
+" Syntax Plugins
+Plugin 'jelera/vim-javascript-syntax'
+Plugin 'elzr/vim-json'
+
+" Plugins I rarely use
+" Plugin 'rking/ag.vim'
+" Plugin 'Yggdroot/indentLine'
+
+" Lua Plugins. Disable until I work on Lua projects again.
+" Plugin 'xolox/vim-misc'
+" Plugin 'xolox/vim-lua-ftplugin'
+
+" This plugins make vim SLOW!
+" Plugin 'xolox/vim-easytags'
 " Plugin 'Valloric/YouCompleteMe'
 
 call vundle#end()
@@ -302,24 +311,30 @@ autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
 autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
 
 " NERDTress File highlighting
-function! NERDTreeHighlightFile(extension, fg, bg, guifg, guibg)
+function! NERDTreeHighlightFile(extension, regex, fg, bg, guifg, guibg)
  exec 'autocmd filetype nerdtree highlight ' . a:extension .' ctermbg='. a:bg .' ctermfg='. a:fg .' guibg='. a:guibg .' guifg='. a:guifg
- exec 'autocmd filetype nerdtree syn match ' . a:extension .' #^\s\+.*'. a:extension .'$#'
+ exec 'autocmd filetype nerdtree syn match ' . a:extension .' #^.*\('. a:regex .'\)$#'
 endfunction
 
 " source files
-call NERDTreeHighlightFile('.c', '11', 'NONE', 'NONE', 'NONE')
-call NERDTreeHighlightFile('h', '3', 'NONE', 'NONE', 'NONE')
-call NERDTreeHighlightFile('cc', '5', 'NONE', 'NONE', 'NONE')
-call NERDTreeHighlightFile('mm', '4', 'NONE', 'NONE', 'NONE')
+" For some reason, VIM doesn't like C files :(
+" C
+call NERDTreeHighlightFile('cfile', '\.c',          '11', 'NONE', 'NONE', 'NONE')
+call NERDTreeHighlightFile('h', '\.h',              '3',  'NONE', 'NONE', 'NONE')
+" C++
+call NERDTreeHighlightFile('cc', '\.cc',            '5',  'NONE', 'NONE', 'NONE')
+call NERDTreeHighlightFile('cpp', '\.cpp',          '5',  'NONE', 'NONE', 'NONE')
+" Objective-C
+call NERDTreeHighlightFile('mm', '\.mm',            '4',  'NONE', 'NONE', 'NONE')
+call NERDTreeHighlightFile('m', '\.m',              '4',  'NONE', 'NONE', 'NONE')
 " shell scripts
-call NERDTreeHighlightFile('sh', '2', 'NONE', 'NONE', 'NONE')
-call NERDTreeHighlightFile('bash', '2', 'NONE', 'NONE', 'NONE')
-call NERDTreeHighlightFile('zsh', '2', 'NONE', 'NONE', 'NONE')
+call NERDTreeHighlightFile('sh', '\.sh',            '2',  'NONE', 'NONE', 'NONE')
+call NERDTreeHighlightFile('bash', '\.bash',        '2',  'NONE', 'NONE', 'NONE')
+call NERDTreeHighlightFile('zsh', '\.zsh',          '2',  'NONE', 'NONE', 'NONE')
 " makefiles
-call NERDTreeHighlightFile('mk', '13', 'NONE', 'NONE', 'NONE')
-call NERDTreeHighlightFile('makefile', '13', 'NONE', 'NONE', 'NONE')
-call NERDTreeHighlightFile('Makefile', '13', 'NONE', 'NONE', 'NONE')
+call NERDTreeHighlightFile('mk', '\.mk',            '13', 'NONE', 'NONE', 'NONE')
+call NERDTreeHighlightFile('makefile', '\makefile', '13', 'NONE', 'NONE', 'NONE')
+call NERDTreeHighlightFile('Makefile', '\Makefile', '13', 'NONE', 'NONE', 'NONE')
 
 
 " Insert new line with Shift-Enter
