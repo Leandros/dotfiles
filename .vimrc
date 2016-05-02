@@ -2,6 +2,7 @@
 set nocompatible
 filetype off
 
+
 " Vundle Stuff
 set rtp+=~/.vim/bundle/Vundle.vim
 call vundle#begin()
@@ -26,6 +27,7 @@ Plugin 'ervandew/supertab'
 Plugin 'easymotion/vim-easymotion'
 Plugin 'Chiel92/vim-autoformat'
 Plugin 'qpkorr/vim-bufkill'
+Plugin 'leandros/hexman.vim'
 
 " General
 Plugin 'scrooloose/syntastic'
@@ -176,8 +178,8 @@ function CompileCC()
 endfunction
 autocmd filetype c nnoremap <F5> :call CompileC()<CR>
 autocmd filetype cpp nnoremap <F5> :call CompileCC()<CR>
-autocmd filetype c nnoremap <C-r> :call CompileC()<CR>
-autocmd filetype cpp nnoremap <C-r> :call CompileCC()<CR>
+" autocmd filetype c nnoremap <C-r> :call CompileC()<CR>
+" autocmd filetype cpp nnoremap <C-r> :call CompileCC()<CR>
 
 " Warn about doing the wrong undo (U instead of u).
 nnoremap U :echo " < < ===== C H E C K C A P S L O C K ===== > > "<CR>
@@ -488,6 +490,9 @@ let g:tagbar_map_closefold='w'
 let g:tagbar_map_zoomwin='e'
 let g:tagbar_map_preview='b'
 
+" hexmanager
+let g:hex_movetab = 0
+
 
 " CtrlP
 let g:ctrlp_map = '<Leader>o'
@@ -526,4 +531,24 @@ function! s:RunShellCommand(cmdline)
   setlocal nomodifiable
   1
 endfunction
+
+" Focus Mode
+function! ToggleFocusMode()
+  if (&foldcolumn != 12)
+    set laststatus=0
+    set numberwidth=10
+    set foldcolumn=12
+    set noruler
+    hi FoldColumn ctermbg=none
+    hi LineNr ctermfg=0 ctermbg=none
+    hi NonText ctermfg=0
+  else
+    set laststatus=2
+    set numberwidth=4
+    set foldcolumn=0
+    set ruler
+    execute 'colorscheme ' . g:colors_name
+  endif
+endfunc
+nnoremap <F1> :call ToggleFocusMode()<cr>
 
