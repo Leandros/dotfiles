@@ -324,10 +324,12 @@ endfunction
 " For some reason, VIM doesn't like C files :(
 " C
 call NERDTreeHighlightFile('cfile', '\.c',          '11', 'NONE', 'NONE', 'NONE')
-call NERDTreeHighlightFile('h', '\.h',              '3',  'NONE', 'NONE', 'NONE')
+call NERDTreeHighlightFile('cheader', '\.h',        '9',  'NONE', 'NONE', 'NONE')
 " C++
 call NERDTreeHighlightFile('cc', '\.cc',            '5',  'NONE', 'NONE', 'NONE')
+call NERDTreeHighlightFile('hh', '\.hh',            '9',  'NONE', 'NONE', 'NONE')
 call NERDTreeHighlightFile('cpp', '\.cpp',          '5',  'NONE', 'NONE', 'NONE')
+call NERDTreeHighlightFile('hpp', '\.hpp',          '9',  'NONE', 'NONE', 'NONE')
 " Objective-C
 call NERDTreeHighlightFile('mm', '\.mm',            '4',  'NONE', 'NONE', 'NONE')
 call NERDTreeHighlightFile('m', '\.m',              '4',  'NONE', 'NONE', 'NONE')
@@ -336,9 +338,11 @@ call NERDTreeHighlightFile('sh', '\.sh',            '2',  'NONE', 'NONE', 'NONE'
 call NERDTreeHighlightFile('bash', '\.bash',        '2',  'NONE', 'NONE', 'NONE')
 call NERDTreeHighlightFile('zsh', '\.zsh',          '2',  'NONE', 'NONE', 'NONE')
 " makefiles
-call NERDTreeHighlightFile('mk', '\.mk',            '13', 'NONE', 'NONE', 'NONE')
-call NERDTreeHighlightFile('makefile', '\makefile', '13', 'NONE', 'NONE', 'NONE')
-call NERDTreeHighlightFile('Makefile', '\Makefile', '13', 'NONE', 'NONE', 'NONE')
+call NERDTreeHighlightFile('mk', '\.mk',            '28', 'NONE', 'NONE', 'NONE')
+call NERDTreeHighlightFile('makefile', '\makefile', '28', 'NONE', 'NONE', 'NONE')
+call NERDTreeHighlightFile('Makefile', '\Makefile', '28', 'NONE', 'NONE', 'NONE')
+" JavaScript
+call NERDTreeHighlightFile('js', '\.js',            '3',  'NONE', 'NONE', 'NONE')
 
 
 " Insert new line with Shift-Enter
