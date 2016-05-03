@@ -122,6 +122,10 @@ nnoremap <Leader>8 :8b<CR>
 nnoremap <Leader>9 :9b<CR>
 nnoremap <Leader>0 :10b<CR>
 
+" <Leader>b will list all available buffers
+" nnoremap <Leader>b :ls<CR>:b<Space>
+nnoremap <Leader>z :CtrlPBuffer<CR>
+
 " Jump to buffers with Ngb
 let c = 1
 while c <= 99
@@ -178,6 +182,8 @@ function CompileCC()
 endfunction
 autocmd filetype c nnoremap <F5> :call CompileC()<CR>
 autocmd filetype cpp nnoremap <F5> :call CompileCC()<CR>
+
+" C-r is mapped to move one buffer up -_-
 " autocmd filetype c nnoremap <C-r> :call CompileC()<CR>
 " autocmd filetype cpp nnoremap <C-r> :call CompileCC()<CR>
 
@@ -518,7 +524,6 @@ let g:ctrlp_prompt_mappings = {
 " Shell command
 command! -complete=shellcmd -nargs=+ Shell call s:RunShellCommand(<q-args>)
 function! s:RunShellCommand(cmdline)
-  echo a:cmdline
   let expanded_cmdline = a:cmdline
   for part in split(a:cmdline, ' ')
      if part[0] =~ '\v[%#<]'
@@ -528,10 +533,8 @@ function! s:RunShellCommand(cmdline)
   endfor
   botright new
   setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap
-  call setline(1, 'You entered:    ' . a:cmdline)
-  call setline(2, 'Expanded Form:  ' .expanded_cmdline)
-  call setline(3,substitute(getline(2),'.','=','g'))
   execute '$read !'. expanded_cmdline
+  execute 1 'delete _'
   setlocal nomodifiable
   1
 endfunction
@@ -555,4 +558,28 @@ function! ToggleFocusMode()
   endif
 endfunc
 nnoremap <F1> :call ToggleFocusMode()<cr>
+
+" Buffer Moving
+function! MarkWindowSwap()
+    let g:markedWinNum = winnr()
+endfunction
+
+function! DoWindowSwap()
+    "Mark destination
+    let curNum = winnr()
+    let curBuf = bufnr( "%" )
+    exe g:markedWinNum . "wincmd w"
+    "Switch to source and shuffle dest->source
+    let markedBuf = bufnr( "%" )
+    "Hide and open so that we aren't prompted and keep history
+    exe 'hide buf' curBuf
+    "Switch to dest and shuffle source->dest
+    exe curNum . "wincmd w"
+    "Hide and open so that we aren't prompted and keep history
+    exe 'hide buf' markedBuf
+endfunction
+
+nnoremap <silent> <Leader>mw :call MarkWindowSwap()<CR>
+nnoremap <silent> <Leader>pw :call DoWindowSwap()<CR>
+
 
