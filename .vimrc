@@ -35,9 +35,10 @@ Plugin 'ctrlpvim/ctrlp.vim'
 Plugin 'jeffkreeftmeijer/vim-numbertoggle'
 Plugin 'tmux-plugins/vim-tmux-focus-events'
 Plugin 'majutsushi/tagbar'
+Plugin 'rking/ag.vim'
 
 " NERDTree
-Plugin 'scrooloose/nerdtree'
+Plugin 'leandros/nerdtree'
 Plugin 'Xuyuanp/nerdtree-git-plugin'
 
 " Syntax Plugins
@@ -45,7 +46,6 @@ Plugin 'jelera/vim-javascript-syntax'
 Plugin 'elzr/vim-json'
 
 " Plugins I rarely use
-" Plugin 'rking/ag.vim'
 " Plugin 'Yggdroot/indentLine'
 
 " Lua Plugins. Disable until I work on Lua projects again.
@@ -291,13 +291,15 @@ nnoremap <C-w> :bd<CR>
 nmap <Leader>c :TagbarToggle<CR>
 
 " ReMap NERDTree Keys.
-let NERDTreeMapRefresh='<C-a>'
-let NERDTreeMapRefreshRoot=''
-let NERDTreeMapOpenSplit='t'
-let NERDTreeMapOpenVSplit='i'
+let g:NERDTreeMapRefresh='<C-a>'
+let g:NERDTreeMapRefreshRoot=''
+let g:NERDTreeMapOpenSplit='t'
+let g:NERDTreeMapOpenVSplit='i'
+let g:NERDTreeMenuDown='n'
+let g:NERDTreeMenuUp='r'
 
-let NERDTreeMapChdir='C'
-let NERDTreeMapUpdir='u'
+let g:NERDTreeMapChdir='C'
+let g:NERDTreeMapUpdir='u'
 " let NERDTreeMapNextSibling='N'
 " let NERDTreeMapPrevSibling='R'
 
@@ -306,10 +308,10 @@ let NERDTreeMapUpdir='u'
 map <Leader>e :NERDTreeToggle<CR>
 
 " NERDTree options
-let NERDTreeShowHidden = 1
-let NERDTreeQuitOnOpen = 1
-let NERDTreeMinimalUI = 1
-let NERDTreeAutoDeleteBuffer = 1
+let g:NERDTreeShowHidden = 1
+let g:NERDTreeQuitOnOpen = 1
+let g:NERDTreeMinimalUI = 1
+let g:NERDTreeAutoDeleteBuffer = 1
 
 
 " Open NERDTree when no files specified.
