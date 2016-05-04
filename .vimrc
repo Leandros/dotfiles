@@ -362,10 +362,13 @@ cmap w!! w !sudo tee % >/dev/null
 " Use Tabs in Makefiles
 autocmd FileType make setlocal noexpandtab
 
-" Unfold all
-if has("autocmd")
+
+" Folding Config
+augroup vimrc
+    au BufReadPre * setlocal foldmethod=indent
+    au BufWinEnter * if &fdm == 'indent' | setlocal foldmethod=manual | endif
     au BufWinEnter * normal zR
-endif
+augroup END
 
 " Set 80 column limit.
 if exists('+colorcolumn')
