@@ -28,6 +28,7 @@ Plugin 'easymotion/vim-easymotion'
 Plugin 'Chiel92/vim-autoformat'
 Plugin 'qpkorr/vim-bufkill'
 Plugin 'leandros/hexman.vim'
+Plugin 'Konfekt/FastFold'
 
 " General
 Plugin 'scrooloose/syntastic'
@@ -49,7 +50,8 @@ Plugin 'elzr/vim-json'
 " Plugin 'Yggdroot/indentLine'
 
 " Lua Plugins. Disable until I work on Lua projects again.
-" Plugin 'xolox/vim-misc'
+Plugin 'xolox/vim-misc'
+Plugin 'xolox/vim-notes'
 " Plugin 'xolox/vim-lua-ftplugin'
 
 " This plugins make vim SLOW!
@@ -407,6 +409,9 @@ let g:syntastic_cpp_config_file = '.syntastic_cpp_config'
 let g:syntastic_cpp_check_header = 1
 let g:syntastic_cpp_remove_include_errors = 1
 
+" Disable syntastic on html
+autocmd BufRead,BufNewFile *.html let g:syntastic_html_checkers=[]
+
 " YouCompleteMe Settings
 let g:ycm_confirm_extra_conf = 0
 
@@ -508,6 +513,13 @@ let g:tagbar_map_preview='b'
 " hexmanager
 let g:hex_movetab = 0
 
+" FastFold
+let g:fastfold_fold_command_suffixes = []
+
+" Vim Notes
+let g:notes_directories = ['~/Documents/Notes']
+let g:notes_suffix = '.txt'
+let g:notes_smart_quotes = 0
 
 " CtrlP
 let g:ctrlp_map = '<Leader>o'
@@ -525,6 +537,12 @@ let g:ctrlp_prompt_mappings = {
             \    'ToggleType(-1)': [],
             \    'AcceptSelection("h")': []
             \ }
+
+" Ignore specific files
+set wildignore+=*/tmp/*,*.so,*.swp,*.zip,*.tar.gz,*.tar.bz2
+set wildignore+=*\\tmp\\*,*.exe
+set wildignore+=*.git,*.hg,*.svn,*.perforce
+set wildignore+=*/node_modules/*,*\\node_modules\\*
 
 " Shell command
 command! -complete=shellcmd -nargs=+ Shell call s:RunShellCommand(<q-args>)
