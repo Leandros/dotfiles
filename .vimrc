@@ -26,7 +26,7 @@ Plugin 'tpope/vim-commentary'
 Plugin 'ervandew/supertab'
 Plugin 'easymotion/vim-easymotion'
 Plugin 'Chiel92/vim-autoformat'
-Plugin 'qpkorr/vim-bufkill'
+Plugin 'leandros/vim-bufkill'
 Plugin 'leandros/hexman.vim'
 Plugin 'Konfekt/FastFold'
 
