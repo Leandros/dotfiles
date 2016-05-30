@@ -36,7 +36,7 @@ Plugin 'ctrlpvim/ctrlp.vim'
 Plugin 'jeffkreeftmeijer/vim-numbertoggle'
 Plugin 'tmux-plugins/vim-tmux-focus-events'
 Plugin 'majutsushi/tagbar'
-Plugin 'rking/ag.vim'
+Plugin 'mhinz/vim-grepper'
 
 " NERDTree
 Plugin 'leandros/nerdtree'
@@ -292,6 +292,11 @@ nnoremap <C-w> :bd<CR>
 " Tagbar
 nmap <Leader>c :TagbarToggle<CR>
 
+" Close / Open quickfix
+nnoremap <Leader>qq :cclose<CR>
+nnoremap <Leader>qc :cclose<CR>
+nnoremap <Leader>qo :copen<CR>
+
 " ReMap NERDTree Keys.
 let g:NERDTreeMapRefresh='<C-a>'
 let g:NERDTreeMapRefreshRoot=''
@@ -314,6 +319,7 @@ let g:NERDTreeShowHidden = 1
 let g:NERDTreeQuitOnOpen = 1
 let g:NERDTreeMinimalUI = 1
 let g:NERDTreeAutoDeleteBuffer = 1
+let g:NERDTreeIgnore = ['\.meta$','^\.DS_Store$']
 
 
 " Open NERDTree when no files specified.
@@ -605,4 +611,11 @@ endfunction
 nnoremap <silent> <Leader>mw :call MarkWindowSwap()<CR>
 nnoremap <silent> <Leader>pw :call DoWindowSwap()<CR>
 
+" Vim Grep
+nnoremap <Leader>ag :Grepper -tool ag -grepprg ag --vimgrep<CR>
+let g:grepper = {
+    \ 'tools': ['ag', 'git', 'grep'],
+    \ 'open': 1,
+    \ 'jump': 0,
+    \ }
 
