@@ -555,9 +555,14 @@ nnoremap <silent> <Leader>mw :call MarkWindowSwap()<CR>
 nnoremap <silent> <Leader>pw :call DoWindowSwap()<CR>
 
 " Vim Grep
-nnoremap <Leader>ag :Grepper -tool ag -grepprg ag --vimgrep<CR>
+nnoremap <Leader>ag :Grepper -tool ag1<CR>
 let g:grepper = {
-    \ 'tools': ['ag', 'git', 'grep'],
+    \ 'tools': ['ag1', 'git', 'grep'],
+    \ 'ag1': {
+    \   'grepprg': 'ag --vimgrep "$*"',
+    \   'grepformat': '%f:%l:%c:%m,%f:%l:%m',
+    \   'escape': '\^$.*+?()[]%# ',
+    \ },
     \ 'open': 1,
     \ 'jump': 0,
     \ }
@@ -567,4 +572,4 @@ function! GenerateTags()
 :   w
 :   exec '!ctags -R -f tags .'
 endfunction
-
+command! -nargs=* GenTags call GenerateTags()
