@@ -31,11 +31,9 @@ Plugin 'leandros/hexman.vim'
 Plugin 'Konfekt/FastFold'
 
 " General
-Plugin 'scrooloose/syntastic'
 Plugin 'ctrlpvim/ctrlp.vim'
 Plugin 'jeffkreeftmeijer/vim-numbertoggle'
 Plugin 'tmux-plugins/vim-tmux-focus-events'
-Plugin 'majutsushi/tagbar'
 Plugin 'mhinz/vim-grepper'
 
 " NERDTree
@@ -46,17 +44,11 @@ Plugin 'Xuyuanp/nerdtree-git-plugin'
 Plugin 'jelera/vim-javascript-syntax'
 Plugin 'elzr/vim-json'
 
-" Plugins I rarely use
-" Plugin 'Yggdroot/indentLine'
-
 " Lua Plugins. Disable until I work on Lua projects again.
-Plugin 'xolox/vim-misc'
-Plugin 'xolox/vim-notes'
+" Plugin 'xolox/vim-misc'
+" Plugin 'xolox/vim-notes'
 " Plugin 'xolox/vim-lua-ftplugin'
 
-" This plugins make vim SLOW!
-" Plugin 'xolox/vim-easytags'
-" Plugin 'Valloric/YouCompleteMe'
 
 call vundle#end()
 filetype plugin indent on
@@ -77,6 +69,7 @@ set incsearch       " Show matched searches as you type.
 set showmatch       " Show matching braces.
 set ignorecase      " Ignore case when searching.
 set smartcase       " Ignore case if search pattern is all lowercase, case-sensitive otherwise.
+set nowrapscan      " Do not wrap when searching
 
 set history=1000    " Larger command history.
 set undolevels=1000 " Undo ALL the changes.
@@ -289,9 +282,6 @@ nnoremap <C-t> :new<CR>
 nnoremap <C-q> :BD<CR>
 nnoremap <C-w> :bd<CR>
 
-" Tagbar
-nmap <Leader>c :TagbarToggle<CR>
-
 " Close / Open quickfix
 nnoremap <Leader>qq :cclose<CR>
 nnoremap <Leader>qc :cclose<CR>
@@ -401,33 +391,13 @@ if has('gui_running')
 endif
 let g:airline_powerline_fonts = 1
 
-" Syntactic Settings
-set statusline+=%#warningmsg#
-set statusline+=%{SyntasticStatuslineFlag()}
-set statusline+=%*
-
-let g:syntastic_always_populate_loc_list = 1
-let g:syntastic_auto_loc_list = 1
-let g:syntastic_check_on_open = 1
-let g:syntastic_check_on_wq = 0
-
-let g:syntastic_cpp_config_file = '.syntastic_cpp_config'
-let g:syntastic_cpp_check_header = 1
-let g:syntastic_cpp_remove_include_errors = 1
-
-" Disable syntastic on html
-autocmd BufRead,BufNewFile *.html let g:syntastic_html_checkers=[]
-
-" YouCompleteMe Settings
-let g:ycm_confirm_extra_conf = 0
-
 " Easy Motion Settings
 map <Leader> <Plug>(easymotion-prefix)
 map <Leader>s <Plug>(easymotion-lineforward)
 map <Leader>n <Plug>(easymotion-j)
 map <Leader>r <Plug>(easymotion-k)
 map <Leader>b <Plug>(easymotion-linebackward)
-nmap t <Plug>(easymotion-s2)
+nmap e <Plug>(easymotion-s2)
 
 let g:EasyMotion_smartcase = 1
 let g:EasyMotion_startofline = 0 " keep cursor column when JK motion
@@ -480,41 +450,8 @@ inoremap <s-tab> <tab>
 " NumberToggle config
 let g:NumberToggleTrigger="<C-o>"
 
-" Indent Line settings
-" let g:indentLine_enabled = 1
-" " let g:indentLine_leadingSpaceEnabled = 1
-" " let g:indentLine_char = ''
-" let g:indentLine_color_term = 239
-" let g:indentLine_char = '┊'
-" let g:indentLine_leadingSpaceChar = '·'
-" let g:indentLine_concealcursor = '' " (default 'inc')
-" let g:indentLine_conceallevel = 2 " (default 2)
-" let g:indentLine_noConcealCursor = 1
-" let g:indentLine_faster = 1
-
 " Fix JSON conceal level Yggdroot/indentLine#140
 let g:vim_json_syntax_conceal = 0
-
-" easytags async
-let g:easytags_async = 1
-let g:easytags_always_enabled = 1
-let g:easytags_on_cursorhold = 1
-let g:easytags_auto_update = 1
-let g:easytags_syntax_keyword = 'always'
-let g:easytags_python_enabled = 0
-" let g:easytags_events = ['BufWinEnter', 'BufWritePost']
-
-" tagbar
-let g:tagbar_autoclose = 1
-let g:tagbar_autofocus = 1
-let g:tagbar_sort = 0
-let g:tagbar_autopreview = 0
-let g:tagbar_show_linenumbers='-1'
-let g:tagbar_map_toggleautoclose = 't'
-let g:tagbar_map_help='^'
-let g:tagbar_map_closefold='w'
-let g:tagbar_map_zoomwin='e'
-let g:tagbar_map_preview='b'
 
 " hexmanager
 let g:hex_movetab = 0
