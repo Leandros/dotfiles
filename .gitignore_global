@@ -1,0 +1,11 @@
+# Some general crap
+*~
+.DS_Store
+Thumbs.db
+
+# CTags
+tags
+
+# Build files
+*.o
+*.d

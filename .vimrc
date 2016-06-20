@@ -29,6 +29,7 @@ Plugin 'Chiel92/vim-autoformat'
 Plugin 'leandros/vim-bufkill'
 Plugin 'leandros/hexman.vim'
 Plugin 'Konfekt/FastFold'
+Plugin 'ludovicchabant/vim-gutentags'
 
 " General
 Plugin 'ctrlpvim/ctrlp.vim'
@@ -286,6 +287,11 @@ nnoremap <C-w> :bd<CR>
 nnoremap <Leader>qq :cclose<CR>
 nnoremap <Leader>qc :cclose<CR>
 nnoremap <Leader>qo :copen<CR>
+
+" Tag navigation keys
+nnoremap <Leader>d <C-]>
+nnoremap <Leader>. <C-t>
+nnoremap <Leader>c :CtrlPTag<CR>
 
 " ReMap NERDTree Keys.
 let g:NERDTreeMapRefresh='<C-a>'
@@ -555,4 +561,10 @@ let g:grepper = {
     \ 'open': 1,
     \ 'jump': 0,
     \ }
+
+" Generate CTags manually
+function! GenerateTags()
+:   w
+:   exec '!ctags -R -f tags .'
+endfunction
 
