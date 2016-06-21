@@ -571,6 +571,22 @@ let g:grepper = {
     \ 'jump': 0,
     \ }
 
+" Fix Grepper's quickfix window
+augroup quickfix
+    autocmd!
+    autocmd FileType qf setlocal nowrap
+    autocmd FileType qf setlocal norelativenumber
+    autocmd FileType qf setlocal nonumber
+    autocmd FileType qf set nobuflisted
+    autocmd FileType qf nnoremap <buffer> q :cclose<CR>
+augroup END
+
+" Quick if quickfix is last window
+augroup QFClose
+    autocmd!
+    autocmd WinEnter * if winnr('$') == 1 && getbufvar(winbufnr(winnr()), "&buftype") == "quickfix" | q | endif
+augroup END
+
 " Generate CTags manually
 function! GenerateTags()
 :   w
