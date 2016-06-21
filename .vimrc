@@ -35,7 +35,7 @@ Plugin 'vim-scripts/taglist.vim'
 Plugin 'ctrlpvim/ctrlp.vim'
 Plugin 'jeffkreeftmeijer/vim-numbertoggle'
 Plugin 'tmux-plugins/vim-tmux-focus-events'
-Plugin 'mhinz/vim-grepper'
+Plugin 'Leandros/vim-grepper'
 
 " NERDTree
 Plugin 'leandros/nerdtree'
