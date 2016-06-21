@@ -27,9 +27,9 @@ Plugin 'ervandew/supertab'
 Plugin 'easymotion/vim-easymotion'
 Plugin 'Chiel92/vim-autoformat'
 Plugin 'leandros/vim-bufkill'
-Plugin 'leandros/hexman.vim'
 Plugin 'Konfekt/FastFold'
 Plugin 'ludovicchabant/vim-gutentags'
+Plugin 'vim-scripts/taglist.vim'
 
 " General
 Plugin 'ctrlpvim/ctrlp.vim'
@@ -44,6 +44,9 @@ Plugin 'Xuyuanp/nerdtree-git-plugin'
 " Syntax Plugins
 Plugin 'jelera/vim-javascript-syntax'
 Plugin 'elzr/vim-json'
+
+" Enable if needed
+" Plugin 'leandros/hexman.vim'
 
 " Lua Plugins. Disable until I work on Lua projects again.
 " Plugin 'xolox/vim-misc'
@@ -291,7 +294,8 @@ nnoremap <Leader>qo :copen<CR>
 " Tag navigation keys
 nnoremap <Leader>d <C-]>
 nnoremap <Leader>. <C-t>
-nnoremap <Leader>c :CtrlPTag<CR>
+nnoremap <Leader>t :CtrlPTag<CR>
+nnoremap <Leader>c :TlistToggle<CR>
 
 " ReMap NERDTree Keys.
 let g:NERDTreeMapRefresh='<C-a>'
@@ -573,3 +577,13 @@ function! GenerateTags()
 :   exec '!ctags -R -f tags .'
 endfunction
 command! -nargs=* GenTags call GenerateTags()
+
+" TagList
+let g:Tlist_Inc_Winwidth=100
+let g:Tlist_Use_Right_Window=1
+let g:Tlist_Enable_Fold_Column=0
+let g:Tlist_Compact_Format=1
+let g:Tlist_Exit_OnlyWindow=1
+autocmd FileType taglist set nonumber
+autocmd FileType taglist set norelativenumber
+
