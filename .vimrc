@@ -576,14 +576,31 @@ function! GenerateTags()
 :   w
 :   exec '!ctags -R -f tags .'
 endfunction
-command! -nargs=* GenTags call GenerateTags()
+command! -nargs=* GenTagsManual call GenerateTags()
+
+" Gutentags
+set statusline+=%{gutentags#statusline('[Generating...]')}
+function! GenTags()
+:   w
+:   GutentagsUpdate
+:   redraw!
+endfunction
+function! GenTagsAll()
+:   w
+:   GutentagsUpdate!
+:   redraw!
+endfunction
+command! -nargs=* GenTags call GenTags()
+command! -nargs=* GenTagsAll call GenTagsAll()
 
 " TagList
-let g:Tlist_Inc_Winwidth=100
+let g:Tlist_Inc_Winwidth=0
+let g:Tlist_WinWidth=40
 let g:Tlist_Use_Right_Window=1
 let g:Tlist_Enable_Fold_Column=0
 let g:Tlist_Compact_Format=1
 let g:Tlist_Exit_OnlyWindow=1
+let g:Tlist_GainFocus_On_ToggleOpen=1
 autocmd FileType taglist set nonumber
 autocmd FileType taglist set norelativenumber
 
