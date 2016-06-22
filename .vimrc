@@ -195,9 +195,10 @@ nnoremap j <C-r>
 " Convenient pasting.
 set pastetoggle=<F2>
 
+" Removed due to blocking super awesome multiline edit mode.
 " Convenient copy to clipboard.
-vnoremap <C-c> :w !pbcopy<CR><CR>
-noremap <C-v> :r !pbpaste<CR><CR>
+" vnoremap <C-c> :w !pbcopy<CR><CR>
+" noremap <C-v> :r !pbpaste<CR><CR>
 
 " Unhighlight searches
 " using <esc> for this, behaves weird
@@ -214,10 +215,10 @@ nnoremap - Nzzzv
 " Move by words
 " nnoremap B B
 " nnoremap S W
-nnoremap <S-b> B
-nnoremap <S-s> W
-vnoremap <S-b> B
-vnoremap <S-s> W
+nnoremap <S-b> b
+nnoremap <S-s> w
+vnoremap <S-b> b
+vnoremap <S-s> w
 
 " Key map optimizations for Bone 2 Layout
 " Normal Mode remaps.
@@ -617,6 +618,9 @@ let g:Tlist_Enable_Fold_Column=0
 let g:Tlist_Compact_Format=1
 let g:Tlist_Exit_OnlyWindow=1
 let g:Tlist_GainFocus_On_ToggleOpen=1
+" Show only current buffer?
+" let g:Tlist_Show_One_File=1
+let g:Tlist_File_Fold_Auto_Close=1
 autocmd FileType taglist set nonumber
 autocmd FileType taglist set norelativenumber
 
