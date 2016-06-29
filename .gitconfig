@@ -61,6 +61,7 @@
     ps = "!f() { git stash -u; git pull --rebase origin master; git stash apply stash@{0}; git stash drop stash@{0}; }; f"
     rank = shortlog -sn --no-merges
     bdm = "!git branch --merged | grep -v '*' | xargs -n 1 git branch -d"
+    lazycommit = commit --allow-empty-message -am \"\"
 [core]
 	editor = vim
 	excludesfile = ~/.gitignore_global
