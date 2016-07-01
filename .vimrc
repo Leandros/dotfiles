@@ -12,6 +12,12 @@ nnoremap <SPACE> <Nop>
 let mapleader=" "
 let maplocalleader=" "
 
+" Set EnhancedJumps mappings before sourcing
+nnoremap <Leader>h  <Plug>EnhancedJumpsOlder
+nnoremap <Leader>l  <Plug>EnhancedJumpsNewer
+nnoremap <Leader>gh <Plug>EnhancedJumpsLocalOlder
+nnoremap <Leader>gl <Plug>EnhancedJumpsLocalNewer
+
 " Let Vundle manage itself.
 Plugin 'gmarik/Vundle.vim'
 
@@ -30,6 +36,9 @@ Plugin 'leandros/vim-bufkill'
 Plugin 'Konfekt/FastFold'
 Plugin 'ludovicchabant/vim-gutentags'
 Plugin 'vim-scripts/taglist.vim'
+Plugin 'vim-scripts/EnhancedJumps'
+
+"Plugin 'vim-scripts/YankRing.vim'
 
 " General
 Plugin 'ctrlpvim/ctrlp.vim'
