@@ -498,7 +498,7 @@ let g:ctrlp_prompt_mappings = {
             \ }
 
 " Ignore specific files
-let g:ctrlp_custom_ignore = '\v[\/](node_modules|tmp|target|dist)|(\.(swp|git|svn|hg|perforce|zip|so|tar\.gz|tar\.bz2)$'
+let g:ctrlp_custom_ignore = '\v[\/](node_modules|tmp|target|dist)|(\.(swp|git|svn|hg|perforce|zip|so|tar\.gz|tar\.bz2))$'
 " set wildignore+=*/tmp/*,*.so,*.swp,*.zip,*.tar.gz,*.tar.bz2
 " set wildignore+=*\\tmp\\*,*.exe
 " set wildignore+=*.git,*.hg,*.svn,*.perforce
