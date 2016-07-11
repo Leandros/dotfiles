@@ -2,7 +2,6 @@
 set nocompatible
 filetype off
 
-
 " Vundle Stuff
 set rtp+=~/.vim/bundle/Vundle.vim
 call vundle#begin()
@@ -11,12 +10,6 @@ call vundle#begin()
 nnoremap <SPACE> <Nop>
 let mapleader=" "
 let maplocalleader=" "
-
-" Set EnhancedJumps mappings before sourcing
-nnoremap <Leader>h  <Plug>EnhancedJumpsOlder
-nnoremap <Leader>l  <Plug>EnhancedJumpsNewer
-nnoremap <Leader>gh <Plug>EnhancedJumpsLocalOlder
-nnoremap <Leader>gl <Plug>EnhancedJumpsLocalNewer
 
 " Let Vundle manage itself.
 Plugin 'gmarik/Vundle.vim'
@@ -36,9 +29,11 @@ Plugin 'leandros/vim-bufkill'
 Plugin 'Konfekt/FastFold'
 Plugin 'ludovicchabant/vim-gutentags'
 Plugin 'vim-scripts/taglist.vim'
-Plugin 'vim-scripts/EnhancedJumps'
+Plugin 'vim-scripts/YankRing.vim'
 
-"Plugin 'vim-scripts/YankRing.vim'
+" I hate plugin interdependencies
+Plugin 'vim-scripts/ingo-library'
+Plugin 'vim-scripts/EnhancedJumps'
 
 " General
 Plugin 'ctrlpvim/ctrlp.vim'
@@ -65,6 +60,7 @@ Plugin 'elzr/vim-json'
 
 call vundle#end()
 filetype plugin indent on
+
 
 " General
 set shell=$SHELL    " Set the default shell
@@ -502,10 +498,11 @@ let g:ctrlp_prompt_mappings = {
             \ }
 
 " Ignore specific files
-set wildignore+=*/tmp/*,*.so,*.swp,*.zip,*.tar.gz,*.tar.bz2
-set wildignore+=*\\tmp\\*,*.exe
-set wildignore+=*.git,*.hg,*.svn,*.perforce
-set wildignore+=*/node_modules/*,*\\node_modules\\*
+let g:ctrlp_custom_ignore = '\v[\/](node_modules|tmp|target|dist)|(\.(swp|git|svn|hg|perforce|zip|so|tar\.gz|tar\.bz2)$'
+" set wildignore+=*/tmp/*,*.so,*.swp,*.zip,*.tar.gz,*.tar.bz2
+" set wildignore+=*\\tmp\\*,*.exe
+" set wildignore+=*.git,*.hg,*.svn,*.perforce
+" set wildignore+=*/node_modules/*,*\\node_modules\\*
 
 " Shell command
 command! -complete=shellcmd -nargs=+ Shell call s:RunShellCommand(<q-args>)
@@ -627,9 +624,22 @@ let g:Tlist_Enable_Fold_Column=0
 let g:Tlist_Compact_Format=1
 let g:Tlist_Exit_OnlyWindow=1
 let g:Tlist_GainFocus_On_ToggleOpen=1
-" Show only current buffer?
-" let g:Tlist_Show_One_File=1
 let g:Tlist_File_Fold_Auto_Close=1
 autocmd FileType taglist set nonumber
 autocmd FileType taglist set norelativenumber
+
+" Show only current buffer?
+" let g:Tlist_Show_One_File=1
+
+" WankRing
+" p for paste
+" <C-P> maps to next paste
+" <C-N> maps to previous paste
+nnoremap <Leader>y :YRShow<CR>
+
+" Set EnhancedJumps mappings via commands
+nnoremap <Leader>h  :call EnhancedJumps#Jump(0,'')<CR>
+nnoremap <Leader>l  :call EnhancedJumps#Jump(1,'')<CR>
+nnoremap <Leader>gh :call EnhancedJumps#Jump(0,'local')<CR>
+nnoremap <Leader>gl :call EnhancedJumps#Jump(1,'local')<CR>
 
