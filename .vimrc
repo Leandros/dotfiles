@@ -640,6 +640,8 @@ autocmd FileType taglist set norelativenumber
 " <C-P> maps to next paste
 " <C-N> maps to previous paste
 nnoremap <Leader>y :YRShow<CR>
+let g:yankring_replace_n_pkey = '<C-H>'
+let g:yankring_replace_n_nkey = '<C-L>'
 
 " Set EnhancedJumps mappings via commands
 nnoremap <Leader>h  :call EnhancedJumps#Jump(0,'')<CR>

@@ -295,6 +295,12 @@ alias mutt3='mutt -F ~/.mutt/muttrc3'
 cal() {
     /usr/bin/cal $* | grep --color -EC6 "\b$(date +%e | sed "s/ //g")"
 }
+h2d() {
+  echo "ibase=16; $@" | bc
+}
+d2h() {
+  echo "obase=16; $@" | bc
+}
 
 # Ignore these commands in history
 alias cd=' cd'
