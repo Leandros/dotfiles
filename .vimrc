@@ -107,6 +107,10 @@ set showcmd
 " Correct backspace
 set backspace=indent,eol,start
 
+" Improve breaks
+set showbreak=>>>
+set breakindent
+
 " Improve performance
 "set ttyfast
 "set lazyredraw
