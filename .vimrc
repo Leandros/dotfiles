@@ -388,7 +388,7 @@ autocmd FileType make setlocal noexpandtab
 augroup vimrc
     au BufReadPre * setlocal foldmethod=indent
     au BufWinEnter * if &fdm == 'indent' | setlocal foldmethod=manual | endif
-    au BufWinEnter * normal zR
+    au BufReadPost * normal zR
 augroup END
 
 " Set 80 column limit.
