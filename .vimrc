@@ -631,6 +631,7 @@ let g:Tlist_GainFocus_On_ToggleOpen=1
 let g:Tlist_File_Fold_Auto_Close=1
 autocmd FileType taglist set nonumber
 autocmd FileType taglist set norelativenumber
+autocmd FileType taglist nnoremap <buffer> <C-a> :TlistUpdate<CR>
 
 " Show only current buffer?
 " let g:Tlist_Show_One_File=1
