@@ -174,6 +174,7 @@ colorscheme solarized
 au BufRead,BufNewFile *.ds set filetype=rgbds
 au BufRead,BufNewFile *.fl,*.flex,*.l,*.lm setlocal ft=lex      " Flex
 au BufRead,BufNewFile *.y,*.ypp,*.ym setlocal ft=yacc           " Bison
+au BufRead,BufNewFile *.h set filetype=c
 
 
 " Compile and Run code. The primitive way.
@@ -629,6 +630,8 @@ let g:Tlist_Compact_Format=1
 let g:Tlist_Exit_OnlyWindow=1
 let g:Tlist_GainFocus_On_ToggleOpen=1
 let g:Tlist_File_Fold_Auto_Close=1
+let g:Tlist_Process_File_Always=1
+let g:tlist_c_settings = 'c;d:macro;f:function;g:enums;p:prototype;s:struct;t:typedef;x:external'
 autocmd FileType taglist set nonumber
 autocmd FileType taglist set norelativenumber
 autocmd FileType taglist nnoremap <buffer> <C-a> :TlistUpdate<CR>
