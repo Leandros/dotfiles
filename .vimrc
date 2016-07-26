@@ -49,6 +49,9 @@ Plugin 'Xuyuanp/nerdtree-git-plugin'
 Plugin 'jelera/vim-javascript-syntax'
 Plugin 'elzr/vim-json'
 
+" Test this!
+" Plugin 'terryma/vim-multiple-cursors'
+
 " Enable if needed
 " Plugin 'leandros/hexman.vim'
 
@@ -466,12 +469,18 @@ let g:lua_compiler_name = '/usr/local/bin/luac'
 " SuperTab config
 imap <C-r> <Plug>SuperTabForward
 imap <C-n> <Plug>SuperTabBackward
+let g:SuperTabDefaultCompletionType = "context"
+let g:SuperTabClosePreviewOnPopupClose = 1
+let g:SuperTabCrMapping = 1
+
+" au BufNewFile,BufRead,BufEnter *.c, *.h filetype plugin on
+" au BufNewFile,BufRead,BufEnter *.c, *.h set omnifunc=syntaxcomplete#Complete
 
 runtime! plugin/supertab.vim
 inoremap <s-tab> <tab>
 
 " NumberToggle config
-let g:NumberToggleTrigger="<C-o>"
+let g:NumberToggleTrigger = "<C-o>"
 
 " Fix JSON conceal level Yggdroot/indentLine#140
 let g:vim_json_syntax_conceal = 0
@@ -634,6 +643,7 @@ let g:Tlist_GainFocus_On_ToggleOpen=1
 let g:Tlist_File_Fold_Auto_Close=1
 let g:Tlist_Process_File_Always=1
 let g:tlist_c_settings = 'c;d:macro;f:function;g:enums;p:prototype;s:struct;t:typedef;x:external'
+let g:tlist_cpp_settings = 'c++;d:macro;f:function;g:enums;p:prototype;s:struct;t:typedef;x:external'
 autocmd FileType taglist set nonumber
 autocmd FileType taglist set norelativenumber
 autocmd FileType taglist nnoremap <buffer> <C-a> :TlistUpdate<CR>
