@@ -464,6 +464,9 @@ endif
 let g:lua_compiler_name = '/usr/local/bin/luac'
 
 " SuperTab config
+imap <C-r> <Plug>SuperTabForward
+imap <C-n> <Plug>SuperTabBackward
+
 runtime! plugin/supertab.vim
 inoremap <s-tab> <tab>
 
@@ -646,9 +649,9 @@ nnoremap <Leader>y :YRShow<CR>
 let g:yankring_replace_n_pkey = '<C-H>'
 let g:yankring_replace_n_nkey = '<C-L>'
 
-" Set EnhancedJumps mappings via commands
-nnoremap <Leader>h  :call EnhancedJumps#Jump(0,'')<CR>
-nnoremap <Leader>l  :call EnhancedJumps#Jump(1,'')<CR>
-nnoremap <Leader>gh :call EnhancedJumps#Jump(0,'local')<CR>
-nnoremap <Leader>gl :call EnhancedJumps#Jump(1,'local')<CR>
+" Set EnhancedJumps mappings
+nmap <Leader>h  <Plug>EnhancedJumpsOlder
+nmap <Leader>l  <Plug>EnhancedJumpsNewer
+nmap <Leader>gh <Plug>EnhancedJumpsLocalOlder
+nmap <Leader>gl <Plug>EnhancedJumpsLocalNewer
 
