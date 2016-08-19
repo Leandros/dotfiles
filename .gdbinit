@@ -75,7 +75,7 @@ set $ARM = 0
 set $COLOREDPROMPT = 1
 # color the first line of the disassembly - default is green, if you want to change it search for
 # SETCOLOR1STLINE and modify it :-)
-set $SETCOLOR1STLINE = 0
+set $SETCOLOR1STLINE = 1
 # set to 0 to remove display of objectivec messages (default is 1)
 set $SHOWOBJECTIVEC = 1
 # set to 0 to remove display of cpu registers (default is 1)
@@ -211,6 +211,7 @@ end
 # can also be used to redefine anything else in particular the colors aka theming
 # just remap the color variables defined above
 source ~/.gdbinit.local
+source ~/.gdb.py
 
 # can't use the color functions because we are using the set command
 if $COLOREDPROMPT == 1
@@ -1019,27 +1020,51 @@ define regx64
   	color $COLOR_REGNAME
     printf "CS:"
     color $COLOR_REGVAL
-    printf " %04X  ", $cs
+    if ($isvalid($cs))
+        ignore-errors printf " %04X  ", $cs
+    else
+        printf " ----  "
+    end
     color $COLOR_REGNAME
     printf "DS:"
     color $COLOR_REGVAL
-    printf " %04X  ", $ds
+    if ($isvalid($ds))
+        ignore-errors printf " %04X  ", $ds
+    else
+        printf " ----  "
+    end
     color $COLOR_REGNAME
     printf "ES:"
     color $COLOR_REGVAL
-    printf " %04X  ", $es
+    if ($isvalid($es))
+        ignore-errors printf " %04X  ", $es
+    else
+        printf " ----  "
+    end
     color $COLOR_REGNAME
     printf "FS:"
     color $COLOR_REGVAL
-    printf " %04X  ", $fs
+    if ($isvalid($fs))
+        ignore-errors printf " %04X  ", $fs
+    else
+        printf " ----  "
+    end
     color $COLOR_REGNAME
     printf "GS:"
     color $COLOR_REGVAL
-    printf " %04X  ", $gs
+    if ($isvalid($gs))
+        ignore-errors printf " %04X  ", $gs
+    else
+        printf " ----  "
+    end
     color $COLOR_REGNAME
     printf "SS:"
     color $COLOR_REGVAL
-    printf " %04X", $ss
+    if ($isvalid($ss))
+        ignore-errors printf " %04X", $ss
+    else
+        printf " ----  "
+    end
     color_reset
 end
 document regx64
@@ -1136,27 +1161,51 @@ define regx86
     color $COLOR_REGNAME
     printf "CS:"
     color $COLOR_REGVAL
-    printf " %04X  ", $cs
+    if ($isvalid($cs))
+        ignore-errors printf " %04X  ", $cs
+    else
+        printf " <err>  "
+    end
     color $COLOR_REGNAME
     printf "DS:"
     color $COLOR_REGVAL
-    printf " %04X  ", $ds
+    if ($isvalid($ds))
+        ignore-errors printf " %04X  ", $ds
+    else
+        printf " <err>  "
+    end
     color $COLOR_REGNAME
     printf "ES:"
     color $COLOR_REGVAL
-    printf " %04X  ", $es
+    if ($isvalid($es))
+        ignore-errors printf " %04X  ", $es
+    else
+        printf " <err>  "
+    end
     color $COLOR_REGNAME
     printf "FS:"
     color $COLOR_REGVAL
-    printf " %04X  ", $fs
+    if ($isvalid($fs))
+        ignore-errors printf " %04X  ", $fs
+    else
+        printf " <err>  "
+    end
     color $COLOR_REGNAME
     printf "GS:"
     color $COLOR_REGVAL
-    printf " %04X  ", $gs
+    if ($isvalid($gs))
+        ignore-errors printf " %04X  ", $gs
+    else
+        printf " <err>  "
+    end
     color $COLOR_REGNAME
     printf "SS:"
     color $COLOR_REGVAL
-    printf " %04X", $ss
+    if ($isvalid($ss))
+        ignore-errors printf " %04X", $ss
+    else
+        printf " <err>  "
+    end
     color_reset
 end
 document regx86
@@ -1504,9 +1553,17 @@ define ddump
             printf "[0x%08X]", $data_addr
         else
             if ($64BITS == 1)
-                printf "[0x%04X:0x%016lX]", $ds, $data_addr
+                if ($isvalid($ds))
+                    ignore-errors printf "[0x%04X:0x%016lX]", $ss, $data_addr
+                else
+                    ignore-errors printf "[0x%04X:0x%016lX]", 0, $data_addr
+                end
             else
-                printf "[0x%04X:0x%08X]", $ds, $data_addr
+                if ($isvalid($ds))
+                    ignore-errors printf "[0x%04X:0x%08X]", $ds, $data_addr
+                else
+                    ignore-errors printf "[0x%04X:0x%08X]", 0, $data_addr
+                end
             end
         end
 
@@ -2043,12 +2100,20 @@ define context
     if $SHOWSTACK == 1
     	color $COLOR_SEPARATOR
 		if $ARM == 1
-       printf "[0x%08X]", $sp
+            printf "[0x%08X]", $sp
 		else
         if ($64BITS == 1)
-		        printf "[0x%04X:0x%016lX]", $ss, $rsp
+            if ($isvalid($ss))
+		        ignore-errors printf "[0x%04X:0x%016lX]", $ss, $rsp
+		    else
+		        ignore-errors printf "[0x%04X:0x%016lX]", 0, $rsp
+		    end
         else
-            printf "[0x%04X:0x%08X]", $ss, $esp
+            if ($isvalid($ss))
+                ignore-errors printf "[0x%04X:0x%08X]", $ss, $esp
+            else
+                ignore-errors printf "[0x%04X:0x%08X]", 0, $esp
+            end
         end
     end
         color $COLOR_SEPARATOR
@@ -3106,7 +3171,7 @@ define objc_symbols
 
 	set logging off
     # XXX: define paths for objc-symbols and SymTabCreator
-	shell target="$(/usr/bin/head -1 /tmp/gdb-objc_symbols | /usr/bin/head -1 | /usr/bin/awk -F '"' '{ print $2 }')"; objc-symbols "$target" | SymTabCreator -o /tmp/gdb-symtab
+	shell target="$(/usr/bin/head -1 /tmp/gdb-objc_symbols | /usr/bin/head -1 | /usr/bin/awk -F '\"' '{ print $2 }')"; objc-symbols "$target" | SymTabCreator -o /tmp/gdb-symtab
 
 	set logging on
 	add-symbol-file /tmp/gdb-symtab
