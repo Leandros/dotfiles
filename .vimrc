@@ -469,7 +469,6 @@ let g:lua_compiler_name = '/usr/local/bin/luac'
 " SuperTab config
 imap <C-r> <Plug>SuperTabForward
 imap <C-n> <Plug>SuperTabBackward
-let g:SuperTabDefaultCompletionType = "context"
 let g:SuperTabClosePreviewOnPopupClose = 1
 let g:SuperTabCrMapping = 1
 
