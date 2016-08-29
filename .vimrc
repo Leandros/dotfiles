@@ -30,6 +30,7 @@ Plugin 'Konfekt/FastFold'
 Plugin 'ludovicchabant/vim-gutentags'
 Plugin 'leandros/taglist.vim'
 Plugin 'vim-scripts/YankRing.vim'
+Plugin 'terryma/vim-multiple-cursors'
 
 " I hate plugin interdependencies
 Plugin 'vim-scripts/ingo-library'
@@ -663,4 +664,9 @@ nmap <Leader>h  <Plug>EnhancedJumpsOlder
 nmap <Leader>l  <Plug>EnhancedJumpsNewer
 nmap <Leader>gh <Plug>EnhancedJumpsLocalOlder
 nmap <Leader>gl <Plug>EnhancedJumpsLocalNewer
+
+" MultipleCursor
+nnoremap <silent> <C-j> :MultipleCursorsFind <C-R>/<CR>
+vnoremap <silent> <C-j> :MultipleCursorsFind <C-R>/<CR>
+
 
