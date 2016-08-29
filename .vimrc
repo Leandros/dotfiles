@@ -28,7 +28,7 @@ Plugin 'Chiel92/vim-autoformat'
 Plugin 'leandros/vim-bufkill'
 Plugin 'Konfekt/FastFold'
 Plugin 'ludovicchabant/vim-gutentags'
-Plugin 'vim-scripts/taglist.vim'
+Plugin 'leandros/taglist.vim'
 Plugin 'vim-scripts/YankRing.vim'
 
 " I hate plugin interdependencies
