@@ -175,6 +175,7 @@ colorscheme solarized
 au BufRead,BufNewFile *.ds set filetype=rgbds
 au BufRead,BufNewFile *.fl,*.flex,*.l,*.lm setlocal ft=lex      " Flex
 au BufRead,BufNewFile *.y,*.ypp,*.ym setlocal ft=yacc           " Bison
+au BufRead,BufNewFile *.bff set filetype=bff
 
 
 " Compile and Run code. The primitive way.
