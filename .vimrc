@@ -291,12 +291,13 @@ nnoremap < 5<C-W><
 nnoremap > 5<C-W>>
 
 " Split Creating
-nnoremap <C-i> :vnew<CR>
-nnoremap <C-t> :new<CR>
+nnoremap <C-i> :vsplit<CR>
+nnoremap <C-t> :split<CR>
 
 " Split killing
+command Bd bp\|bd \#
 nnoremap <C-q> :BD<CR>
-nnoremap <C-w> :bd<CR>
+nnoremap <C-w> :Bd<CR>
 
 " Close / Open quickfix
 nnoremap <Leader>qq :cclose<CR>
@@ -577,7 +578,7 @@ function! DoWindowSwap()
 endfunction
 
 nnoremap <silent> <Leader>mw :call MarkWindowSwap()<CR>
-nnoremap <silent> <Leader>pw :call DoWindowSwap()<CR>
+nnoremap <silent> <Leader>sw :call DoWindowSwap()<CR>
 
 " Vim Grep
 nnoremap <Leader>ag :Grepper -tool ag1<CR>
@@ -673,4 +674,12 @@ let g:multi_cursor_start_key='<C-g>'
 nnoremap <silent> <C-j> :MultipleCursorsFind <C-R>/<CR>
 vnoremap <silent> <C-j> :MultipleCursorsFind <C-R>/<CR>
 
+function! CloseBuffers()
+    let curr = bufnr("%")
+    let last = bufnr("$")
+    if curr > 1     | silent! execute "1,".(curr-1)."bd"        | endif
+    if curr < last  | silent! execute (curr+1).",".last."bd"    | endif
+endfunction
+
+nmap <Leader>w :call CloseBuffers()<CR>
 
