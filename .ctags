@@ -6,3 +6,7 @@
 --exclude=temp
 --exclude=Temp
 --exclude=_build
+--exclude=_Build
+--exclude=_Install
+--exclude=_install
+--exclude=node_modules
