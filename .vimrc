@@ -276,7 +276,8 @@ vnoremap <S-r> <C-y>
 " Insert newline
 nnoremap <CR> o<Esc>
 inoremap <C-O> <Esc>o
-" inoremap  <Esc>o
+" inoremap 
+ <Esc>o
 
 " Split switching
 nnoremap <C-n> <C-W>j
@@ -388,7 +389,7 @@ autocmd FileType make setlocal noexpandtab
 augroup vimrc
     au BufReadPre * setlocal foldmethod=indent
     au BufWinEnter * if &fdm == 'indent' | setlocal foldmethod=manual | endif
-    au BufReadPost * normal zR
+    au BufWinEnter * normal zR
 augroup END
 
 " Set 80 column limit.
@@ -578,7 +579,7 @@ function! DoWindowSwap()
 endfunction
 
 nnoremap <silent> <Leader>mw :call MarkWindowSwap()<CR>
-nnoremap <silent> <Leader>sw :call DoWindowSwap()<CR>
+nnoremap <silent> <Leader>pw :call DoWindowSwap()<CR>
 
 " Vim Grep
 nnoremap <Leader>ag :Grepper -tool ag1<CR>
