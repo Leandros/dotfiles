@@ -49,7 +49,7 @@ Plugin 'Xuyuanp/nerdtree-git-plugin'
 " Syntax Plugins
 Plugin 'jelera/vim-javascript-syntax'
 Plugin 'elzr/vim-json'
-Plugin 'leandros/vim-fastbuild'
+Plugin 'dummyunit/vim-fastbuild'
 
 " Enable if needed
 " Plugin 'leandros/hexman.vim'
@@ -180,12 +180,12 @@ au BufRead,BufNewFile *.y,*.ypp,*.ym setlocal ft=yacc           " Bison
 
 " Compile and Run code. The primitive way.
 command! -nargs=1 Silent execute ':silent !'.<q-args> | execute ':redraw!'
-function CompileC()
+function! CompileC()
 :   w
 :   exec '!clang '.shellescape('%').' -o '.shellescape('%:r').' && ./'.shellescape('%:r')
 :   exec 'Silent rm '.shellescape('%:r')
 endfunction
-function CompileCC()
+function! CompileCC()
 :   w
 :   exec '!clang++ '.shellescape('%').' -o '.shellescape('%:r').' && ./'.shellescape('%:r')
 :   exec 'Silent rm '.shellescape('%:r')
@@ -276,8 +276,6 @@ vnoremap <S-r> <C-y>
 " Insert newline
 nnoremap <CR> o<Esc>
 inoremap <C-O> <Esc>o
-" inoremap 
- <Esc>o
 
 " Split switching
 nnoremap <C-n> <C-W>j
@@ -296,7 +294,7 @@ nnoremap <C-i> :vsplit<CR>
 nnoremap <C-t> :split<CR>
 
 " Split killing
-command Bd bp\|bd \#
+command! Bd bp\|bd \#
 nnoremap <C-q> :BD<CR>
 nnoremap <C-w> :Bd<CR>
 
