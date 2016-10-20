@@ -113,6 +113,7 @@ source $ZSH/oh-my-zsh.sh
 # External Scripts
 # ====================
 source $ZSH/oh-my-zsh.sh
+eval "$(fasd --init posix-alias zsh-hook zsh-ccomp zsh-wcomp)"
 
 # Glob all other scripts
 for file in $HOME/.zsh/scripts/* ; do
@@ -120,6 +121,14 @@ for file in $HOME/.zsh/scripts/* ; do
     source "$file"
   fi
 done
+
+# init fasd and cache the result
+fasd_cache="$HOME/.fasd-init-zsh"
+if [ "$(command -v fasd)" -nt "$fasd_cache" -o ! -s "$fasd_cache" ]; then
+  fasd --init posix-alias zsh-hook zsh-ccomp zsh-ccomp-install >| "$fasd_cache"
+fi
+source "$fasd_cache"
+unset fasd_cache
 
 
 # ====================
@@ -290,6 +299,7 @@ alias m3='mutt -F ~/.mutt/muttrc3'
 alias mutt1='mutt -F ~/.mutt/muttrc1'
 alias mutt2='mutt -F ~/.mutt/muttrc2'
 alias mutt3='mutt -F ~/.mutt/muttrc3'
+alias ccp='rsync -ah --progress'
 
 # Highlight current day
 cal() {
@@ -301,6 +311,14 @@ h2d() {
 d2h() {
   echo "obase=16; $@" | bc
 }
+
+# ====================
+# Fasd Aliases
+# ====================
+alias v='f -e vim'
+alias nv='f -e nvim'
+alias o='a -e open'
+alias c='fasd_cd -d'
 
 # Ignore these commands in history
 alias cd=' cd'

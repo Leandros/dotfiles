@@ -187,7 +187,7 @@ function! CompileC()
 endfunction
 function! CompileCC()
 :   w
-:   exec '!clang++ '.shellescape('%').' -o '.shellescape('%:r').' && ./'.shellescape('%:r')
+:   exec '!clang++ -std=c++14 '.shellescape('%').' -o '.shellescape('%:r').' && ./'.shellescape('%:r')
 :   exec 'Silent rm '.shellescape('%:r')
 endfunction
 autocmd filetype c nnoremap <F5> :call CompileC()<CR>
@@ -296,7 +296,7 @@ nnoremap <C-t> :split<CR>
 " Split killing
 command! Bd bp\|bd \#
 nnoremap <C-q> :BD<CR>
-nnoremap <C-w> :Bd<CR>
+nnoremap <C-w> :bd<CR>
 
 " Close / Open quickfix
 nnoremap <Leader>qq :cclose<CR>
@@ -387,7 +387,7 @@ autocmd FileType make setlocal noexpandtab
 augroup vimrc
     au BufReadPre * setlocal foldmethod=indent
     au BufWinEnter * if &fdm == 'indent' | setlocal foldmethod=manual | endif
-    au BufWinEnter * normal zR
+    au BufReadPost * normal zR
 augroup END
 
 " Set 80 column limit.
@@ -496,7 +496,10 @@ let g:notes_smart_quotes = 0
 
 " CtrlP
 let g:ctrlp_map = '<Leader>o'
+let g:ctrlp_max_files = 0
+let g:ctrlp_path_nolim = 1
 let g:ctrlp_show_hidden = 1
+let g:ctrlp_root_markers = ['.git', '.svn', '.hg', '.p4ignore', '*.sln']
 let g:ctrlp_prompt_mappings = {
             \    'PrtSelectMove("j")': ['<c-n>'],
             \    'PrtSelectMove("k")': ['<c-r>'],
