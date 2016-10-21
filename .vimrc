@@ -38,6 +38,7 @@ Plugin 'vim-scripts/EnhancedJumps'
 
 " General
 Plugin 'ctrlpvim/ctrlp.vim'
+Plugin 'FelikZ/ctrlp-py-matcher'
 Plugin 'jeffkreeftmeijer/vim-numbertoggle'
 Plugin 'tmux-plugins/vim-tmux-focus-events'
 Plugin 'Leandros/vim-grepper'
@@ -71,6 +72,7 @@ set termencoding=utf-8 " Set the default encodings just in case $LANG isn't set
 set encoding=utf-8  " Set the default encodings just in case $LANG isn't set
 set cursorline      " Hightlight current selected line.
 set ttyfast         " Set that we have a fast terminal
+set emoji
 
 set hidden          " Hide buffer, instead of closing it.
 syntax enable
@@ -497,7 +499,7 @@ let g:notes_smart_quotes = 0
 " CtrlP
 let g:ctrlp_map = '<Leader>o'
 let g:ctrlp_max_files = 0
-let g:ctrlp_path_nolim = 1
+" let g:ctrlp_path_nolim = 1
 let g:ctrlp_show_hidden = 1
 let g:ctrlp_root_markers = ['.git', '.svn', '.hg', '.p4ignore', '*.sln']
 let g:ctrlp_prompt_mappings = {
@@ -513,6 +515,9 @@ let g:ctrlp_prompt_mappings = {
             \    'ToggleType(-1)': [],
             \    'AcceptSelection("h")': []
             \ }
+
+" Matching / Searching
+let g:ctrlp_match_func = { 'match': 'pymatcher#PyMatch' }
 
 " Ignore specific files
 let g:ctrlp_custom_ignore = '\v[\/](node_modules|tmp|target|dist)|(\.(swp|git|svn|hg|perforce|zip|so|tar\.gz|tar\.bz2))$'
