@@ -31,6 +31,7 @@ Plugin 'ludovicchabant/vim-gutentags'
 Plugin 'leandros/taglist.vim'
 Plugin 'vim-scripts/YankRing.vim'
 Plugin 'terryma/vim-multiple-cursors'
+Plugin 'leandros/zoomwin'
 
 " I hate plugin interdependencies
 Plugin 'vim-scripts/ingo-library'
@@ -72,7 +73,7 @@ set termencoding=utf-8 " Set the default encodings just in case $LANG isn't set
 set encoding=utf-8  " Set the default encodings just in case $LANG isn't set
 set cursorline      " Hightlight current selected line.
 set ttyfast         " Set that we have a fast terminal
-set emoji
+set emoji           " enable emoji's on Vim8
 
 set hidden          " Hide buffer, instead of closing it.
 syntax enable
@@ -114,6 +115,13 @@ set backspace=indent,eol,start
 " Improve breaks
 set showbreak=>>>
 set breakindent
+
+" Disable mouse
+set mouse=c
+set guioptions-=m
+set guioptions-=T
+set guioptions-=r
+set guioptions-=L
 
 " Improve performance
 "set ttyfast
@@ -290,6 +298,11 @@ nnoremap ! 5<C-W>-
 nnoremap = 5<C-W>+
 nnoremap < 5<C-W><
 nnoremap > 5<C-W>>
+
+" Even out splits
+nnoremap <C-y>w <C-W>=
+nnoremap <C-y>m <C-W>_
+nnoremap <C-y>l :ZoomWin<CR>
 
 " Split Creating
 nnoremap <C-i> :vsplit<CR>
@@ -689,4 +702,16 @@ function! CloseBuffers()
 endfunction
 
 nmap <Leader>w :call CloseBuffers()<CR>
+
+function! Incr()
+  let a = line('.') - line("'<")
+  let c = virtcol("'<")
+  if a > 0
+    execute 'normal! '.c.'|'.a."\<C-a>"
+  endif
+  normal `<
+endfunction
+vnoremap <C-a> :call Incr()<CR>
+
+nnoremap ,cd :cd %:p:h<CR>:pwd<CR>
 
