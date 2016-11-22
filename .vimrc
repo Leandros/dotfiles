@@ -38,8 +38,7 @@ Plugin 'vim-scripts/ingo-library'
 Plugin 'vim-scripts/EnhancedJumps'
 
 " General
-Plugin 'ctrlpvim/ctrlp.vim'
-Plugin 'FelikZ/ctrlp-py-matcher'
+Plugin 'Yggdroot/LeaderF'
 Plugin 'jeffkreeftmeijer/vim-numbertoggle'
 Plugin 'tmux-plugins/vim-tmux-focus-events'
 Plugin 'Leandros/vim-grepper'
@@ -52,6 +51,10 @@ Plugin 'Xuyuanp/nerdtree-git-plugin'
 Plugin 'jelera/vim-javascript-syntax'
 Plugin 'elzr/vim-json'
 Plugin 'dummyunit/vim-fastbuild'
+Plugin 'leandros/hlsl.vim'
+
+" Disabled Syntaxes
+" Plugin 'chrisbra/csv.vim'
 
 " Enable if needed
 " Plugin 'leandros/hexman.vim'
@@ -141,10 +144,6 @@ nnoremap <Leader>7 :7b<CR>
 nnoremap <Leader>8 :8b<CR>
 nnoremap <Leader>9 :9b<CR>
 nnoremap <Leader>0 :10b<CR>
-
-" <Leader>b will list all available buffers
-" nnoremap <Leader>b :ls<CR>:b<Space>
-nnoremap <Leader>z :CtrlPBuffer<CR>
 
 " Jump to buffers with Ngb
 let c = 1
@@ -321,7 +320,7 @@ nnoremap <Leader>qo :copen<CR>
 " Tag navigation keys
 nnoremap <Leader>d <C-]>
 nnoremap <Leader>. <C-t>
-nnoremap <Leader>t :CtrlPTag<CR>
+" nnoremap <Leader>t :CtrlPTag<CR>
 nnoremap <Leader>c :TlistToggle<CR>
 
 " ReMap NERDTree Keys.
@@ -509,35 +508,22 @@ let g:notes_directories = ['~/Documents/Notes']
 let g:notes_suffix = '.txt'
 let g:notes_smart_quotes = 0
 
-" CtrlP
-let g:ctrlp_map = '<Leader>o'
-let g:ctrlp_max_files = 0
-" let g:ctrlp_path_nolim = 1
-let g:ctrlp_show_hidden = 1
-let g:ctrlp_root_markers = ['.git', '.svn', '.hg', '.p4ignore', '*.sln']
-let g:ctrlp_prompt_mappings = {
-            \    'PrtSelectMove("j")': ['<c-n>'],
-            \    'PrtSelectMove("k")': ['<c-r>'],
-            \    'PrtCurLeft()': ['<c-b>'],
-            \    'PrtCurRight()': ['<c-s>'],
-            \    'ToggleRegex()': ['<c-a>'],
-            \    'CreateNewFile()': ['<c-y>'],
-            \    'MarkToOpen()': ['<c-z>'],
-            \    'OpenMulti()': ['<c-o>'],
-            \    'PrtHistory(-1)': [],
-            \    'ToggleType(-1)': [],
-            \    'AcceptSelection("h")': []
-            \ }
+" LeaderF
+let g:Lf_ShortcutF = '<Leader>o'
+let g:Lf_ShortcutB = '<Leader>z'
+let g:Lf_WildIgnore = {
+    \ 'dir': ['.svn','.git','.p4','.perforce','node_modules'],
+    \ 'file': ['*.sw?','~$*','*.bak','*.exe','*.o','*.so','*.py[co]','*.dll']
+    \ }
+let g:Lf_CommandMap = {
+    \ '<C-R>': ['<C-E>'],
+    \ '<Down>': ['<C-N>'],
+    \ '<Up>': ['<C-R>'],
+    \ '<C-C>': ['<ESC>'],
+    \ '<C-X>': ['<C-I>'],
+    \ '<C-]>': ['<C-T>']
+    \ }
 
-" Matching / Searching
-let g:ctrlp_match_func = { 'match': 'pymatcher#PyMatch' }
-
-" Ignore specific files
-let g:ctrlp_custom_ignore = '\v[\/](node_modules|tmp|target|dist)|(\.(swp|git|svn|hg|perforce|zip|so|tar\.gz|tar\.bz2))$'
-" set wildignore+=*/tmp/*,*.so,*.swp,*.zip,*.tar.gz,*.tar.bz2
-" set wildignore+=*\\tmp\\*,*.exe
-" set wildignore+=*.git,*.hg,*.svn,*.perforce
-" set wildignore+=*/node_modules/*,*\\node_modules\\*
 
 " Shell command
 command! -complete=shellcmd -nargs=+ Shell call s:RunShellCommand(<q-args>)
@@ -694,15 +680,16 @@ let g:multi_cursor_start_key='<C-g>'
 nnoremap <silent> <C-j> :MultipleCursorsFind <C-R>/<CR>
 vnoremap <silent> <C-j> :MultipleCursorsFind <C-R>/<CR>
 
+" Close all buffers
 function! CloseBuffers()
     let curr = bufnr("%")
     let last = bufnr("$")
     if curr > 1     | silent! execute "1,".(curr-1)."bd"        | endif
     if curr < last  | silent! execute (curr+1).",".last."bd"    | endif
 endfunction
-
 nmap <Leader>w :call CloseBuffers()<CR>
 
+" Increment numbers in rows
 function! Incr()
   let a = line('.') - line("'<")
   let c = virtcol("'<")
@@ -713,5 +700,6 @@ function! Incr()
 endfunction
 vnoremap <C-a> :call Incr()<CR>
 
+" Change current working directory
 nnoremap ,cd :cd %:p:h<CR>:pwd<CR>
 
