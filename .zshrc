@@ -15,12 +15,10 @@ export EDITOR=##NEWEDITOR##
 export CC=gcc
 export CXX=g++
 export DEFAULT_USER=##NEWUSER##
-export BROWSER="/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome"
 
 
 # System Specifics: OS X
 if [[ "Darwin" == "`uname`" ]]; then
-    alias vim='mvim -v'
     bindkey "^[[7~" beginning-of-line
     bindkey "^[[8~" end-of-line
 
@@ -60,6 +58,14 @@ if [[ "Cygwin" == "`uname -o`" ]]; then
 
     pbcopy() { read data; echo "$data" > /dev/clipboard }
     pbpaste() { cat /dev/clipboard }
+fi
+
+
+# ====================
+# External
+# ====================
+if [ -f "$HOME/.p4creds" ]; then
+    source "$HOME/.p4creds"
 fi
 
 
@@ -303,13 +309,15 @@ alias ccp='rsync -ah --progress'
 
 # Highlight current day
 cal() {
-    /usr/bin/cal $* | grep --color -EC6 "\b$(date +%e | sed "s/ //g")"
+    /usr/bin/cal $* | grep --color -EC6 "\b$(date +%e | sed "s/ //g")\b"
 }
+
+# Easyily convert between hex and decimal
 h2d() {
-  echo "ibase=16; $@" | bc
+    echo "ibase=16; $@" | bc
 }
 d2h() {
-  echo "obase=16; $@" | bc
+    echo "obase=16; $@" | bc
 }
 
 # ====================
@@ -328,7 +336,8 @@ alias ls=' ls --color=auto'
 export ANDROID_ROOT=$HOME/android-sdk
 export ANDROID_SDK_ROOT=$ANDROID_ROOT
 export ANDROID_HOME=$ANDROID_ROOT
-export NDK_ROOT=$HOME/android-ndk-r9b
+export NDK_ROOT=$HOME/android-ndk-r10c
+export ANDROID_NDK=$NDK_ROOT
 export NDK_TOOLCHAIN_VERSION=4.9
 export NDK_CCACHE=/usr/local/bin/ccache
 export USE_CCACHE=1
