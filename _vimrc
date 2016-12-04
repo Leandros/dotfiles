@@ -59,6 +59,7 @@ endif
 Plugin 'jelera/vim-javascript-syntax'
 Plugin 'elzr/vim-json'
 Plugin 'dummyunit/vim-fastbuild'
+Plugin 'beyondmarc/hlsl.vim'
 
 " Enable if needed
 " Plugin 'leandros/hexman.vim'
@@ -137,10 +138,9 @@ set breakindent
 
 " Disable mouse
 set mouse=c
-set guioptions-=m
-set guioptions-=T
-set guioptions-=r
-set guioptions-=L
+set guioptions+=lrbmTLce
+set guioptions-=lrbmTLce
+set guioptions+=c
 
 " Improve performance
 "set ttyfast
