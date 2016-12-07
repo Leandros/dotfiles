@@ -3,8 +3,13 @@ set nocompatible
 filetype off
 
 " Vundle Stuff
-set rtp+=~/.vim/bundle/Vundle.vim
-call vundle#begin()
+if has("win32") || has("win16")
+    set rtp+=$HOME/vimfiles/bundle/Vundle.vim
+    call vundle#begin('$HOME/vimfiles/bundle/')
+else
+    set rtp+=~/.vim/bundle/Vundle.vim
+    call vundle#begin()
+endif
 
 " Set mapleader before plugin loads
 nnoremap <SPACE> <Nop>
@@ -45,7 +50,9 @@ Plugin 'Leandros/vim-grepper'
 
 " NERDTree
 Plugin 'leandros/nerdtree'
-Plugin 'Xuyuanp/nerdtree-git-plugin'
+if !has("win32") && !has("win16")
+    Plugin 'Xuyuanp/nerdtree-git-plugin'
+endif
 
 " Syntax Plugins
 Plugin 'jelera/vim-javascript-syntax'
@@ -70,7 +77,19 @@ filetype plugin indent on
 
 
 " General
-set shell=$SHELL    " Set the default shell
+set langmenu=en_US.UTF-8
+let $LANG='en_US'
+
+" Set the default shell
+if has("win32") || has("win16")
+    source $VIMRUNTIME/delmenu.vim
+    source $VIMRUNTIME/menu.vim
+    set shell=cmd.exe
+    set shellcmdflag=/C
+else
+    set shell=$SHELL
+endif
+
 set fileencoding=utf-8 " Set the encoding written to file
 set termencoding=utf-8 " Set the default encodings just in case $LANG isn't set
 set encoding=utf-8  " Set the default encodings just in case $LANG isn't set
@@ -121,10 +140,9 @@ set breakindent
 
 " Disable mouse
 set mouse=c
-set guioptions-=m
-set guioptions-=T
-set guioptions-=r
-set guioptions-=L
+set guioptions+=lrbmTLce
+set guioptions-=lrbmTLce
+set guioptions+=c
 
 " Improve performance
 "set ttyfast
