@@ -50,6 +50,7 @@ Plugin 'Leandros/vim-grepper'
 
 " NERDTree
 Plugin 'leandros/nerdtree'
+Plugin 'leandros/nerdtree-p4'
 if !has("win32") && !has("win16")
     Plugin 'Xuyuanp/nerdtree-git-plugin'
 endif
@@ -343,7 +344,7 @@ nnoremap <Leader>c :TlistToggle<CR>
 
 " ReMap NERDTree Keys.
 let g:NERDTreeMapRefresh='<C-a>'
-let g:NERDTreeMapRefreshRoot=''
+let g:NERDTreeMapRefreshRoot='<C-u>'
 let g:NERDTreeMapOpenSplit='t'
 let g:NERDTreeMapOpenVSplit='i'
 let g:NERDTreeMenuDown='n'
@@ -359,12 +360,12 @@ let g:NERDTreeMapUpdir='u'
 map <Leader>e :NERDTreeToggle<CR>
 
 " NERDTree options
+let g:NERDTreeChDirMode = 2
 let g:NERDTreeShowHidden = 1
 let g:NERDTreeQuitOnOpen = 1
 let g:NERDTreeMinimalUI = 1
 let g:NERDTreeAutoDeleteBuffer = 1
 let g:NERDTreeIgnore = ['\.meta$','^\.DS_Store$']
-
 
 " Open NERDTree when no files specified.
 autocmd StdinReadPre * let s:std_in=1
