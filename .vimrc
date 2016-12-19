@@ -529,9 +529,9 @@ let g:notes_smart_quotes = 0
 
 " LeaderF
 let g:Lf_ShortcutF = '<Leader>o'
-" let g:Lf_ShortcutB = '<Leader>z'
-nnoremap <Leader>z :LeaderfMru<CR>
+nnoremap <Leader>z :LeaderfMruCwd<CR>
 let g:Lf_ShowRelativePath = 0
+let g:Lf_WindowHeight = 0.2
 let g:Lf_WildIgnore = {
     \ 'dir': ['.svn','.git','.p4','.perforce','node_modules','temp','Temp','out','_out','_build'],
     \ 'file': ['*.sw?','~$*','*.bak','*.exe','*.o','*.so','*.py[co]','*.dll','*.meta','AssemblyU2DCSharp*']
