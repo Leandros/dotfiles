@@ -15,6 +15,12 @@ update_or_install() {
     fi
 }
 
+mv_if_exists() {
+    if [ -f "$1" ]; then
+        mv "$1" "$2"
+    fi
+}
+
 # Poor mans input parsing.
 SKIPINSTALL=0
 if [[ "$1" == "--skip-install" ]]; then
@@ -110,35 +116,35 @@ if [[ "$SKIPCOPY" -eq 0 ]]; then
 
     rm -rf $NEWHOME/.dotbackup
     mkdir -p $NEWHOME/.dotbackup
-    mv $NEWHOME/.astylerc $NEWHOME/.dotbackup/
+    mv_if_exists $NEWHOME/.astylerc $NEWHOME/.dotbackup/
     # Do not "backup" .config, or a lot of stuff might be lost
-    # mv $NEWHOME/.config $NEWHOME/.dotbackup/
-    mv $NEWHOME/.gitconfig $NEWHOME/.dotbackup/
-    mv $NEWHOME/.jsbeautifyrc $NEWHOME/.dotbackup/
-    mv $NEWHOME/.jshintrc $NEWHOME/.dotbackup/
-    mv $NEWHOME/.lessfilter $NEWHOME/.dotbackup/
-    mv $NEWHOME/.lesskey $NEWHOME/.dotbackup/
-    mv $NEWHOME/.lldbinit $NEWHOME/.dotbackup/
+    # mv_if_exists $NEWHOME/.config $NEWHOME/.dotbackup/
+    mv_if_exists $NEWHOME/.gitconfig $NEWHOME/.dotbackup/
+    mv_if_exists $NEWHOME/.jsbeautifyrc $NEWHOME/.dotbackup/
+    mv_if_exists $NEWHOME/.jshintrc $NEWHOME/.dotbackup/
+    mv_if_exists $NEWHOME/.lessfilter $NEWHOME/.dotbackup/
+    mv_if_exists $NEWHOME/.lesskey $NEWHOME/.dotbackup/
+    mv_if_exists $NEWHOME/.lldbinit $NEWHOME/.dotbackup/
     # Do not "backup" .mutt either, or mail cache is lost
-    # mv $NEWHOME/.mutt $NEWHOME/.dotbackup/
+    # mv_if_exists $NEWHOME/.mutt $NEWHOME/.dotbackup/
     # Do not "backup" .oh-my-zsh either, or the oh-my-zsh installation is lost
-    # mv $NEWHOME/.oh-my-zsh $NEWHOME/.dotbackup/
-    mv $NEWHOME/.passwords.sh $NEWHOME/.dotbackup/
-    mv $NEWHOME/.tigrc $NEWHOME/.dotbackup/
+    # mv_if_exists $NEWHOME/.oh-my-zsh $NEWHOME/.dotbackup/
+    mv_if_exists $NEWHOME/.passwords.sh $NEWHOME/.dotbackup/
+    mv_if_exists $NEWHOME/.tigrc $NEWHOME/.dotbackup/
     # do not backup .tmux, or plugins are lost
-    # mv $NEWHOME/.tmux $NEWHOME/.dotbackup/
-    mv $NEWHOME/.tmux.conf $NEWHOME/.dotbackup/
+    # mv_if_exists $NEWHOME/.tmux $NEWHOME/.dotbackup/
+    mv_if_exists $NEWHOME/.tmux.conf $NEWHOME/.dotbackup/
     # Do not "backup" .vim directory either, or all plugins have to re-installed
-    # mv $NEWHOME/.vim $NEWHOME/.dotbackup/
-    mv $NEWHOME/.vimrc $NEWHOME/.dotbackup/
-    mv $NEWHOME/.xbindkeysrc $NEWHOME/.dotbackup/
-    mv $NEWHOME/.Xdefaults $NEWHOME/.dotbackup/
-    mv $NEWHOME/.xinitrc $NEWHOME/.dotbackup/
-    mv $NEWHOME/.Xmodmap $NEWHOME/.dotbackup/
-    mv $NEWHOME/.xsession $NEWHOME/.dotbackup/
-    mv $NEWHOME/.ycm_extra_conf.py $NEWHOME/.dotbackup/
-    mv $NEWHOME/.zsh $NEWHOME/.dotbackup/
-    mv $NEWHOME/.zshrc $NEWHOME/.dotbackup/
+    # mv_if_exists $NEWHOME/.vim $NEWHOME/.dotbackup/
+    mv_if_exists $NEWHOME/.vimrc $NEWHOME/.dotbackup/
+    mv_if_exists $NEWHOME/.xbindkeysrc $NEWHOME/.dotbackup/
+    mv_if_exists $NEWHOME/.Xdefaults $NEWHOME/.dotbackup/
+    mv_if_exists $NEWHOME/.xinitrc $NEWHOME/.dotbackup/
+    mv_if_exists $NEWHOME/.Xmodmap $NEWHOME/.dotbackup/
+    mv_if_exists $NEWHOME/.xsession $NEWHOME/.dotbackup/
+    mv_if_exists $NEWHOME/.ycm_extra_conf.py $NEWHOME/.dotbackup/
+    mv_if_exists $NEWHOME/.zsh $NEWHOME/.dotbackup/
+    mv_if_exists $NEWHOME/.zshrc $NEWHOME/.dotbackup/
 
 
     # Copy all files over:
