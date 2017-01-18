@@ -117,7 +117,7 @@ source $ZSH/oh-my-zsh.sh
 # External Scripts
 # ====================
 source $ZSH/oh-my-zsh.sh
-if command -v fasd; then
+if command -v fasd > /dev/null 2>&1; then
     eval "$(fasd --init posix-alias zsh-hook zsh-ccomp zsh-wcomp)"
 fi
 
@@ -129,7 +129,7 @@ for file in $HOME/.zsh/scripts/* ; do
 done
 
 # init fasd and cache the result
-if command -v fasd; then
+if command -v fasd > /dev/null 2>&1; then
     fasd_cache="$HOME/.fasd-init-zsh"
     if [ "$(command -v fasd)" -nt "$fasd_cache" -o ! -s "$fasd_cache" ]; then
       fasd --init posix-alias zsh-hook zsh-ccomp zsh-ccomp-install >| "$fasd_cache"
