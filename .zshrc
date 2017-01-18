@@ -33,10 +33,9 @@ if [[ "Darwin" == "`uname`" ]]; then
     export GREP_OPTIONS='--color=always'
     export GREP_COLOR='1;35;40'
     source "`brew --prefix`/etc/grc.bashrc"
-fi
 
 # System Specifics: Linux
-if [[ "Linux" == "`uname`" ]]; then
+elif [[ "Linux" == "`uname`" ]]; then
     alias startx='startx -- -dpi 144'
     alias pbpaste='xclip -o'
     alias pbcopy='xclip -i'
@@ -50,10 +49,9 @@ if [[ "Linux" == "`uname`" ]]; then
     if [[ "$TERM" == "rxvt-unicode" ]]; then
         export TERM="xterm-256color"
     fi
-fi
 
 # System Specifics: cygwin
-if [[ "Cygwin" == "`uname -o`" ]]; then
+elif [[ "Cygwin" == "`uname -o`" ]]; then
     export TERM="xterm-256color"
 
     pbcopy() { read data; echo "$data" > /dev/clipboard }
@@ -119,7 +117,9 @@ source $ZSH/oh-my-zsh.sh
 # External Scripts
 # ====================
 source $ZSH/oh-my-zsh.sh
-eval "$(fasd --init posix-alias zsh-hook zsh-ccomp zsh-wcomp)"
+if command -v fasd; then
+    eval "$(fasd --init posix-alias zsh-hook zsh-ccomp zsh-wcomp)"
+fi
 
 # Glob all other scripts
 for file in $HOME/.zsh/scripts/* ; do
@@ -129,12 +129,14 @@ for file in $HOME/.zsh/scripts/* ; do
 done
 
 # init fasd and cache the result
-fasd_cache="$HOME/.fasd-init-zsh"
-if [ "$(command -v fasd)" -nt "$fasd_cache" -o ! -s "$fasd_cache" ]; then
-  fasd --init posix-alias zsh-hook zsh-ccomp zsh-ccomp-install >| "$fasd_cache"
+if command -v fasd; then
+    fasd_cache="$HOME/.fasd-init-zsh"
+    if [ "$(command -v fasd)" -nt "$fasd_cache" -o ! -s "$fasd_cache" ]; then
+      fasd --init posix-alias zsh-hook zsh-ccomp zsh-ccomp-install >| "$fasd_cache"
+    fi
+    source "$fasd_cache"
+    unset fasd_cache
 fi
-source "$fasd_cache"
-unset fasd_cache
 
 
 # ====================
@@ -376,6 +378,9 @@ PATH=$PATH:/usr/local/sh-coff/bin
 PATH=$PATH:/usr/local/m68k-elf/bin
 
 export PATH
+
+# Golang
+export GOPATH=$HOME/gopath
 
 # Start ssh-agent on startup
 eval `ssh-agent -s` > /dev/null 2>&1

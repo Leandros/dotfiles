@@ -368,8 +368,8 @@ let g:NERDTreeAutoDeleteBuffer = 1
 let g:NERDTreeIgnore = ['\.meta$','^\.DS_Store$']
 
 " Open NERDTree when no files specified.
-autocmd StdinReadPre * let s:std_in=1
-autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
+" autocmd StdinReadPre * let s:std_in=1
+" autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
 
 " Close VIM if only tab left is NERDTree
 " Nope. Closing buffers is getting harder with that.
@@ -511,6 +511,7 @@ runtime! plugin/supertab.vim
 inoremap <s-tab> <tab>
 
 " NumberToggle config
+set relativenumber
 let g:NumberToggleTrigger = "<C-o>"
 
 " Fix JSON conceal level Yggdroot/indentLine#140
