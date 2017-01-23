@@ -5,3 +5,9 @@
 id_rsa
 id_rsa*
 *id_rsa*
+
+# Ctags
+tags
+tags.temp
+tags.lock
+

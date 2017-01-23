@@ -1,0 +1,40 @@
+###############################################################################
+## GNU Readline Settings
+$include /etc/inputrc
+
+# General settings
+set bell-style none
+set show-all-if-ambiguous on
+set completion-ignore-case on
+set menu-complete-display-prefix on
+
+# Enable vi mode
+set editing-mode vi
+
+
+###############################################################################
+## Normal mode bindings
+set keymap vi-command
+
+"b": backward-char
+"s": forward-char
+"B": backward-word
+"S": forward-word
+
+"r": history-search-backward
+"n": history-search-forward
+
+TAB: menu-complete
+"\e[Z": menu-complete-backward
+
+
+###############################################################################
+## Insert mode bindings
+set keymap vi-insert
+
+"\Cr": reverse-search-history
+"\Cn": forward-search-history
+
+TAB: menu-complete
+"\e[Z": menu-complete-backward
+
