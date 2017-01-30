@@ -161,7 +161,7 @@ function print_diff() {
 
     get_diff
 
-    if [[ $(( TN + DIFF_LINES_NUMBER )) -ge $(( `tput lines` - 1 )) ]]; then
+    if [[ true ]]; then
 	echo -e "$REVERSE ${COMMITS[$CP - 1]}\n\n $DIFF" | less -r -k $HOME/.lsh_less_keys_tmp
     else
 	stop=false
