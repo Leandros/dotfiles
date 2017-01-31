@@ -320,6 +320,7 @@ nnoremap > 5<C-W>>
 " Even out splits
 nnoremap <C-y>w <C-W>=
 nnoremap <C-y>m <C-W>_
+nnoremap <C-y>t <C-W>T
 nnoremap <C-y>l :ZoomWin<CR>
 
 " Split Creating
@@ -341,6 +342,19 @@ nnoremap <Leader>d <C-]>
 nnoremap <Leader>. <C-t>
 " nnoremap <Leader>t :CtrlPTag<CR>
 nnoremap <Leader>c :TlistToggle<CR>
+
+" Tab navigation
+nnoremap <C-u>b :tabprevious<CR>
+nnoremap <C-u>s :tabnext<CR>
+nnoremap <C-u>n :tabedit<CR>
+nnoremap <C-u>c :tabclose<CR>
+nnoremap <C-u>1 1gt
+nnoremap <C-u>2 2gt
+nnoremap <C-u>3 3gt
+nnoremap <C-u>4 4gt
+nnoremap <C-u>5 5gt
+nnoremap <C-u>6 6gt
+cabbrev tabv tab sview +setlocal\ nomodifiable
 
 " ReMap NERDTree Keys.
 let g:NERDTreeMapRefresh='<C-a>'
@@ -368,8 +382,8 @@ let g:NERDTreeAutoDeleteBuffer = 1
 let g:NERDTreeIgnore = ['\.meta$','^\.DS_Store$']
 
 " Open NERDTree when no files specified.
-" autocmd StdinReadPre * let s:std_in=1
-" autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
+autocmd StdinReadPre * let s:std_in=1
+autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
 
 " Close VIM if only tab left is NERDTree
 " Nope. Closing buffers is getting harder with that.
