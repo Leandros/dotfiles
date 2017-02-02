@@ -16,6 +16,9 @@ nnoremap <SPACE> <Nop>
 let mapleader=" "
 let maplocalleader=" "
 
+" Vim Internal Plugins
+packadd matchit
+
 " Let Vundle manage itself.
 Plugin 'gmarik/Vundle.vim'
 
@@ -431,10 +434,28 @@ autocmd FileType make setlocal noexpandtab
 
 
 " Folding Config
+nnoremap z( zj
+nnoremap z) zk
 augroup vimrc
-    au BufReadPre * setlocal foldmethod=indent
-    au BufWinEnter * if &fdm == 'indent' | setlocal foldmethod=manual | endif
-    au BufReadPost * normal zR
+    autocmd!
+
+    " Set foldmethod indent AND manual
+    autocmd BufReadPre * setlocal foldmethod=indent
+    autocmd BufWinEnter * if &fdm == 'indent' | setlocal foldmethod=manual | endif
+
+    " Open all folds at startup
+    autocmd BufReadPost * normal zR
+augroup END
+
+augroup filetype_cs
+    autocmd!
+
+    " Set folding by syntax for C# (Unity) files
+    autocmd FileType cs setlocal foldmethod=syntax
+    autocmd FileType cs let b:match_words = '\s*#\s*region.*$:\s*#\s*endregion'
+
+    " Close all folds
+    autocmd BufReadPost *.cs normal zM
 augroup END
 
 " Set 80 column limit.
