@@ -444,7 +444,7 @@ augroup vimrc
     autocmd BufWinEnter * if &fdm == 'indent' | setlocal foldmethod=manual | endif
 
     " Open all folds at startup
-    autocmd BufReadPost * normal zR
+    autocmd BufRead * normal zR
 augroup END
 
 augroup filetype_cs
@@ -455,7 +455,7 @@ augroup filetype_cs
     autocmd FileType cs let b:match_words = '\s*#\s*region.*$:\s*#\s*endregion'
 
     " Close all folds
-    autocmd BufReadPost *.cs normal zM
+    autocmd BufRead *.cs normal zM
 augroup END
 
 " Set 80 column limit.

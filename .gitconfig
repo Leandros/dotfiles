@@ -1,27 +1,27 @@
 [user]
-	name = Arvid Gerstmann
-	email = dev@arvid-g.de
+    name = Arvid Gerstmann
+    email = dev@arvid-g.de
 [color]
-	ui = auto
+    ui = auto
 [review "gerrit.aokp.co"]
-	username = Leandros
-	email = dev@arvid-g.de
+    username = Leandros
+    email = dev@arvid-g.de
 [review "gerrit.sudoservers.com"]
-	username = Leandros
-	email = dev@arvid-g.de
+    username = Leandros
+    email = dev@arvid-g.de
 [credential]
-	helper = cache --timeout=3600
+    helper = cache --timeout=3600
 [alias]
     # One letter short aliases
     a = add -p
     c = commit
     f = fetch -p
-    p = push
+    p = push -u
     r = reset
 
     # Two letter short aliases
-	st = status -sb
-	co = checkout
+    st = status -sb
+    co = checkout
     df = difftool
     dc = diff --cached
     cp = cherry-pick
@@ -39,55 +39,61 @@
     sa = stash apply
     ss = stash save
 
-    # Log aliases
-    fl = log -u
-
     # Push aliases
     pa = push --all
-    po = push origin master
-    pd = push origin dev
+    po = push -u origin master
+    pd = push -u origin dev
 
     # Log aliases
-    lg = log --color --graph --date=iso --pretty=format:'%C(yellow)%h%C(reset) %C(green)%ai%x08%x08%x08%x08%x08%x08%x08%x08%x08%C(reset) %<(20)%C(blue)%an%C(reset) %C(red)%d%C(reset) %s' --abbrev-commit
+    fl = log -u
+    lg = log --color --graph --date=iso --pretty=format:'%C(yellow)%h%C(reset) %C(green)%ai%x08%x08%x08%x08%x08%x08%x08%x08%x08%C(reset) %<(25)%C(blue)%an%C(reset) %C(red)%d%C(reset) %s' --abbrev-commit
     llog = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr)%C(bold blue)<%an>%Creset' --abbrev-commit
     plog = log --graph --pretty='format:%C(red)%d%C(reset) %C(yellow)%h%C(reset) %ar %C(green)%aN%C(reset) %s'
     tlog = log --stat --color --graph --pretty=oneline --abbrev-commit --date=relative
+    blog = log --branches --not --remotes --simplify-by-decoration --decorate --oneline
 
-	standup = log --pretty=format:'%Cred%h%Creset -%Creset %s %Cgreen(%cD) %C(bold blue)<%an>%Creset' --since yesterday --author 'Leandros Linux'
-	ignored = ls-files --others -i --exclude-standard
+    standup = log --pretty=format:'%Cred%h%Creset -%Creset %s %Cgreen(%cD) %C(bold blue)<%an>%Creset' --since yesterday --author 'Leandros Linux'
+    ignored = ls-files --others -i --exclude-standard
     change = log --pretty=\"- \"%s --first-parent --color
     ours = "!f() { git co --ours $@ && git add $@; }; f"
     theirs = "!f() { git co --theirs $@ && git add $@; }; f"
     ps = "!f() { git stash -u; git pull --rebase origin master; git stash apply stash@{0}; git stash drop stash@{0}; }; f"
     rank = shortlog -sn --no-merges
     bdm = "!git branch --merged | grep -v '*' | xargs -n 1 git branch -d"
-    lazycommit = commit --allow-empty-message -am \"\"
+    lazy = commit --allow-empty-message -am \"\"
+    out = push
 [core]
-	editor = vim
-	excludesfile = ~/.gitignore_global
+    editor = vim
+    excludesfile = ~/.gitignore_global
 [filter "media"]
-	clean = git-media-clean %f
-	smudge = git-media-smudge %f
+    clean = git-media-clean %f
+    smudge = git-media-smudge %f
 [mergetool "Kaleidoscope"]
-	cmd = ksdiff --merge --output \"$MERGED\" --base \"$BASE\" -- \"$LOCAL\" --snapshot \"$REMOTE\" --snapshot
-	trustexitcode = true
+    cmd = ksdiff --merge --output \"$MERGED\" --base \"$BASE\" -- \"$LOCAL\" --snapshot \"$REMOTE\" --snapshot
+    trustexitcode = true
 [mergetool]
     prompt = false
 [merge]
-	tool = Kaleidoscope
+    tool = Kaleidoscope
 [difftool "Kaleidoscope"]
-	cmd = ksdiff --partial-changeset --relative-path \"$MERGED\" -- \"$LOCAL\" \"$REMOTE\"
+    cmd = ksdiff --partial-changeset --relative-path \"$MERGED\" -- \"$LOCAL\" \"$REMOTE\"
 [difftool]
-	prompt = false
+    prompt = false
 [diff]
-	tool = vimdiff
+    tool = vimdiff
 [github]
-	user = leandros
+    user = leandros
 [ghi]
-	token = !security find-internet-password -a leandros -s github.com -l 'ghi token' -w
+    token = !security find-internet-password -a leandros -s github.com -l 'ghi token' -w
 [pull]
-	rebase = true
+    rebase = true
 [rebase]
-	autoStash = true
+    autoStash = true
 [push]
-	default = simple
+    default = simple
+[difftool "sourcetree"]
+    cmd = opendiff \"$LOCAL\" \"$REMOTE\"
+    path =
+[mergetool "sourcetree"]
+    cmd = /Applications/SourceTree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
+    trustExitCode = true
