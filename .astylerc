@@ -16,16 +16,6 @@
 
 # Style
 #
-# bsd:
-# int main(void)
-# {
-#     if (true)
-#     {
-#         return 0;
-#     }
-# }
-#
-# kr:
 # int main(void)
 # {
 #     if (true) {
@@ -40,10 +30,6 @@
 
 # Attach brackets to extern c: `extern "C" {`
 --attach-extern-c
-
-# Attach brackets to namespaces: `namespace foo {`
---attach-namespaces
-
 
 # Indent preprocessor blocks, and defines
 --indent-preproc-block
@@ -63,34 +49,17 @@
 --pad-oper
 --pad-header
 
-# Do I like this? No, I don't.
-# Pad parens, and remove all not requested padding
-#--pad-paren-in
-#--unpad-paren
-
-
-# doesn't seem to preserve any lines, will just remove any empty lines!
-# --delete-empty-lines
-
 # Pointer alignment
 --align-pointer=name
 --align-reference=name
 
-# Break elseifs / closing brackets
-# might be useful with style=kr
-#--break-closing-brackets
-#--break-elseifs
-
-# Make sure to always add brackets to if,for,while etc statements
-# we do not want to repeat goto fail;
+# Keep one liner
 --keep-one-line-blocks
 --keep-one-line-statements
---add-one-line-brackets
 
 # Obvious 80 col length maximum
 --max-code-length=80
 --break-after-logical
-
 
 # objective-c options
 --align-method-colon
