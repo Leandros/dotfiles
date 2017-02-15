@@ -1,0 +1,38 @@
+keymap n MOVE_DOWN
+keymap r MOVE_UP
+keymap b MOVE_LEFT
+keymap s MOVE_RIGHT
+keymap B PREV_WORD
+keymap S NEXT_WORD
+
+keymap g BEGIN
+keymap G END
+
+keymap $ LINE_END
+keymap 0 LINE_BEGIN
+
+keymap / SEARCH
+keymap ? SEARCH_NEXT
+keymap - SEARCH_PREV
+
+keymap ( NEXT_PAGE
+keymap ) PREV_PAGE
+
+keymap l LIST
+
+keymap Q EXIT
+keymap q QUIT
+
+keymap z CENTER_V
+keymap Z CENTER_H
+
+keymap C-t NEW_TAB
+keymap } NEXT_TAB
+keymap { PREV_TAB
+keymap T TAB_MENU
+
+keymap C-r RELOAD
+keymap u GOTO
+
+keymap C-b BACK
+keymap C-s SELECT_MENU
