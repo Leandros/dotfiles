@@ -28,7 +28,6 @@ Plugin 'vim-airline/vim-airline'
 Plugin 'vim-airline/vim-airline-themes'
 
 " Must-Have
-Plugin 'tpope/vim-repeat'
 Plugin 'tpope/vim-commentary'
 Plugin 'ervandew/supertab'
 Plugin 'easymotion/vim-easymotion'
@@ -40,6 +39,7 @@ Plugin 'leandros/taglist.vim'
 Plugin 'vim-scripts/YankRing.vim'
 Plugin 'terryma/vim-multiple-cursors'
 Plugin 'leandros/zoomwin'
+Plugin 'yssl/QFEnter'
 
 " I hate plugin interdependencies
 Plugin 'vim-scripts/ingo-library'
@@ -49,11 +49,13 @@ Plugin 'vim-scripts/EnhancedJumps'
 Plugin 'Yggdroot/LeaderF'
 Plugin 'jeffkreeftmeijer/vim-numbertoggle'
 Plugin 'tmux-plugins/vim-tmux-focus-events'
-Plugin 'Leandros/vim-grepper'
+Plugin 'mhinz/vim-grepper'
 
 " NERDTree
 Plugin 'leandros/nerdtree'
-Plugin 'leandros/nerdtree-p4'
+if has("win32")
+    Plugin 'leandros/nerdtree-p4'
+endif
 if !has("win32") && !has("win16")
     Plugin 'Xuyuanp/nerdtree-git-plugin'
 endif
@@ -305,8 +307,8 @@ vnoremap <S-n> <C-e>
 vnoremap <S-r> <C-y>
 
 " Insert newline
-nnoremap <CR> o<Esc>
-inoremap <C-O> <Esc>o
+" nnoremap <CR> o<Esc>
+" inoremap <C-O> <Esc>o
 
 " Split switching
 nnoremap <C-n> <C-W>j
@@ -565,6 +567,8 @@ let g:notes_smart_quotes = 0
 
 " LeaderF
 let g:Lf_ShortcutF = '<Leader>o'
+nnoremap <Leader>o :LeaderfFile<CR>
+nnoremap <Leader>b :LeaderfBuffer<CR>
 nnoremap <Leader>z :LeaderfMruCwd<CR>
 let g:Lf_ShowRelativePath = 0
 let g:Lf_WindowHeight = 0.2
@@ -578,7 +582,8 @@ let g:Lf_CommandMap = {
     \ '<Up>': ['<C-R>'],
     \ '<C-C>': ['<ESC>'],
     \ '<C-X>': ['<C-I>'],
-    \ '<C-]>': ['<C-T>']
+    \ '<C-]>': ['<C-T>'],
+    \ '<C-L>': ['<C-D>']
     \ }
 
 
@@ -644,7 +649,11 @@ nnoremap <silent> <Leader>mw :call MarkWindowSwap()<CR>
 nnoremap <silent> <Leader>pw :call DoWindowSwap()<CR>
 
 " Vim Grep
-nnoremap <Leader>ag :Grepper -tool ag1<CR>
+nnoremap <Leader>ag :Grepper<CR>
+nmap gs <plug>(GrepperOperator)
+xmap gs <plug>(GrepperOperator)
+nmap g* gsiw
+xmap g* gsiw
 let g:grepper = {
     \ 'tools': ['ag1', 'git', 'grep'],
     \ 'ag1': {
@@ -665,6 +674,14 @@ augroup quickfix
     autocmd FileType qf set nobuflisted
     autocmd FileType qf nnoremap <buffer> q :cclose<CR>
 augroup END
+
+" Improve Quickfix through QFEnter
+let g:qfenter_open_map = ['<CR>']
+let g:qfenter_vopen_map = ['i']
+let g:qfenter_hopen_map = ['t']
+let g:qfenter_topen_map = ['<Tab>']
+let g:qfenter_keep_quickfixfocus = 0
+nnoremap <Leader>qf :copen<CR>
 
 " Quick if quickfix is last window
 augroup QFClose
