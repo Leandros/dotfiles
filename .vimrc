@@ -572,6 +572,10 @@ nnoremap <Leader>b :LeaderfBuffer<CR>
 nnoremap <Leader>z :LeaderfMruCwd<CR>
 let g:Lf_ShowRelativePath = 0
 let g:Lf_WindowHeight = 0.2
+let g:Lf_StlSeparator = {
+    \ 'left': '',
+    \ 'right': ''
+    \ }
 let g:Lf_WildIgnore = {
     \ 'dir': ['.svn','.git','.p4','.perforce','node_modules','temp','Temp','out','_out','_build'],
     \ 'file': ['*.sw?','~$*','*.bak','*.exe','*.o','*.so','*.py[co]','*.dll','*.meta','AssemblyU2DCSharp*']
