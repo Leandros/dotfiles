@@ -577,7 +577,7 @@ let g:Lf_StlSeparator = {
     \ 'right': ''
     \ }
 let g:Lf_WildIgnore = {
-    \ 'dir': ['.svn','.git','.p4','.perforce','node_modules','temp','Temp','out','_out','_build'],
+    \ 'dir': ['.svn','.git','.p4','.perforce','node_modules','temp','Temp','out','_out','_build','extern'],
     \ 'file': ['*.sw?','~$*','*.bak','*.exe','*.o','*.so','*.py[co]','*.dll','*.meta','AssemblyU2DCSharp*']
     \ }
 let g:Lf_CommandMap = {
