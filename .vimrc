@@ -649,8 +649,8 @@ function! DoWindowSwap()
     exe 'hide buf' markedBuf
 endfunction
 
-nnoremap <silent> <Leader>mw :call MarkWindowSwap()<CR>
-nnoremap <silent> <Leader>pw :call DoWindowSwap()<CR>
+nnoremap <silent> <Leader>m :call MarkWindowSwap()<CR>
+nnoremap <silent> <Leader>p :call DoWindowSwap()<CR>
 
 " Vim Grep
 nnoremap <Leader>ag :Grepper<CR>
