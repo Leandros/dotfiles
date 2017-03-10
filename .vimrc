@@ -39,7 +39,7 @@ Plugin 'leandros/taglist.vim'
 Plugin 'vim-scripts/YankRing.vim'
 Plugin 'terryma/vim-multiple-cursors'
 Plugin 'leandros/zoomwin'
-Plugin 'yssl/QFEnter'
+Plugin 'leandros/QFEnter'
 
 " I hate plugin interdependencies
 Plugin 'vim-scripts/ingo-library'
@@ -235,6 +235,9 @@ nnoremap U :echo " < < ===== C H E C K C A P S L O C K ===== > > "<CR>
 
 " Map redo to r instead of C-r
 nnoremap j <C-r>
+
+" Map Vim Expression valuation
+inoremap <c-a> <c-r>
 
 " Convenient pasting.
 set pastetoggle=<F2>
@@ -578,7 +581,7 @@ let g:Lf_StlSeparator = {
     \ }
 let g:Lf_WildIgnore = {
     \ 'dir': ['.svn','.git','.p4','.perforce','node_modules','temp','Temp','out','_out','_build','extern'],
-    \ 'file': ['*.sw?','~$*','*.bak','*.exe','*.o','*.so','*.py[co]','*.dll','*.meta','AssemblyU2DCSharp*']
+    \ 'file': ['*.sw?','~$*','*.bak','*.exe','*.o','*.so','*.py[co]','*.dll','*.meta','AssemblyU2DCSharp*','COMMIT_EDITMSG']
     \ }
 let g:Lf_CommandMap = {
     \ '<C-R>': ['<C-E>'],
