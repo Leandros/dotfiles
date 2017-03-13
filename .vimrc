@@ -573,6 +573,7 @@ let g:Lf_ShortcutF = '<Leader>o'
 nnoremap <Leader>o :LeaderfFile<CR>
 nnoremap <Leader>b :LeaderfBuffer<CR>
 nnoremap <Leader>z :LeaderfMruCwd<CR>
+nnoremap <Leader>f :LeaderfTag<CR>
 let g:Lf_ShowRelativePath = 0
 let g:Lf_WindowHeight = 0.2
 let g:Lf_StlSeparator = {
@@ -581,7 +582,7 @@ let g:Lf_StlSeparator = {
     \ }
 let g:Lf_WildIgnore = {
     \ 'dir': ['.svn','.git','.p4','.perforce','node_modules','temp','Temp','out','_out','_build','extern'],
-    \ 'file': ['*.sw?','~$*','*.bak','*.exe','*.o','*.so','*.py[co]','*.dll','*.meta','AssemblyU2DCSharp*','COMMIT_EDITMSG']
+    \ 'file': ['*.sw?','~$*','*.bak','*.exe','*.o','*.so','*.py[co]','*.dll','*.meta','AssemblyU2DCSharp*']
     \ }
 let g:Lf_CommandMap = {
     \ '<C-R>': ['<C-E>'],
@@ -687,7 +688,11 @@ let g:qfenter_open_map = ['<CR>']
 let g:qfenter_vopen_map = ['i']
 let g:qfenter_hopen_map = ['t']
 let g:qfenter_topen_map = ['<Tab>']
-let g:qfenter_keep_quickfixfocus = 0
+let g:qfenter_keep_quickfixfocus = {
+            \ 'open': 0,
+            \ 'cnext': 0,
+            \ 'cprev': 0,
+            \ }
 nnoremap <Leader>qf :copen<CR>
 
 " Quick if quickfix is last window
@@ -717,6 +722,9 @@ function! GenTagsAll()
 endfunction
 command! -nargs=* GenTags call GenTags()
 command! -nargs=* GenTagsAll call GenTagsAll()
+
+let g:gutentags_project_root = [ '.p4project' ]
+"let g:gutentags_ctags_exclude_wildignore = [ '*.meta' ]
 
 " TagList
 let g:Tlist_Inc_Winwidth=0
