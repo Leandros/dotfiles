@@ -374,9 +374,16 @@ let g:NERDTreeMenuUp='r'
 
 let g:NERDTreeMapChdir='C'
 let g:NERDTreeMapUpdir='u'
+" let g:NERDTreeMapActivateNode='<CR>'
 " let NERDTreeMapNextSibling='N'
 " let NERDTreeMapPrevSibling='R'
 
+" Custom bindings
+augroup nerdtreebuf
+    autocmd!
+
+    autocmd FileType nerdtree nnoremap <buffer> <CR> :call nerdtree#ui_glue#invokeKeyMap("o")<CR>
+augroup END
 
 " Open NERDTree
 map <Leader>e :NERDTreeToggle<CR>
@@ -427,9 +434,6 @@ call NERDTreeHighlightFile('Makefile', '\Makefile', '28', 'NONE', 'NONE', 'NONE'
 " JavaScript
 call NERDTreeHighlightFile('js', '\.js',            '3',  'NONE', 'NONE', 'NONE')
 
-
-" Insert new line with Shift-Enter
-nmap <S-Enter> o<Esc>
 
 " Never mess when file opened without sudo.
 cmap w!! w !sudo tee % >/dev/null
