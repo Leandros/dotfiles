@@ -382,7 +382,7 @@ let g:NERDTreeMapUpdir='u'
 augroup nerdtreebuf
     autocmd!
 
-    autocmd FileType nerdtree nnoremap <buffer> <CR> :call nerdtree#ui_glue#invokeKeyMap("o")<CR>
+    autocmd FileType nerdtree nnoremap <buffer> <silent> <CR> :call nerdtree#ui_glue#invokeKeyMap("o")<CR>
 augroup END
 
 " Open NERDTree
