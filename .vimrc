@@ -577,7 +577,8 @@ let g:Lf_ShortcutF = '<Leader>o'
 nnoremap <Leader>o :LeaderfFile<CR>
 nnoremap <Leader>b :LeaderfBuffer<CR>
 nnoremap <Leader>z :LeaderfMruCwd<CR>
-nnoremap <Leader>f :LeaderfTag<CR>
+nnoremap <Leader>f :LeaderfBufTag<CR>
+nnoremap <Leader>v :LeaderfTag<CR>
 let g:Lf_ShowRelativePath = 0
 let g:Lf_WindowHeight = 0.2
 let g:Lf_StlSeparator = {
@@ -595,6 +596,7 @@ let g:Lf_CommandMap = {
     \ '<C-C>': ['<ESC>'],
     \ '<C-X>': ['<C-I>'],
     \ '<C-]>': ['<C-T>'],
+    \ '<C-T>': ['<C-X>'],
     \ '<C-L>': ['<C-D>']
     \ }
 
