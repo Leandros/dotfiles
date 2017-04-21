@@ -786,15 +786,51 @@ nmap <Leader>w :call CloseBuffers()<CR>
 
 " Increment numbers in rows
 function! Incr()
-  let a = line('.') - line("'<")
-  let c = virtcol("'<")
-  if a > 0
-    execute 'normal! '.c.'|'.a."\<C-a>"
-  endif
-  normal `<
+    let a = line('.') - line("'<")
+    let c = virtcol("'<")
+    if a > 0
+        execute 'normal! '.c.'|'.a."\<C-a>"
+    endif
+    normal `<
 endfunction
 vnoremap <C-a> :call Incr()<CR>
 
 " Change current working directory
 nnoremap ,cd :cd %:p:h<CR>:pwd<CR>
+
+" Uncrustify command
+function! Uncrustify()
+python3 <<EOF
+import vim
+import os
+
+file_name = ".uncrustify.cfg"
+cur_dir = os.getcwd()
+
+while True:
+    file_list = os.listdir(cur_dir)
+    parent_dir = os.path.dirname(cur_dir)
+    if file_name in file_list:
+        vim.command("let sPath = '%s'" % cur_dir)
+        break
+    else:
+        if cur_dir == parent_dir:
+            vim.command("let sPath = '%s'" % "__non__")
+            break
+        else:
+            cur_dir = parent_dir
+
+EOF
+
+    if sPath ==# "__non__"
+        return 0
+    else
+        let sPath = sPath . "/.uncrustify.cfg"
+        :w
+        :silent exec "!uncrustify -c ".sPath." --replace %"
+        :e!
+        return 1
+    endif
+endfunction
+command! -nargs=* Uncrustify call Uncrustify() | execute ':redraw!'
 
