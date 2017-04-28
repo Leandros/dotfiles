@@ -1,0 +1,429 @@
+" Must-Haves.
+set nocompatible
+filetype off
+
+" Set mapleader before plugin loads
+nnoremap <SPACE> <Nop>
+let mapleader=" "
+let maplocalleader=" "
+"
+" General
+set langmenu=en_US.UTF-8
+let $LANG='en_US'
+
+" Set the default shell
+if has("win32") || has("win16")
+    source $VIMRUNTIME/delmenu.vim
+    source $VIMRUNTIME/menu.vim
+    set shell=cmd.exe
+    set shellcmdflag=/C
+else
+    set shell=$SHELL
+endif
+
+set fileencoding=utf-8 " Set the encoding written to file
+set termencoding=utf-8 " Set the default encodings just in case $LANG isn't set
+set encoding=utf-8  " Set the default encodings just in case $LANG isn't set
+set cursorline      " Hightlight current selected line.
+set ttyfast         " Set that we have a fast terminal
+set emoji           " enable emoji's on Vim8
+
+set hidden          " Hide buffer, instead of closing it.
+syntax enable
+set number          " Always show line numbers.
+set hlsearch        " Hightlight found searches.
+set incsearch       " Show matched searches as you type.
+set showmatch       " Show matching braces.
+set ignorecase      " Ignore case when searching.
+set smartcase       " Ignore case if search pattern is all lowercase, case-sensitive otherwise.
+set nowrapscan      " Do not wrap when searching
+
+set history=1000    " Larger command history.
+set undolevels=1000 " Undo ALL the changes.
+set visualbell      " Don't beep.
+set noerrorbells    " Don't beep.
+
+set nobackup        " Disable backup. set noswapfile can disable the .swp file.
+set noswapfile
+
+" Indentation is 4 spaces, and not a tab
+set tabstop=4       " A tab is 4 spaces.
+set autoindent      " Autoindent.
+set copyindent      " Copy the previous indent on autoindenting.
+set shiftwidth=4    " Number of spaces used for autoindent.
+set expandtab
+set smarttab        " Insert 'tabs' on start of line, according to shiftwidth instead of tabstop.
+
+" Set mapping and key timeouts
+set timeout
+set timeoutlen=1000 " timeout for leader key
+set ttimeoutlen=10  " timeout for esc key
+
+" Show if leader key is pressed
+set showcmd
+
+" Correct backspace
+set backspace=indent,eol,start
+
+" Improve breaks
+set showbreak=>>>
+set breakindent
+
+" Disable mouse
+set mouse=c
+set guioptions+=lrbmTLce
+set guioptions-=lrbmTLce
+set guioptions+=c
+
+" Improve performance
+"set ttyfast
+"set lazyredraw
+
+" Improve :b switch menu
+set wildchar=<Tab> wildmenu wildmode=full
+
+" Buffer switching
+nnoremap <Leader>1 :1b<CR>
+nnoremap <Leader>2 :2b<CR>
+nnoremap <Leader>3 :3b<CR>
+nnoremap <Leader>4 :4b<CR>
+nnoremap <Leader>5 :5b<CR>
+nnoremap <Leader>6 :6b<CR>
+nnoremap <Leader>7 :7b<CR>
+nnoremap <Leader>8 :8b<CR>
+nnoremap <Leader>9 :9b<CR>
+nnoremap <Leader>0 :10b<CR>
+
+" Jump to buffers with Ngb
+let c = 1
+while c <= 99
+  execute "nnoremap " . c . "gb :" . c . "b\<CR>"
+  let c += 1
+endwhile
+
+" Cygwin cursor fix.
+let &t_ti.="\e[1 q"
+let &t_SI.="\e[5 q"
+let &t_EI.="\e[1 q"
+let &t_te.="\e[0 q"
+
+" Write undo tree to a file to resume from next time the file is opened.
+if has("persistent_undo")
+  set undolevels=2000            " The number of undo items to remember
+  set undofile                   " Save undo history to files locally
+  set undodir=$HOME/.vimundo     " Set the directory of the undofile
+  if !isdirectory(expand(&undodir))
+    call mkdir(expand(&undodir), "p")
+  endif
+endif
+
+" When running as diff.
+if &diff
+  set modifiable
+  set noreadonly
+  if tabpagenr('$') == 1
+    nnoremap ZZ :wqall<cr>
+  endif
+endif
+
+" Custom Filetypes
+au BufRead,BufNewFile *.ds set filetype=rgbds
+au BufRead,BufNewFile *.fl,*.flex,*.l,*.lm setlocal ft=lex      " Flex
+au BufRead,BufNewFile *.y,*.ypp,*.ym setlocal ft=yacc           " Bison
+
+" Compile and Run code. The primitive way.
+command! -nargs=1 Silent execute ':silent !'.<q-args> | execute ':redraw!'
+function! CompileC()
+:   w
+:   exec '!clang '.shellescape('%').' -o '.shellescape('%:r').' && ./'.shellescape('%:r')
+:   exec 'Silent rm '.shellescape('%:r')
+endfunction
+function! CompileCC()
+:   w
+:   exec '!clang++ -std=c++14 '.shellescape('%').' -o '.shellescape('%:r').' && ./'.shellescape('%:r')
+:   exec 'Silent rm '.shellescape('%:r')
+endfunction
+autocmd filetype c nnoremap <F5> :call CompileC()<CR>
+autocmd filetype cpp nnoremap <F5> :call CompileCC()<CR>
+
+" C-r is mapped to move one buffer up -_-
+" autocmd filetype c nnoremap <C-r> :call CompileC()<CR>
+" autocmd filetype cpp nnoremap <C-r> :call CompileCC()<CR>
+
+" Warn about doing the wrong undo (U instead of u).
+nnoremap U :echo " < < ===== C H E C K C A P S L O C K ===== > > "<CR>
+
+" Map redo to r instead of C-r
+nnoremap j <C-r>
+
+" Map Vim Expression valuation
+inoremap <c-a> <c-r>
+
+" Convenient pasting.
+set pastetoggle=<F2>
+
+" Removed due to blocking super awesome multiline edit mode.
+" Convenient copy to clipboard.
+" vnoremap <C-c> :w !pbcopy<CR><CR>
+" noremap <C-v> :r !pbpaste<CR><CR>
+
+" Unhighlight searches
+" using <esc> for this, behaves weird
+nnoremap <C-d> :noh<return>
+
+" Reselect visual blocks after movement
+vnoremap < <gv
+vnoremap > >gv
+
+" Keep search matches in the middle of the window.
+nnoremap ? nzzzv
+nnoremap - Nzzzv
+
+" Move by words
+" nnoremap B B
+" nnoremap S W
+nnoremap <S-b> b
+nnoremap <S-s> w
+vnoremap <S-b> b
+vnoremap <S-s> w
+
+" Key map optimizations for Bone 2 Layout
+" Normal Mode remaps.
+nnoremap b <Left>
+nnoremap r <Up>
+nnoremap n <Down>
+nnoremap s <Right>
+nnoremap gn gj
+nnoremap gr gk
+
+" Visual and Select Mode remaps.
+vnoremap b <Left>
+vnoremap r <Up>
+vnoremap n <Down>
+vnoremap s <Right>
+vnoremap gn gj
+vnoremap gr gk
+
+" No clue???
+" nnoremap <C-B> <C-W><C-H>
+" nnoremap <C-N> <C-W><C-J>
+" nnoremap <C-R> <C-W><C-K>
+" nnoremap <C-S> <C-W><C-L>
+
+" Move page up / down
+"nnoremap ( <PageDown>
+"nnoremap ) <PageUp>
+"vnoremap ( <PageDown>
+"vnoremap ) <PageUp>
+
+" Move half page up / down
+nnoremap ( <C-D>
+nnoremap ) <C-U>
+vnoremap ( <C-D>
+vnoremap ) <C-U>
+
+
+" Move line up down
+nnoremap <S-n> <C-e>
+nnoremap <S-r> <C-y>
+vnoremap <S-n> <C-e>
+vnoremap <S-r> <C-y>
+
+" Insert newline
+" nnoremap <CR> o<Esc>
+" inoremap <C-O> <Esc>o
+
+" Split switching
+nnoremap <C-n> <C-W>j
+nnoremap <C-r> <C-W>k
+nnoremap <C-b> <C-W>h
+nnoremap <C-s> <C-W>l
+
+" Split resizing
+nnoremap ! 5<C-W>-
+nnoremap = 5<C-W>+
+nnoremap < 5<C-W><
+nnoremap > 5<C-W>>
+
+" Even out splits
+nnoremap <C-y>w <C-W>=
+nnoremap <C-y>m <C-W>_
+nnoremap <C-y>t <C-W>T
+nnoremap <C-y>l :ZoomWin<CR>
+
+" Split Creating
+nnoremap <C-i> :vsplit<CR>
+nnoremap <C-t> :split<CR>
+
+" Split killing
+command! Bd bp\|bd \#
+nnoremap <C-q> :BD<CR>
+nnoremap <C-w> :bd<CR>
+
+" Close / Open quickfix
+nnoremap <Leader>qq :cclose<CR>
+nnoremap <Leader>qc :cclose<CR>
+nnoremap <Leader>qo :copen<CR>
+
+" Tag navigation keys
+nnoremap <Leader>d <C-]>
+nnoremap <Leader>. <C-t>
+" nnoremap <Leader>t :CtrlPTag<CR>
+nnoremap <Leader>c :TlistToggle<CR>
+
+" Tab navigation
+nnoremap <C-u>b :tabprevious<CR>
+nnoremap <C-u>s :tabnext<CR>
+nnoremap <C-u>n :tabedit<CR>
+nnoremap <C-u>c :tabclose<CR>
+nnoremap <C-u>1 1gt
+nnoremap <C-u>2 2gt
+nnoremap <C-u>3 3gt
+nnoremap <C-u>4 4gt
+nnoremap <C-u>5 5gt
+nnoremap <C-u>6 6gt
+cabbrev tabv tab sview +setlocal\ nomodifiable
+
+" Never mess when file opened without sudo.
+cmap w!! w !sudo tee % >/dev/null
+
+" Use Tabs in Makefiles
+autocmd FileType make setlocal noexpandtab
+
+
+" Folding Config
+nnoremap z( zj
+nnoremap z) zk
+augroup vimrc
+    autocmd!
+
+    " Set foldmethod indent AND manual
+    autocmd BufReadPre * setlocal foldmethod=indent
+    autocmd BufWinEnter * if &fdm == 'indent' | setlocal foldmethod=manual | endif
+
+    " Open all folds at startup
+    autocmd BufRead * normal zR
+augroup END
+
+" Set 80 column limit.
+if exists('+colorcolumn')
+  set colorcolumn=80
+  highlight ColorColumn guibg=#004653
+
+  " except for mail
+  autocmd FileType mail set colorcolumn=72
+else
+  au BufWinEnter * let w:m2=matchadd('ErrorMsg', '\%>80v.\+', -1)
+endif
+
+" Font
+if has('gui_running')
+    set guifont=Menlo\ Patched:h11
+endif
+
+" Strip trailing whitespace
+fun! StripTrailingWhitespaces()
+    let l = line(".")
+    let c = col(".")
+    %s/\s\+$//e
+    call cursor(l, c)
+endfun
+
+autocmd BufWritePre * :call StripTrailingWhitespaces()
+
+" Minifier functions
+fun! MinifyJson()
+  %s/\ //g
+  %s/\n//g
+endfunction
+
+command! JsonMinify call MinifyJson()
+
+" Highlight whitespace
+if version >= 704 && has('patch712')
+    set listchars=tab:--,trail:~,extends:>,precedes:<,space:·
+    set nolist
+
+    " Highlight whitespace color config
+    hi Conceal ctermfg=NONE ctermbg=NONE guifg=NONE guibg=NONE
+endif
+
+" Shell command
+command! -complete=shellcmd -nargs=+ Shell call s:RunShellCommand(<q-args>)
+function! s:RunShellCommand(cmdline)
+  let expanded_cmdline = a:cmdline
+  for part in split(a:cmdline, ' ')
+     if part[0] =~ '\v[%#<]'
+        let expanded_part = fnameescape(expand(part))
+        let expanded_cmdline = substitute(expanded_cmdline, part, expanded_part, '')
+     endif
+  endfor
+  botright new
+  setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap
+  execute '$read !'. expanded_cmdline
+  execute 1 'delete _'
+  setlocal nomodifiable
+  1
+endfunction
+
+" Buffer Moving
+function! MarkWindowSwap()
+    let g:markedWinNum = winnr()
+endfunction
+
+function! DoWindowSwap()
+    "Mark destination
+    let curNum = winnr()
+    let curBuf = bufnr( "%" )
+    exe g:markedWinNum . "wincmd w"
+    "Switch to source and shuffle dest->source
+    let markedBuf = bufnr( "%" )
+    "Hide and open so that we aren't prompted and keep history
+    exe 'hide buf' curBuf
+    "Switch to dest and shuffle source->dest
+    exe curNum . "wincmd w"
+    "Hide and open so that we aren't prompted and keep history
+    exe 'hide buf' markedBuf
+endfunction
+
+nnoremap <silent> <Leader>m :call MarkWindowSwap()<CR>
+nnoremap <silent> <Leader>p :call DoWindowSwap()<CR>
+
+" Fix Grepper's quickfix window
+augroup quickfix
+    autocmd!
+    autocmd FileType qf setlocal nowrap
+    autocmd FileType qf setlocal norelativenumber
+    autocmd FileType qf setlocal nonumber
+    autocmd FileType qf set nobuflisted
+    autocmd FileType qf nnoremap <buffer> q :cclose<CR>
+augroup END
+
+" Quick if quickfix is last window
+augroup QFClose
+    autocmd!
+    autocmd WinEnter * if winnr('$') == 1 && getbufvar(winbufnr(winnr()), "&buftype") == "quickfix" | q | endif
+augroup END
+
+" Close all buffers
+function! CloseBuffers()
+    let curr = bufnr("%")
+    let last = bufnr("$")
+    if curr > 1     | silent! execute "1,".(curr-1)."bd"        | endif
+    if curr < last  | silent! execute (curr+1).",".last."bd"    | endif
+endfunction
+nmap <Leader>w :call CloseBuffers()<CR>
+
+" Increment numbers in rows
+function! Incr()
+    let a = line('.') - line("'<")
+    let c = virtcol("'<")
+    if a > 0
+        execute 'normal! '.c.'|'.a."\<C-a>"
+    endif
+    normal `<
+endfunction
+vnoremap <C-a> :call Incr()<CR>
+
+" Change current working directory
+nnoremap ,cd :cd %:p:h<CR>:pwd<CR>
