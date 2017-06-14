@@ -51,6 +51,7 @@
     plog = log --graph --pretty='format:%C(red)%d%C(reset) %C(yellow)%h%C(reset) %ar %C(green)%aN%C(reset) %s'
     tlog = log --stat --color --graph --pretty=oneline --abbrev-commit --date=relative
     blog = log --branches --not --remotes --simplify-by-decoration --decorate --oneline
+    date-log = log --color --all --date-order --date=iso --abbrev-commit --pretty=format:'%C(yellow)%h%C(reset) %C(green)%ai%x08%x08%x08%x08%x08%x08%x08%x08%x08%C(reset) %<(25)%C(blue)%an%C(reset) %C(red)%d%C(reset) %s'
 
     standup = log --pretty=format:'%Cred%h%Creset -%Creset %s %Cgreen(%cD) %C(bold blue)<%an>%Creset' --since yesterday --author 'Leandros Linux'
     ignored = ls-files --others -i --exclude-standard
@@ -98,3 +99,8 @@
 [mergetool "sourcetree"]
     cmd = /Applications/SourceTree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
     trustExitCode = true
+[filter "lfs"]
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+	clean = git-lfs clean -- %f
