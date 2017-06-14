@@ -102,6 +102,7 @@ set encoding=utf-8  " Set the default encodings just in case $LANG isn't set
 set cursorline      " Hightlight current selected line.
 set ttyfast         " Set that we have a fast terminal
 set emoji           " enable emoji's on Vim8
+set clipboard+=unnamed " enabled system clipboard
 
 set hidden          " Hide buffer, instead of closing it.
 syntax enable
@@ -594,8 +595,8 @@ let g:Lf_CommandMap = {
     \ '<Down>': ['<C-N>'],
     \ '<Up>': ['<C-R>'],
     \ '<C-C>': ['<ESC>'],
-    \ '<C-X>': ['<C-I>'],
-    \ '<C-]>': ['<C-T>'],
+    \ '<C-X>': ['<C-T>'],
+    \ '<C-]>': ['<C-I>'],
     \ '<C-T>': ['<C-X>'],
     \ '<C-L>': ['<C-D>']
     \ }
