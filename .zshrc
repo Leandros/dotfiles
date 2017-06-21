@@ -16,6 +16,13 @@ export CC=gcc
 export CXX=g++
 export DEFAULT_USER=##NEWUSER##
 
+PROFILE_STARTUP=false
+if [[ "$PROFILE_STARTUP" == true ]]; then
+    # http://zsh.sourceforge.net/Doc/Release/Prompt-Expansion.html
+    PS4=$'%D{%M%S%.} %N:%i> '
+    exec 3>&2 2>$HOME/tmp/startlog.$$
+    setopt xtrace prompt_subst
+fi
 
 # System Specifics: OS X
 if [[ "Darwin" == "`uname`" ]]; then
@@ -109,9 +116,8 @@ POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(vi_mode status)
 POWERLEVEL9K_TIME_BACKGROUND="blue" # cyan / 013 are also good looking
 POWERLEVEL9K_PROMPT_ON_NEWLINE=true
 
-plugins=(git git-flow git-extras repo wd brew sublime osx pod terminalapp colored-man cp colorize history)
+plugins=(git git-flow git-extras repo wd brew osx colored-man cp colorize history)
 
-source $ZSH/oh-my-zsh.sh
 
 # ====================
 # External Scripts
@@ -384,4 +390,10 @@ export GOPATH=$HOME/gopath
 
 # Start ssh-agent on startup
 eval `ssh-agent -s` > /dev/null 2>&1
+
+# Entirety of my startup file... then
+if [[ "$PROFILE_STARTUP" == true ]]; then
+    unsetopt xtrace
+    exec 2>&3 3>&-
+fi
 
