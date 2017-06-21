@@ -111,7 +111,7 @@ export UPDATE_ZSH_DAYS=7
 
 # powerlevel9k theme
 ZSH_THEME="powerlevel9k/powerlevel9k"
-POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(time context dir vcs)
+POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(context dir vcs)
 POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(vi_mode status)
 POWERLEVEL9K_TIME_BACKGROUND="blue" # cyan / 013 are also good looking
 POWERLEVEL9K_PROMPT_ON_NEWLINE=true
