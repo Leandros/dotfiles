@@ -25,6 +25,9 @@ export LANG=en_US.UTF-8
 export LESS="-R"
 export LESSOPEN="|~/.lessfilter %s"
 
+# Enable advanced globbing
+shopt -s globstar
+
 # Disable stupid old stuff (enables c-s)
 stty -ixon
 
