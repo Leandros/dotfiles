@@ -16,6 +16,11 @@ export CC=gcc
 export CXX=g++
 export DEFAULT_USER=##NEWUSER##
 
+# Set Locale. LOL
+export LC_ALL=en_US.UTF-8
+export LANG=en_US.UTF-8
+
+
 PROFILE_STARTUP=false
 if [[ "$PROFILE_STARTUP" == true ]]; then
     # http://zsh.sourceforge.net/Doc/Release/Prompt-Expansion.html
@@ -154,10 +159,6 @@ export LESSOPEN="|~/.lessfilter %s"
 # ====================
 # General Config
 # ====================
-# Set Locale. LOL
-export LC_ALL=en_US.UTF-8
-export LANG=en_US.UTF-8
-
 # Make use of the dirstack
 _mydirstack() {
   local -a lines list
