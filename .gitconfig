@@ -3,12 +3,6 @@
     email = dev@arvid-g.de
 [color]
     ui = auto
-[review "gerrit.aokp.co"]
-    username = Leandros
-    email = dev@arvid-g.de
-[review "gerrit.sudoservers.com"]
-    username = Leandros
-    email = dev@arvid-g.de
 [credential]
     helper = cache --timeout=3600
 [alias]
@@ -38,6 +32,12 @@
     sl = stash list
     sa = stash apply
     ss = stash save
+    stsh = stash --keep-index
+    staash = stash --include-untracked
+    staaash = stash --all
+
+    # Serve
+    serve = daemon --reuseaddr --verbose --base-path=. --export-all ./.git
 
     # Push aliases
     pa = push --all
@@ -46,7 +46,7 @@
 
     # Log aliases
     fl = log -u
-    lg = log --color --graph --date=iso --pretty=format:'%C(yellow)%h%C(reset) %C(green)%ai%x08%x08%x08%x08%x08%x08%x08%x08%x08%C(reset) %<(25)%C(blue)%an%C(reset) %C(red)%d%C(reset) %s' --abbrev-commit
+    lg = log --color --graph --date=iso --pretty=format:'%C(yellow)%h%C(reset) %C(green)%ai%x08%x08%x08%x08%x08%x08%x08%x08%x08%C(reset) %<(20)%C(blue)%an%C(reset) %C(red)%d%C(reset) %s' --abbrev-commit
     llog = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr)%C(bold blue)<%an>%Creset' --abbrev-commit
     plog = log --graph --pretty='format:%C(red)%d%C(reset) %C(yellow)%h%C(reset) %ar %C(green)%aN%C(reset) %s'
     tlog = log --stat --color --graph --pretty=oneline --abbrev-commit --date=relative
