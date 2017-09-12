@@ -47,7 +47,7 @@ Plugin 'vim-scripts/EnhancedJumps'
 
 " General
 Plugin 'Yggdroot/LeaderF'
-Plugin 'jeffkreeftmeijer/vim-numbertoggle'
+Plugin 'leandros/vim-numbertoggle'
 Plugin 'tmux-plugins/vim-tmux-focus-events'
 Plugin 'mhinz/vim-grepper'
 
@@ -395,6 +395,7 @@ let g:NERDTreeShowHidden = 1
 let g:NERDTreeQuitOnOpen = 1
 let g:NERDTreeMinimalUI = 1
 let g:NERDTreeAutoDeleteBuffer = 1
+let g:NERDTreeShowLineNumbers = 0
 let g:NERDTreeIgnore = ['\.meta$','^\.DS_Store$']
 
 " Open NERDTree when no files specified.
@@ -402,8 +403,14 @@ autocmd StdinReadPre * let s:std_in=1
 autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
 
 " Close VIM if only tab left is NERDTree
-" Nope. Closing buffers is getting harder with that.
 autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
+
+" Hide Line Numbers
+augroup nerdtree
+    autocmd!
+    autocmd FileType nerdtree set nonumber
+    autocmd FileType nerdtree set norelativenumber
+augroup END
 
 " NERDTress File highlighting
 function! NERDTreeHighlightFile(extension, regex, fg, bg, guifg, guibg)
