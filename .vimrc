@@ -50,6 +50,7 @@ Plugin 'Yggdroot/LeaderF'
 Plugin 'leandros/vim-numbertoggle'
 Plugin 'tmux-plugins/vim-tmux-focus-events'
 Plugin 'mhinz/vim-grepper'
+Plugin 'thirtythreeforty/lessspace.vim'
 
 " NERDTree
 Plugin 'leandros/nerdtree'
@@ -528,7 +529,7 @@ fun! StripTrailingWhitespaces()
     call cursor(l, c)
 endfun
 
-autocmd BufWritePre * :call StripTrailingWhitespaces()
+command! Whitespace call StripTrailingWhitespaces()
 
 " Minifier functions
 fun! MinifyJson()
