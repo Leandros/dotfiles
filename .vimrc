@@ -47,7 +47,7 @@ Plugin 'vim-scripts/EnhancedJumps'
 
 " General
 Plugin 'Yggdroot/LeaderF'
-Plugin 'leandros/vim-numbertoggle'
+Plugin 'jeffkreeftmeijer/vim-numbertoggle'
 Plugin 'tmux-plugins/vim-tmux-focus-events'
 Plugin 'mhinz/vim-grepper'
 Plugin 'thirtythreeforty/lessspace.vim'
@@ -495,7 +495,8 @@ let g:airline#extensions#whitespace#mixed_indent_algo = 0
 
 " Setup Airline font
 if has('gui_running')
-    set guifont=Menlo\ Patched:h11
+    set guifont=Input:h9:w4.5
+    set lsp=-2
 endif
 let g:airline_powerline_fonts = 1
 
