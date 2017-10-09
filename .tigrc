@@ -16,8 +16,17 @@ bind generic a view-refs
 # Amend last commit
 bind status + !git commit --amend
 
+# Copy commit ID to clipboard
+bind generic 9 !@sh -c "echo -n %(commit) | pbcopy"
+
+# Show history of currently selected file
+bind generic H !tig log %(file)
+
 # Disable the default mapping for running git-gc
 bind generic G none
+bind generic G move-last-line
+bind generic g none
+bind generic gg move-first-line
 
 # Save the current commit as patch
 bind main S !git format-patch -1 %(commit)
