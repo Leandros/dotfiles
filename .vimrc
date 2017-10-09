@@ -383,7 +383,6 @@ let g:NERDTreeMapUpdir='u'
 " Custom bindings
 augroup nerdtreebuf
     autocmd!
-
     autocmd FileType nerdtree nnoremap <buffer> <silent> <CR> :call nerdtree#ui_glue#invokeKeyMap("o")<CR>
 augroup END
 
@@ -530,7 +529,7 @@ fun! StripTrailingWhitespaces()
     call cursor(l, c)
 endfun
 
-command! Whitespace call StripTrailingWhitespaces()
+command! StripWhitespace call StripTrailingWhitespaces()
 
 " Minifier functions
 fun! MinifyJson()
