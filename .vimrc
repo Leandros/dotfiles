@@ -40,6 +40,7 @@ Plugin 'vim-scripts/YankRing.vim'
 Plugin 'terryma/vim-multiple-cursors'
 Plugin 'leandros/zoomwin'
 Plugin 'leandros/QFEnter'
+Plugin 'Valloric/YouCompleteMe'
 
 " I hate plugin interdependencies
 Plugin 'vim-scripts/ingo-library'
@@ -563,6 +564,11 @@ let g:SuperTabCrMapping = 1
 runtime! plugin/supertab.vim
 inoremap <s-tab> <tab>
 
+" YouCompleteMe
+let g:ycm_key_list_select_completion  = ['<TAB>', '<C-n>', '<Down>']
+let g:ycm_key_list_previous_completion  = ['<S-TAB>', '<C-r>', '<Up>']
+let g:ycm_key_invoke_completion = '<C-Space>'
+
 " NumberToggle config
 set relativenumber
 let g:NumberToggleTrigger = "<C-o>"
@@ -595,8 +601,8 @@ let g:Lf_StlSeparator = {
     \ 'right': ''
     \ }
 let g:Lf_WildIgnore = {
-    \ 'dir': ['.svn','.git','.p4','.perforce','node_modules','temp','Temp','out','_out','_build','extern'],
-    \ 'file': ['*.sw?','~$*','*.bak','*.exe','*.o','*.so','*.py[co]','*.dll','*.meta','AssemblyU2DCSharp*']
+    \ 'dir': ['.svn','.git','.p4','.perforce','.plastic','node_modules','temp','Temp','out','_out','_build'],
+    \ 'file': ['*.sw?','~$*','*.bak','*.exe','*.o','*.so','*.pyco','*.dll','*.meta','AssemblyU2DCSharp*']
     \ }
 let g:Lf_CommandMap = {
     \ '<C-R>': ['<C-E>'],
@@ -738,7 +744,7 @@ endfunction
 command! -nargs=* GenTags call GenTags()
 command! -nargs=* GenTagsAll call GenTagsAll()
 
-let g:gutentags_project_root = [ '.p4project' ]
+let g:gutentags_project_root = [ '.git', '.p4project', '.plastic' ]
 "let g:gutentags_ctags_exclude_wildignore = [ '*.meta' ]
 
 " TagList
