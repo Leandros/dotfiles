@@ -567,7 +567,25 @@ inoremap <s-tab> <tab>
 " YouCompleteMe
 let g:ycm_key_list_select_completion  = ['<TAB>', '<C-n>', '<Down>']
 let g:ycm_key_list_previous_completion  = ['<S-TAB>', '<C-r>', '<Up>']
+let g:ycm_key_list_stop_completion = ['<Enter>']
 let g:ycm_key_invoke_completion = '<C-Space>'
+let g:ycm_add_preview_to_completeopt = 0
+let g:ycm_error_symbol = 'E>'
+let g:ycm_warning_symbol = 'W>'
+let g:ycm_complete_in_comments = 1
+let g:ycm_min_num_of_chars_for_completion = 3
+let g:ycm_echo_current_diagnostic = 0
+set completeopt-=preview
+"
+" vim-multiple-cursors Setup {{{
+function! Multiple_cursors_before()
+    call youcompleteme#DisableCursorMovedAutocommands()
+endfunction
+
+function! Multiple_cursors_after()
+    call youcompleteme#EnableCursorMovedAutocommands()
+endfunction
+" }}}
 
 " NumberToggle config
 set relativenumber
