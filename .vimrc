@@ -4,11 +4,9 @@ filetype off
 
 " Vundle Stuff
 if has("win32") || has("win16")
-    set rtp+=$HOME/vimfiles/bundle/Vundle.vim
-    call vundle#begin('$HOME/vimfiles/bundle/')
+    call plug#begin('$HOME/vimfiles/bundle/')
 else
-    set rtp+=~/.vim/bundle/Vundle.vim
-    call vundle#begin()
+    call plug#begin('~/.vim/bundle')
 endif
 
 " Set mapleader before plugin loads
@@ -19,68 +17,59 @@ let maplocalleader=" "
 " Vim Internal Plugins
 packadd matchit
 
-" Let Vundle manage itself.
-Plugin 'gmarik/Vundle.vim'
-
 " Visual Plugins
-Plugin 'altercation/vim-colors-solarized'
-Plugin 'vim-airline/vim-airline'
-Plugin 'vim-airline/vim-airline-themes'
+Plug 'altercation/vim-colors-solarized'
+Plug 'vim-airline/vim-airline'
+Plug 'vim-airline/vim-airline-themes'
 
 " Must-Have
-Plugin 'tpope/vim-commentary'
-Plugin 'ervandew/supertab'
-Plugin 'easymotion/vim-easymotion'
-Plugin 'Chiel92/vim-autoformat'
-Plugin 'leandros/vim-bufkill'
-Plugin 'Konfekt/FastFold'
-Plugin 'ludovicchabant/vim-gutentags'
-Plugin 'leandros/taglist.vim'
-Plugin 'vim-scripts/YankRing.vim'
-Plugin 'terryma/vim-multiple-cursors'
-Plugin 'leandros/zoomwin'
-Plugin 'leandros/QFEnter'
-Plugin 'Valloric/YouCompleteMe'
+Plug 'tpope/vim-commentary'
+Plug 'easymotion/vim-easymotion'
+Plug 'Chiel92/vim-autoformat'
+Plug 'leandros/vim-bufkill'
+Plug 'Konfekt/FastFold'
+Plug 'ludovicchabant/vim-gutentags'
+Plug 'leandros/taglist.vim'
+Plug 'vim-scripts/YankRing.vim'
+Plug 'terryma/vim-multiple-cursors'
+Plug 'leandros/zoomwin'
+Plug 'leandros/QFEnter'
+Plug 'ervandew/supertab'
+Plug 'Valloric/YouCompleteMe', { 'for': ['cpp', 'c', 'python'] }
 
 " I hate plugin interdependencies
-Plugin 'vim-scripts/ingo-library'
-Plugin 'vim-scripts/EnhancedJumps'
+Plug 'vim-scripts/ingo-library'
+Plug 'vim-scripts/EnhancedJumps'
 
 " General
-Plugin 'Yggdroot/LeaderF'
-Plugin 'jeffkreeftmeijer/vim-numbertoggle'
-Plugin 'tmux-plugins/vim-tmux-focus-events'
-Plugin 'mhinz/vim-grepper'
-Plugin 'thirtythreeforty/lessspace.vim'
+Plug 'Yggdroot/LeaderF'
+Plug 'jeffkreeftmeijer/vim-numbertoggle'
+Plug 'tmux-plugins/vim-tmux-focus-events'
+Plug 'mhinz/vim-grepper'
+Plug 'thirtythreeforty/lessspace.vim'
 
 " NERDTree
-Plugin 'leandros/nerdtree'
+Plug 'leandros/nerdtree'
 if has("win32")
-    Plugin 'leandros/nerdtree-p4'
+    Plug 'leandros/nerdtree-p4'
 endif
 if !has("win32") && !has("win16")
-    Plugin 'Xuyuanp/nerdtree-git-plugin'
+    Plug 'Xuyuanp/nerdtree-git-plugin'
 endif
 
 " Syntax Plugins
-Plugin 'jelera/vim-javascript-syntax'
-Plugin 'elzr/vim-json'
-Plugin 'dummyunit/vim-fastbuild'
-Plugin 'leandros/hlsl.vim'
-
-" Disabled Syntaxes
-" Plugin 'chrisbra/csv.vim'
-
-" Enable if needed
-" Plugin 'leandros/hexman.vim'
+Plug 'jelera/vim-javascript-syntax'
+Plug 'elzr/vim-json'
+Plug 'dummyunit/vim-fastbuild'
+Plug 'leandros/hlsl.vim'
 
 " Lua Plugins. Disable until I work on Lua projects again.
-" Plugin 'xolox/vim-misc'
-" Plugin 'xolox/vim-notes'
-" Plugin 'xolox/vim-lua-ftplugin'
+" Plug 'xolox/vim-misc'
+" Plug 'xolox/vim-notes'
+" Plug 'xolox/vim-lua-ftplugin'
 
 
-call vundle#end()
+call plug#end()
 filetype plugin indent on
 
 
@@ -532,6 +521,20 @@ endfun
 
 command! StripWhitespace call StripTrailingWhitespaces()
 
+" Profiling
+fun! ProfileStart()
+:   profile start profile.log
+:   profile func *
+:   profile file *
+endfun
+command! ProfileStart call ProfileStart()
+
+fun! ProfileEnd()
+:   profile pause
+:   noautocmd qall!
+endfun
+command! ProfileEnd call ProfileEnd()
+
 " Minifier functions
 fun! MinifyJson()
   %s/\ //g
@@ -573,7 +576,7 @@ let g:ycm_add_preview_to_completeopt = 0
 let g:ycm_error_symbol = 'E>'
 let g:ycm_warning_symbol = 'W>'
 let g:ycm_complete_in_comments = 1
-let g:ycm_min_num_of_chars_for_completion = 3
+let g:ycm_min_num_of_chars_for_completion = 2
 let g:ycm_echo_current_diagnostic = 0
 set completeopt-=preview
 "
