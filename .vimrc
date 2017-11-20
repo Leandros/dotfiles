@@ -47,6 +47,7 @@ Plug 'jeffkreeftmeijer/vim-numbertoggle'
 Plug 'tmux-plugins/vim-tmux-focus-events'
 Plug 'mhinz/vim-grepper'
 Plug 'thirtythreeforty/lessspace.vim'
+Plug 'junegunn/vim-easy-align'
 
 " NERDTree
 Plug 'leandros/nerdtree'
@@ -478,6 +479,9 @@ endif
 
 " Airline Settings
 set laststatus=2
+let g:airline_highlighting_cache = 1
+let g:airline_inactive_collapse = 1
+let g:airline_extensions = ['whitespace']
 let g:airline#extensions#tabline#enabled = 1
 let g:airline#extensions#tabline#buffer_nr_show = 1
 let g:airline#extensions#whitespace#mixed_indent_algo = 0
@@ -581,13 +585,17 @@ let g:ycm_echo_current_diagnostic = 0
 set completeopt-=preview
 "
 " vim-multiple-cursors Setup {{{
-function! Multiple_cursors_before()
-    call youcompleteme#DisableCursorMovedAutocommands()
-endfunction
+" function! Multiple_cursors_before()
+"     if &ft =~ '\(cpp\|c\|python\)'
+"         call youcompleteme#DisableCursorMovedAutocommands()
+"     endif
+" endfunction
 
-function! Multiple_cursors_after()
-    call youcompleteme#EnableCursorMovedAutocommands()
-endfunction
+" function! Multiple_cursors_after()
+"     if &ft =~ '\(cpp\|c\|python\)'
+"         call youcompleteme#EnableCursorMovedAutocommands()
+"     endif
+" endfunction
 " }}}
 
 " NumberToggle config
@@ -810,6 +818,10 @@ let g:multi_cursor_quit_key='<Esc>'
 let g:multi_cursor_start_key='<C-g>'
 nnoremap <silent> <C-j> :MultipleCursorsFind <C-R>/<CR>
 vnoremap <silent> <C-j> :MultipleCursorsFind <C-R>/<CR>
+
+" Vim Easy Align
+xmap ga <Plug>(EasyAlign)
+nmap ga <Plug>(EasyAlign)
 
 " Close all buffers
 function! CloseBuffers()
