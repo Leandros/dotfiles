@@ -35,7 +35,7 @@ Plug 'terryma/vim-multiple-cursors'
 Plug 'leandros/zoomwin'
 Plug 'leandros/QFEnter'
 Plug 'ervandew/supertab'
-Plug 'Valloric/YouCompleteMe', { 'for': ['cpp', 'c', 'python'] }
+"Plug 'Valloric/YouCompleteMe', { 'for': ['cpp', 'c', 'python'] }
 
 " I hate plugin interdependencies
 Plug 'vim-scripts/ingo-library'
@@ -63,6 +63,8 @@ Plug 'jelera/vim-javascript-syntax'
 Plug 'elzr/vim-json'
 Plug 'dummyunit/vim-fastbuild'
 Plug 'leandros/hlsl.vim'
+Plug 'wlangstroth/vim-racket'
+Plug 'luochen1990/rainbow', { 'for': ['scheme', 'lisp', 'racket'] }
 
 " Lua Plugins. Disable until I work on Lua projects again.
 " Plug 'xolox/vim-misc'
@@ -822,6 +824,31 @@ vnoremap <silent> <C-j> :MultipleCursorsFind <C-R>/<CR>
 " Vim Easy Align
 xmap ga <Plug>(EasyAlign)
 nmap ga <Plug>(EasyAlign)
+
+" Rainbow
+let g:rainbow_active = 1
+let g:rainbow_conf = {
+\   'guifgs': ['firebrick', 'seagreen3', 'darkorange3', 'yellow', 'magenta1'],
+\	'ctermfgs': ['lightblue', 'lightyellow', 'lightcyan', 'lightmagenta'],
+\	'operators': '_,_',
+\	'parentheses': ['start=/(/ end=/)/ fold', 'start=/\[/ end=/\]/ fold', 'start=/{/ end=/}/ fold'],
+\	'separately': {
+\		'*': {},
+\		'tex': {
+\			'parentheses': ['start=/(/ end=/)/', 'start=/\[/ end=/\]/'],
+\		},
+\		'lisp': {
+\			'guifgs': ['royalblue3', 'darkorange3', 'seagreen3', 'firebrick', 'darkorchid3'],
+\		},
+\		'vim': {
+\			'parentheses': ['start=/(/ end=/)/', 'start=/\[/ end=/\]/', 'start=/{/ end=/}/ fold', 'start=/(/ end=/)/ containedin=vimFuncBody', 'start=/\[/ end=/\]/ containedin=vimFuncBody', 'start=/{/ end=/}/ fold containedin=vimFuncBody'],
+\		},
+\		'html': {
+\			'parentheses': ['start=/\v\<((area|base|br|col|embed|hr|img|input|keygen|link|menuitem|meta|param|source|track|wbr)[ >])@!\z([-_:a-zA-Z0-9]+)(\s+[-_:a-zA-Z0-9]+(\=("[^"]*"|'."'".'[^'."'".']*'."'".'|[^ '."'".'"><=`]*))?)*\>/ end=#</\z1># fold'],
+\		},
+\		'css': 0,
+\	}
+\}
 
 " Close all buffers
 function! CloseBuffers()
