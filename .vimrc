@@ -829,7 +829,7 @@ nmap ga <Plug>(EasyAlign)
 let g:rainbow_active = 1
 let g:rainbow_conf = {
 \   'guifgs': ['firebrick', 'seagreen3', 'darkorange3', 'yellow', 'magenta1'],
-\	'ctermfgs': ['lightblue', 'lightyellow', 'lightcyan', 'lightmagenta'],
+\	'ctermfgs': [9, 2, 4, 3, 5],
 \	'operators': '_,_',
 \	'parentheses': ['start=/(/ end=/)/ fold', 'start=/\[/ end=/\]/ fold', 'start=/{/ end=/}/ fold'],
 \	'separately': {
