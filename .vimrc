@@ -51,9 +51,6 @@ Plug 'junegunn/vim-easy-align'
 
 " NERDTree
 Plug 'leandros/nerdtree'
-if has("win32")
-    Plug 'leandros/nerdtree-p4'
-endif
 if !has("win32") && !has("win16")
     Plug 'Xuyuanp/nerdtree-git-plugin'
 endif
