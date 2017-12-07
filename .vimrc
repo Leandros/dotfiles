@@ -16,7 +16,7 @@ let maplocalleader=" "
 
 " Python3
 if has("win64") || has("win32")
-    set pythonthreedll="C:\Python36\python36.dll"
+    " set pythonthreedll="C:\Python36\python36.dll"
 endif
 
 " Optional plugins
@@ -529,24 +529,24 @@ endif
 if has_key(g:plugs, 'vim-uncrustify')
     function! GetUncrustifyCfg()
 python3 <<EOF
-    import vim
-    import os
+import vim
+import os
 
-    file_name = ".uncrustify.cfg"
-    cur_dir = os.getcwd()
+file_name = ".uncrustify.cfg"
+cur_dir = os.getcwd()
 
-    while True:
-        file_list = os.listdir(cur_dir)
-        parent_dir = os.path.dirname(cur_dir)
-        if file_name in file_list:
-            vim.command("let sUncPath = '%s'" % cur_dir)
+while True:
+    file_list = os.listdir(cur_dir)
+    parent_dir = os.path.dirname(cur_dir)
+    if file_name in file_list:
+        vim.command("let sUncPath = '%s'" % cur_dir)
+        break
+    else:
+        if cur_dir == parent_dir:
+            vim.command("let sUncPath = '%s'" % "__non__")
             break
         else:
-            if cur_dir == parent_dir:
-                vim.command("let sUncPath = '%s'" % "__non__")
-                break
-            else:
-                cur_dir = parent_dir
+            cur_dir = parent_dir
 
 EOF
 
@@ -558,13 +558,14 @@ EOF
         endif
     endfunction
 
-    function! UncrustifyWrapper(lang)
+    function! UncrustifyWrapper(language)
         call GetUncrustifyCfg()
-        return call Uncrustify(lang)
+        call Uncrustify('cpp')
     endfunction
-    function! RangeUncrustifyWrapper(lang)
+    function! RangeUncrustifyWrapper(language) range
         call GetUncrustifyCfg()
-        return call RangeUncrustify(lang)
+        " call RangeUncrustify('cpp')
+        return call('Uncrustify2', extend([a:language], [a:firstline, a:lastline]))
     endfunction
 
     autocmd FileType c noremap <buffer> <c-f> :call UncrustifyWrapper('c')<CR>
