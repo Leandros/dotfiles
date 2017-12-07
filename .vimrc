@@ -14,6 +14,14 @@ nnoremap <SPACE> <Nop>
 let mapleader=" "
 let maplocalleader=" "
 
+" Python3
+if has("win64") || has("win32")
+    set pythonthreedll="C:\Python36\python36.dll"
+endif
+
+" Optional plugins
+let ycm_enabled = 0
+
 " Vim Internal Plugins
 packadd matchit
 
@@ -25,7 +33,8 @@ Plug 'vim-airline/vim-airline-themes'
 " Must-Have
 Plug 'tpope/vim-commentary'
 Plug 'easymotion/vim-easymotion'
-Plug 'Chiel92/vim-autoformat'
+Plug 'Chiel92/vim-autoformat', { 'for': ['js', 'objc'] }
+Plug 'cofyc/vim-uncrustify', { 'for': ['cpp', 'c'] }
 Plug 'leandros/vim-bufkill'
 Plug 'Konfekt/FastFold'
 Plug 'ludovicchabant/vim-gutentags'
@@ -35,7 +44,9 @@ Plug 'terryma/vim-multiple-cursors'
 Plug 'leandros/zoomwin'
 Plug 'leandros/QFEnter'
 Plug 'ervandew/supertab'
-"Plug 'Valloric/YouCompleteMe', { 'for': ['cpp', 'c', 'python'] }
+if ycm_enabled
+    Plug 'Valloric/YouCompleteMe', { 'for': ['cpp', 'c', 'python'] }
+endif
 
 " I hate plugin interdependencies
 Plug 'vim-scripts/ingo-library'
@@ -487,8 +498,8 @@ let g:airline#extensions#whitespace#mixed_indent_algo = 0
 
 " Setup Airline font
 if has('gui_running')
-    set guifont=Input:h9:w4.5
-    set lsp=-2
+    set guifont=Input:h9
+    set lsp=0
 endif
 let g:airline_powerline_fonts = 1
 
@@ -507,11 +518,60 @@ let g:EasyMotion_startofline = 0 " keep cursor column when JK motion
 let g:ag_working_path_mode="r"
 
 " vim-autoformat Settings.
-noremap <C-f> :Autoformat<CR>
-let g:formatdef_astyle_objc = 'astyle --mode=c'
-let g:formatters_objc = ['astyle_objc']
-let g:formatdef_jsbeautify = 'js-beautify -f -'
-let g:formatters_javascript = ['jsbeautify']
+if has_key(g:plugs, 'vim-autoformat')
+    noremap <C-f> :Autoformat<CR>
+    let g:formatdef_astyle_objc = '"astyle --mode=c"'
+    let g:formatdef_jsbeautify = '"js-beautify -f -"'
+    let g:formatters_objc = ['astyle_objc']
+    let g:formatters_javascript = ['jsbeautify']
+endif
+
+if has_key(g:plugs, 'vim-uncrustify')
+    function! GetUncrustifyCfg()
+python3 <<EOF
+    import vim
+    import os
+
+    file_name = ".uncrustify.cfg"
+    cur_dir = os.getcwd()
+
+    while True:
+        file_list = os.listdir(cur_dir)
+        parent_dir = os.path.dirname(cur_dir)
+        if file_name in file_list:
+            vim.command("let sUncPath = '%s'" % cur_dir)
+            break
+        else:
+            if cur_dir == parent_dir:
+                vim.command("let sUncPath = '%s'" % "__non__")
+                break
+            else:
+                cur_dir = parent_dir
+
+EOF
+
+        if sUncPath ==# "__non__"
+            return 0
+        else
+            let g:uncrustify_cfg_file_path = sUncPath . "/.uncrustify.cfg"
+            return 1
+        endif
+    endfunction
+
+    function! UncrustifyWrapper(lang)
+        call GetUncrustifyCfg()
+        return call Uncrustify(lang)
+    endfunction
+    function! RangeUncrustifyWrapper(lang)
+        call GetUncrustifyCfg()
+        return call RangeUncrustify(lang)
+    endfunction
+
+    autocmd FileType c noremap <buffer> <c-f> :call UncrustifyWrapper('c')<CR>
+    autocmd FileType c vnoremap <buffer> <c-f> :call RangeUncrustifyWrapper('c')<CR>
+    autocmd FileType cpp noremap <buffer> <c-f> :call UncrustifyWrapper('cpp')<CR>
+    autocmd FileType cpp vnoremap <buffer> <c-f> :call RangeUncrustifyWrapper('cpp')<CR>
+endif
 
 
 " Strip trailing whitespace
@@ -571,18 +631,20 @@ runtime! plugin/supertab.vim
 inoremap <s-tab> <tab>
 
 " YouCompleteMe
-let g:ycm_key_list_select_completion  = ['<TAB>', '<C-n>', '<Down>']
-let g:ycm_key_list_previous_completion  = ['<S-TAB>', '<C-r>', '<Up>']
-let g:ycm_key_list_stop_completion = ['<Enter>']
-let g:ycm_key_invoke_completion = '<C-Space>'
-let g:ycm_add_preview_to_completeopt = 0
-let g:ycm_error_symbol = 'E>'
-let g:ycm_warning_symbol = 'W>'
-let g:ycm_complete_in_comments = 1
-let g:ycm_min_num_of_chars_for_completion = 2
-let g:ycm_echo_current_diagnostic = 0
-set completeopt-=preview
-"
+if ycm_enabled
+    let g:ycm_key_list_select_completion  = ['<TAB>', '<C-n>', '<Down>']
+    let g:ycm_key_list_previous_completion  = ['<S-TAB>', '<C-r>', '<Up>']
+    let g:ycm_key_list_stop_completion = ['<Enter>']
+    let g:ycm_key_invoke_completion = '<C-Space>'
+    let g:ycm_add_preview_to_completeopt = 0
+    let g:ycm_error_symbol = 'E>'
+    let g:ycm_warning_symbol = 'W>'
+    let g:ycm_complete_in_comments = 1
+    let g:ycm_min_num_of_chars_for_completion = 2
+    let g:ycm_echo_current_diagnostic = 0
+    set completeopt-=preview
+endif
+
 " vim-multiple-cursors Setup {{{
 " function! Multiple_cursors_before()
 "     if &ft =~ '\(cpp\|c\|python\)'
@@ -826,25 +888,25 @@ nmap ga <Plug>(EasyAlign)
 let g:rainbow_active = 1
 let g:rainbow_conf = {
 \   'guifgs': ['firebrick', 'seagreen3', 'darkorange3', 'yellow', 'magenta1'],
-\	'ctermfgs': [9, 2, 4, 3, 5],
-\	'operators': '_,_',
-\	'parentheses': ['start=/(/ end=/)/ fold', 'start=/\[/ end=/\]/ fold', 'start=/{/ end=/}/ fold'],
-\	'separately': {
-\		'*': {},
-\		'tex': {
-\			'parentheses': ['start=/(/ end=/)/', 'start=/\[/ end=/\]/'],
-\		},
-\		'lisp': {
-\			'guifgs': ['royalblue3', 'darkorange3', 'seagreen3', 'firebrick', 'darkorchid3'],
-\		},
-\		'vim': {
-\			'parentheses': ['start=/(/ end=/)/', 'start=/\[/ end=/\]/', 'start=/{/ end=/}/ fold', 'start=/(/ end=/)/ containedin=vimFuncBody', 'start=/\[/ end=/\]/ containedin=vimFuncBody', 'start=/{/ end=/}/ fold containedin=vimFuncBody'],
-\		},
-\		'html': {
-\			'parentheses': ['start=/\v\<((area|base|br|col|embed|hr|img|input|keygen|link|menuitem|meta|param|source|track|wbr)[ >])@!\z([-_:a-zA-Z0-9]+)(\s+[-_:a-zA-Z0-9]+(\=("[^"]*"|'."'".'[^'."'".']*'."'".'|[^ '."'".'"><=`]*))?)*\>/ end=#</\z1># fold'],
-\		},
-\		'css': 0,
-\	}
+\   'ctermfgs': [9, 2, 4, 3, 5],
+\   'operators': '_,_',
+\   'parentheses': ['start=/(/ end=/)/ fold', 'start=/\[/ end=/\]/ fold', 'start=/{/ end=/}/ fold'],
+\   'separately': {
+\       '*': {},
+\       'tex': {
+\           'parentheses': ['start=/(/ end=/)/', 'start=/\[/ end=/\]/'],
+\       },
+\       'lisp': {
+\           'guifgs': ['royalblue3', 'darkorange3', 'seagreen3', 'firebrick', 'darkorchid3'],
+\       },
+\       'vim': {
+\           'parentheses': ['start=/(/ end=/)/', 'start=/\[/ end=/\]/', 'start=/{/ end=/}/ fold', 'start=/(/ end=/)/ containedin=vimFuncBody', 'start=/\[/ end=/\]/ containedin=vimFuncBody', 'start=/{/ end=/}/ fold containedin=vimFuncBody'],
+\       },
+\       'html': {
+\           'parentheses': ['start=/\v\<((area|base|br|col|embed|hr|img|input|keygen|link|menuitem|meta|param|source|track|wbr)[ >])@!\z([-_:a-zA-Z0-9]+)(\s+[-_:a-zA-Z0-9]+(\=("[^"]*"|'."'".'[^'."'".']*'."'".'|[^ '."'".'"><=`]*))?)*\>/ end=#</\z1># fold'],
+\       },
+\       'css': 0,
+\   }
 \}
 
 " Close all buffers
@@ -871,38 +933,38 @@ vnoremap <C-a> :call Incr()<CR>
 nnoremap ,cd :cd %:p:h<CR>:pwd<CR>
 
 " Uncrustify command
-function! Uncrustify()
-python3 <<EOF
-import vim
-import os
+" function! Uncrustify()
+" python3 <<EOF
+" import vim
+" import os
 
-file_name = ".uncrustify.cfg"
-cur_dir = os.getcwd()
+" file_name = ".uncrustify.cfg"
+" cur_dir = os.getcwd()
 
-while True:
-    file_list = os.listdir(cur_dir)
-    parent_dir = os.path.dirname(cur_dir)
-    if file_name in file_list:
-        vim.command("let sPath = '%s'" % cur_dir)
-        break
-    else:
-        if cur_dir == parent_dir:
-            vim.command("let sPath = '%s'" % "__non__")
-            break
-        else:
-            cur_dir = parent_dir
+" while True:
+"     file_list = os.listdir(cur_dir)
+"     parent_dir = os.path.dirname(cur_dir)
+"     if file_name in file_list:
+"         vim.command("let sPath = '%s'" % cur_dir)
+"         break
+"     else:
+"         if cur_dir == parent_dir:
+"             vim.command("let sPath = '%s'" % "__non__")
+"             break
+"         else:
+"             cur_dir = parent_dir
 
-EOF
+" EOF
 
-    if sPath ==# "__non__"
-        return 0
-    else
-        let sPath = sPath . "/.uncrustify.cfg"
-        :w
-        :silent exec "!uncrustify -c ".sPath." --replace %"
-        :e!
-        return 1
-    endif
-endfunction
-command! -nargs=* Uncrustify call Uncrustify() | execute ':redraw!'
+"     if sPath ==# "__non__"
+"         return 0
+"     else
+"         let sPath = sPath . "/.uncrustify.cfg"
+"         :w
+"         :silent exec "!uncrustify -c ".sPath." --replace %"
+"         :e!
+"         return 1
+"     endif
+" endfunction
+" command! -nargs=* Uncrustify call Uncrustify() | execute ':redraw!'
 
