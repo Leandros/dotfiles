@@ -14,11 +14,6 @@ nnoremap <SPACE> <Nop>
 let mapleader=" "
 let maplocalleader=" "
 
-" Python3
-if has("win64") || has("win32")
-    " set pythonthreedll="C:\Python36\python36.dll"
-endif
-
 " Optional plugins
 let ycm_enabled = 0
 
@@ -500,6 +495,9 @@ let g:airline#extensions#whitespace#mixed_indent_algo = 0
 if has('gui_running')
     set guifont=Input:h9
     set lsp=0
+    " HighDPI
+    " set guifont=Input:h9:w4.5
+    " set lsp=-2
 endif
 let g:airline_powerline_fonts = 1
 
