@@ -498,11 +498,11 @@ let g:airline#extensions#whitespace#mixed_indent_algo = 0
 
 " Setup Airline font
 if has('gui_running')
-    " set guifont=Input:h9
-    " set lsp=0
+    set guifont=Input:h9
+    set lsp=0
     " HighDPI
-    set guifont=Input:h9:w4.5
-    set lsp=-2
+    " set guifont=Input:h9:w4.5
+    " set lsp=-2
 endif
 let g:airline_powerline_fonts = 1
 
