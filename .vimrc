@@ -68,6 +68,7 @@ Plug 'dummyunit/vim-fastbuild'
 Plug 'leandros/hlsl.vim'
 Plug 'wlangstroth/vim-racket'
 Plug 'luochen1990/rainbow', { 'for': ['scheme', 'lisp', 'racket'] }
+Plug 'leandros/vim-gn'
 
 " Lua Plugins. Disable until I work on Lua projects again.
 " Plug 'xolox/vim-misc'
@@ -445,6 +446,10 @@ cmap w!! w !sudo tee % >/dev/null
 " Use Tabs in Makefiles
 autocmd FileType make setlocal noexpandtab
 
+" Use two spaces in gn files
+autocmd FileType gn setlocal tabstop=2
+autocmd FileType gn setlocal shiftwidth=2
+
 
 " Folding Config
 nnoremap z( zj
@@ -493,11 +498,11 @@ let g:airline#extensions#whitespace#mixed_indent_algo = 0
 
 " Setup Airline font
 if has('gui_running')
-    set guifont=Input:h9
-    set lsp=0
+    " set guifont=Input:h9
+    " set lsp=0
     " HighDPI
-    " set guifont=Input:h9:w4.5
-    " set lsp=-2
+    set guifont=Input:h9:w4.5
+    set lsp=-2
 endif
 let g:airline_powerline_fonts = 1
 
