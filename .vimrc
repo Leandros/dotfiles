@@ -16,14 +16,23 @@ let maplocalleader=" "
 
 " Optional plugins
 let ycm_enabled = 0
+let lightline_enabled = 1
+let airline_enabled = 0
 
 " Vim Internal Plugins
-packadd matchit
+if !has('nvim')
+    packadd matchit
+endif
 
 " Visual Plugins
 Plug 'altercation/vim-colors-solarized'
-Plug 'vim-airline/vim-airline'
-Plug 'vim-airline/vim-airline-themes'
+if lightline_enabled
+    Plug 'itchyny/lightline.vim'
+endif
+if airline_enabled
+    Plug 'vim-airline/vim-airline'
+    Plug 'vim-airline/vim-airline-themes'
+endif
 
 " Must-Have
 Plug 'tpope/vim-commentary'
@@ -148,6 +157,12 @@ set mouse=c
 set guioptions+=lrbmTLce
 set guioptions-=lrbmTLce
 set guioptions+=c
+
+" Improve performance of matchparen plugin
+" This is DISABLING it!
+" let g:loaded_matchparen = 1
+let g:matchparen_timeout = 2
+let g:matchparen_insert_timeout = 2
 
 " Improve performance
 "set ttyfast
@@ -487,24 +502,35 @@ else
   au BufWinEnter * let w:m2=matchadd('ErrorMsg', '\%>80v.\+', -1)
 endif
 
-" Airline Settings
-set laststatus=2
-let g:airline_highlighting_cache = 1
-let g:airline_inactive_collapse = 1
-let g:airline_extensions = ['whitespace']
-let g:airline#extensions#tabline#enabled = 1
-let g:airline#extensions#tabline#buffer_nr_show = 1
-let g:airline#extensions#whitespace#mixed_indent_algo = 0
-
-" Setup Airline font
+" Setup GUI font
 if has('gui_running')
+    set t_Co=256
     set guifont=Input:h9
     set lsp=0
     " HighDPI
     " set guifont=Input:h9:w4.5
     " set lsp=-2
 endif
-let g:airline_powerline_fonts = 1
+
+" Statusline
+set laststatus=2
+
+if lightline_enabled
+    " Lightline settings
+    let g:lightline = {
+        \ 'colorscheme': 'solarized',
+        \ }
+endif
+if airline_enabled
+    " Airline Settings
+    let g:airline_highlighting_cache = 1
+    let g:airline_inactive_collapse = 1
+    let g:airline_extensions = []
+    let g:airline#extensions#tabline#enabled = 1
+    let g:airline#extensions#tabline#buffer_nr_show = 1
+    let g:airline#extensions#whitespace#mixed_indent_algo = 0
+    let g:airline_powerline_fonts = 1
+endif
 
 " Easy Motion Settings
 map <Leader> <Plug>(easymotion-prefix)
