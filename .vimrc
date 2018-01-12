@@ -519,6 +519,9 @@ if lightline_enabled
     " Lightline settings
     let g:lightline = {
         \ 'colorscheme': 'solarized',
+        \ 'active': {
+        \   'left': [ [ 'mode', 'paste' ], [ 'readonly', 'relativepath', 'modified' ] ],
+        \ },
         \ }
 endif
 if airline_enabled
