@@ -43,7 +43,7 @@ Plug 'leandros/vim-bufkill'
 Plug 'Konfekt/FastFold'
 Plug 'ludovicchabant/vim-gutentags'
 Plug 'leandros/taglist.vim'
-Plug 'vim-scripts/YankRing.vim'
+Plug 'leandros/YankRing.vim'
 Plug 'terryma/vim-multiple-cursors'
 Plug 'leandros/zoomwin'
 Plug 'leandros/QFEnter'
@@ -675,19 +675,18 @@ if ycm_enabled
     set completeopt-=preview
 endif
 
-" vim-multiple-cursors Setup {{{
-" function! Multiple_cursors_before()
-"     if &ft =~ '\(cpp\|c\|python\)'
-"         call youcompleteme#DisableCursorMovedAutocommands()
-"     endif
-" endfunction
-
-" function! Multiple_cursors_after()
-"     if &ft =~ '\(cpp\|c\|python\)'
-"         call youcompleteme#EnableCursorMovedAutocommands()
-"     endif
-" endfunction
-" }}}
+function! Multiple_cursors_before()
+    let g:yankring_record_enabled = 0
+    " if &ft =~ '\(cpp\|c\|python\)'
+    "     call youcompleteme#DisableCursorMovedAutocommands()
+    " endif
+endfunction
+function! Multiple_cursors_after()
+    let g:yankring_record_enabled = 1
+    " if &ft =~ '\(cpp\|c\|python\)'
+    "     call youcompleteme#EnableCursorMovedAutocommands()
+    " endif
+endfunction
 
 " NumberToggle config
 set relativenumber
