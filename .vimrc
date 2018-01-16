@@ -546,9 +546,6 @@ nmap e <Plug>(easymotion-s2)
 let g:EasyMotion_smartcase = 1
 let g:EasyMotion_startofline = 0 " keep cursor column when JK motion
 
-" ag.vim Settings.
-let g:ag_working_path_mode="r"
-
 " vim-autoformat Settings.
 if has_key(g:plugs, 'vim-autoformat')
     noremap <C-f> :Autoformat<CR>
@@ -802,20 +799,27 @@ nnoremap <silent> <Leader>p :call DoWindowSwap()<CR>
 
 " Vim Grep
 nnoremap <Leader>ag :Grepper<CR>
-nmap gs <plug>(GrepperOperator)
-xmap gs <plug>(GrepperOperator)
+nmap gt <plug>(GrepperOperator)
+xmap gt <plug>(GrepperOperator)
 nmap g* gsiw
 xmap g* gsiw
 let g:grepper = {
-    \ 'tools': ['ag1', 'git', 'grep'],
-    \ 'ag1': {
-    \   'grepprg': 'ag --vimgrep "$*"',
-    \   'grepformat': '%f:%l:%c:%m,%f:%l:%m',
-    \   'escape': '\^$.*+?()[]%# ',
-    \ },
+    \ 'tools': ['rg', 'ag', 'git', 'grep'],
     \ 'open': 1,
     \ 'jump': 0,
     \ }
+" let g:grepper = {
+"     \ 'tools': ['ripgrep', 'ag1', 'git', 'grep'],
+"     \ 'ripgrep': {
+"     \   'grepprg': 'rg --vimgrep "$*"',
+"     \ 'ag1': {
+"     \   'grepprg': 'ag --vimgrep "$*"',
+"     \   'grepformat': '%f:%l:%c:%m,%f:%l:%m',
+"     \   'escape': '\^$.*+?()[]%# ',
+"     \ },
+"     \ 'open': 1,
+"     \ 'jump': 0,
+"     \ }
 
 " Fix Grepper's quickfix window
 augroup quickfix
