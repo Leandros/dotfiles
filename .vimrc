@@ -145,6 +145,9 @@ set ttimeoutlen=10  " timeout for esc key
 " Show if leader key is pressed
 set showcmd
 
+" Set the working directory to the file you're working on
+" set autochdir
+
 " Correct backspace
 set backspace=indent,eol,start
 
@@ -708,7 +711,7 @@ let g:notes_smart_quotes = 0
 
 " LeaderF
 let g:Lf_ShortcutF = '<Leader>o'
-nnoremap <Leader>o :LeaderfFile<CR>
+nnoremap <Leader>o :LeaderfFile $PWD<CR>
 nnoremap <Leader>b :LeaderfBuffer<CR>
 nnoremap <Leader>z :LeaderfMruCwd<CR>
 nnoremap <Leader>f :LeaderfBufTag<CR>
