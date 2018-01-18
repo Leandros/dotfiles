@@ -65,7 +65,9 @@ Plug 'thirtythreeforty/lessspace.vim'
 Plug 'junegunn/vim-easy-align'
 
 " NERDTree
-Plug 'leandros/nerdtree'
+" I don't know the reason anymore, why I used my own NERDTree fork.
+" Plug 'leandros/nerdtree'
+Plug 'scrooloose/nerdtree'
 if !has("win32") && !has("win16")
     Plug 'Xuyuanp/nerdtree-git-plugin'
 endif
@@ -524,6 +526,9 @@ if lightline_enabled
         \ 'colorscheme': 'solarized',
         \ 'active': {
         \   'left': [ [ 'mode', 'paste' ], [ 'readonly', 'relativepath', 'modified' ] ],
+        \ },
+        \ 'inactive': {
+        \   'left': [ [ ], [ 'relativepath' ] ],
         \ },
         \ }
 endif
