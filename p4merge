@@ -1,0 +1,21 @@
+#!/bin/bash
+# chmod +x and copy to C:\Program Files (x86)\Git\bin
+# then
+# git config --global merge.tool p4merge
+# git config --global mergetool.keepTemporaries false
+# git config --global mergetool.prompt false
+
+if [ -n "$GIT_DIR" ]; then
+  if $(git submodule | grep -q $2); then
+    tmp=$TMP/$2/$sha && mkdir -p $TMP/$2 && trap 'rm -rf $tmp' EXIT HUP INT QUIT TERM
+    sha=$(cd $2 > /dev/null && git rev-parse HEAD)
+    echo "Subproject commit $sha" > $tmp
+    set -- $1 $tmp
+  fi
+fi
+
+NULL=$TMP/$$.NULL
+for arg; do [[ $arg = /dev/null ]] && arg=$NULL && echo "" >"$arg"; args+=("$arg"); done;
+
+/c/Program\ Files/Perforce/p4merge "${args[@]}"
+[[ -f $NULL ]] && rm $NULL

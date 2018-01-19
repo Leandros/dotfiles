@@ -66,23 +66,31 @@
 [core]
     editor = vim
     excludesfile = ~/.gitignore_global
-[filter "media"]
-    clean = git-media-clean %f
-    smudge = git-media-smudge %f
 [mergetool "Kaleidoscope"]
     cmd = ksdiff --merge --output \"$MERGED\" --base \"$BASE\" -- \"$LOCAL\" --snapshot \"$REMOTE\" --snapshot
     trustexitcode = true
-[mergetool]
-    prompt = false
-[merge]
-    tool = Kaleidoscope
-    conflictstyle = diff3
 [difftool "Kaleidoscope"]
     cmd = ksdiff --partial-changeset --relative-path \"$MERGED\" -- \"$LOCAL\" \"$REMOTE\"
+[mergetool "sourcetree"]
+    cmd = /Applications/SourceTree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
+    trustExitCode = true
+[difftool "sourcetree"]
+    cmd = opendiff \"$LOCAL\" \"$REMOTE\"
+    path =
+[mergetool "p4merge"]
+    cmd = p4merge
+[difftool "p4merge"]
+    cmd = \"C:/Perforce/p4merge.exe\" -db \"$LOCAL\" \"$REMOTE\"
+[mergetool]
+    prompt = false
+    keepTemporaries = false
+[merge]
+    tool = p4merge
+    conflictstyle = diff3
 [difftool]
     prompt = false
 [diff]
-    tool = vimdiff
+    tool = p4merge
 [github]
     user = leandros
 [ghi]
@@ -93,14 +101,11 @@
     autoStash = true
 [push]
     default = simple
-[difftool "sourcetree"]
-    cmd = opendiff \"$LOCAL\" \"$REMOTE\"
-    path =
-[mergetool "sourcetree"]
-    cmd = /Applications/SourceTree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
-    trustExitCode = true
 [filter "lfs"]
 	smudge = git-lfs smudge -- %f
 	process = git-lfs filter-process
 	required = true
 	clean = git-lfs clean -- %f
+[filter "media"]
+    clean = git-media-clean %f
+    smudge = git-media-smudge %f
