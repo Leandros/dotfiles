@@ -25,7 +25,12 @@ if !has('nvim')
 endif
 
 " Visual Plugins
-Plug 'altercation/vim-colors-solarized'
+if has('nvim')
+    Plug 'frankier/neovim-colors-solarized-truecolor-only'
+    Plug 'equalsraf/neovim-gui-shim'
+else
+    Plug 'altercation/vim-colors-solarized'
+endif
 if lightline_enabled
     Plug 'itchyny/lightline.vim'
 endif
@@ -147,9 +152,6 @@ set ttimeoutlen=10  " timeout for esc key
 " Show if leader key is pressed
 set showcmd
 
-" Set the working directory to the file you're working on
-" set autochdir
-
 " Correct backspace
 set backspace=indent,eol,start
 
@@ -221,6 +223,9 @@ if &diff
 endif
 
 " Theme
+if has('nvim')
+    set termguicolors
+endif
 set background=dark
 colorscheme solarized
 
@@ -509,12 +514,17 @@ endif
 
 " Setup GUI font
 if has('gui_running')
-    set t_Co=256
-    set guifont=Input:h9
-    set lsp=0
-    " HighDPI
-    " set guifont=Input:h9:w4.5
-    " set lsp=-2
+    if has('nvim')
+        " Done in ginit.vim
+        " has('gui_running') is always false.
+    else
+        set t_Co=256
+        " set guifont=Input:h9
+        " set lsp=0
+        " HighDPI
+        set guifont=Input:h9:w4.5
+        set lsp=-2
+    endif
 endif
 
 " Statusline
@@ -746,7 +756,6 @@ let g:Lf_CommandMap = {
     \ }
 let g:Lf_RootMarkers = ['.git', '.hg', '.svn', '.depotroot', '.projroot', '.p4', '.perforce', '.plastic']
 
-
 " Shell command
 command! -complete=shellcmd -nargs=+ Shell call s:RunShellCommand(<q-args>)
 function! s:RunShellCommand(cmdline)
@@ -810,8 +819,8 @@ nnoremap <silent> <Leader>p :call DoWindowSwap()<CR>
 
 " Vim Grep
 nnoremap <Leader>ag :Grepper<CR>
-nmap gt <plug>(GrepperOperator)
-xmap gt <plug>(GrepperOperator)
+nmap gs <plug>(GrepperOperator)
+xmap gs <plug>(GrepperOperator)
 nmap g* gsiw
 xmap g* gsiw
 let g:grepper = {
@@ -819,18 +828,6 @@ let g:grepper = {
     \ 'open': 1,
     \ 'jump': 0,
     \ }
-" let g:grepper = {
-"     \ 'tools': ['ripgrep', 'ag1', 'git', 'grep'],
-"     \ 'ripgrep': {
-"     \   'grepprg': 'rg --vimgrep "$*"',
-"     \ 'ag1': {
-"     \   'grepprg': 'ag --vimgrep "$*"',
-"     \   'grepformat': '%f:%l:%c:%m,%f:%l:%m',
-"     \   'escape': '\^$.*+?()[]%# ',
-"     \ },
-"     \ 'open': 1,
-"     \ 'jump': 0,
-"     \ }
 
 " Fix Grepper's quickfix window
 augroup quickfix
