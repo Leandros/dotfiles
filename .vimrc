@@ -143,6 +143,7 @@ set copyindent      " Copy the previous indent on autoindenting.
 set shiftwidth=4    " Number of spaces used for autoindent.
 set expandtab
 set smarttab        " Insert 'tabs' on start of line, according to shiftwidth instead of tabstop.
+set scrolloff=3     " 3 lines of buffer above and below the cursor
 
 " Set mapping and key timeouts
 set timeout
