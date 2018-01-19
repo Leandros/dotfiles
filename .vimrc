@@ -836,6 +836,7 @@ augroup quickfix
     autocmd FileType qf setlocal nowrap
     autocmd FileType qf setlocal norelativenumber
     autocmd FileType qf setlocal nonumber
+    autocmd FileType qf setlocal scrolloff=0
     autocmd FileType qf set nobuflisted
     autocmd FileType qf nnoremap <buffer> q :cclose<CR>
 augroup END
@@ -974,6 +975,12 @@ function! Incr()
     normal `<
 endfunction
 vnoremap <C-a> :call Incr()<CR>
+
+" Invoke p4
+command -nargs=+ P4 :cexpr system('p4 <args> '.expand('%:p')) | e! | copen
+
+" General run command
+command -nargs=+ Run :cexpr system('<args>') | copen
 
 " Change current working directory
 nnoremap ,cd :cd %:p:h<CR>:pwd<CR>
