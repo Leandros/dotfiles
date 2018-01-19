@@ -38,7 +38,7 @@ endif
 Plug 'tpope/vim-commentary'
 Plug 'easymotion/vim-easymotion'
 Plug 'Chiel92/vim-autoformat', { 'for': ['js', 'objc'] }
-Plug 'cofyc/vim-uncrustify', { 'for': ['cpp', 'c'] }
+Plug 'cofyc/vim-uncrustify', { 'for': ['cpp', 'c', 'cs'] }
 Plug 'leandros/vim-bufkill'
 Plug 'Konfekt/FastFold'
 Plug 'ludovicchabant/vim-gutentags'
@@ -65,9 +65,9 @@ Plug 'thirtythreeforty/lessspace.vim'
 Plug 'junegunn/vim-easy-align'
 
 " NERDTree
+" Plug 'scrooloose/nerdtree'
 " I don't know the reason anymore, why I used my own NERDTree fork.
-" Plug 'leandros/nerdtree'
-Plug 'scrooloose/nerdtree'
+Plug 'leandros/nerdtree'
 if !has("win32") && !has("win16")
     Plug 'Xuyuanp/nerdtree-git-plugin'
 endif
@@ -721,7 +721,9 @@ nnoremap <Leader>b :LeaderfBuffer<CR>
 nnoremap <Leader>z :LeaderfMruCwd<CR>
 nnoremap <Leader>f :LeaderfBufTag<CR>
 nnoremap <Leader>v :LeaderfTag<CR>
-let g:Lf_ShowRelativePath = 0
+let g:Lf_UseVersionControlTool = 0
+let g:Lf_ShowRelativePath = 1
+let g:Lf_PreviewCode = 0
 let g:Lf_WindowHeight = 0.2
 let g:Lf_StlSeparator = {
     \ 'left': '',
@@ -729,7 +731,7 @@ let g:Lf_StlSeparator = {
     \ }
 let g:Lf_WildIgnore = {
     \ 'dir': ['.svn','.git','.p4','.perforce','.plastic','node_modules','temp','Temp','out','_out','_build'],
-    \ 'file': ['*.sw?','~$*','*.bak','*.exe','*.o','*.so','*.pyco','*.dll','*.meta','AssemblyU2DCSharp*']
+    \ 'file': ['*.sw?','~$*','*.bak','*.exe','*.o','*.so','*.pyco','*.dll','*.meta','AssemblyU2DCSharp*','*.a','*.lib']
     \ }
 let g:Lf_CommandMap = {
     \ '<C-R>': ['<C-E>'],
@@ -742,6 +744,7 @@ let g:Lf_CommandMap = {
     \ '<C-L>': ['<C-D>'],
     \ '<F5>': ['<C-Z>']
     \ }
+let g:Lf_RootMarkers = ['.git', '.hg', '.svn', '.depotroot', '.projroot', '.p4', '.perforce', '.plastic']
 
 
 " Shell command
