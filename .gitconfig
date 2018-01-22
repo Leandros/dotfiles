@@ -68,7 +68,7 @@
     excludesfile = ~/.gitignore_global
 [mergetool "Kaleidoscope"]
     cmd = ksdiff --merge --output \"$MERGED\" --base \"$BASE\" -- \"$LOCAL\" --snapshot \"$REMOTE\" --snapshot
-    trustexitcode = true
+    trustExitCode = true
 [difftool "Kaleidoscope"]
     cmd = ksdiff --partial-changeset --relative-path \"$MERGED\" -- \"$LOCAL\" \"$REMOTE\"
 [mergetool "sourcetree"]
@@ -78,14 +78,23 @@
     cmd = opendiff \"$LOCAL\" \"$REMOTE\"
     path =
 [mergetool "p4merge"]
-    cmd = p4merge
+    cmd = \"C:/Perforce/p4merge.exe\" -db \"$BASE\" \"$LOCAL\" \"$REMOTE\" \"$MERGED\"
 [difftool "p4merge"]
     cmd = \"C:/Perforce/p4merge.exe\" -db \"$LOCAL\" \"$REMOTE\"
+[mergetool "bc"]
+    path = "C:/Program Files/Beyond Compare 4/bcomp.exe"
+[difftool "bc"]
+    path = "C:/Program Files/Beyond Compare 4/bcomp.exe"
+[mergetool "diffmerge"]
+    cmd = \"C:/Program Files/SourceGear/Common/DiffMerge/sgdm.exe\" -merge -result=\"$MERGED\" \"$LOCAL\" \"$BASE\" \"$REMOTE\"
+    trustExitCode = true
+[difftool "diffmerge"]
+    cmd = \"C:/Program Files/SourceGear/Common/DiffMerge/sgdm.exe\" \"$LOCAL\" \"$REMOTE\"
 [mergetool]
     prompt = false
     keepTemporaries = false
 [merge]
-    tool = p4merge
+    tool = diffmerge
     conflictstyle = diff3
 [difftool]
     prompt = false
@@ -102,10 +111,10 @@
 [push]
     default = simple
 [filter "lfs"]
-	smudge = git-lfs smudge -- %f
-	process = git-lfs filter-process
-	required = true
-	clean = git-lfs clean -- %f
+    smudge = git-lfs smudge -- %f
+    process = git-lfs filter-process
+    required = true
+    clean = git-lfs clean -- %f
 [filter "media"]
     clean = git-media-clean %f
     smudge = git-media-smudge %f
