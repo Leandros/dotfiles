@@ -44,14 +44,9 @@ Plug 'tpope/vim-commentary'
 Plug 'easymotion/vim-easymotion'
 Plug 'Chiel92/vim-autoformat', { 'for': ['js', 'objc'] }
 Plug 'cofyc/vim-uncrustify', { 'for': ['cpp', 'c', 'cs'] }
-Plug 'leandros/vim-bufkill'
 Plug 'Konfekt/FastFold'
 Plug 'ludovicchabant/vim-gutentags'
-Plug 'leandros/taglist.vim'
-Plug 'leandros/YankRing.vim'
 Plug 'terryma/vim-multiple-cursors'
-Plug 'leandros/zoomwin'
-Plug 'leandros/QFEnter'
 Plug 'ervandew/supertab'
 if ycm_enabled
     Plug 'Valloric/YouCompleteMe', { 'for': ['cpp', 'c', 'python'] }
@@ -69,22 +64,31 @@ Plug 'mhinz/vim-grepper'
 Plug 'thirtythreeforty/lessspace.vim'
 Plug 'junegunn/vim-easy-align'
 
-" NERDTree
-" Plug 'scrooloose/nerdtree'
-" I don't know the reason anymore, why I used my own NERDTree fork.
-Plug 'leandros/nerdtree'
-if !has("win32") && !has("win16")
-    Plug 'Xuyuanp/nerdtree-git-plugin'
-endif
-
 " Syntax Plugins
 Plug 'jelera/vim-javascript-syntax'
 Plug 'elzr/vim-json'
 Plug 'dummyunit/vim-fastbuild'
-Plug 'leandros/hlsl.vim'
 Plug 'wlangstroth/vim-racket'
 Plug 'luochen1990/rainbow', { 'for': ['scheme', 'lisp', 'racket'] }
+
+" My own plugins
+Plug 'leandros/vim-misc'
+" My forks
+Plug 'leandros/hlsl.vim'
 Plug 'leandros/vim-gn'
+Plug 'leandros/zoomwin'
+Plug 'leandros/QFEnter'
+Plug 'leandros/taglist.vim'
+Plug 'leandros/YankRing.vim'
+Plug 'leandros/vim-bufkill'
+" I don't actually know why I use that, instead of 'scrooloose/nerdtree'
+Plug 'leandros/nerdtree'
+
+" NERDTree
+" I don't know the reason anymore, why I used my own NERDTree fork.
+if !has("win32") && !has("win16")
+    Plug 'Xuyuanp/nerdtree-git-plugin'
+endif
 
 " Lua Plugins. Disable until I work on Lua projects again.
 " Plug 'xolox/vim-misc'
@@ -235,6 +239,15 @@ au BufRead,BufNewFile *.ds set filetype=rgbds
 au BufRead,BufNewFile *.fl,*.flex,*.l,*.lm setlocal ft=lex      " Flex
 au BufRead,BufNewFile *.y,*.ypp,*.ym setlocal ft=yacc           " Bison
 
+" Set syntax options
+" Highlight trailing whitespace in c files
+let c_space_errors = 1
+" Custom no-fold in my c.vim
+let c_no_block_fold = 1
+" Don't fold comments
+let c_no_comment_fold = 1
+" Don't fold #if 0 blocks
+let c_no_if0_fold = 1
 
 " Compile and Run code. The primitive way.
 command! -nargs=1 Silent execute ':silent !'.<q-args> | execute ':redraw!'
@@ -502,6 +515,20 @@ augroup filetype_cs
     autocmd BufRead *.cs normal zM
 augroup END
 
+augroup filetype_cpp
+    autocmd!
+
+    " Create custom doxygen comment style
+    autocmd FileType cpp syn region doxygenComment start="/\*\!" end="\*/" fold
+    autocmd FileType cpp hi link doxygenComment cError
+
+    " Fold based on our custom syntax.
+    autocmd FileType cpp setlocal foldmethod=syntax
+
+    " Close all folds.
+    autocmd BufRead *.cxx,*.hxx,*.cpp,*.hpp normal zM
+augroup END
+
 " Set 80 column limit.
 if exists('+colorcolumn')
   set colorcolumn=80
@@ -727,7 +754,7 @@ let g:notes_smart_quotes = 0
 
 " LeaderF
 let g:Lf_ShortcutF = '<Leader>o'
-nnoremap <Leader>o :LeaderfFile $PWD<CR>
+nnoremap <Leader>o :LeaderfFile<CR>
 nnoremap <Leader>b :LeaderfBuffer<CR>
 nnoremap <Leader>z :LeaderfMruCwd<CR>
 nnoremap <Leader>f :LeaderfBufTag<CR>
@@ -741,7 +768,7 @@ let g:Lf_StlSeparator = {
     \ 'right': ''
     \ }
 let g:Lf_WildIgnore = {
-    \ 'dir': ['.svn','.git','.p4','.perforce','.plastic','node_modules','temp','Temp','out','_out','_build'],
+    \ 'dir': ['.svn','.git','.p4','.perforce','.plastic','node_modules','temp','Temp','out','_out','_build','extern'],
     \ 'file': ['*.sw?','~$*','*.bak','*.exe','*.o','*.so','*.pyco','*.dll','*.meta','AssemblyU2DCSharp*','*.a','*.lib']
     \ }
 let g:Lf_CommandMap = {
@@ -881,7 +908,7 @@ endfunction
 command! -nargs=* GenTags call GenTags()
 command! -nargs=* GenTagsAll call GenTagsAll()
 
-let g:gutentags_project_root = [ '.git', '.p4project', '.plastic' ]
+let g:gutentags_project_root = [ '.git', '.svn', '.hg', '.p4', '.p4project', '.plastic', '.depotroot' ]
 "let g:gutentags_ctags_exclude_wildignore = [ '*.meta' ]
 
 " TagList
@@ -977,7 +1004,7 @@ endfunction
 vnoremap <C-a> :call Incr()<CR>
 
 " Invoke p4
-command -nargs=+ P4 :cexpr system('p4 <args> '.expand('%:p')) | e! | copen
+command -nargs=+ P4 :cexpr system('p4.py <args> '.expand('%:p')) | e! | copen
 
 " General run command
 command -nargs=+ Run :cexpr system('<args>') | copen
