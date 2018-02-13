@@ -25,7 +25,7 @@ if !has('nvim')
 endif
 
 " Visual Plugins
-if has('nvim') && !empyt($NVIM_GUI)
+if has('nvim') && !empty($NVIM_GUI)
     Plug 'frankier/neovim-colors-solarized-truecolor-only'
     Plug 'equalsraf/neovim-gui-shim'
 else
@@ -231,7 +231,7 @@ if &diff
 endif
 
 " Theme
-if has('nvim')
+if has('nvim') && !empty($NVIM_GUI)
     set termguicolors
 endif
 set background=dark
