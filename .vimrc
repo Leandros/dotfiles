@@ -42,7 +42,7 @@ endif
 " Must-Have
 Plug 'tpope/vim-commentary'
 Plug 'easymotion/vim-easymotion'
-Plug 'Chiel92/vim-autoformat', { 'for': ['js', 'objc'] }
+Plug 'Chiel92/vim-autoformat', { 'for': ['js', 'objc', 'gn'] }
 Plug 'cofyc/vim-uncrustify', { 'for': ['cpp', 'c', 'cs'] }
 Plug 'Konfekt/FastFold'
 Plug 'ludovicchabant/vim-gutentags'
@@ -601,8 +601,10 @@ if has_key(g:plugs, 'vim-autoformat')
     noremap <C-f> :Autoformat<CR>
     let g:formatdef_astyle_objc = '"astyle --mode=c"'
     let g:formatdef_jsbeautify = '"js-beautify -f -"'
+    let g:formatdef_gnformat = '"gn format --stdin"'
     let g:formatters_objc = ['astyle_objc']
     let g:formatters_javascript = ['jsbeautify']
+    let g:formatters_gn = ['gnformat']
 endif
 
 if has_key(g:plugs, 'vim-uncrustify')
