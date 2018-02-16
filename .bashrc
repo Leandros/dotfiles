@@ -9,7 +9,8 @@ export HISTFILESIZE=100000
 export HISTCONTROL=ignoreboth:erasedups
 
 # Defaults
-export EDITOR=vim
+export EDITOR=gvim
+# export TERM=xterm-256color
 
 # General settings (i don't know if this is bash or readline specific)
 set bell-style none
@@ -39,6 +40,19 @@ alias pbpaste='cat /dev/clipboard'
 if [ -f "$HOME/.p4creds" ]; then
     source "$HOME/.p4creds"
 fi
+
+# Prompt
+function __bash_prompt {
+    local exitcode=$?
+    local NONE="\[\033[0m\]"        # Reset Prompt
+    local R="\[\033[0;31m\]"        # Red
+    local G="\[\033[0;32m\]"        # Green
+    local B="\[\033[0;34m\]"        # Blue
+    local Y="\[\033[0;33m\]"        # Yellow
+    local C="\[\033[0;36m\]"        # Cyan
+    PS1="${G}\n\u@\h ${Y}\w${C}`__git_ps1`${NONE}\n$ "
+}
+PROMPT_COMMAND=__bash_prompt
 
 # Functions
 function up()
