@@ -200,6 +200,12 @@ mutt() {
     cd $cwd
 }
 
+if [[ "$OSTYPE" =~ darwin* ]]; then
+    gn() {
+        command gn $@ --script-executable=python3
+    }
+fi
+
 # tmux current working dir
 PS1="$PS1"'$([ -n "$TMUX"  ] && tmux setenv TMUXPWD_$(tmux display -p "#D" | tr -d %) "$PWD")'
 
@@ -345,7 +351,7 @@ alias ls=' ls --color=auto'
 export ANDROID_ROOT=$HOME/android-sdk
 export ANDROID_SDK_ROOT=$ANDROID_ROOT
 export ANDROID_HOME=$ANDROID_ROOT
-export NDK_ROOT=$HOME/android-ndk-r10c
+export NDK_ROOT=$HOME/android-ndk-r10e
 export ANDROID_NDK=$NDK_ROOT
 export NDK_TOOLCHAIN_VERSION=4.9
 export NDK_CCACHE=/usr/local/bin/ccache
@@ -359,6 +365,14 @@ else
 fi
 MANPATH=$HOMEBREW_PREFIX/opt/coreutils/libexec/gnuman:$MANPATH
 export MANPATH
+
+function mman {
+    MANPATH=$HOME/p4/depot/liba/docs man $1
+}
+
+function dump {
+    command gobjdump -Mintel -S $@
+}
 
 # PATH
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -378,6 +392,7 @@ PATH=$PATH:$ANDROID_ROOT/tools
 PATH=$PATH:$ANDROID_ROOT/platform-tools
 PATH=$PATH:$NDK_ROOT
 PATH=$PATH:$NDK_CCACHE
+PATH=$PATH:$HOME/p4/depot/extern/bin/shared
 
 # Cross Compiling Toolchains
 PATH=$PATH:/usr/local/sh-elf/bin
