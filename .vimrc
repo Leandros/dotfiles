@@ -15,7 +15,7 @@ let mapleader=" "
 let maplocalleader=" "
 
 " Optional plugins
-let ycm_enabled = 0
+let ycm_enabled = 1
 let lightline_enabled = 1
 let airline_enabled = 0
 
@@ -388,9 +388,17 @@ nnoremap <Leader>qc :cclose<CR>
 nnoremap <Leader>qo :copen<CR>
 
 " Tag navigation keys
-nnoremap <Leader>d <C-]>
-nnoremap <Leader>. <C-t>
-" nnoremap <Leader>t :CtrlPTag<CR>
+if ycm_enabled
+    nnoremap <Leader>d :YcmCompleter GoTo<CR>
+    nnoremap <Leader>, :YcmCompleter GetType<CR>
+    nnoremap <Leader>t :YcmCompleter GetDoc<CR>
+    nnoremap <Leader>i :YcmCompleter GoToInclude<CR>
+    " jump back after go to definition
+    nnoremap <Leader>.  <C-O>
+else
+    nnoremap <Leader>d <C-]>
+    nnoremap <Leader>. <C-t>
+endif
 nnoremap <Leader>c :TlistToggle<CR>
 
 " Tab navigation
@@ -718,12 +726,13 @@ if ycm_enabled
     let g:ycm_key_list_previous_completion  = ['<S-TAB>', '<C-r>', '<Up>']
     let g:ycm_key_list_stop_completion = ['<Enter>']
     let g:ycm_key_invoke_completion = '<C-Space>'
-    let g:ycm_add_preview_to_completeopt = 0
+    let g:ycm_add_preview_to_completeopt = 1
     let g:ycm_error_symbol = 'E>'
     let g:ycm_warning_symbol = 'W>'
     let g:ycm_complete_in_comments = 1
     let g:ycm_min_num_of_chars_for_completion = 2
-    let g:ycm_echo_current_diagnostic = 0
+    let g:ycm_echo_current_diagnostic = 1
+    let g:ycm_always_populate_location_list = 1
     set completeopt-=preview
 endif
 
