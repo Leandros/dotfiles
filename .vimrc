@@ -71,7 +71,6 @@ Plug 'elzr/vim-json'
 Plug 'dummyunit/vim-fastbuild'
 Plug 'wlangstroth/vim-racket'
 Plug 'luochen1990/rainbow', { 'for': ['scheme', 'lisp', 'racket'] }
-Plug 'gabrielelana/vim-markdown'
 
 " My own plugins
 Plug 'leandros/vim-misc'
