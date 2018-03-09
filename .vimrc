@@ -47,7 +47,8 @@ Plug 'cofyc/vim-uncrustify', { 'for': ['cpp', 'c', 'cs'] }
 Plug 'Konfekt/FastFold'
 Plug 'ludovicchabant/vim-gutentags'
 Plug 'terryma/vim-multiple-cursors'
-Plug 'ervandew/supertab'
+" Potentially useful with supertab
+Plug 'SirVer/ultisnips'
 if ycm_enabled
     Plug 'Valloric/YouCompleteMe', { 'for': ['cpp', 'c', 'python'] }
 endif
@@ -97,9 +98,7 @@ endif
 " Plug 'xolox/vim-notes'
 " Plug 'xolox/vim-lua-ftplugin'
 
-
 call plug#end()
-filetype plugin indent on
 
 
 " General
@@ -707,22 +706,10 @@ endif
 " vim-ftplugin config
 let g:lua_compiler_name = '/usr/local/bin/luac'
 
-" SuperTab config
-imap <C-r> <Plug>SuperTabForward
-imap <C-n> <Plug>SuperTabBackward
-let g:SuperTabClosePreviewOnPopupClose = 1
-let g:SuperTabCrMapping = 1
-
-" au BufNewFile,BufRead,BufEnter *.c, *.h filetype plugin on
-" au BufNewFile,BufRead,BufEnter *.c, *.h set omnifunc=syntaxcomplete#Complete
-
-runtime! plugin/supertab.vim
-inoremap <s-tab> <tab>
-
 " YouCompleteMe
 if ycm_enabled
-    let g:ycm_key_list_select_completion  = ['<TAB>', '<C-n>', '<Down>']
-    let g:ycm_key_list_previous_completion  = ['<S-TAB>', '<C-r>', '<Up>']
+    let g:ycm_key_list_select_completion  = ['<tab>', '<c-n>', '<Down>']
+    let g:ycm_key_list_previous_completion  = ['<s-tab>', '<c-r>', '<Up>']
     let g:ycm_key_list_stop_completion = ['<Enter>']
     let g:ycm_key_invoke_completion = '<C-Space>'
     let g:ycm_add_preview_to_completeopt = 1
@@ -732,9 +719,11 @@ if ycm_enabled
     let g:ycm_min_num_of_chars_for_completion = 2
     let g:ycm_echo_current_diagnostic = 1
     let g:ycm_always_populate_location_list = 1
+    let g:ycm_use_ultisnips_completer = 1
     set completeopt-=preview
 endif
 
+" Disable youcompleteme while multiple cursors are active
 function! Multiple_cursors_before()
     let g:yankring_record_enabled = 0
     " if &ft =~ '\(cpp\|c\|python\)'
@@ -747,6 +736,15 @@ function! Multiple_cursors_after()
     "     call youcompleteme#EnableCursorMovedAutocommands()
     " endif
 endfunction
+
+" UltiSnips config
+let g:UltiSnipsExpandTrigger = "<c-e>"
+let g:UltiSnipsJumpForwardTrigger = "<c-n>"
+let g:UltiSnipsJumpBackwardTrigger = "<c-r>"
+let g:UltiSnipsListSnippets = "<c-tab>"
+let g:UltiSnipsSnippetsDir = $HOME . '/vimfiles/UltiSnips'
+let g:UltiSnipsSnippetDirectories = ['UltiSnips']
+let g:UltiSnipsEditSplit = "vertical"
 
 " NumberToggle config
 set relativenumber
