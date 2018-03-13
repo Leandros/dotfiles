@@ -47,10 +47,10 @@ Plug 'cofyc/vim-uncrustify', { 'for': ['cpp', 'c', 'cs'] }
 Plug 'Konfekt/FastFold'
 Plug 'ludovicchabant/vim-gutentags'
 Plug 'terryma/vim-multiple-cursors'
-" Potentially useful with supertab
 Plug 'SirVer/ultisnips'
+Plug 'ervandew/supertab'
 if ycm_enabled
-    Plug 'Valloric/YouCompleteMe', { 'for': ['cpp', 'c', 'python'] }
+    Plug 'Valloric/YouCompleteMe', { 'for': ['cpp', 'c', 'python', 'cs'] }
 endif
 
 " I hate plugin interdependencies
@@ -557,11 +557,11 @@ if has('gui_running')
         " has('gui_running') is always false.
     else
         set t_Co=256
-        " set guifont=Input:h9
-        " set lsp=0
+        set guifont=Input:h9
+        set lsp=0
         " HighDPI
-        set guifont=Input:h9:w4.5
-        set lsp=-2
+        " set guifont=Input:h9:w4.5
+        " set lsp=-2
     endif
 endif
 
@@ -708,8 +708,8 @@ let g:lua_compiler_name = '/usr/local/bin/luac'
 
 " YouCompleteMe
 if ycm_enabled
-    let g:ycm_key_list_select_completion  = ['<tab>', '<c-n>', '<Down>']
-    let g:ycm_key_list_previous_completion  = ['<s-tab>', '<c-r>', '<Up>']
+    let g:ycm_key_list_select_completion  = ['<Tab>', '<Down>']
+    let g:ycm_key_list_previous_completion  = ['<S-Tab>', '<Up>']
     let g:ycm_key_list_stop_completion = ['<Enter>']
     let g:ycm_key_invoke_completion = '<C-Space>'
     let g:ycm_add_preview_to_completeopt = 1
@@ -723,24 +723,37 @@ if ycm_enabled
     set completeopt-=preview
 endif
 
+" SuperTab
+" inoremap <C-n> <Plug>SuperTabForward
+" inoremap <C-r> <Plug>SuperTabBackward
+let g:SuperTabCrMapping = 1
+
+" Up & down mapping
+" inoremap <expr> <c-r> ((pumvisible()) ? ("\<c-n>") : ("\<c-n>"))
+" inoremap <expr> <c-n> ((pumvisible()) ? ("\<c-p>") : ("\<c-r>"))
+
+" To map <s-tab> to the real tab:
+runtime! plugin/supertab.vim
+inoremap <s-tab> <tab>
+
 " Disable youcompleteme while multiple cursors are active
 function! Multiple_cursors_before()
     let g:yankring_record_enabled = 0
-    " if &ft =~ '\(cpp\|c\|python\)'
-    "     call youcompleteme#DisableCursorMovedAutocommands()
-    " endif
+    if &ft =~ '\(cpp\|c\|python\)'
+        call youcompleteme#DisableCursorMovedAutocommands()
+    endif
 endfunction
 function! Multiple_cursors_after()
     let g:yankring_record_enabled = 1
-    " if &ft =~ '\(cpp\|c\|python\)'
-    "     call youcompleteme#EnableCursorMovedAutocommands()
-    " endif
+    if &ft =~ '\(cpp\|c\|python\)'
+        call youcompleteme#EnableCursorMovedAutocommands()
+    endif
 endfunction
 
 " UltiSnips config
-let g:UltiSnipsExpandTrigger = "<c-e>"
-let g:UltiSnipsJumpForwardTrigger = "<c-n>"
-let g:UltiSnipsJumpBackwardTrigger = "<c-r>"
+let g:UltiSnipsExpandTrigger = "<c-z>"
+let g:UltiSnipsJumpForwardTrigger = "<c-z>"
+let g:UltiSnipsJumpBackwardTrigger = "<c-y>"
 let g:UltiSnipsListSnippets = "<c-tab>"
 let g:UltiSnipsSnippetsDir = $HOME . '/vimfiles/UltiSnips'
 let g:UltiSnipsSnippetDirectories = ['UltiSnips']
