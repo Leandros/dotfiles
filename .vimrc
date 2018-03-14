@@ -306,6 +306,9 @@ nnoremap <S-b> b
 nnoremap <S-s> w
 vnoremap <S-b> b
 vnoremap <S-s> w
+" Go to end of word
+nnoremap w e
+vnoremap w e
 
 " Key map optimizations for Bone 2 Layout
 " Normal Mode remaps.
