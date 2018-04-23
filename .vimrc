@@ -18,6 +18,7 @@ let maplocalleader=" "
 let ycm_enabled = 1
 let lightline_enabled = 1
 let airline_enabled = 0
+let js_dev_enabled = 1
 
 " Vim Internal Plugins
 if !has('nvim')
@@ -42,15 +43,25 @@ endif
 " Must-Have
 Plug 'tpope/vim-commentary'
 Plug 'easymotion/vim-easymotion'
-Plug 'Chiel92/vim-autoformat', { 'for': ['js', 'objc', 'gn'] }
+Plug 'Chiel92/vim-autoformat', { 'for': ['objc', 'gn', 'js', 'jsx', 'ts', 'tsx', 'javascript', 'typescript'] }
 Plug 'cofyc/vim-uncrustify', { 'for': ['cpp', 'c', 'cs'] }
 Plug 'Konfekt/FastFold'
-Plug 'ludovicchabant/vim-gutentags'
+" Pinned, due to deoplete incompatability.
+Plug 'ludovicchabant/vim-gutentags', { 'tag': '0423321dc4fa80b41eaa41295b609186bb1eb5fb' }
 Plug 'terryma/vim-multiple-cursors'
 Plug 'SirVer/ultisnips'
 Plug 'ervandew/supertab'
 if ycm_enabled
-    Plug 'Valloric/YouCompleteMe', { 'for': ['cpp', 'c', 'python', 'cs'] }
+    Plug 'Valloric/YouCompleteMe', { 'for': ['cpp', 'c', 'python'] }
+endif
+if js_dev_enabled
+    Plug 'leafgarland/typescript-vim'
+    Plug 'pangloss/vim-javascript'
+    Plug 'w0rp/ale', { 'for': ['js', 'ts', 'jsx', 'tsx', 'javascript', 'typescript' ] }
+    Plug 'Shougo/deoplete.nvim', { 'for': ['js', 'ts', 'jsx', 'tsx', 'javascript', 'typescript' ], 'do': ':UpdateRemotePlugins' }
+    if has_key(g:plugs, 'deoplete.nvim')
+        let g:deoplete#enable_at_startup = 1
+    endif
 endif
 
 " I hate plugin interdependencies
@@ -67,7 +78,6 @@ Plug 'junegunn/vim-easy-align'
 Plug 'tpope/vim-fugitive'
 
 " Syntax Plugins
-Plug 'jelera/vim-javascript-syntax'
 Plug 'elzr/vim-json'
 Plug 'dummyunit/vim-fastbuild'
 Plug 'wlangstroth/vim-racket'
@@ -390,12 +400,27 @@ nnoremap <Leader>qo :copen<CR>
 
 " Tag navigation keys
 if ycm_enabled
-    nnoremap <Leader>d :YcmCompleter GoTo<CR>
-    nnoremap <Leader>, :YcmCompleter GetType<CR>
-    nnoremap <Leader>t :YcmCompleter GetDoc<CR>
-    nnoremap <Leader>i :YcmCompleter GoToInclude<CR>
-    " jump back after go to definition
-    nnoremap <Leader>.  <C-O>
+    if js_dev_enabled
+        autocmd FileType javascript nnoremap <Leader>d :ALEGoToDefinition<CR>
+        autocmd FileType typescript nnoremap <Leader>d :ALEGoToDefinition<CR>
+        autocmd FileType cpp nnoremap <Leader>d :YcmCompleter GoTo<CR>
+        autocmd FileType c nnoremap <Leader>d :YcmCompleter GoTo<CR>
+        autocmd FileType javascript nnoremap <Leader>, :ALEFindReferences<CR>
+        autocmd FileType typescript nnoremap <Leader>, :ALEFindReferences<CR>
+        autocmd FileType cpp nnoremap <Leader>, :YcmCompleter GetType<CR>
+        autocmd FileType c nnoremap <Leader>, :YcmCompleter GetType<CR>
+        nnoremap <Leader>t :YcmCompleter GetDoc<CR>
+        nnoremap <Leader>i :YcmCompleter GoToInclude<CR>
+        " jump back after go to definition
+        nnoremap <Leader>.  <C-O>
+    else
+        nnoremap <Leader>d :YcmCompleter GoTo<CR>
+        nnoremap <Leader>, :YcmCompleter GetType<CR>
+        nnoremap <Leader>t :YcmCompleter GetDoc<CR>
+        nnoremap <Leader>i :YcmCompleter GoToInclude<CR>
+        " jump back after go to definition
+        nnoremap <Leader>.  <C-O>
+    endif
 else
     nnoremap <Leader>d <C-]>
     nnoremap <Leader>. <C-t>
@@ -490,6 +515,9 @@ call NERDTreeHighlightFile('makefile', '\makefile', '28', 'NONE', 'NONE', 'NONE'
 call NERDTreeHighlightFile('Makefile', '\Makefile', '28', 'NONE', 'NONE', 'NONE')
 " JavaScript
 call NERDTreeHighlightFile('js', '\.js',            '3',  'NONE', 'NONE', 'NONE')
+call NERDTreeHighlightFile('jsx', '\.jsx',          '3',  'NONE', 'NONE', 'NONE')
+call NERDTreeHighlightFile('ts', '\.ts',            '5',  'NONE', 'NONE', 'NONE')
+call NERDTreeHighlightFile('tsx', '\.tsx',          '5',  'NONE', 'NONE', 'NONE')
 
 
 " Never mess when file opened without sudo.
@@ -501,7 +529,6 @@ autocmd FileType make setlocal noexpandtab
 " Use two spaces in gn files
 autocmd FileType gn setlocal tabstop=2
 autocmd FileType gn setlocal shiftwidth=2
-
 
 " Folding Config
 nnoremap z( zj
@@ -609,10 +636,12 @@ let g:EasyMotion_startofline = 0 " keep cursor column when JK motion
 if has_key(g:plugs, 'vim-autoformat')
     noremap <C-f> :Autoformat<CR>
     let g:formatdef_astyle_objc = '"astyle --mode=c"'
-    let g:formatdef_jsbeautify = '"js-beautify -f -"'
+    let g:formatdef_prettier_ts = '"yarn --silent prettier --parser=typescript --stdin"'
+    let g:formatdef_prettier_js = '"yarn --silent prettier --stdin"'
     let g:formatdef_gnformat = '"gn format --stdin"'
     let g:formatters_objc = ['astyle_objc']
-    let g:formatters_javascript = ['jsbeautify']
+    let g:formatters_javascript = ['prettier_js']
+    let g:formatters_typescript = ['prettier_ts']
     let g:formatters_gn = ['gnformat']
 endif
 
@@ -742,13 +771,13 @@ inoremap <s-tab> <tab>
 " Disable youcompleteme while multiple cursors are active
 function! Multiple_cursors_before()
     let g:yankring_record_enabled = 0
-    if &ft =~ '\(cpp\|c\|python\)'
+    if exists("*youcompleteme#DisableCursorMovedAutocommands")
         call youcompleteme#DisableCursorMovedAutocommands()
     endif
 endfunction
 function! Multiple_cursors_after()
     let g:yankring_record_enabled = 1
-    if &ft =~ '\(cpp\|c\|python\)'
+    if exists("*youcompleteme#EnableCursorMovedAutocommands")
         call youcompleteme#EnableCursorMovedAutocommands()
     endif
 endfunction
@@ -758,7 +787,11 @@ let g:UltiSnipsExpandTrigger = "<c-z>"
 let g:UltiSnipsJumpForwardTrigger = "<c-z>"
 let g:UltiSnipsJumpBackwardTrigger = "<c-y>"
 let g:UltiSnipsListSnippets = "<c-tab>"
-let g:UltiSnipsSnippetsDir = $HOME . '/vimfiles/UltiSnips'
+if has("win32") || has("win16")
+    let g:UltiSnipsSnippetsDir = $HOME . '/vimfiles/bundle/vim-misc/UltiSnips'
+else
+    let g:UltiSnipsSnippetsDir = $HOME . '/.vim/bundle/vim-misc/UltiSnips'
+endif
 let g:UltiSnipsSnippetDirectories = ['UltiSnips']
 let g:UltiSnipsEditSplit = "vertical"
 
@@ -1039,4 +1072,28 @@ command -nargs=+ Run :cexpr system('<args>') | copen
 
 " Change current working directory
 nnoremap ,cd :cd %:p:h<CR>:pwd<CR>
+
+" Use two spaces to indent js/ts files
+autocmd FileType javascript setlocal tabstop=2
+autocmd FileType javascript setlocal shiftwidth=2
+autocmd FileType typescript setlocal tabstop=2
+autocmd FileType typescript setlocal shiftwidth=2
+autocmd FileType typescript set makeprg=tsc\ $*
+
+" Setup comment string
+autocmd FileType javascript setlocal commentstring=/*\ %s\ */
+autocmd FileType typescript setlocal commentstring=/*\ %s\ */
+
+" Use two spaces to indent json files
+autocmd FileType json setlocal tabstop=2
+autocmd FileType json setlocal shiftwidth=2
+
+" ALE
+let g:ale_fixers = {
+    \ 'typescript': ['tslint'],
+    \ 'javascript': ['eslint'],
+    \ }
+noremap <C-j> :ALEFix<CR>
+" Disable, we use deoplete.
+let g:ale_completion_enabled = 0
 
