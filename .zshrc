@@ -1,7 +1,7 @@
 # Lines configured by zsh-newuser-install
 HISTFILE=~/.histfile
-HISTSIZE=10000
-SAVEHIST=1000
+HISTSIZE=1000000
+SAVEHIST=100000
 setopt HIST_IGNORE_SPACE
 
 # This needs to be run earlier than compinit

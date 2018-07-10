@@ -59,9 +59,12 @@ if js_dev_enabled
     Plug 'pangloss/vim-javascript'
     Plug 'w0rp/ale', { 'for': ['js', 'ts', 'jsx', 'tsx', 'javascript', 'typescript' ] }
     Plug 'Shougo/deoplete.nvim', { 'for': ['js', 'ts', 'jsx', 'tsx', 'javascript', 'typescript' ], 'do': ':UpdateRemotePlugins' }
+    Plug 'alvan/vim-closetag'
     if has_key(g:plugs, 'deoplete.nvim')
         let g:deoplete#enable_at_startup = 1
     endif
+    let g:closetag_filenames = '*.html,*.xhtml,*.phtml,*.vue'
+    let g:closetag_xhtml_filenames = '*.xhtml,*.jsx,*.tsx,*.vue'
 endif
 
 " I hate plugin interdependencies
@@ -400,6 +403,7 @@ nnoremap <Leader>qo :copen<CR>
 
 " Tag navigation keys
 if ycm_enabled
+    " let g:ycm_python_binary_path = 'python3'
     if js_dev_enabled
         autocmd FileType javascript nnoremap <Leader>d :ALEGoToDefinition<CR>
         autocmd FileType typescript nnoremap <Leader>d :ALEGoToDefinition<CR>
@@ -529,6 +533,10 @@ autocmd FileType make setlocal noexpandtab
 " Use two spaces in gn files
 autocmd FileType gn setlocal tabstop=2
 autocmd FileType gn setlocal shiftwidth=2
+
+" Use two spaces in yaml files
+autocmd FileType yaml setlocal tabstop=2
+autocmd FileType yaml setlocal shiftwidth=2
 
 " Folding Config
 nnoremap z( zj
@@ -1093,7 +1101,14 @@ let g:ale_fixers = {
     \ 'typescript': ['tslint'],
     \ 'javascript': ['eslint'],
     \ }
+let g:ale_linters = {
+    \ 'typescript': ['tslint', 'tsserver', 'typecheck'],
+    \ 'javascript': ['eslint'],
+    \ }
 noremap <C-j> :ALEFix<CR>
+autocmd FileType typescript inoremap <expr><tab> pumvisible() ? "\<c-n>" : "\<tab>"
+autocmd FileType typescript inoremap <expr><s-tab> pumvisible() ? "\<c-p>" : "\<s-tab>"
+
 " Disable, we use deoplete.
 let g:ale_completion_enabled = 0
 
