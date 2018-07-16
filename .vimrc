@@ -15,6 +15,7 @@ let mapleader=" "
 let maplocalleader=" "
 
 " Optional plugins
+let vim_fat = 0
 let ycm_enabled = 1
 let lightline_enabled = 1
 let airline_enabled = 0
@@ -32,91 +33,97 @@ if has('nvim') && !empty($NVIM_GUI)
 else
     Plug 'altercation/vim-colors-solarized'
 endif
-if lightline_enabled
-    Plug 'itchyny/lightline.vim'
-endif
-if airline_enabled
-    Plug 'vim-airline/vim-airline'
-    Plug 'vim-airline/vim-airline-themes'
-endif
 
-" Must-Have
+" Absolute Must Haves!
 Plug 'tpope/vim-commentary'
-Plug 'easymotion/vim-easymotion'
-Plug 'Chiel92/vim-autoformat', { 'for': ['objc', 'gn', 'js', 'jsx', 'ts', 'tsx', 'javascript', 'typescript'] }
-Plug 'cofyc/vim-uncrustify', { 'for': ['cpp', 'c', 'cs'] }
-Plug 'Konfekt/FastFold'
-" Pinned, due to deoplete incompatability.
-Plug 'ludovicchabant/vim-gutentags', { 'tag': '0423321dc4fa80b41eaa41295b609186bb1eb5fb' }
 Plug 'terryma/vim-multiple-cursors'
-Plug 'SirVer/ultisnips'
+Plug 'Konfekt/FastFold'
 Plug 'ervandew/supertab'
-if ycm_enabled
-    Plug 'Valloric/YouCompleteMe', { 'for': ['cpp', 'c', 'python'] }
-endif
-if js_dev_enabled
-    Plug 'leafgarland/typescript-vim'
-    Plug 'pangloss/vim-javascript'
-    Plug 'w0rp/ale', { 'for': ['js', 'ts', 'jsx', 'tsx', 'javascript', 'typescript' ] }
-    Plug 'Shougo/deoplete.nvim', { 'for': ['js', 'ts', 'jsx', 'tsx', 'javascript', 'typescript' ], 'do': ':UpdateRemotePlugins' }
-    Plug 'jparise/vim-graphql'
-    Plug 'posva/vim-vue'
-    Plug 'alvan/vim-closetag'
-    if has_key(g:plugs, 'deoplete.nvim')
-        let g:deoplete#enable_at_startup = 1
-    endif
-    let g:closetag_filenames = '*.html,*.xhtml,*.phtml,*.vue'
-    let g:closetag_xhtml_filenames = '*.xhtml,*.jsx,*.tsx,*.vue'
-endif
-
-" I hate plugin interdependencies
-Plug 'vim-scripts/ingo-library'
-Plug 'vim-scripts/EnhancedJumps'
-
-" General
 Plug 'Yggdroot/LeaderF'
-Plug 'jeffkreeftmeijer/vim-numbertoggle'
-Plug 'tmux-plugins/vim-tmux-focus-events'
 Plug 'mhinz/vim-grepper'
 Plug 'thirtythreeforty/lessspace.vim'
-Plug 'junegunn/vim-easy-align'
-Plug 'tpope/vim-fugitive'
 
-" Syntax Plugins
-Plug 'elzr/vim-json'
-Plug 'dummyunit/vim-fastbuild'
-Plug 'wlangstroth/vim-racket'
-Plug 'luochen1990/rainbow', { 'for': ['scheme', 'lisp', 'racket'] }
+" General
+Plug 'SirVer/ultisnips'
+Plug 'tmux-plugins/vim-tmux-focus-events'
+Plug 'junegunn/vim-easy-align'
 
 " My own plugins
 Plug 'leandros/vim-misc'
-" My forks - syntax
-Plug 'leandros/hlsl.vim'
-Plug 'leandros/vim-gn'
-" My forks
-Plug 'leandros/zoomwin'
-Plug 'leandros/QFEnter'
-Plug 'leandros/taglist.vim'
-Plug 'leandros/YankRing.vim'
-Plug 'leandros/vim-bufkill'
-" I don't actually know why I use that, instead of 'scrooloose/nerdtree'
-Plug 'leandros/nerdtree'
 
-" NERDTree
-" I don't know the reason anymore, why I used my own NERDTree fork.
-if !has("win32") && !has("win16")
-    Plug 'Xuyuanp/nerdtree-git-plugin'
+" My forks
+Plug 'leandros/QFEnter'
+Plug 'leandros/vim-bufkill'
+Plug 'leandros/nerdtree' " No idea why I use my own fork
+
+" Syntax / File Plugins
+Plug 'Chiel92/vim-autoformat', { 'for': ['objc', 'gn', 'js', 'jsx', 'ts', 'tsx', 'javascript', 'typescript'] }
+Plug 'cofyc/vim-uncrustify', { 'for': ['cpp', 'c', 'cs'] }
+Plug 'dummyunit/vim-fastbuild', { 'for': ['fastbuild'] }
+Plug 'wlangstroth/vim-racket', { 'for': ['racket'] }
+Plug 'luochen1990/rainbow', { 'for': ['scheme', 'lisp', 'racket'] }
+Plug 'leandros/hlsl.vim', { 'for': ['hlsl'] }
+Plug 'leandros/vim-gn', { 'for': ['gn'] }
+
+
+    if ycm_enabled
+        Plug 'Valloric/YouCompleteMe', { 'for': ['cpp', 'c', 'python'] }
+    endif
+
+" =============================================================================
+" FAT VIM
+" =============================================================================
+if vim_fat
+    if lightline_enabled
+        Plug 'itchyny/lightline.vim'
+    elseif airline_enabled
+        Plug 'vim-airline/vim-airline'
+        Plug 'vim-airline/vim-airline-themes'
+    endif
+
+    if js_dev_enabled
+        Plug 'leafgarland/typescript-vim'
+        Plug 'pangloss/vim-javascript'
+        Plug 'w0rp/ale', { 'for': ['js', 'ts', 'jsx', 'tsx', 'javascript', 'typescript' ] }
+        Plug 'Shougo/deoplete.nvim', { 'for': ['js', 'ts', 'jsx', 'tsx', 'javascript', 'typescript' ], 'do': ':UpdateRemotePlugins' }
+        Plug 'jparise/vim-graphql'
+        Plug 'posva/vim-vue'
+        Plug 'alvan/vim-closetag'
+        Plug 'elzr/vim-json'
+        if has_key(g:plugs, 'deoplete.nvim')
+            let g:deoplete#enable_at_startup = 1
+        endif
+        let g:closetag_filenames = '*.html,*.xhtml,*.phtml,*.vue'
+        let g:closetag_xhtml_filenames = '*.xhtml,*.jsx,*.tsx,*.vue'
+    endif
+
+    Plug 'easymotion/vim-easymotion'
+    Plug 'jeffkreeftmeijer/vim-numbertoggle'
+
+    " Pinned, due to deoplete incompatability.
+    Plug 'ludovicchabant/vim-gutentags', { 'tag': '0423321dc4fa80b41eaa41295b609186bb1eb5fb' }
+
+    " Required for 'EnhancedJumps'
+    Plug 'vim-scripts/ingo-library'
+    Plug 'vim-scripts/EnhancedJumps'
+    Plug 'tpope/vim-fugitive'
+
+    " My forks
+    Plug 'leandros/taglist.vim'
+    Plug 'leandros/YankRing.vim'
+    Plug 'leandros/zoomwin'
+
+    if !has("win32") && !has("win16")
+        Plug 'Xuyuanp/nerdtree-git-plugin'
+    endif
 endif
 
-" Lua Plugins. Disable until I work on Lua projects again.
-" Plug 'xolox/vim-misc'
-" Plug 'xolox/vim-notes'
-" Plug 'xolox/vim-lua-ftplugin'
 
 call plug#end()
 
-
-" General
+" =============================================================================
+" Language / Shell
+" =============================================================================
 set langmenu=en_US.UTF-8
 let $LANG='en_US'
 
@@ -130,6 +137,9 @@ else
     set shell=$SHELL
 endif
 
+" =============================================================================
+" General
+" =============================================================================
 set fileencoding=utf-8 " Set the encoding written to file
 set termencoding=utf-8 " Set the default encodings just in case $LANG isn't set
 set encoding=utf-8  " Set the default encodings just in case $LANG isn't set
@@ -138,12 +148,11 @@ set ttyfast         " Set that we have a fast terminal
 set emoji           " enable emoji's on Vim8
 set clipboard+=unnamed " enabled system clipboard
 
-set hidden          " Hide buffer, instead of closing it.
 syntax enable
+set hidden          " Hide buffer, instead of closing it.
 set number          " Always show line numbers.
 set hlsearch        " Hightlight found searches.
 set incsearch       " Show matched searches as you type.
-set showmatch       " Show matching braces.
 set ignorecase      " Ignore case when searching.
 set smartcase       " Ignore case if search pattern is all lowercase, case-sensitive otherwise.
 set nowrapscan      " Do not wrap when searching
@@ -186,16 +195,28 @@ set guioptions+=lrbmTLce
 set guioptions-=lrbmTLce
 set guioptions+=c
 
+" =============================================================================
+" Performance
+" =============================================================================
 " Improve performance of matchparen plugin
 " This is DISABLING it!
-" let g:loaded_matchparen = 1
+let g:loaded_matchparen = 1         " Don't show matching parens.
+set noshowmatch                     " Don't show matching braces.
 let g:matchparen_timeout = 2
 let g:matchparen_insert_timeout = 2
 
 " Improve performance
-"set ttyfast
-"set lazyredraw
+set lazyredraw
 
+" Disable syntax highlighting long lines
+set synmaxcol=300
+
+" Disable syntax highlighting in large files
+autocmd BufReadPre * if getfsize(expand("%")) > 10000000 | set syntax=OFF | endif
+
+" =============================================================================
+" Buffer Switching
+" =============================================================================
 " Improve :b switch menu
 set wildchar=<Tab> wildmenu wildmode=full
 
@@ -250,13 +271,17 @@ endif
 set background=dark
 colorscheme solarized
 
+" =============================================================================
 " Custom Filetypes
+" =============================================================================
 au BufRead,BufNewFile *.ds set filetype=rgbds
 au BufRead,BufNewFile *.fl,*.flex,*.l,*.lm setlocal ft=lex      " Flex
 au BufRead,BufNewFile *.y,*.ypp,*.ym setlocal ft=yacc           " Bison
 au BufRead,BufNewFile *.man setlocal ft=groff                   " Groff/Troff
 
+" =============================================================================
 " Set syntax options
+" =============================================================================
 " Highlight trailing whitespace in c files
 let c_space_errors = 1
 " Custom no-fold in my c.vim
@@ -266,25 +291,13 @@ let c_no_comment_fold = 1
 " Don't fold #if 0 blocks
 let c_no_if0_fold = 1
 
-" Compile and Run code. The primitive way.
-command! -nargs=1 Silent execute ':silent !'.<q-args> | execute ':redraw!'
-function! CompileC()
-:   w
-:   exec '!clang '.shellescape('%').' -o '.shellescape('%:r').' && ./'.shellescape('%:r')
-:   exec 'Silent rm '.shellescape('%:r')
-endfunction
-function! CompileCC()
-:   w
-:   exec '!clang++ -std=c++14 '.shellescape('%').' -o '.shellescape('%:r').' && ./'.shellescape('%:r')
-:   exec 'Silent rm '.shellescape('%:r')
-endfunction
-autocmd filetype c nnoremap <F5> :call CompileC()<CR>
-autocmd filetype cpp nnoremap <F5> :call CompileCC()<CR>
-
 " C-r is mapped to move one buffer up -_-
 " autocmd filetype c nnoremap <C-r> :call CompileC()<CR>
 " autocmd filetype cpp nnoremap <C-r> :call CompileCC()<CR>
 
+" =============================================================================
+" Bindings
+" =============================================================================
 " Warn about doing the wrong undo (U instead of u).
 nnoremap U :echo " < < ===== C H E C K C A P S L O C K ===== > > "<CR>
 
@@ -342,24 +355,11 @@ vnoremap s <Right>
 vnoremap gn gj
 vnoremap gr gk
 
-" No clue???
-" nnoremap <C-B> <C-W><C-H>
-" nnoremap <C-N> <C-W><C-J>
-" nnoremap <C-R> <C-W><C-K>
-" nnoremap <C-S> <C-W><C-L>
-
-" Move page up / down
-"nnoremap ( <PageDown>
-"nnoremap ) <PageUp>
-"vnoremap ( <PageDown>
-"vnoremap ) <PageUp>
-
 " Move half page up / down
 nnoremap ( <C-D>
 nnoremap ) <C-U>
 vnoremap ( <C-D>
 vnoremap ) <C-U>
-
 
 " Move line up down
 nnoremap <S-n> <C-e>
@@ -403,7 +403,9 @@ nnoremap <Leader>qq :cclose<CR>
 nnoremap <Leader>qc :cclose<CR>
 nnoremap <Leader>qo :copen<CR>
 
+" =============================================================================
 " Tag navigation keys
+" =============================================================================
 if ycm_enabled
     " let g:ycm_python_binary_path = 'python3'
     if js_dev_enabled
@@ -433,7 +435,9 @@ else
 endif
 nnoremap <Leader>c :TlistToggle<CR>
 
+" =============================================================================
 " Tab navigation
+" =============================================================================
 nnoremap <C-u>b :tabprevious<CR>
 nnoremap <C-u>s :tabnext<CR>
 nnoremap <C-u>n :tabedit<CR>
@@ -446,7 +450,335 @@ nnoremap <C-u>5 5gt
 nnoremap <C-u>6 6gt
 cabbrev tabv tab sview +setlocal\ nomodifiable
 
+" =============================================================================
+" Indent
+" =============================================================================
+" Use two spaces to indent js/ts files
+autocmd FileType javascript setlocal tabstop=2
+autocmd FileType javascript setlocal shiftwidth=2
+autocmd FileType typescript setlocal tabstop=2
+autocmd FileType typescript setlocal shiftwidth=2
+autocmd FileType typescript set makeprg=tsc\ $*
+
+" Setup comment string
+autocmd FileType javascript setlocal commentstring=/*\ %s\ */
+autocmd FileType typescript setlocal commentstring=/*\ %s\ */
+
+" Use two spaces to indent json files
+autocmd FileType json setlocal tabstop=2
+autocmd FileType json setlocal shiftwidth=2
+" Use Tabs in Makefiles
+autocmd FileType make setlocal noexpandtab
+
+" Use two spaces in gn files
+autocmd FileType gn setlocal tabstop=2
+autocmd FileType gn setlocal shiftwidth=2
+
+" Use two spaces in yaml files
+autocmd FileType yaml setlocal tabstop=2
+autocmd FileType yaml setlocal shiftwidth=2
+
+" =============================================================================
+" Folding Config
+" =============================================================================
+nnoremap z( zj
+nnoremap z) zk
+augroup vimrc
+    autocmd!
+
+    " Set foldmethod indent AND manual
+    autocmd BufReadPre * setlocal foldmethod=indent
+    autocmd BufWinEnter * if &fdm == 'indent' | setlocal foldmethod=manual | endif
+
+    " Open all folds at startup
+    autocmd BufRead * normal zR
+augroup END
+
+augroup filetype_cs
+    autocmd!
+
+    " Set folding by syntax for C# (Unity) files
+    autocmd FileType cs setlocal foldmethod=syntax
+    autocmd FileType cs let b:match_words = '\s*#\s*region.*$:\s*#\s*endregion'
+
+    " Close all folds
+    autocmd BufRead *.cs normal zM
+augroup END
+
+augroup filetype_cpp
+    autocmd!
+
+    " Create custom doxygen comment style
+    autocmd FileType cpp syn region doxygenComment start="/\*\!" end="\*/" fold
+    autocmd FileType cpp hi link doxygenComment cError
+
+    " Fold based on our custom syntax.
+    autocmd FileType cpp setlocal foldmethod=syntax
+
+    " Close all folds.
+    autocmd BufRead *.cxx,*.hxx,*.cpp,*.hpp normal zM
+augroup END
+
+" =============================================================================
+" Set 80 column limit.
+" =============================================================================
+if exists('+colorcolumn')
+  set colorcolumn=80
+  highlight ColorColumn guibg=#004653
+
+  " except for mail
+  autocmd FileType mail set colorcolumn=72
+else
+  au BufWinEnter * let w:m2=matchadd('ErrorMsg', '\%>80v.\+', -1)
+endif
+
+" =============================================================================
+" Setup GUI font
+" =============================================================================
+if has('gui_running')
+    if has('nvim')
+        " Done in ginit.vim
+        " has('gui_running') is always false.
+    else
+        set t_Co=256
+        set guifont=Input:h11
+        set lsp=0
+        " HighDPI
+        " set guifont=Input:h9:w4.5
+        " set lsp=-2
+    endif
+endif
+
+" =============================================================================
+" Commands
+" =============================================================================
+" Invoke p4
+command -nargs=+ P4 :cexpr system('p4.py <args> '.expand('%:p')) | e! | copen
+
+" General run command
+command -nargs=+ Run :cexpr system('<args>') | copen
+
+" Change current working directory
+nnoremap ,cd :cd %:p:h<CR>:pwd<CR>
+
+" Never mess when file opened without sudo.
+cmap w!! w !sudo tee % >/dev/null
+
+" =============================================================================
+" Compile and Run code. The primitive way.
+" =============================================================================
+command! -nargs=1 Silent execute ':silent !'.<q-args> | execute ':redraw!'
+function! CompileC()
+:   w
+:   exec '!clang '.shellescape('%').' -o '.shellescape('%:r').' && ./'.shellescape('%:r')
+:   exec 'Silent rm '.shellescape('%:r')
+endfunction
+function! CompileCC()
+:   w
+:   exec '!clang++ -std=c++14 '.shellescape('%').' -o '.shellescape('%:r').' && ./'.shellescape('%:r')
+:   exec 'Silent rm '.shellescape('%:r')
+endfunction
+autocmd filetype c nnoremap <F5> :call CompileC()<CR>
+autocmd filetype cpp nnoremap <F5> :call CompileCC()<CR>
+
+" =============================================================================
+" Profiling
+" =============================================================================
+fun! ProfileStart()
+:   profile start profile.log
+:   profile func *
+:   profile file *
+endfun
+command! ProfileStart call ProfileStart()
+
+fun! ProfileEnd()
+:   profile pause
+:   noautocmd qall!
+endfun
+command! ProfileEnd call ProfileEnd()
+
+" =============================================================================
+" Strip trailing whitespace
+" =============================================================================
+fun! StripTrailingWhitespaces()
+    let l = line(".")
+    let c = col(".")
+    %s/\s\+$//e
+    call cursor(l, c)
+endfun
+
+command! StripWhitespace call StripTrailingWhitespaces()
+
+" =============================================================================
+" Minifier functions
+" =============================================================================
+fun! MinifyJson()
+  %s/\ //g
+  %s/\n//g
+endfunction
+
+command! JsonMinify call MinifyJson()
+
+" =============================================================================
+" Highlight whitespace
+" =============================================================================
+" if version >= 704 && has('patch712')
+"     set listchars=tab:--,trail:~,extends:>,precedes:<,space:·
+"     set nolist
+"     " Highlight whitespace color config
+"     hi Conceal ctermfg=NONE ctermbg=NONE guifg=NONE guibg=NONE
+" endif
+
+" =============================================================================
+" Shell command
+" =============================================================================
+command! -complete=shellcmd -nargs=+ Shell call s:RunShellCommand(<q-args>)
+function! s:RunShellCommand(cmdline)
+  let expanded_cmdline = a:cmdline
+  for part in split(a:cmdline, ' ')
+     if part[0] =~ '\v[%#<]'
+        let expanded_part = fnameescape(expand(part))
+        let expanded_cmdline = substitute(expanded_cmdline, part, expanded_part, '')
+     endif
+  endfor
+  botright new
+  setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap
+  execute '$read !'. expanded_cmdline
+  execute 1 'delete _'
+  setlocal nomodifiable
+  1
+endfunction
+
+" =============================================================================
+" Focus Mode
+" =============================================================================
+function! ToggleFocusMode()
+  if (&foldcolumn != 12)
+    set laststatus=0
+    set numberwidth=10
+    set foldcolumn=12
+    set noruler
+    hi FoldColumn ctermbg=none
+    hi LineNr ctermfg=0 ctermbg=none
+    hi NonText ctermfg=0
+  else
+    set laststatus=2
+    set numberwidth=4
+    set foldcolumn=0
+    set ruler
+    execute 'colorscheme ' . g:colors_name
+  endif
+endfunc
+nnoremap <F1> :call ToggleFocusMode()<cr>
+
+" =============================================================================
+" Buffer Moving
+" =============================================================================
+function! MarkWindowSwap()
+    let g:markedWinNum = winnr()
+endfunction
+
+function! DoWindowSwap()
+    "Mark destination
+    let curNum = winnr()
+    let curBuf = bufnr( "%" )
+    exe g:markedWinNum . "wincmd w"
+    "Switch to source and shuffle dest->source
+    let markedBuf = bufnr( "%" )
+    "Hide and open so that we aren't prompted and keep history
+    exe 'hide buf' curBuf
+    "Switch to dest and shuffle source->dest
+    exe curNum . "wincmd w"
+    "Hide and open so that we aren't prompted and keep history
+    exe 'hide buf' markedBuf
+endfunction
+
+nnoremap <silent> <Leader>m :call MarkWindowSwap()<CR>
+nnoremap <silent> <Leader>p :call DoWindowSwap()<CR>
+
+" =============================================================================
+" Generate CTags manually
+" =============================================================================
+function! GenerateTags()
+:   w
+:   exec '!ctags -R -f tags .'
+endfunction
+command! -nargs=* GenTagsManual call GenerateTags()
+
+" =============================================================================
+" Quit if quickfix is last window
+" =============================================================================
+augroup QFClose
+    autocmd!
+    autocmd WinEnter * if winnr('$') == 1 && getbufvar(winbufnr(winnr()), "&buftype") == "quickfix" | q | endif
+augroup END
+
+" =============================================================================
+" Close all buffers
+" =============================================================================
+function! CloseBuffers()
+    let curr = bufnr("%")
+    let last = bufnr("$")
+    if curr > 1     | silent! execute "1,".(curr-1)."bd"        | endif
+    if curr < last  | silent! execute (curr+1).",".last."bd"    | endif
+endfunction
+nmap <Leader>w :call CloseBuffers()<CR>
+
+" =============================================================================
+" Increment numbers in rows
+" =============================================================================
+function! Incr()
+    let a = line('.') - line("'<")
+    let c = virtcol("'<")
+    if a > 0
+        execute 'normal! '.c.'|'.a."\<C-a>"
+    endif
+    normal `<
+endfunction
+vnoremap <C-a> :call Incr()<CR>
+
+
+" =============================================================================
+"                       ____  _             _
+"                      |  _ \| |_   _  __ _(_)_ __  ___
+"                      | |_) | | | | |/ _` | | '_ \/ __|
+"                      |  __/| | |_| | (_| | | | | \__ \
+"                      |_|   |_|\__,_|\__, |_|_| |_|___/
+"                                     |___/
+" =============================================================================
+
+" =============================================================================
+" Statusline
+" =============================================================================
+set laststatus=2
+
+if has_key(g:plugs, 'lightline-vim')
+    " Lightline settings
+    let g:lightline = {
+        \ 'colorscheme': 'solarized',
+        \ 'active': {
+        \   'left': [ [ 'mode', 'paste' ], [ 'readonly', 'relativepath', 'modified' ] ],
+        \ },
+        \ 'inactive': {
+        \   'left': [ [ ], [ 'relativepath' ] ],
+        \ },
+        \ }
+endif
+
+if has_key(g:plugs, 'vim-airline')
+    " Airline Settings
+    let g:airline_highlighting_cache = 1
+    let g:airline_inactive_collapse = 1
+    let g:airline_extensions = []
+    let g:airline#extensions#tabline#enabled = 1
+    let g:airline#extensions#tabline#buffer_nr_show = 1
+    let g:airline#extensions#whitespace#mixed_indent_algo = 0
+    let g:airline_powerline_fonts = 1
+endif
+
+" =============================================================================
 " ReMap NERDTree Keys.
+" =============================================================================
 let g:NERDTreeMapRefresh='<C-a>'
 let g:NERDTreeMapRefreshRoot='<C-u>'
 let g:NERDTreeMapOpenSplit='t'
@@ -525,124 +857,24 @@ call NERDTreeHighlightFile('jsx', '\.jsx',          '3',  'NONE', 'NONE', 'NONE'
 call NERDTreeHighlightFile('ts', '\.ts',            '5',  'NONE', 'NONE', 'NONE')
 call NERDTreeHighlightFile('tsx', '\.tsx',          '5',  'NONE', 'NONE', 'NONE')
 
-
-" Never mess when file opened without sudo.
-cmap w!! w !sudo tee % >/dev/null
-
-" Use Tabs in Makefiles
-autocmd FileType make setlocal noexpandtab
-
-" Use two spaces in gn files
-autocmd FileType gn setlocal tabstop=2
-autocmd FileType gn setlocal shiftwidth=2
-
-" Use two spaces in yaml files
-autocmd FileType yaml setlocal tabstop=2
-autocmd FileType yaml setlocal shiftwidth=2
-
-" Folding Config
-nnoremap z( zj
-nnoremap z) zk
-augroup vimrc
-    autocmd!
-
-    " Set foldmethod indent AND manual
-    autocmd BufReadPre * setlocal foldmethod=indent
-    autocmd BufWinEnter * if &fdm == 'indent' | setlocal foldmethod=manual | endif
-
-    " Open all folds at startup
-    autocmd BufRead * normal zR
-augroup END
-
-augroup filetype_cs
-    autocmd!
-
-    " Set folding by syntax for C# (Unity) files
-    autocmd FileType cs setlocal foldmethod=syntax
-    autocmd FileType cs let b:match_words = '\s*#\s*region.*$:\s*#\s*endregion'
-
-    " Close all folds
-    autocmd BufRead *.cs normal zM
-augroup END
-
-augroup filetype_cpp
-    autocmd!
-
-    " Create custom doxygen comment style
-    autocmd FileType cpp syn region doxygenComment start="/\*\!" end="\*/" fold
-    autocmd FileType cpp hi link doxygenComment cError
-
-    " Fold based on our custom syntax.
-    autocmd FileType cpp setlocal foldmethod=syntax
-
-    " Close all folds.
-    autocmd BufRead *.cxx,*.hxx,*.cpp,*.hpp normal zM
-augroup END
-
-" Set 80 column limit.
-if exists('+colorcolumn')
-  set colorcolumn=80
-  highlight ColorColumn guibg=#004653
-
-  " except for mail
-  autocmd FileType mail set colorcolumn=72
-else
-  au BufWinEnter * let w:m2=matchadd('ErrorMsg', '\%>80v.\+', -1)
-endif
-
-" Setup GUI font
-if has('gui_running')
-    if has('nvim')
-        " Done in ginit.vim
-        " has('gui_running') is always false.
-    else
-        set t_Co=256
-        set guifont=Input:h9
-        set lsp=0
-        " HighDPI
-        " set guifont=Input:h9:w4.5
-        " set lsp=-2
-    endif
-endif
-
-" Statusline
-set laststatus=2
-
-if lightline_enabled
-    " Lightline settings
-    let g:lightline = {
-        \ 'colorscheme': 'solarized',
-        \ 'active': {
-        \   'left': [ [ 'mode', 'paste' ], [ 'readonly', 'relativepath', 'modified' ] ],
-        \ },
-        \ 'inactive': {
-        \   'left': [ [ ], [ 'relativepath' ] ],
-        \ },
-        \ }
-endif
-if airline_enabled
-    " Airline Settings
-    let g:airline_highlighting_cache = 1
-    let g:airline_inactive_collapse = 1
-    let g:airline_extensions = []
-    let g:airline#extensions#tabline#enabled = 1
-    let g:airline#extensions#tabline#buffer_nr_show = 1
-    let g:airline#extensions#whitespace#mixed_indent_algo = 0
-    let g:airline_powerline_fonts = 1
-endif
-
+" =============================================================================
 " Easy Motion Settings
-map <Leader> <Plug>(easymotion-prefix)
-map <Leader>s <Plug>(easymotion-lineforward)
-map <Leader>n <Plug>(easymotion-j)
-map <Leader>r <Plug>(easymotion-k)
-map <Leader>b <Plug>(easymotion-linebackward)
-nmap e <Plug>(easymotion-s2)
+" =============================================================================
+if has_key(g:plugs, 'vim-easymotion')
+    map <Leader> <Plug>(easymotion-prefix)
+    map <Leader>s <Plug>(easymotion-lineforward)
+    map <Leader>n <Plug>(easymotion-j)
+    map <Leader>r <Plug>(easymotion-k)
+    map <Leader>b <Plug>(easymotion-linebackward)
+    nmap e <Plug>(easymotion-s2)
 
-let g:EasyMotion_smartcase = 1
-let g:EasyMotion_startofline = 0 " keep cursor column when JK motion
+    let g:EasyMotion_smartcase = 1
+    let g:EasyMotion_startofline = 0 " keep cursor column when JK motion
+endif
 
+" =============================================================================
 " vim-autoformat Settings.
+" =============================================================================
 if has_key(g:plugs, 'vim-autoformat')
     noremap <C-f> :Autoformat<CR>
     let g:formatdef_astyle_objc = '"astyle --mode=c"'
@@ -655,6 +887,9 @@ if has_key(g:plugs, 'vim-autoformat')
     let g:formatters_gn = ['gnformat']
 endif
 
+" =============================================================================
+" Uncrustify
+" =============================================================================
 if has_key(g:plugs, 'vim-uncrustify')
     function! GetUncrustifyCfg()
 python3 <<EOF
@@ -703,53 +938,10 @@ EOF
     autocmd FileType cpp vnoremap <buffer> <c-f> :call RangeUncrustifyWrapper('cpp')<CR>
 endif
 
-
-" Strip trailing whitespace
-fun! StripTrailingWhitespaces()
-    let l = line(".")
-    let c = col(".")
-    %s/\s\+$//e
-    call cursor(l, c)
-endfun
-
-command! StripWhitespace call StripTrailingWhitespaces()
-
-" Profiling
-fun! ProfileStart()
-:   profile start profile.log
-:   profile func *
-:   profile file *
-endfun
-command! ProfileStart call ProfileStart()
-
-fun! ProfileEnd()
-:   profile pause
-:   noautocmd qall!
-endfun
-command! ProfileEnd call ProfileEnd()
-
-" Minifier functions
-fun! MinifyJson()
-  %s/\ //g
-  %s/\n//g
-endfunction
-
-command! JsonMinify call MinifyJson()
-
-" Highlight whitespace
-if version >= 704 && has('patch712')
-    set listchars=tab:--,trail:~,extends:>,precedes:<,space:·
-    set nolist
-
-    " Highlight whitespace color config
-    hi Conceal ctermfg=NONE ctermbg=NONE guifg=NONE guibg=NONE
-endif
-
-" vim-ftplugin config
-let g:lua_compiler_name = '/usr/local/bin/luac'
-
+" =============================================================================
 " YouCompleteMe
-if ycm_enabled
+" =============================================================================
+if has_key(g:plugs, 'YouCompleteMe')
     let g:ycm_key_list_select_completion  = ['<Tab>', '<Down>']
     let g:ycm_key_list_previous_completion  = ['<S-Tab>', '<Up>']
     let g:ycm_key_list_stop_completion = ['<Enter>']
@@ -765,65 +957,56 @@ if ycm_enabled
     set completeopt-=preview
 endif
 
+" =============================================================================
 " SuperTab
-" inoremap <C-n> <Plug>SuperTabForward
-" inoremap <C-r> <Plug>SuperTabBackward
-let g:SuperTabCrMapping = 1
+" =============================================================================
+if has_key(g:plugs, 'supertab')
+    " inoremap <C-n> <Plug>SuperTabForward
+    " inoremap <C-r> <Plug>SuperTabBackward
+    let g:SuperTabCrMapping = 1
 
-" Up & down mapping
-" inoremap <expr> <c-r> ((pumvisible()) ? ("\<c-n>") : ("\<c-n>"))
-" inoremap <expr> <c-n> ((pumvisible()) ? ("\<c-p>") : ("\<c-r>"))
+    " Up & down mapping
+    " inoremap <expr> <c-r> ((pumvisible()) ? ("\<c-n>") : ("\<c-n>"))
+    " inoremap <expr> <c-n> ((pumvisible()) ? ("\<c-p>") : ("\<c-r>"))
 
-" To map <s-tab> to the real tab:
-runtime! plugin/supertab.vim
-inoremap <s-tab> <tab>
-
-" Disable youcompleteme while multiple cursors are active
-function! Multiple_cursors_before()
-    let g:yankring_record_enabled = 0
-    if exists("*youcompleteme#DisableCursorMovedAutocommands")
-        call youcompleteme#DisableCursorMovedAutocommands()
-    endif
-endfunction
-function! Multiple_cursors_after()
-    let g:yankring_record_enabled = 1
-    if exists("*youcompleteme#EnableCursorMovedAutocommands")
-        call youcompleteme#EnableCursorMovedAutocommands()
-    endif
-endfunction
-
-" UltiSnips config
-let g:UltiSnipsExpandTrigger = "<c-z>"
-let g:UltiSnipsJumpForwardTrigger = "<c-z>"
-let g:UltiSnipsJumpBackwardTrigger = "<c-y>"
-let g:UltiSnipsListSnippets = "<c-tab>"
-if has("win32") || has("win16")
-    let g:UltiSnipsSnippetsDir = $HOME . '/vimfiles/bundle/vim-misc/UltiSnips'
-else
-    let g:UltiSnipsSnippetsDir = $HOME . '/.vim/bundle/vim-misc/UltiSnips'
+    " To map <s-tab> to the real tab:
+    runtime! plugin/supertab.vim
+    inoremap <s-tab> <tab>
 endif
-let g:UltiSnipsSnippetDirectories = ['UltiSnips']
-let g:UltiSnipsEditSplit = "vertical"
 
+" =============================================================================
+" UltiSnips
+" =============================================================================
+if has_key(g:plugs, 'ultisnips')
+    let g:UltiSnipsExpandTrigger = "<c-z>"
+    let g:UltiSnipsJumpForwardTrigger = "<c-z>"
+    let g:UltiSnipsJumpBackwardTrigger = "<c-y>"
+    let g:UltiSnipsListSnippets = "<c-tab>"
+    if has("win32") || has("win16")
+        let g:UltiSnipsSnippetsDir = $HOME . '/vimfiles/bundle/vim-misc/UltiSnips'
+    else
+        let g:UltiSnipsSnippetsDir = $HOME . '/.vim/bundle/vim-misc/UltiSnips'
+    endif
+    let g:UltiSnipsSnippetDirectories = ['UltiSnips']
+    let g:UltiSnipsEditSplit = "vertical"
+endif
+
+" =============================================================================
 " NumberToggle config
-set relativenumber
-let g:NumberToggleTrigger = "<C-o>"
+" =============================================================================
+if has_key(g:plugs, 'vim-numbertoggle')
+    set relativenumber
+    let g:NumberToggleTrigger = "<C-o>"
+endif
 
-" Fix JSON conceal level Yggdroot/indentLine#140
-let g:vim_json_syntax_conceal = 0
-
-" hexmanager
-let g:hex_movetab = 0
-
+" =============================================================================
 " FastFold
+" =============================================================================
 let g:fastfold_fold_command_suffixes = []
 
-" Vim Notes
-let g:notes_directories = ['~/Documents/Notes']
-let g:notes_suffix = '.txt'
-let g:notes_smart_quotes = 0
-
+" =============================================================================
 " LeaderF
+" =============================================================================
 let g:Lf_ShortcutF = '<Leader>o'
 nnoremap <Leader>o :LeaderfFile<CR>
 nnoremap <Leader>b :LeaderfBuffer<CR>
@@ -855,68 +1038,9 @@ let g:Lf_CommandMap = {
     \ }
 let g:Lf_RootMarkers = ['.git', '.hg', '.svn', '.depotroot', '.projroot', '.p4', '.perforce', '.plastic']
 
-" Shell command
-command! -complete=shellcmd -nargs=+ Shell call s:RunShellCommand(<q-args>)
-function! s:RunShellCommand(cmdline)
-  let expanded_cmdline = a:cmdline
-  for part in split(a:cmdline, ' ')
-     if part[0] =~ '\v[%#<]'
-        let expanded_part = fnameescape(expand(part))
-        let expanded_cmdline = substitute(expanded_cmdline, part, expanded_part, '')
-     endif
-  endfor
-  botright new
-  setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap
-  execute '$read !'. expanded_cmdline
-  execute 1 'delete _'
-  setlocal nomodifiable
-  1
-endfunction
-
-" Focus Mode
-function! ToggleFocusMode()
-  if (&foldcolumn != 12)
-    set laststatus=0
-    set numberwidth=10
-    set foldcolumn=12
-    set noruler
-    hi FoldColumn ctermbg=none
-    hi LineNr ctermfg=0 ctermbg=none
-    hi NonText ctermfg=0
-  else
-    set laststatus=2
-    set numberwidth=4
-    set foldcolumn=0
-    set ruler
-    execute 'colorscheme ' . g:colors_name
-  endif
-endfunc
-nnoremap <F1> :call ToggleFocusMode()<cr>
-
-" Buffer Moving
-function! MarkWindowSwap()
-    let g:markedWinNum = winnr()
-endfunction
-
-function! DoWindowSwap()
-    "Mark destination
-    let curNum = winnr()
-    let curBuf = bufnr( "%" )
-    exe g:markedWinNum . "wincmd w"
-    "Switch to source and shuffle dest->source
-    let markedBuf = bufnr( "%" )
-    "Hide and open so that we aren't prompted and keep history
-    exe 'hide buf' curBuf
-    "Switch to dest and shuffle source->dest
-    exe curNum . "wincmd w"
-    "Hide and open so that we aren't prompted and keep history
-    exe 'hide buf' markedBuf
-endfunction
-
-nnoremap <silent> <Leader>m :call MarkWindowSwap()<CR>
-nnoremap <silent> <Leader>p :call DoWindowSwap()<CR>
-
+" =============================================================================
 " Vim Grep
+" =============================================================================
 nnoremap <Leader>ag :Grepper<CR>
 nmap gs <plug>(GrepperOperator)
 xmap gs <plug>(GrepperOperator)
@@ -951,38 +1075,31 @@ let g:qfenter_keep_quickfixfocus = {
             \ }
 nnoremap <Leader>qf :copen<CR>
 
-" Quick if quickfix is last window
-augroup QFClose
-    autocmd!
-    autocmd WinEnter * if winnr('$') == 1 && getbufvar(winbufnr(winnr()), "&buftype") == "quickfix" | q | endif
-augroup END
-
-" Generate CTags manually
-function! GenerateTags()
-:   w
-:   exec '!ctags -R -f tags .'
-endfunction
-command! -nargs=* GenTagsManual call GenerateTags()
-
+" =============================================================================
 " Gutentags
-set statusline+=%{gutentags#statusline('[Generating...]')}
-function! GenTags()
-:   w
-:   GutentagsUpdate
-:   redraw!
-endfunction
-function! GenTagsAll()
-:   w
-:   GutentagsUpdate!
-:   redraw!
-endfunction
-command! -nargs=* GenTags call GenTags()
-command! -nargs=* GenTagsAll call GenTagsAll()
+" =============================================================================
+if has_key(g:plugs, 'vim-gutentags')
+    set statusline+=%{gutentags#statusline('[Generating...]')}
+    function! GenTags()
+    :   w
+    :   GutentagsUpdate
+    :   redraw!
+    endfunction
+    function! GenTagsAll()
+    :   w
+    :   GutentagsUpdate!
+    :   redraw!
+    endfunction
+    command! -nargs=* GenTags call GenTags()
+    command! -nargs=* GenTagsAll call GenTagsAll()
 
-let g:gutentags_project_root = [ '.git', '.svn', '.hg', '.p4', '.p4project', '.plastic', '.depotroot' ]
-"let g:gutentags_ctags_exclude_wildignore = [ '*.meta' ]
+    let g:gutentags_project_root = [ '.git', '.svn', '.hg', '.p4', '.p4project', '.plastic', '.depotroot' ]
+    "let g:gutentags_ctags_exclude_wildignore = [ '*.meta' ]
+endif
 
+" =============================================================================
 " TagList
+" =============================================================================
 let g:Tlist_Inc_Winwidth=0
 let g:Tlist_WinWidth=40
 let g:Tlist_Use_Right_Window=1
@@ -1001,7 +1118,9 @@ autocmd FileType taglist nnoremap <buffer> <C-a> :TlistUpdate<CR>
 " Show only current buffer?
 " let g:Tlist_Show_One_File=1
 
-" WankRing
+" =============================================================================
+" YankRing
+" =============================================================================
 " p for paste
 " <C-P> maps to next paste
 " <C-N> maps to previous paste
@@ -1009,13 +1128,17 @@ nnoremap <Leader>y :YRShow<CR>
 let g:yankring_replace_n_pkey = '<C-H>'
 let g:yankring_replace_n_nkey = '<C-L>'
 
-" Set EnhancedJumps mappings
+" =============================================================================
+" EnhancedJumps
+" =============================================================================
 nmap <Leader>h  <Plug>EnhancedJumpsOlder
 nmap <Leader>l  <Plug>EnhancedJumpsNewer
 nmap <Leader>gh <Plug>EnhancedJumpsLocalOlder
 nmap <Leader>gl <Plug>EnhancedJumpsLocalNewer
 
+" =============================================================================
 " MultipleCursor
+" =============================================================================
 let g:multi_cursor_use_default_mapping=0
 let g:multi_cursor_next_key='<C-g>'
 let g:multi_cursor_prev_key='<C-p>'
@@ -1025,11 +1148,29 @@ let g:multi_cursor_start_key='<C-g>'
 nnoremap <silent> <C-j> :MultipleCursorsFind <C-R>/<CR>
 vnoremap <silent> <C-j> :MultipleCursorsFind <C-R>/<CR>
 
+" Disable youcompleteme while multiple cursors are active
+function! Multiple_cursors_before()
+    let g:yankring_record_enabled = 0
+    if exists("*youcompleteme#DisableCursorMovedAutocommands")
+        call youcompleteme#DisableCursorMovedAutocommands()
+    endif
+endfunction
+function! Multiple_cursors_after()
+    let g:yankring_record_enabled = 1
+    if exists("*youcompleteme#EnableCursorMovedAutocommands")
+        call youcompleteme#EnableCursorMovedAutocommands()
+    endif
+endfunction
+
+" =============================================================================
 " Vim Easy Align
+" =============================================================================
 xmap ga <Plug>(EasyAlign)
 nmap ga <Plug>(EasyAlign)
 
+" =============================================================================
 " Rainbow
+" =============================================================================
 let g:rainbow_active = 1
 let g:rainbow_conf = {
 \   'guifgs': ['firebrick', 'seagreen3', 'darkorange3', 'yellow', 'magenta1'],
@@ -1054,51 +1195,9 @@ let g:rainbow_conf = {
 \   }
 \}
 
-" Close all buffers
-function! CloseBuffers()
-    let curr = bufnr("%")
-    let last = bufnr("$")
-    if curr > 1     | silent! execute "1,".(curr-1)."bd"        | endif
-    if curr < last  | silent! execute (curr+1).",".last."bd"    | endif
-endfunction
-nmap <Leader>w :call CloseBuffers()<CR>
-
-" Increment numbers in rows
-function! Incr()
-    let a = line('.') - line("'<")
-    let c = virtcol("'<")
-    if a > 0
-        execute 'normal! '.c.'|'.a."\<C-a>"
-    endif
-    normal `<
-endfunction
-vnoremap <C-a> :call Incr()<CR>
-
-" Invoke p4
-command -nargs=+ P4 :cexpr system('p4.py <args> '.expand('%:p')) | e! | copen
-
-" General run command
-command -nargs=+ Run :cexpr system('<args>') | copen
-
-" Change current working directory
-nnoremap ,cd :cd %:p:h<CR>:pwd<CR>
-
-" Use two spaces to indent js/ts files
-autocmd FileType javascript setlocal tabstop=2
-autocmd FileType javascript setlocal shiftwidth=2
-autocmd FileType typescript setlocal tabstop=2
-autocmd FileType typescript setlocal shiftwidth=2
-autocmd FileType typescript set makeprg=tsc\ $*
-
-" Setup comment string
-autocmd FileType javascript setlocal commentstring=/*\ %s\ */
-autocmd FileType typescript setlocal commentstring=/*\ %s\ */
-
-" Use two spaces to indent json files
-autocmd FileType json setlocal tabstop=2
-autocmd FileType json setlocal shiftwidth=2
-
+" =============================================================================
 " ALE
+" =============================================================================
 let g:ale_fixers = {
     \ 'typescript': ['tslint'],
     \ 'javascript': ['eslint'],
