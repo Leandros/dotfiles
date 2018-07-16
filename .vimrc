@@ -555,31 +555,11 @@ endif
 " Invoke p4
 command -nargs=+ P4 :cexpr system('p4.py <args> '.expand('%:p')) | e! | copen
 
-" General run command
-command -nargs=+ Run :cexpr system('<args>') | copen
-
 " Change current working directory
 nnoremap ,cd :cd %:p:h<CR>:pwd<CR>
 
 " Never mess when file opened without sudo.
 cmap w!! w !sudo tee % >/dev/null
-
-" =============================================================================
-" Compile and Run code. The primitive way.
-" =============================================================================
-command! -nargs=1 Silent execute ':silent !'.<q-args> | execute ':redraw!'
-function! CompileC()
-:   w
-:   exec '!clang '.shellescape('%').' -o '.shellescape('%:r').' && ./'.shellescape('%:r')
-:   exec 'Silent rm '.shellescape('%:r')
-endfunction
-function! CompileCC()
-:   w
-:   exec '!clang++ -std=c++14 '.shellescape('%').' -o '.shellescape('%:r').' && ./'.shellescape('%:r')
-:   exec 'Silent rm '.shellescape('%:r')
-endfunction
-autocmd filetype c nnoremap <F5> :call CompileC()<CR>
-autocmd filetype cpp nnoremap <F5> :call CompileCC()<CR>
 
 " =============================================================================
 " Profiling
@@ -648,6 +628,20 @@ function! s:RunShellCommand(cmdline)
   setlocal nomodifiable
   1
 endfunction
+
+" =============================================================================
+" Compile and Run code. The primitive way.
+" =============================================================================
+command! -nargs=1 Silent execute ':silent !'.<q-args> | execute ':redraw!'
+function! CompileCC()
+   write
+   let src = expand('%:p')
+   let exe = expand('%:r')
+   call s:RunShellCommand('clang++ -std=c++14 '.src.' -o '.exe.' && ./'.exe)
+   exec 'Silent rm '.exe
+endfunction
+autocmd filetype cpp nnoremap <F5> :call CompileCC()<CR>
+command! Run :call CompileCC()
 
 " =============================================================================
 " Focus Mode
