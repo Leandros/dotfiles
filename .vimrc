@@ -59,6 +59,8 @@ if js_dev_enabled
     Plug 'pangloss/vim-javascript'
     Plug 'w0rp/ale', { 'for': ['js', 'ts', 'jsx', 'tsx', 'javascript', 'typescript' ] }
     Plug 'Shougo/deoplete.nvim', { 'for': ['js', 'ts', 'jsx', 'tsx', 'javascript', 'typescript' ], 'do': ':UpdateRemotePlugins' }
+    Plug 'jparise/vim-graphql'
+    Plug 'posva/vim-vue'
     Plug 'alvan/vim-closetag'
     if has_key(g:plugs, 'deoplete.nvim')
         let g:deoplete#enable_at_startup = 1
