@@ -26,6 +26,11 @@ if !has('nvim')
     packadd matchit
 endif
 
+" Ugly workaround until vim fixes
+if has('python3')
+  silent! python3 1
+endif
+
 " Visual Plugins
 if has('nvim') && !empty($NVIM_GUI)
     Plug 'frankier/neovim-colors-solarized-truecolor-only'
