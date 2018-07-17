@@ -121,9 +121,17 @@ function __git_prompt {
         echo "%{$fg[green]%}[${ref#refs/heads/}]%{$reset_color%}"
     fi
 }
+if [ "$EUID" = "0" ]; then
+    promptchar="%{$fg[red]%}#%{$reset_color%}"
+elif [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ] || [ -n "$SSH_CONNECTION" ]; then
+    promptchar="%{$fg[magenta]%}%%%%%{$reset_color%}"
+else
+    promptchar="%{$fg[magenta]%}%%%{$reset_color%}"
+fi
+
 export PS1=$'
 %{$fg[blue]%}%~%{$reset_color%} $(__git_prompt)
-$ '
+$promptchar '
 export PS2="%{$fg_blod[black]%}%_> %{$reset_color%}"
 export _RPS1="%(?.%{$fg[green]%}✓%{$reset_color%}.%{$fg[red]%}✗ %?%{$reset_color%})"
 function zle-line-init zle-keymap-select {
@@ -237,6 +245,12 @@ zle -N _history-incremental-preserving-pattern-search-backward
 bindkey -M viins "" _history-incremental-preserving-pattern-search-backward
 bindkey -M vicmd "" _history-incremental-preserving-pattern-search-backward
 bindkey -M isearch "" history-incremental-pattern-search-backward
+
+foreground-vim() {
+    fg %nvim 2>/dev/null || fg %vim 2>/dev/null
+}
+zle -N foreground-vim
+bindkey '^Z' foreground-vim
 
 export KEYTIMEOUT=1
 

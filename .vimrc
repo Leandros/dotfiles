@@ -52,6 +52,7 @@ Plug 'thirtythreeforty/lessspace.vim'
 Plug 'SirVer/ultisnips'
 Plug 'tmux-plugins/vim-tmux-focus-events'
 Plug 'junegunn/vim-easy-align'
+Plug 'tpope/vim-fugitive'
 
 " My own plugins
 Plug 'leandros/vim-misc'
@@ -111,7 +112,6 @@ if vim_fat
     " Required for 'EnhancedJumps'
     Plug 'vim-scripts/ingo-library'
     Plug 'vim-scripts/EnhancedJumps'
-    Plug 'tpope/vim-fugitive'
 
     " My forks
     Plug 'leandros/taglist.vim'
