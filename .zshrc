@@ -3,24 +3,23 @@ HISTFILE=~/.histfile
 HISTSIZE=1000000
 SAVEHIST=100000
 setopt HIST_IGNORE_SPACE
+setopt AUTO_PUSHD
 
 # This needs to be run earlier than compinit
 bindkey -v
 
-# ====================
+# =============================================================================
 # Config
-# ====================
+# =============================================================================
 export HOME=##NEWHOME##
 export EDITOR=##NEWEDITOR##
 export CC=gcc
 export CXX=g++
 export DEFAULT_USER=##NEWUSER##
-
-# Set Locale. LOL
+export LANG=en_us.UTF-8
 export LC_ALL=en_US.UTF-8
-export LANG=en_US.UTF-8
 
-
+# Profiling
 PROFILE_STARTUP=false
 if [[ "$PROFILE_STARTUP" == true ]]; then
     # http://zsh.sourceforge.net/Doc/Release/Prompt-Expansion.html
@@ -29,7 +28,9 @@ if [[ "$PROFILE_STARTUP" == true ]]; then
     setopt xtrace prompt_subst
 fi
 
-# System Specifics: OS X
+# =============================================================================
+# OS X
+# =============================================================================
 if [[ "Darwin" == "`uname`" ]]; then
     bindkey "^[[7~" beginning-of-line
     bindkey "^[[8~" end-of-line
@@ -41,12 +42,15 @@ if [[ "Darwin" == "`uname`" ]]; then
     stty -ixon -ixoff
 
     # Terminal Colors
-    export FLAGS_GETOPT_CMD="$(brew --prefix gnu-getopt)/bin/getopt"
+    # I could call `brew --prefix`, but that's slow, and it's `/usr/local` anyway.
+    BREW_PREFIX="/usr/local"
+    export FLAGS_GETOPT_CMD="$BREW_PREFIX/opt/gnu-getopt/bin/getopt"
     export GREP_OPTIONS='--color=always'
     export GREP_COLOR='1;35;40'
-    source "`brew --prefix`/etc/grc.bashrc"
 
-# System Specifics: Linux
+# =============================================================================
+# Linux
+# =============================================================================
 elif [[ "Linux" == "`uname`" ]]; then
     alias startx='startx -- -dpi 144'
     alias pbpaste='xclip -o'
@@ -62,7 +66,9 @@ elif [[ "Linux" == "`uname`" ]]; then
         export TERM="xterm-256color"
     fi
 
-# System Specifics: cygwin
+# =============================================================================
+# Cygwin
+# =============================================================================
 elif [[ "Cygwin" == "`uname -o`" ]]; then
     export TERM="xterm-256color"
 
@@ -70,18 +76,9 @@ elif [[ "Cygwin" == "`uname -o`" ]]; then
     pbpaste() { cat /dev/clipboard }
 fi
 
-
-# ====================
-# External
-# ====================
-if [ -f "$HOME/.p4creds" ]; then
-    source "$HOME/.p4creds"
-fi
-
-
-# ====================
+# =============================================================================
 # ZSH
-# ====================
+# =============================================================================
 zstyle :compinstall filename $HOME'/.zshrc'
 zmodload zsh/complist
 zmodload zsh/mathfunc
@@ -106,113 +103,54 @@ fpath=(/usr/local/share/zsh-completions $fpath)
 alias mmv='noglob zmv -W'
 
 
-# ====================
+# =============================================================================
 # OH-MY-ZSH
-# ====================
+# =============================================================================
 ZSH=$HOME/.oh-my-zsh
 ENABLE_CORRECTION="false"
 COMPLETION_WAITING_DOTS=false
+export ZSH_THEME=""
 export UPDATE_ZSH_DAYS=7
 
-# powerlevel9k theme
-ZSH_THEME="powerlevel9k/powerlevel9k"
-POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(context dir vcs)
-POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(vi_mode status)
-POWERLEVEL9K_TIME_BACKGROUND="blue" # cyan / 013 are also good looking
-POWERLEVEL9K_PROMPT_ON_NEWLINE=true
-
-plugins=(git git-flow git-extras repo wd brew osx colored-man cp colorize history)
-
-
-# ====================
-# External Scripts
-# ====================
+plugins=(git)
 source $ZSH/oh-my-zsh.sh
-# if command -v fasd > /dev/null 2>&1; then
-#     eval "$(fasd --init posix-alias zsh-hook zsh-ccomp zsh-wcomp)"
-# fi
 
-# Glob all other scripts
-for file in $HOME/.zsh/scripts/* ; do
-  if [ -f "$file" ] ; then
-    source "$file"
-  fi
-done
+function __git_prompt {
+    local ref=$(command git symbolic-ref HEAD 2>/dev/null || command git rev-parse --short HEAD 2>/dev/null)
+    if [ "$ref" != "" ]; then
+        echo "%{$fg[green]%}[${ref#refs/heads/}]%{$reset_color%}"
+    fi
+}
+export PS1=$'
+%{$fg[blue]%}%~%{$reset_color%} $(__git_prompt)
+$ '
+export PS2="%{$fg_blod[black]%}%_> %{$reset_color%}"
+export _RPS1="%(?.%{$fg[green]%}✓%{$reset_color%}.%{$fg[red]%}✗ %?%{$reset_color%})"
+function zle-line-init zle-keymap-select {
+    local insert="%{$fg[blue]%}INSERT%{$reset_color%}"
+    RPS1="${${KEYMAP/vicmd/NORMAL}/(main|viins)/$insert} $_RPS1"
+    zle reset-prompt
+}
+zle -N zle-line-init
+zle -N zle-keymap-select
 
-# init fasd and cache the result
-# if command -v fasd > /dev/null 2>&1; then
-#     fasd_cache="$HOME/.fasd-init-zsh"
-#     if [ "$(command -v fasd)" -nt "$fasd_cache" -o ! -s "$fasd_cache" ]; then
-#       fasd --init posix-alias zsh-hook zsh-ccomp zsh-ccomp-install >| "$fasd_cache"
-#     fi
-#     source "$fasd_cache"
-#     unset fasd_cache
-# fi
-
-
-# ====================
-# Programs
-# ====================
-export LESS="-R"
-export LESSOPEN="|~/.lessfilter %s"
-
-# ====================
+# =============================================================================
 # General Config
-# ====================
+# =============================================================================
 # Make use of the dirstack
-_mydirstack() {
-  local -a lines list
-  for d in $dirstack; do
-    lines+="$(($#lines+1)) -- $d"
-    list+="$#lines"
-  done
-  _wanted -V directory-stack expl 'directory stack' \
-    compadd "$@" -ld lines -S']/' -Q -a list
-}
-zsh_directory_name() {
-  case $1 in
-    c) _mydirstack;;
-    n) case $2 in
-         <0-9>) reply=($dirstack[$2]);;
-         *) reply=($dirstack[(r)*$2*]);;
-       esac;;
-    d) false;;
-  esac
-}
-
-# Also, persist dirstack through restarts
 DIRSTACKSIZE=9
 DIRSTACKFILE=~/.zdirs
-touch $DIRSTACKFILE
-if [[ $#dirstack -eq 0 ]]; then
+if [[ -f $DIRSTACKFILE ]] && [[ $#dirstack -eq 0 ]]; then
   dirstack=( ${(f)"$(< $DIRSTACKFILE)"} )
   [[ -d $dirstack[1] ]] && cd $dirstack[1] && cd $OLDPWD
 fi
-chpwd_dirstack() {
-  local -a dirs; dirs=( "$PWD" ${(f)"$(< $DIRSTACKFILE)"} )
-  print -l ${${(u)dirs}[0,$DIRSTACKSIZE]} >$DIRSTACKFILE
+chpwd() {
+  print -l $PWD ${(u)dirstack} >$DIRSTACKFILE
 }
 
-mutt() {
-    local cwd=$(pwd)
-    cd ~/
-    command mutt $@
-    cd $cwd
-}
-
-if [[ "$OSTYPE" =~ darwin* ]]; then
-    gn() {
-        command gn $@ --script-executable=python3
-    }
-fi
-
-# tmux current working dir
-PS1="$PS1"'$([ -n "$TMUX"  ] && tmux setenv TMUXPWD_$(tmux display -p "#D" | tr -d %) "$PWD")'
-
-# ====================
+# =============================================================================
 # Vi Mode
-# ====================
-
+# =============================================================================
 # Enable Vi mode
 bindkey -v
 
@@ -226,6 +164,7 @@ bindkey -M vicmd "n" down-line-or-beginning-search
 bindkey -M vicmd "r" up-line-or-beginning-search
 bindkey -M vicmd "B" backward-word
 bindkey -M vicmd "S" forward-word
+bindkey -M vicmd "w" vi-forward-word-end
 bindkey -M vicmd "$" end-of-line
 bindkey -M vicmd "0" beginning-of-line
 bindkey -M vicmd "u" undo
@@ -238,6 +177,10 @@ bindkey -M vicmd "?" vi-repeat-search
 bindkey -M vicmd ":" vi-rev-repeat-search # was execute-named-cmd
 #bindkey -M vicmd "y" yank
 #bindkey -M vicmd " " magic-space
+
+# Search on steroids.
+bindkey "^R" history-incremental-pattern-search-backward
+bindkey "^S" history-incremental-pattern-search-forward
 
 # Bind Up and Down keys again
 bindkey -M vicmd "OA" up-line-or-beginning-search
@@ -297,10 +240,9 @@ bindkey -M isearch "" history-incremental-pattern-search-backward
 
 export KEYTIMEOUT=1
 
-
-# ====================
+# =============================================================================
 # Aliases
-# ====================
+# =============================================================================
 alias l=' ls -lah'
 alias g=git
 alias ti='tig status'
@@ -317,10 +259,15 @@ alias m='mutt -F ~/.mutt/muttrc1'
 alias m1='mutt -F ~/.mutt/muttrc1'
 alias m2='mutt -F ~/.mutt/muttrc2'
 alias m3='mutt -F ~/.mutt/muttrc3'
-alias mutt1='mutt -F ~/.mutt/muttrc1'
-alias mutt2='mutt -F ~/.mutt/muttrc2'
-alias mutt3='mutt -F ~/.mutt/muttrc3'
 alias ccp='rsync -ah --progress'
+
+# Less modes
+export LESS="-R"
+export LESSOPEN="|~/.lessfilter %s"
+
+# Ignore these commands in history
+alias cd=' cd'
+alias ls=' ls --color=auto'
 
 # Highlight current day
 cal() {
@@ -328,57 +275,130 @@ cal() {
 }
 
 # Easyily convert between hex and decimal
-h2d() {
-    echo "ibase=16; $@" | bc
+h2d() { echo "ibase=16; $@" | bc }
+d2h() { echo "obase=16; $@" | bc }
+
+# Objdump shortcut
+function dump {
+    if [ -x "$(command -v gobjdump)" ]; then
+        command gobjdump -Mintel -S $@
+    else
+        command objdump -Mintel -S $@
+    fi
 }
-d2h() {
-    echo "obase=16; $@" | bc
+
+# Mutt command
+mutt() {
+    local cwd=$(pwd)
+    cd ~/
+    command mutt $@
+    cd $cwd
 }
 
-# ====================
-# Fasd Aliases
-# ====================
-alias v='f -e vim'
-alias nv='f -e nvim'
-alias o='a -e open'
-alias c='fasd_cd -d'
+# GN with python3
+if [[ "$OSTYPE" =~ darwin* ]]; then
+    gn() {
+        command gn $@ --script-executable=python3
+    }
+fi
 
-# Ignore these commands in history
-alias cd=' cd'
-alias ls=' ls --color=auto'
+# up x -- move up x levels
+up() {
+  local op=print
+  [[ -t 1 ]] && op=cd
+  case "$1" in
+    '') up 1;;
+    -*|+*) $op ~$1;;
+    <->) $op $(printf '../%.0s' {1..$1});;
+    *) local -a seg; seg=(${(s:/:)PWD%/*})
+       local n=${(j:/:)seg[1,(I)$1*]}
+       if [[ -n $n ]]; then
+         $op /$n
+       else
+         print -u2 up: could not find prefix $1 in $PWD
+         return 1
+       fi
+  esac
+}
 
-# Android SDK / NDK
+# Short of learning how to actually configure OSX, here's a hacky way to use
+# GNU manpages for programs that are GNU ones, and fallback to OSX manpages otherwise
+# oh, and colorized
+alias gnuman='_() { echo $1; man -M $(brew --prefix)/opt/coreutils/libexec/gnuman $1 1>/dev/null 2>&1;  if [ "$?" -eq 0  ]; then man -M $(brew --prefix)/opt/coreutils/libexec/gnuman $1; else man $1; fi  }; _'
+man() {
+    env \
+        LESS_TERMCAP_mb=$(printf "\e[1;31m") \
+        LESS_TERMCAP_md=$(printf "\e[1;31m") \
+        LESS_TERMCAP_me=$(printf "\e[0m") \
+        LESS_TERMCAP_se=$(printf "\e[0m") \
+        LESS_TERMCAP_so=$(printf "\e[1;44;33m") \
+        LESS_TERMCAP_ue=$(printf "\e[0m") \
+        LESS_TERMCAP_us=$(printf "\e[1;32m") \
+            man "$@" | less
+}
+
+# Convert man page to pdf
+man-pdf () {
+    man -t "$@" | pstopdf -i -o "$@.pdf"
+}
+
+countdown() {
+    local target=$(($(date +%s) + $1))
+    while [ "$target" -ge `date +%s` ]; do
+        echo -ne "$(date -u --date @$(($target - `date +%s`)) +%H:%M:%S)\r"
+        sleep 0.1
+    done
+    echo -e "Countdown Over!"
+}
+
+stopwatch() {
+  date1=`date +%s`;
+   while true; do
+    echo -ne "$(date -u --date @$((`date +%s` - $date1)) +%H:%M:%S)\r";
+    sleep 0.1
+   done
+}
+
+# extract any format
+extract () {
+    if [ -f $1 ]; then
+        case $1 in
+            *.tar.bz2)   tar xjf $1;;
+            *.tar.gz)    tar xzf $1;;
+            *.bz2)       bunzip2 $1;;
+            *.rar)       rar x $1;;
+            *.gz)        gunzip $1;;
+            *.tar)       tar xf $1;;
+            *.tbz2)      tar xjf $1;;
+            *.tgz)       tar xzf $1;;
+            *.zip)       unzip $1;;
+            *.Z)         uncompress $1;;
+            *.7z)        7z x $1;;
+            *)           echo "'$1' cannot be extracted via extract()";;
+        esac
+        else
+            echo "'$1' is not a valid file"
+    fi
+}
+
+# =============================================================================
+# SDKs
+# =============================================================================
 export ANDROID_ROOT=$HOME/android-sdk
 export ANDROID_SDK_ROOT=$ANDROID_ROOT
 export ANDROID_HOME=$ANDROID_ROOT
+export ANDROID_SDK=$ANDROID_ROOT
 export NDK_ROOT=$HOME/android-ndk-r10e
 export ANDROID_NDK=$NDK_ROOT
 export NDK_TOOLCHAIN_VERSION=4.9
 export NDK_CCACHE=/usr/local/bin/ccache
 export USE_CCACHE=1
 
-# MANPATH
-if command_exists brew ; then
-    HOMEBREW_PREFIX=$(brew --prefix)
-else
-    HOMEBREW_PREFIX=/usr/local
-fi
-MANPATH=$HOMEBREW_PREFIX/opt/coreutils/libexec/gnuman:$MANPATH
-export MANPATH
-
-function mman {
-    MANPATH=$HOME/p4/depot/liba/docs man $1
-}
-
-function dump {
-    command gobjdump -Mintel -S $@
-}
-
+# =============================================================================
 # PATH
+# =============================================================================
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-if command_exists brew ; then
-    PATH=$(brew --prefix coreutils)/libexec/gnubin:$PATH
-fi
+PATH="$BREW_PREFIX/opt/coreutils/libexec/gnubin:$PATH"
 
 PATH=$PATH:/usr/bin/core_perl
 PATH=$PATH:$HOME/bin
@@ -405,7 +425,20 @@ export PATH
 export GOPATH=$HOME/gopath
 
 # Start ssh-agent on startup
-eval `ssh-agent -s` > /dev/null 2>&1
+# eval `ssh-agent -s` > /dev/null 2>&1
+
+# =============================================================================
+# MANPATH
+# =============================================================================
+export MANPATH=$BREW_PREFIX/opt/coreutils/libexec/gnuman:$MANPATH
+function mman { MANPATH=$HOME/p4/depot/liba/docs man $* | less }
+
+# =============================================================================
+# External
+# =============================================================================
+if [ -f "$HOME/.p4creds" ]; then
+    source "$HOME/.p4creds"
+fi
 
 # Entirety of my startup file... then
 if [[ "$PROFILE_STARTUP" == true ]]; then
