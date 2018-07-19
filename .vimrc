@@ -47,6 +47,7 @@ Plug 'ervandew/supertab'
 Plug 'Yggdroot/LeaderF'
 Plug 'mhinz/vim-grepper'
 Plug 'thirtythreeforty/lessspace.vim'
+Plug 'maxbrunsfeld/vim-yankstack'
 
 " General
 Plug 'SirVer/ultisnips'
@@ -71,10 +72,10 @@ Plug 'luochen1990/rainbow', { 'for': ['scheme', 'lisp', 'racket'] }
 Plug 'leandros/hlsl.vim', { 'for': ['hlsl'] }
 Plug 'leandros/vim-gn', { 'for': ['gn'] }
 
+if ycm_enabled
+    Plug 'Valloric/YouCompleteMe', { 'for': ['cpp', 'c', 'python'] }
+endif
 
-    if ycm_enabled
-        Plug 'Valloric/YouCompleteMe', { 'for': ['cpp', 'c', 'python'] }
-    endif
 
 " =============================================================================
 " FAT VIM
@@ -123,8 +124,14 @@ if vim_fat
     endif
 endif
 
-
 call plug#end()
+
+
+" required for remapping Y to y$
+" has to come after plug#end()
+if has_key(g:plugs, 'vim-yankstack')
+    call yankstack#setup()
+endif
 
 " =============================================================================
 " Language / Shell
@@ -210,8 +217,8 @@ set noshowmatch                     " Don't show matching braces.
 let g:matchparen_timeout = 2
 let g:matchparen_insert_timeout = 2
 
-" Improve performance
-set lazyredraw
+" Improve performance (not necessary on iTerm2 Beta)
+" set lazyredraw
 
 " Disable syntax highlighting long lines
 set synmaxcol=300
@@ -407,6 +414,9 @@ nnoremap <C-w> :bd<CR>
 nnoremap <Leader>qq :cclose<CR>
 nnoremap <Leader>qc :cclose<CR>
 nnoremap <Leader>qo :copen<CR>
+
+" Map Y to y$, to behave like D and C
+nnoremap Y y$
 
 " =============================================================================
 " Tag navigation keys
@@ -693,7 +703,7 @@ function! DoWindowSwap()
 endfunction
 
 nnoremap <silent> <Leader>m :call MarkWindowSwap()<CR>
-nnoremap <silent> <Leader>p :call DoWindowSwap()<CR>
+nnoremap <silent> <Leader>u :call DoWindowSwap()<CR>
 
 " =============================================================================
 " Generate CTags manually
@@ -1118,14 +1128,21 @@ autocmd FileType taglist nnoremap <buffer> <C-a> :TlistUpdate<CR>
 " let g:Tlist_Show_One_File=1
 
 " =============================================================================
-" YankRing
+" YankRing / YankStack
 " =============================================================================
-" p for paste
-" <C-P> maps to next paste
-" <C-N> maps to previous paste
-nnoremap <Leader>y :YRShow<CR>
-let g:yankring_replace_n_pkey = '<C-H>'
-let g:yankring_replace_n_nkey = '<C-L>'
+if has_key(g:plugs, 'YankRing.vim')
+    " p for paste
+    " <C-P> maps to next paste
+    " <C-N> maps to previous paste
+    nnoremap <Leader>y :YRShow<CR>
+    let g:yankring_replace_n_pkey = '<C-H>'
+    let g:yankring_replace_n_nkey = '<C-L>'
+elseif has_key(g:plugs, 'vim-yankstack')
+    let g:yankstack_yank_keys = ['y', 'd', 'c', 'yy', 'dd', 'cc', 'Y', 'D', 'C']
+    nmap <Leader>p <Plug>yankstack_substitute_older_paste
+    nmap <Leader>P <Plug>yankstack_substitute_newer_paste
+    nnoremap <Leader>y :Yanks<CR>
+endif
 
 " =============================================================================
 " EnhancedJumps
