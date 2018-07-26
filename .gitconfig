@@ -57,6 +57,10 @@
     ff = merge --ff-only
     noff = merge --no-ff
 
+    # Archiving
+    mirror = clone --mirror
+    arch = "!f() { git bundle create \"${GIT_PREFIX}$1\" --all; }; f"
+
     standup = log --pretty=format:'%Cred%h%Creset -%Creset %s %Cgreen(%cD) %C(bold blue)<%an>%Creset' --since yesterday --author 'Leandros Linux'
     ignored = ls-files --others -i --exclude-standard
     change = log --pretty=\"- \"%s --first-parent --color
