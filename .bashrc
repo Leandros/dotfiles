@@ -33,12 +33,17 @@ shopt -s globstar
 stty -ixon
 
 # Aliases
-alias pbcoby='/dev/clipboard'
-alias pbpaste='cat /dev/clipboard'
+pbcopy() { read data; echo "$data" > /dev/clipboard; }
+pbpaste() { cat /dev/clipboard; }
 
 # Source perforce (if any process ends up using bash instead of zsh)
 if [ -f "$HOME/.p4creds" ]; then
     source "$HOME/.p4creds"
+fi
+
+# Path
+if [[ "$(uname)" =~ MINGW* ]]; then
+    export PATH=$PATH:"C:/Perforce"
 fi
 
 # Prompt

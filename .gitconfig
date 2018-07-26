@@ -86,9 +86,9 @@
     cmd = opendiff \"$LOCAL\" \"$REMOTE\"
     path =
 [mergetool "p4merge"]
-    cmd = \"C:/Perforce/p4merge.exe\" -db \"$BASE\" \"$LOCAL\" \"$REMOTE\" \"$MERGED\"
+    cmd = p4merge -db \"$BASE\" \"$LOCAL\" \"$REMOTE\" \"$MERGED\"
 [difftool "p4merge"]
-    cmd = \"C:/Perforce/p4merge.exe\" -db \"$LOCAL\" \"$REMOTE\"
+    cmd = p4merge -db \"$LOCAL\" \"$REMOTE\"
 [mergetool "bc"]
     path = "C:/Program Files/Beyond Compare 4/bcomp.exe"
 [difftool "bc"]
@@ -102,7 +102,7 @@
     prompt = false
     keepTemporaries = false
 [merge]
-    tool = diffmerge
+    tool = p4merge
     conflictstyle = diff3
 [difftool]
     prompt = false

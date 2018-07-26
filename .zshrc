@@ -47,6 +47,7 @@ if [[ "Darwin" == "`uname`" ]]; then
     export FLAGS_GETOPT_CMD="$BREW_PREFIX/opt/gnu-getopt/bin/getopt"
     export GREP_OPTIONS='--color=always'
     export GREP_COLOR='1;35;40'
+    export PATH=$PATH:/Applications/p4merge.app/Contents/MacOS
 
 # =============================================================================
 # Linux
