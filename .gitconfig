@@ -53,6 +53,10 @@
     blog = log --branches --not --remotes --simplify-by-decoration --decorate --oneline
     date-log = log --color --all --date-order --date=iso --abbrev-commit --pretty=format:'%C(yellow)%h%C(reset) %C(green)%ai%x08%x08%x08%x08%x08%x08%x08%x08%x08%C(reset) %<(25)%C(blue)%an%C(reset) %C(red)%d%C(reset) %s'
 
+    # Merge aliases
+    ff = merge --ff-only
+    noff = merge --no-ff
+
     standup = log --pretty=format:'%Cred%h%Creset -%Creset %s %Cgreen(%cD) %C(bold blue)<%an>%Creset' --since yesterday --author 'Leandros Linux'
     ignored = ls-files --others -i --exclude-standard
     change = log --pretty=\"- \"%s --first-parent --color
