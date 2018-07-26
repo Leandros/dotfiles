@@ -48,6 +48,7 @@ if [[ "Darwin" == "`uname`" ]]; then
     export GREP_OPTIONS='--color=always'
     export GREP_COLOR='1;35;40'
     export PATH=$PATH:/Applications/p4merge.app/Contents/MacOS
+    export PATH=$PATH:/usr/local/share/dotnet
 
 # =============================================================================
 # Linux
