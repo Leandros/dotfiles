@@ -47,8 +47,6 @@ if [[ "Darwin" == "`uname`" ]]; then
     export FLAGS_GETOPT_CMD="$BREW_PREFIX/opt/gnu-getopt/bin/getopt"
     export GREP_OPTIONS='--color=always'
     export GREP_COLOR='1;35;40'
-    export PATH=$PATH:/Applications/p4merge.app/Contents/MacOS
-    export PATH=$PATH:/usr/local/share/dotnet
 
 # =============================================================================
 # Linux
@@ -430,6 +428,10 @@ PATH=$PATH:$ANDROID_ROOT/platform-tools
 PATH=$PATH:$NDK_ROOT
 PATH=$PATH:$NDK_CCACHE
 PATH=$PATH:$HOME/p4/depot/extern/bin/shared
+
+# macOS specific
+PATH=$PATH:/Applications/p4merge.app/Contents/MacOS
+PATH=$PATH:/usr/local/share/dotnet
 
 # Cross Compiling Toolchains
 PATH=$PATH:/usr/local/sh-elf/bin
