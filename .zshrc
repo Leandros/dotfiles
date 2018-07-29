@@ -446,6 +446,9 @@ export GOPATH=$HOME/gopath
 # Start ssh-agent on startup
 # eval `ssh-agent -s` > /dev/null 2>&1
 
+# DotNET
+export DOTNET_CLI_TELEMETRY_OPTOUT=1
+
 # =============================================================================
 # MANPATH
 # =============================================================================
