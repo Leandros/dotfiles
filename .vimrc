@@ -41,6 +41,7 @@ endif
 
 " Absolute Must Haves!
 Plug 'tpope/vim-commentary'
+Plug 'tpope/vim-surround'
 Plug 'terryma/vim-multiple-cursors'
 Plug 'Konfekt/FastFold'
 Plug 'ervandew/supertab'
@@ -125,7 +126,6 @@ if vim_fat
 endif
 
 call plug#end()
-
 
 " required for remapping Y to y$
 " has to come after plug#end()
@@ -286,10 +286,12 @@ colorscheme solarized
 " =============================================================================
 " Custom Filetypes
 " =============================================================================
-au BufRead,BufNewFile *.ds set filetype=rgbds
+au BufRead,BufNewFile *.ds set filetype=rgbds                   " GameBoy Assembly
 au BufRead,BufNewFile *.fl,*.flex,*.l,*.lm setlocal ft=lex      " Flex
 au BufRead,BufNewFile *.y,*.ypp,*.ym setlocal ft=yacc           " Bison
 au BufRead,BufNewFile *.man setlocal ft=groff                   " Groff/Troff
+au BufRead,BufNewFile *.mm setlocal ft=objcpp                   " Objective-C++
+au BufRead,BufNewFile *.m setlocal ft=objc                      " Objective-C
 
 " =============================================================================
 " Set syntax options
@@ -302,10 +304,6 @@ let c_no_block_fold = 1
 let c_no_comment_fold = 1
 " Don't fold #if 0 blocks
 let c_no_if0_fold = 1
-
-" C-r is mapped to move one buffer up -_-
-" autocmd filetype c nnoremap <C-r> :call CompileC()<CR>
-" autocmd filetype cpp nnoremap <C-r> :call CompileCC()<CR>
 
 " =============================================================================
 " Bindings
