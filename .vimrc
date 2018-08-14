@@ -65,8 +65,8 @@ Plug 'leandros/vim-bufkill'
 Plug 'leandros/nerdtree' " No idea why I use my own fork
 
 " Syntax / File Plugins
-Plug 'Chiel92/vim-autoformat', { 'for': ['objc', 'gn', 'js', 'jsx', 'ts', 'tsx', 'javascript', 'typescript'] }
-Plug 'cofyc/vim-uncrustify', { 'for': ['cpp', 'c', 'cs'] }
+Plug 'Chiel92/vim-autoformat', { 'for': ['gn', 'js', 'jsx', 'ts', 'tsx', 'javascript', 'typescript'] }
+Plug 'cofyc/vim-uncrustify', { 'for': ['cpp', 'c', 'cs', 'objc', 'objcpp'] }
 Plug 'dummyunit/vim-fastbuild', { 'for': ['fastbuild'] }
 Plug 'wlangstroth/vim-racket', { 'for': ['racket'] }
 Plug 'luochen1990/rainbow', { 'for': ['scheme', 'lisp', 'racket'] }
@@ -74,7 +74,7 @@ Plug 'leandros/hlsl.vim', { 'for': ['hlsl'] }
 Plug 'leandros/vim-gn', { 'for': ['gn'] }
 
 if ycm_enabled
-    Plug 'Valloric/YouCompleteMe', { 'for': ['cpp', 'c', 'python'] }
+    Plug 'Valloric/YouCompleteMe', { 'for': ['cpp', 'c', 'python', 'objc', 'objcpp'] }
 endif
 
 
@@ -943,6 +943,10 @@ EOF
     autocmd FileType c vnoremap <buffer> <c-f> :call RangeUncrustifyWrapper('c')<CR>
     autocmd FileType cpp noremap <buffer> <c-f> :call UncrustifyWrapper('cpp')<CR>
     autocmd FileType cpp vnoremap <buffer> <c-f> :call RangeUncrustifyWrapper('cpp')<CR>
+    autocmd FileType objc noremap <buffer> <c-f> :call UncrustifyWrapper('objc')<CR>
+    autocmd FileType objc vnoremap <buffer> <c-f> :call RangeUncrustifyWrapper('objc')<CR>
+    autocmd FileType objcpp noremap <buffer> <c-f> :call UncrustifyWrapper('objcpp')<CR>
+    autocmd FileType objcpp vnoremap <buffer> <c-f> :call RangeUncrustifyWrapper('objcpp')<CR>
 endif
 
 " =============================================================================
