@@ -61,8 +61,8 @@ Xft.hinting:            true
 Xft.hintstyle:          hintslight
 
 ! Font
-URxvt.font:             xft:Menlo:size=10
-URxvt.font:             xft:Menlo:size=10
+URxvt.font:             xft:Input:size=10
+URxvt.font:             xft:Input:size=10
 
 
 ! =============================================================================

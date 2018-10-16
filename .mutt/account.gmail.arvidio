@@ -1,11 +1,11 @@
 # Private account
 
 # Password
-set my_pw = `security find-generic-password -a 'arvid@voonygames.com' -l 'gmail.com' -w`
+set my_pw = `security find-generic-password -a 'admin@arvid.io' -l 'gmail.com' -w`
 
 # Imap
 set folder          = imaps://imap.gmail.com:993/
-set imap_user       = arvid@voonygames.com
+set imap_user       = admin@arvid.io
 set imap_pass       = $my_pw
 set spoolfile       = +INBOX
 
@@ -15,7 +15,7 @@ set                 imap_check_subscribed
 
 # Smtp
 set realname        = "Arvid Gerstmann"
-set from            = arvid@voonygames.com
+set from            = ag@arvid.io
 set use_from        = yes
 set smtp_url        = smtp://arvid@voonygames.com@smtp.gmail.com:587/
 set smtp_pass       = $my_pw
@@ -24,9 +24,9 @@ set ssl_force_tls   = yes
 set ssl_starttls    = yes
 
 # Caching
-set header_cache    = ~/.mutt/com.gmail.voonygames/cache/headers
-set message_cachedir= ~/.mutt/com.gmail.voonygames/cache/bodies
-set certificate_file= ~/.mutt/com.gmail.voonygames/certificates
+set header_cache    = ~/.mutt/com.gmail.arvidio/cache/headers
+set message_cachedir= ~/.mutt/com.gmail.arvidio/cache/bodies
+set certificate_file= ~/.mutt/com.gmail.arvidio/certificates
 
 # Labels
 set postponed       = +[Google\ Mail]/Drafts
@@ -40,5 +40,5 @@ set imap_keepalive  = 900
 set mail_check      = 30
 set timeout         = 10
 set net_inc         = 5
-set signature       = ~/.mutt/signature.voonygames
+set signature       = ~/.mutt/signature.arvidio
 

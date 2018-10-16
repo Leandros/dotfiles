@@ -56,7 +56,7 @@ set edit_headers    = yes
 set smart_wrap
 
 # Compose View Options
-set realname = "Arvid Gerstmann"          # who am i?
+set realname = "Arvid Gerstmann"     # who am i?
 set envelope_from       = yes        # which from?
 set sig_dashes          = no         # dashes before sig
 set edit_headers        = yes        # show headers when composing
@@ -93,8 +93,8 @@ bind index,pager f forward-message
 bind index,pager m mail
 bind index,pager d delete-message
 bind index D delete-pattern
-bind index,pager e reply
-bind index,pager i group-reply
+bind index,pager i reply
+bind index,pager e group-reply
 
 
 # Index (main mail page) binds
@@ -204,12 +204,12 @@ set mailcap_path    = ~/.mutt/mailcap
 # Setup folders
 folder-hook 'account.gmail.private' 'source ~/.mutt/account.gmail.private'
 folder-hook 'account.gmail.appico' 'source ~/.mutt/account.gmail.appico'
-folder-hook 'account.gmail.voonygames' 'source ~/.mutt/account.gmail.voonygames'
+folder-hook 'account.gmail.arvidio' 'source ~/.mutt/account.gmail.arvidio'
 
 # Change between folders
 macro index 1 '<sync-mailbox><refresh><enter-command>source ~/.mutt/account.gmail.private<enter><change-folder>!<enter>'
 macro index 2 '<sync-mailbox><refresh><enter-command>source ~/.mutt/account.gmail.appico<enter><change-folder>!<enter>'
-macro index 3 '<sync-mailbox><refresh><enter-command>source ~/.mutt/account.gmail.voonygames<enter><change-folder>!<enter>'
+macro index 3 '<sync-mailbox><refresh><enter-command>source ~/.mutt/account.gmail.arvidio<enter><change-folder>!<enter>'
 
 # switch to default account on startup
 # source ~/.mutt/account.gmail.private
