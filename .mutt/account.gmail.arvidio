@@ -17,7 +17,7 @@ set                 imap_check_subscribed
 set realname        = "Arvid Gerstmann"
 set from            = ag@arvid.io
 set use_from        = yes
-set smtp_url        = smtp://arvid@voonygames.com@smtp.gmail.com:587/
+set smtp_url        = smtp://admin@arvid.io@smtp.gmail.com:587/
 set smtp_pass       = $my_pw
 set smtp_authenticators = "gssapi:login"
 set ssl_force_tls   = yes
