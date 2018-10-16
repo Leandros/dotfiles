@@ -4,9 +4,10 @@
 
 # History
 export HISTFILE=~/.bash_history
-export HISTSIZE=100000
-export HISTFILESIZE=100000
+export HISTSIZE=
+export HISTFILESIZE=
 export HISTCONTROL=ignoreboth:erasedups
+export HISTTIMEFORMAT="%F %T: "
 
 # Defaults
 export EDITOR=gvim
