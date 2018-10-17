@@ -8,6 +8,7 @@ set folder          = imaps://imap.gmail.com:993/
 set imap_user       = arvid.gerstmann@appico.com
 set imap_pass       = $my_pw
 set spoolfile       = +INBOX
+set imap_delim_chars='/'
 
 unmailboxes         *
 unset               imap_passive
