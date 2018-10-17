@@ -178,19 +178,26 @@ bind index,pager  previous-line
 
 # Sidebar
 # Disable it, since it's not exactly great with multi accounts.
-# set sidebar_width       = 30
-# set sidebar_visible     = yes
-# set sidebar_delim       = '|'
-# set sidebar_sort        = no
-# set sidebar_shortpath   = yes
-# bind index  sidebar-prev
-# bind index  sidebar-next
-# bind index  sidebar-open
-# bind pager  sidebar-prev
-# bind pager  sidebar-next
-# bind pager  sidebar-open
-# macro index o ‘<enter-command>toggle sidebar_visible<enter><refresh>’
-# macro pager o ‘<enter-command>toggle sidebar_visible<enter><redraw-screen>’
+set sidebar_visible         = yes
+set sidebar_width           = 30
+set sidebar_format          = '%B%?F? [%F]?%* %?N?%N/?%S'
+set sidebar_short_path      = no
+set sidebar_delim_chars     = '/.'
+set sidebar_folder_indent   = no
+set sidebar_indent_string   = '  '
+set sidebar_new_mail_only   = no
+set sidebar_next_new_wrap   = no
+set sidebar_divider_char    = '|'
+set sidebar_sort_method     = 'unsorted'
+set mail_check_stats
+bind index  sidebar-prev
+bind index  sidebar-next
+bind index  sidebar-open
+bind pager  sidebar-prev
+bind pager  sidebar-next
+bind pager  sidebar-open
+macro index o ‘<enter-command>toggle sidebar_visible<enter><refresh>’
+macro pager o ‘<enter-command>toggle sidebar_visible<enter><redraw-screen>’
 
 # # Color
 # color sidebar_new yellow default
