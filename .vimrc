@@ -41,7 +41,8 @@ endif
 
 " Absolute Must Haves!
 Plug 'tpope/vim-commentary'
-Plug 'tpope/vim-surround'
+" Overrides my <S-s> bind
+" Plug 'tpope/vim-surround'
 Plug 'terryma/vim-multiple-cursors'
 Plug 'Konfekt/FastFold'
 Plug 'ervandew/supertab'
@@ -650,11 +651,22 @@ function! CompileCC()
    write
    let src = expand('%:p')
    let exe = expand('%:r')
-   call s:RunShellCommand('clang++ -std=c++14 '.src.' -o '.exe.' && ./'.exe)
+   call s:RunShellCommand('clang++ -std=c++17 '.src.' -o '.exe.' && ./'.exe)
    exec 'Silent rm '.exe
 endfunction
 autocmd filetype cpp nnoremap <F5> :call CompileCC()<CR>
-command! Run :call CompileCC()
+autocmd filetype cpp command! Run :call CompileCC()
+
+" =============================================================================
+" Make
+" =============================================================================
+function! RunMake(...)
+   write
+   echo 'make ' . join(a:000, ' ')
+   call s:RunShellCommand('make '.join(a:000, ' '))
+endfunction
+command! -nargs=* Make :call RunMake(<f-args>)
+
 
 " =============================================================================
 " Focus Mode
