@@ -468,3 +468,19 @@ if [[ "$PROFILE_STARTUP" == true ]]; then
     exec 2>&3 3>&-
 fi
 
+
+# =============================================================================
+# Completion
+# =============================================================================
+# tabtab source for serverless package
+# uninstall by removing these lines or running `tabtab uninstall serverless`
+[[ -f /Users/arvidgerstmann/workspace/epic/sierra-graphql/node_modules/tabtab/.completions/serverless.zsh ]] && . /Users/arvidgerstmann/workspace/epic/sierra-graphql/node_modules/tabtab/.completions/serverless.zsh
+# tabtab source for sls package
+# uninstall by removing these lines or running `tabtab uninstall sls`
+[[ -f /Users/arvidgerstmann/workspace/epic/sierra-graphql/node_modules/tabtab/.completions/sls.zsh ]] && . /Users/arvidgerstmann/workspace/epic/sierra-graphql/node_modules/tabtab/.completions/sls.zsh
+
+# opam configuration
+if [ -f "$HOME/.opam/opam-init/init.zsh" ]; then
+    source $HOME/.opam/opam-init/init.zsh > /dev/null 2> /dev/null || true
+fi
+
