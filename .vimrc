@@ -63,7 +63,8 @@ Plug 'leandros/vim-misc'
 " My forks
 Plug 'leandros/QFEnter'
 Plug 'leandros/vim-bufkill'
-Plug 'leandros/nerdtree' " No idea why I use my own fork
+" Plug 'leandros/nerdtree' " No idea why I use my own fork
+Plug 'scrooloose/nerdtree'
 
 " Syntax / File Plugins
 Plug 'Chiel92/vim-autoformat', { 'for': ['gn', 'js', 'jsx', 'ts', 'tsx', 'javascript', 'typescript'] }
@@ -73,6 +74,7 @@ Plug 'wlangstroth/vim-racket', { 'for': ['racket'] }
 Plug 'luochen1990/rainbow', { 'for': ['scheme', 'lisp', 'racket'] }
 Plug 'leandros/hlsl.vim', { 'for': ['hlsl'] }
 Plug 'leandros/vim-gn', { 'for': ['gn'] }
+Plug 'rgrinberg/vim-ocaml', { 'for': ['ocaml'] }
 
 if ycm_enabled
     Plug 'Valloric/YouCompleteMe', { 'for': ['cpp', 'c', 'python', 'objc', 'objcpp'] }
@@ -389,10 +391,10 @@ nnoremap <C-b> <C-W>h
 nnoremap <C-s> <C-W>l
 
 " Split resizing
-nnoremap ! 5<C-W>-
-nnoremap = 5<C-W>+
-nnoremap < 5<C-W><
-nnoremap > 5<C-W>>
+nnoremap ! :vertical resize -5<CR>
+nnoremap = :vertical resize +5<CR>
+nnoremap < :resize +5<CR>
+nnoremap > :resize -5<CR>
 
 " Even out splits
 nnoremap <C-y>w <C-W>=
@@ -850,7 +852,8 @@ function! NERDTreeHighlightFile(extension, regex, fg, bg, guifg, guibg)
 endfunction
 
 " source files
-" For some reason, VIM doesn't like C files :(
+" Fixing NeoVim color theme regression neovim/neovim#9019
+highlight NERDTreeFile ctermfg=14
 " C
 call NERDTreeHighlightFile('cfile', '\.c',          '11', 'NONE', 'NONE', 'NONE')
 call NERDTreeHighlightFile('cheader', '\.h',        '9',  'NONE', 'NONE', 'NONE')
