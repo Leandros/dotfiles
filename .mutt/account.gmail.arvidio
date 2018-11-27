@@ -30,7 +30,7 @@ set message_cachedir= ~/.mutt/com.gmail.arvidio/cache/bodies
 set certificate_file= ~/.mutt/com.gmail.arvidio/certificates
 
 # Labels
-set postponed       = +[Google\ Mail]/Drafts
+set postponed       = +[Gmail]/Drafts
 #set trash           = +[Gmail]/Trash
 unset record
 
@@ -42,4 +42,8 @@ set mail_check      = 30
 set timeout         = 10
 set net_inc         = 5
 set signature       = ~/.mutt/signature.arvidio
+
+# Address Book
+set query_command   = "goobook -c ~/.mutt/goobook/goobookrc_arvidio query %s"
+bind editor <Tab> complete-query
 

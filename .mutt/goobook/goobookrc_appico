@@ -1,0 +1,8 @@
+[DEFAULT]
+# This file is written by the oauth library, and should be kept secure,
+# it's like a password to your google contacts.
+oauth_db_filename: ~/.mutt/goobook/auth_appico.json
+
+# Cache. Should not be committed!
+cache_filename: ~/.mutt/goobook/cache_appico
+cache_expiry_hours: 12

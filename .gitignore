@@ -12,3 +12,6 @@ tags
 tags.temp
 tags.lock
 
+# Goobook cache / credentials
+cache_*
+auth_*.json

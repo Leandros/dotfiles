@@ -30,7 +30,7 @@ set message_cachedir= ~/.mutt/com.gmail.appico/cache/bodies
 set certificate_file= ~/.mutt/com.gmail.appico/certificates
 
 # Labels
-set postponed       = +[Google\ Mail]/Drafts
+set postponed       = +[Gmail]/Drafts
 #set trash           = +[Gmail]/Trash
 unset record
 
@@ -42,4 +42,8 @@ set mail_check      = 30
 set timeout         = 10
 set net_inc         = 5
 set signature       = ~/.mutt/signature.appico
+
+# Address Book
+set query_command   = "goobook -c ~/.mutt/goobook/goobookrc_appico query %s"
+bind editor <Tab> complete-query
 
