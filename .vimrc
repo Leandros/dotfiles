@@ -1053,8 +1053,8 @@ let g:Lf_WildIgnore = {
     \ }
 let g:Lf_CommandMap = {
     \ '<C-R>': ['<C-E>'],
-    \ '<Down>': ['<C-N>'],
-    \ '<Up>': ['<C-R>'],
+    \ '<C-J>': ['<C-N>'],
+    \ '<C-K>': ['<C-R>'],
     \ '<C-C>': ['<ESC>'],
     \ '<C-X>': ['<C-T>'],
     \ '<C-]>': ['<C-I>'],
