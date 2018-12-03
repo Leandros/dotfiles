@@ -63,7 +63,6 @@ Plug 'leandros/vim-misc'
 " My forks
 Plug 'leandros/QFEnter'
 Plug 'leandros/vim-bufkill'
-" Plug 'leandros/nerdtree' " No idea why I use my own fork
 Plug 'scrooloose/nerdtree'
 
 " Syntax / File Plugins
