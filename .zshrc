@@ -257,7 +257,8 @@ export KEYTIMEOUT=1
 # =============================================================================
 # Aliases
 # =============================================================================
-alias l=' ls -lah'
+# alias l=' ls -lah'
+alias l='exa'
 alias g=git
 alias ti='tig status'
 alias tigs='tig status'
@@ -273,6 +274,9 @@ alias m='mutt -F ~/.mutt/muttrc1'
 alias m1='mutt -F ~/.mutt/muttrc1'
 alias m2='mutt -F ~/.mutt/muttrc2'
 alias m3='mutt -F ~/.mutt/muttrc3'
+alias gb1='goobook -c ~/.mutt/goobook/goobookrc_private'
+alias gb2='goobook -c ~/.mutt/goobook/goobookrc_appico'
+alias gb3='goobook -c ~/.mutt/goobook/goobookrc_arvidio'
 alias ccp='rsync -ah --progress'
 
 # Less modes

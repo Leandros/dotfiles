@@ -175,6 +175,8 @@ bind index,pager  previous-line
 
 # Fix space in names
 # bind editor <space> noop
+# Query contacts
+bind editor <Tab> complete-query
 
 # Sidebar
 # Disable it, since it's not exactly great with multi accounts.
