@@ -460,31 +460,44 @@ export MANPATH=$BREW_PREFIX/opt/coreutils/libexec/gnuman:$MANPATH
 function mman { MANPATH=$HOME/p4/depot/liba/docs man $* | less }
 
 # =============================================================================
+# NVM
+# =============================================================================
+export NVM_DIR="$HOME/.nvm"
+declare -a NODE_GLOBALS=(`find $NVM_DIR/versions/node -maxdepth 3 -type l -wholename '*/bin/*' | xargs -n1 basename | sort | uniq`)
+NODE_GLOBALS+=("node")
+NODE_GLOBALS+=("nvm")
+
+load_nvm () {
+    mkdir -p "$NVM_DIR"
+    [ -s "/usr/local/opt/nvm/nvm.sh" ] && source "/usr/local/opt/nvm/nvm.sh"
+}
+
+for cmd in "${NODE_GLOBALS[@]}"; do
+    eval "${cmd}(){ unset -f ${NODE_GLOBALS}; load_nvm; ${cmd} \$@ }"
+done
+
+# =============================================================================
 # External
 # =============================================================================
 if [ -f "$HOME/.p4creds" ]; then
     source "$HOME/.p4creds"
 fi
 
+# =============================================================================
+# Completion
+# =============================================================================
+# opam configuration
+if [ -f "$HOME/.opam/opam-init/init.zsh" ]; then
+    source $HOME/.opam/opam-init/init.zsh > /dev/null 2> /dev/null || true
+fi
+
+
+
+
+# KEEP AT BOTTOM!
 # Entirety of my startup file... then
 if [[ "$PROFILE_STARTUP" == true ]]; then
     unsetopt xtrace
     exec 2>&3 3>&-
-fi
-
-
-# =============================================================================
-# Completion
-# =============================================================================
-# tabtab source for serverless package
-# uninstall by removing these lines or running `tabtab uninstall serverless`
-[[ -f /Users/arvidgerstmann/workspace/epic/sierra-graphql/node_modules/tabtab/.completions/serverless.zsh ]] && . /Users/arvidgerstmann/workspace/epic/sierra-graphql/node_modules/tabtab/.completions/serverless.zsh
-# tabtab source for sls package
-# uninstall by removing these lines or running `tabtab uninstall sls`
-[[ -f /Users/arvidgerstmann/workspace/epic/sierra-graphql/node_modules/tabtab/.completions/sls.zsh ]] && . /Users/arvidgerstmann/workspace/epic/sierra-graphql/node_modules/tabtab/.completions/sls.zsh
-
-# opam configuration
-if [ -f "$HOME/.opam/opam-init/init.zsh" ]; then
-    source $HOME/.opam/opam-init/init.zsh > /dev/null 2> /dev/null || true
 fi
 
