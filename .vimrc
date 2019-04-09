@@ -32,6 +32,9 @@ if has('python3')
 endif
 
 " Visual Plugins
+if has('nvim')
+    " Plug 'iCyMind/NeoSolarized'
+endif
 if has('nvim') && !empty($NVIM_GUI)
     Plug 'frankier/neovim-colors-solarized-truecolor-only'
     Plug 'equalsraf/neovim-gui-shim'
@@ -66,18 +69,65 @@ Plug 'leandros/vim-bufkill'
 Plug 'scrooloose/nerdtree'
 
 " Syntax / File Plugins
-Plug 'Chiel92/vim-autoformat', { 'for': ['gn', 'js', 'jsx', 'ts', 'tsx', 'javascript', 'typescript'] }
+Plug 'Chiel92/vim-autoformat', { 'for': ['gn', 'js', 'jsx', 'ts', 'tsx', 'javascript', 'typescript', 'ocaml', 'jbuild', 'opam'] }
 Plug 'cofyc/vim-uncrustify', { 'for': ['cpp', 'c', 'cs', 'objc', 'objcpp'] }
 Plug 'dummyunit/vim-fastbuild', { 'for': ['fastbuild'] }
 Plug 'wlangstroth/vim-racket', { 'for': ['racket'] }
 Plug 'luochen1990/rainbow', { 'for': ['scheme', 'lisp', 'racket'] }
 Plug 'leandros/hlsl.vim', { 'for': ['hlsl'] }
 Plug 'leandros/vim-gn', { 'for': ['gn'] }
-Plug 'rgrinberg/vim-ocaml', { 'for': ['ocaml'] }
+Plug 'aexpl/vim-aexpl', { 'for': ['aexpl'] }
+
+" Semi FAT
+Plug 'rgrinberg/vim-ocaml', { 'for': ['ocaml', 'jbuild', 'opam'] }
+Plug 'w0rp/ale', { 'for': ['js', 'ts', 'jsx', 'tsx', 'javascript', 'typescript', 'ocaml' ] }
+Plug 'Shougo/deoplete.nvim', { 'for': ['js', 'ts', 'jsx', 'tsx', 'javascript', 'typescript', 'ocaml' ], 'do': ':UpdateRemotePlugins' }
+Plug 'copy/deoplete-ocaml', { 'for': ['ocaml'] }
 
 if ycm_enabled
     Plug 'Valloric/YouCompleteMe', { 'for': ['cpp', 'c', 'python', 'objc', 'objcpp'] }
 endif
+
+" =============================================================================
+" Merlin (OCaml)
+" =============================================================================
+" ## added by OPAM user-setup for vim / base ## 93ee63e278bdfc07d1139a748ed3fff2 ## you can edit, but keep this line
+let s:opam_share_dir = system("opam config var share")
+let s:opam_share_dir = substitute(s:opam_share_dir, '[\r\n]*$', '', '')
+
+let s:opam_configuration = {}
+
+function! OpamConfOcpIndent()
+  execute "set rtp^=" . s:opam_share_dir . "/ocp-indent/vim"
+endfunction
+let s:opam_configuration['ocp-indent'] = function('OpamConfOcpIndent')
+
+function! OpamConfOcpIndex()
+  execute "set rtp+=" . s:opam_share_dir . "/ocp-index/vim"
+endfunction
+let s:opam_configuration['ocp-index'] = function('OpamConfOcpIndex')
+
+function! OpamConfMerlin()
+  let l:dir = s:opam_share_dir . "/merlin/vim"
+  execute "set rtp+=" . l:dir
+  execute "helptags " . l:dir . "/doc"
+endfunction
+let s:opam_configuration['merlin'] = function('OpamConfMerlin')
+
+let s:opam_packages = ["ocp-indent", "ocp-index", "merlin"]
+let s:opam_check_cmdline = ["opam list --installed --short --safe --color=never"] + s:opam_packages
+let s:opam_available_tools = split(system(join(s:opam_check_cmdline)))
+for tool in s:opam_packages
+  " Respect package order (merlin should be after ocp-index)
+  if count(s:opam_available_tools, tool) > 0
+    call s:opam_configuration[tool]()
+  endif
+endfor
+" ## end of OPAM user-setup addition for vim / base ## keep this line
+
+let g:merlin_ignore_warnings = "true"
+let g:merlin_completion_dwim = 0
+let g:merlin_disable_default_keybindings = 1
 
 
 " =============================================================================
@@ -94,15 +144,10 @@ if vim_fat
     if js_dev_enabled
         Plug 'leafgarland/typescript-vim'
         Plug 'pangloss/vim-javascript'
-        Plug 'w0rp/ale', { 'for': ['js', 'ts', 'jsx', 'tsx', 'javascript', 'typescript' ] }
-        Plug 'Shougo/deoplete.nvim', { 'for': ['js', 'ts', 'jsx', 'tsx', 'javascript', 'typescript' ], 'do': ':UpdateRemotePlugins' }
         Plug 'jparise/vim-graphql'
         Plug 'posva/vim-vue'
         Plug 'alvan/vim-closetag'
         Plug 'elzr/vim-json'
-        if has_key(g:plugs, 'deoplete.nvim')
-            let g:deoplete#enable_at_startup = 1
-        endif
         let g:closetag_filenames = '*.html,*.xhtml,*.phtml,*.vue'
         let g:closetag_xhtml_filenames = '*.xhtml,*.jsx,*.tsx,*.vue'
     endif
@@ -184,7 +229,7 @@ set tabstop=4       " A tab is 4 spaces.
 set autoindent      " Autoindent.
 set copyindent      " Copy the previous indent on autoindenting.
 set shiftwidth=4    " Number of spaces used for autoindent.
-set expandtab
+set expandtab       " Expand <Tab> into spaces
 set smarttab        " Insert 'tabs' on start of line, according to shiftwidth instead of tabstop.
 set scrolloff=3     " 3 lines of buffer above and below the cursor
 
@@ -281,9 +326,14 @@ endif
 " Theme
 if has('nvim') && !empty($NVIM_GUI)
     set termguicolors
+    let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
+    let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
 endif
 set background=dark
 colorscheme solarized
+
+" let g:neosolarized_vertSplitBgTrans = 0
+" colorscheme NeoSolarized
 
 " =============================================================================
 " Custom Filetypes
@@ -488,6 +538,11 @@ autocmd FileType make setlocal noexpandtab
 " Use two spaces in gn files
 autocmd FileType gn setlocal tabstop=2
 autocmd FileType gn setlocal shiftwidth=2
+
+" Use two spaces in ocaml files
+autocmd FileType ocaml setlocal tabstop=2
+autocmd FileType ocaml setlocal shiftwidth=2
+autocmd FileType ocaml setlocal formatoptions-=cro
 
 " Use two spaces in yaml files
 autocmd FileType yaml setlocal tabstop=2
@@ -902,10 +957,12 @@ if has_key(g:plugs, 'vim-autoformat')
     let g:formatdef_prettier_ts = '"yarn --silent prettier --parser=typescript --stdin"'
     let g:formatdef_prettier_js = '"yarn --silent prettier --stdin"'
     let g:formatdef_gnformat = '"gn format --stdin"'
+    let g:formatdef_ocpindent = '"ocp-indent"'
     let g:formatters_objc = ['astyle_objc']
     let g:formatters_javascript = ['prettier_js']
     let g:formatters_typescript = ['prettier_ts']
     let g:formatters_gn = ['gnformat']
+    let g:formatters_ocaml = ['ocpindent']
 endif
 
 " =============================================================================
@@ -1186,11 +1243,20 @@ function! Multiple_cursors_before()
     if exists("*youcompleteme#DisableCursorMovedAutocommands")
         call youcompleteme#DisableCursorMovedAutocommands()
     endif
+    if exists("*deoplete#is_enabled") && deoplete#is_enabled()
+        call deoplete#disable()
+        let g:deoplete_is_enable_before_multi_cursors = 1
+    else
+        let g:deoplete_is_enable_before_multi_cursors = 0
+    endif
 endfunction
 function! Multiple_cursors_after()
     let g:yankring_record_enabled = 1
     if exists("*youcompleteme#EnableCursorMovedAutocommands")
         call youcompleteme#EnableCursorMovedAutocommands()
+    endif
+    if g:deoplete_is_enable_before_multi_cursors
+        call deoplete#enable()
     endif
 endfunction
 
@@ -1237,6 +1303,7 @@ let g:ale_fixers = {
 let g:ale_linters = {
     \ 'typescript': ['tslint', 'tsserver', 'typecheck'],
     \ 'javascript': ['eslint'],
+    \ 'ocaml': ['merlin'],
     \ }
 noremap <C-j> :ALEFix<CR>
 autocmd FileType typescript inoremap <expr><tab> pumvisible() ? "\<c-n>" : "\<tab>"
@@ -1244,4 +1311,23 @@ autocmd FileType typescript inoremap <expr><s-tab> pumvisible() ? "\<c-p>" : "\<
 
 " Disable, we use deoplete.
 let g:ale_completion_enabled = 0
+
+" =============================================================================
+" Deoplete
+" =============================================================================
+if has_key(g:plugs, 'deoplete.nvim')
+    let g:deoplete#enable_at_startup = 1
+    " this is the default, make sure it is not set to "omnifunc" somewhere else in your vimrc
+    let g:deoplete#complete_method = "complete"
+    " other completion sources suggested to disable
+    let g:deoplete#ignore_sources = {}
+    let g:deoplete#ignore_sources.ocaml = ['buffer', 'around', 'member', 'tag']
+    " no delay before completion
+    let g:deoplete#auto_complete_delay = 0
+
+    " if !exists('g:deoplete#omni_patterns')
+    "   let g:deoplete#omni#input_patterns = {}
+    " endif
+    " let g:deoplete#omni#input_patterns.ocaml = '[^. *\t]\.\w*|\s\w*|#'
+endif
 
