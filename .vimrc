@@ -80,7 +80,7 @@ Plug 'aexpl/vim-aexpl', { 'for': ['aexpl'] }
 
 " Semi FAT
 Plug 'rgrinberg/vim-ocaml', { 'for': ['ocaml', 'jbuild', 'opam'] }
-Plug 'w0rp/ale', { 'for': ['js', 'ts', 'jsx', 'tsx', 'javascript', 'typescript', 'ocaml' ] }
+Plug 'w0rp/ale', { 'for': ['js', 'ts', 'jsx', 'tsx', 'javascript', 'typescript', 'ocaml', 'sh' ] }
 Plug 'Shougo/deoplete.nvim', { 'for': ['js', 'ts', 'jsx', 'tsx', 'javascript', 'typescript', 'ocaml' ], 'do': ':UpdateRemotePlugins' }
 Plug 'copy/deoplete-ocaml', { 'for': ['ocaml'] }
 
@@ -543,6 +543,8 @@ autocmd FileType gn setlocal shiftwidth=2
 autocmd FileType ocaml setlocal tabstop=2
 autocmd FileType ocaml setlocal shiftwidth=2
 autocmd FileType ocaml setlocal formatoptions-=cro
+autocmd BufNewFile,BufRead *.ml.inc set filetype=ocaml
+autocmd BufNewFile,BufRead *.mli.inc set filetype=ocaml
 
 " Use two spaces in yaml files
 autocmd FileType yaml setlocal tabstop=2

@@ -247,7 +247,7 @@ bindkey -M vicmd "" _history-incremental-preserving-pattern-search-backward
 bindkey -M isearch "" history-incremental-pattern-search-backward
 
 foreground-vim() {
-    fg %nvim 2>/dev/null || fg %vim 2>/dev/null
+    fg %nvim 2>/dev/null >/dev/null || fg %vim 2>/dev/null >/dev/null
 }
 zle -N foreground-vim
 bindkey '^Z' foreground-vim
@@ -278,6 +278,7 @@ alias gb1='goobook -c ~/.mutt/goobook/goobookrc_private'
 alias gb2='goobook -c ~/.mutt/goobook/goobookrc_appico'
 alias gb3='goobook -c ~/.mutt/goobook/goobookrc_arvidio'
 alias ccp='rsync -ah --progress'
+alias ytdl="youtube-dl -f 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'"
 
 # Less modes
 export LESS="-R"
@@ -452,6 +453,9 @@ export GOPATH=$HOME/gopath
 
 # DotNET
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
+
+# Homebrew
+export HOMEBREW_GITHUB_API_TOKEN=$(security find-generic-password -a 'homebrew-token' -l 'github.com' -w)
 
 # =============================================================================
 # MANPATH
