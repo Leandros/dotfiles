@@ -49,7 +49,11 @@ Plug 'tpope/vim-commentary'
 Plug 'terryma/vim-multiple-cursors'
 Plug 'Konfekt/FastFold'
 Plug 'ervandew/supertab'
-Plug 'Yggdroot/LeaderF'
+if has("win32") || has("win16")
+    Plug 'Yggdroot/LeaderF', { 'do': './install.bat' }
+else
+    Plug 'Yggdroot/LeaderF', { 'do': './install.sh' }
+endif
 Plug 'mhinz/vim-grepper'
 Plug 'thirtythreeforty/lessspace.vim'
 Plug 'maxbrunsfeld/vim-yankstack'
@@ -69,7 +73,10 @@ Plug 'leandros/vim-bufkill'
 Plug 'scrooloose/nerdtree'
 
 " Syntax / File Plugins
-Plug 'Chiel92/vim-autoformat', { 'for': ['gn', 'js', 'jsx', 'ts', 'tsx', 'javascript', 'typescript', 'ocaml', 'jbuild', 'opam'] }
+Plug 'Chiel92/vim-autoformat', { 'for': ['gn', 'ocaml', 'jbuild', 'opam'] }
+Plug 'prettier/vim-prettier', {
+  \ 'do': 'yarn install',
+  \ 'for': ['javascript', 'typescript', 'css', 'less', 'scss', 'json', 'graphql', 'markdown', 'vue', 'yaml', 'html'] }
 Plug 'cofyc/vim-uncrustify', { 'for': ['cpp', 'c', 'cs', 'objc', 'objcpp'] }
 Plug 'dummyunit/vim-fastbuild', { 'for': ['fastbuild'] }
 Plug 'wlangstroth/vim-racket', { 'for': ['racket'] }
@@ -81,7 +88,6 @@ Plug 'aexpl/vim-aexpl', { 'for': ['aexpl'] }
 " Semi FAT
 Plug 'rgrinberg/vim-ocaml', { 'for': ['ocaml', 'jbuild', 'opam'] }
 Plug 'w0rp/ale', { 'for': ['js', 'ts', 'jsx', 'tsx', 'javascript', 'typescript', 'ocaml', 'sh' ] }
-Plug 'Shougo/deoplete.nvim', { 'for': ['js', 'ts', 'jsx', 'tsx', 'javascript', 'typescript', 'ocaml' ], 'do': ':UpdateRemotePlugins' }
 Plug 'copy/deoplete-ocaml', { 'for': ['ocaml'] }
 
 if ycm_enabled
@@ -92,37 +98,37 @@ endif
 " Merlin (OCaml)
 " =============================================================================
 " ## added by OPAM user-setup for vim / base ## 93ee63e278bdfc07d1139a748ed3fff2 ## you can edit, but keep this line
-let s:opam_share_dir = system("opam config var share")
-let s:opam_share_dir = substitute(s:opam_share_dir, '[\r\n]*$', '', '')
+" let s:opam_share_dir = system("opam config var share")
+" let s:opam_share_dir = substitute(s:opam_share_dir, '[\r\n]*$', '', '')
 
-let s:opam_configuration = {}
+" let s:opam_configuration = {}
 
-function! OpamConfOcpIndent()
-  execute "set rtp^=" . s:opam_share_dir . "/ocp-indent/vim"
-endfunction
-let s:opam_configuration['ocp-indent'] = function('OpamConfOcpIndent')
+" function! OpamConfOcpIndent()
+"   execute "set rtp^=" . s:opam_share_dir . "/ocp-indent/vim"
+" endfunction
+" let s:opam_configuration['ocp-indent'] = function('OpamConfOcpIndent')
 
-function! OpamConfOcpIndex()
-  execute "set rtp+=" . s:opam_share_dir . "/ocp-index/vim"
-endfunction
-let s:opam_configuration['ocp-index'] = function('OpamConfOcpIndex')
+" function! OpamConfOcpIndex()
+"   execute "set rtp+=" . s:opam_share_dir . "/ocp-index/vim"
+" endfunction
+" let s:opam_configuration['ocp-index'] = function('OpamConfOcpIndex')
 
-function! OpamConfMerlin()
-  let l:dir = s:opam_share_dir . "/merlin/vim"
-  execute "set rtp+=" . l:dir
-  execute "helptags " . l:dir . "/doc"
-endfunction
-let s:opam_configuration['merlin'] = function('OpamConfMerlin')
+" function! OpamConfMerlin()
+"   let l:dir = s:opam_share_dir . "/merlin/vim"
+"   execute "set rtp+=" . l:dir
+"   execute "helptags " . l:dir . "/doc"
+" endfunction
+" let s:opam_configuration['merlin'] = function('OpamConfMerlin')
 
-let s:opam_packages = ["ocp-indent", "ocp-index", "merlin"]
-let s:opam_check_cmdline = ["opam list --installed --short --safe --color=never"] + s:opam_packages
-let s:opam_available_tools = split(system(join(s:opam_check_cmdline)))
-for tool in s:opam_packages
-  " Respect package order (merlin should be after ocp-index)
-  if count(s:opam_available_tools, tool) > 0
-    call s:opam_configuration[tool]()
-  endif
-endfor
+" let s:opam_packages = ["ocp-indent", "ocp-index", "merlin"]
+" let s:opam_check_cmdline = ["opam list --installed --short --safe --color=never"] + s:opam_packages
+" let s:opam_available_tools = split(system(join(s:opam_check_cmdline)))
+" for tool in s:opam_packages
+"   " Respect package order (merlin should be after ocp-index)
+"   if count(s:opam_available_tools, tool) > 0
+"     call s:opam_configuration[tool]()
+"   endif
+" endfor
 " ## end of OPAM user-setup addition for vim / base ## keep this line
 
 let g:merlin_ignore_warnings = "true"
@@ -139,17 +145,6 @@ if vim_fat
     elseif airline_enabled
         Plug 'vim-airline/vim-airline'
         Plug 'vim-airline/vim-airline-themes'
-    endif
-
-    if js_dev_enabled
-        Plug 'leafgarland/typescript-vim'
-        Plug 'pangloss/vim-javascript'
-        Plug 'jparise/vim-graphql'
-        Plug 'posva/vim-vue'
-        Plug 'alvan/vim-closetag'
-        Plug 'elzr/vim-json'
-        let g:closetag_filenames = '*.html,*.xhtml,*.phtml,*.vue'
-        let g:closetag_xhtml_filenames = '*.xhtml,*.jsx,*.tsx,*.vue'
     endif
 
     Plug 'easymotion/vim-easymotion'
@@ -171,6 +166,19 @@ if vim_fat
         Plug 'Xuyuanp/nerdtree-git-plugin'
     endif
 endif
+
+if js_dev_enabled
+    Plug 'leafgarland/typescript-vim'
+    Plug 'pangloss/vim-javascript'
+    Plug 'alvan/vim-closetag'
+    Plug 'elzr/vim-json'
+
+    Plug 'Shougo/deoplete.nvim', { 'for': ['js', 'ts', 'jsx', 'tsx', 'javascript', 'typescript'], 'do': ':UpdateRemotePlugins' }
+
+    let g:closetag_filenames = '*.html,*.xhtml,*.phtml'
+    let g:closetag_xhtml_filenames = '*.xhtml,*.jsx,*.tsx'
+endif
+
 
 call plug#end()
 
@@ -344,6 +352,9 @@ au BufRead,BufNewFile *.y,*.ypp,*.ym setlocal ft=yacc           " Bison
 au BufRead,BufNewFile *.man setlocal ft=groff                   " Groff/Troff
 au BufRead,BufNewFile *.mm setlocal ft=objcpp                   " Objective-C++
 au BufRead,BufNewFile *.m setlocal ft=objc                      " Objective-C
+au BufRead,BufNewFile *.jsx set ft=javascript                   " Javascript
+au BufRead,BufNewFile *.tsx set ft=typescript                   " TypescriptX
+au BufRead,BufNewFile *.ts set ft=typescript                    " Typescript
 
 " =============================================================================
 " Set syntax options
@@ -956,15 +967,25 @@ endif
 if has_key(g:plugs, 'vim-autoformat')
     noremap <C-f> :Autoformat<CR>
     let g:formatdef_astyle_objc = '"astyle --mode=c"'
-    let g:formatdef_prettier_ts = '"yarn --silent prettier --parser=typescript --stdin"'
-    let g:formatdef_prettier_js = '"yarn --silent prettier --stdin"'
+    " let g:formatdef_prettier_ts = '"yarn --silent prettier --parser=typescript --stdin"'
+    " let g:formatdef_prettier_js = '"yarn --silent prettier --stdin"'
     let g:formatdef_gnformat = '"gn format --stdin"'
     let g:formatdef_ocpindent = '"ocp-indent"'
     let g:formatters_objc = ['astyle_objc']
-    let g:formatters_javascript = ['prettier_js']
-    let g:formatters_typescript = ['prettier_ts']
+    " let g:formatters_javascript = ['prettier_js']
+    " let g:formatters_typescript = ['prettier_ts']
     let g:formatters_gn = ['gnformat']
     let g:formatters_ocaml = ['ocpindent']
+endif
+
+" =============================================================================
+" vim-prettier Settings.
+" =============================================================================
+if has_key(g:plugs, 'vim-prettier')
+    noremap <C-f> :Prettier<CR>
+    let g:prettier#config#trailing_comma = 'all'
+    let g:prettier#config#arrow_parens = 'always'
+    let g:prettier#config#bracket_spacing = 'true'
 endif
 
 " =============================================================================

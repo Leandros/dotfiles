@@ -470,6 +470,7 @@ export NVM_DIR="$HOME/.nvm"
 declare -a NODE_GLOBALS=(`find $NVM_DIR/versions/node -maxdepth 3 -type l -wholename '*/bin/*' | xargs -n1 basename | sort | uniq`)
 NODE_GLOBALS+=("node")
 NODE_GLOBALS+=("nvm")
+NODE_GLOBALS+=("yarn")
 
 load_nvm () {
     mkdir -p "$NVM_DIR"
