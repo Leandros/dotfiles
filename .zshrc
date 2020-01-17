@@ -48,6 +48,7 @@ if [[ "Darwin" == "`uname`" ]]; then
     export GREP_OPTIONS='--color=always'
     export GREP_COLOR='1;35;40'
 
+
 # =============================================================================
 # Linux
 # =============================================================================
@@ -425,7 +426,6 @@ PATH=$PATH:$HOME/bin
 PATH=$PATH:$HOME/.zsh/bin
 PATH=$PATH:$HOME/bin/awscli/eb/macosx/python2.7
 PATH=$PATH:$HOME/bin/drmemory/bin
-PATH=$PATH:$HOME/.rvm/bin
 
 PATH=$PATH:$ANDROID_ROOT
 PATH=$PATH:$ANDROID_ROOT/tools
@@ -437,11 +437,14 @@ PATH=$PATH:$HOME/p4/depot/extern/bin/shared
 # macOS specific
 PATH=$PATH:/Applications/p4merge.app/Contents/MacOS
 PATH=$PATH:/usr/local/share/dotnet
+PATH=$PATH:$HOME/.fastlane/bin
 
 # Cross Compiling Toolchains
 PATH=$PATH:/usr/local/sh-elf/bin
 PATH=$PATH:/usr/local/sh-coff/bin
 PATH=$PATH:/usr/local/m68k-elf/bin
+
+PATH=$PATH:$HOME/.rvm/bin
 
 export PATH
 
@@ -496,6 +499,9 @@ if [ -f "$HOME/.opam/opam-init/init.zsh" ]; then
     source $HOME/.opam/opam-init/init.zsh > /dev/null 2> /dev/null || true
 fi
 
+
+# RVM. Keep at BOTTOM!
+[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
 
 
 
