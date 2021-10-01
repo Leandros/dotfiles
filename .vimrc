@@ -26,6 +26,12 @@ if !has('nvim')
     packadd matchit
 endif
 
+" Python paths
+if has('nvim')
+    let g:python_host_prog = '/usr/local/bin/python2'
+    let g:python3_host_prog = '/usr/local/bin/python3'
+endif
+
 " Ugly workaround until vim fixes
 if has('python3')
   silent! python3 1
@@ -48,15 +54,12 @@ Plug 'tpope/vim-commentary'
 " Plug 'tpope/vim-surround'
 Plug 'terryma/vim-multiple-cursors'
 Plug 'Konfekt/FastFold'
-Plug 'ervandew/supertab'
-if has("win32") || has("win16")
-    Plug 'Yggdroot/LeaderF', { 'do': './install.bat' }
-else
-    Plug 'Yggdroot/LeaderF', { 'do': './install.sh' }
-endif
+" Plug 'ervandew/supertab'
+Plug 'Yggdroot/LeaderF', { 'do': ':LeaderfInstallCExtension' }
 Plug 'mhinz/vim-grepper'
 Plug 'thirtythreeforty/lessspace.vim'
 Plug 'maxbrunsfeld/vim-yankstack'
+Plug 'scrooloose/nerdtree'
 
 " General
 Plug 'SirVer/ultisnips'
@@ -70,10 +73,15 @@ Plug 'leandros/vim-misc'
 " My forks
 Plug 'leandros/QFEnter'
 Plug 'leandros/vim-bufkill'
-Plug 'scrooloose/nerdtree'
+
+" Rust
+if has('nvim')
+    Plug 'neovim/nvim-lspconfig'
+    Plug 'simrat39/rust-tools.nvim'
+endif
 
 " Syntax / File Plugins
-Plug 'Chiel92/vim-autoformat', { 'for': ['gn', 'ocaml', 'jbuild', 'opam'] }
+Plug 'Chiel92/vim-autoformat', { 'for': ['gn', 'ocaml', 'jbuild', 'opam', 'python'] }
 Plug 'prettier/vim-prettier', {
   \ 'do': 'yarn install',
   \ 'for': ['javascript', 'typescript', 'css', 'less', 'scss', 'json', 'graphql', 'markdown', 'vue', 'yaml', 'html'] }
@@ -84,14 +92,18 @@ Plug 'luochen1990/rainbow', { 'for': ['scheme', 'lisp', 'racket'] }
 Plug 'leandros/hlsl.vim', { 'for': ['hlsl'] }
 Plug 'leandros/vim-gn', { 'for': ['gn'] }
 Plug 'aexpl/vim-aexpl', { 'for': ['aexpl'] }
+Plug 'jparise/vim-graphql', { 'for': ['graphql'] }
+Plug 'qnighy/lalrpop.vim', { 'for': ['lalrpop'] }
+Plug 'rust-lang/rust.vim', { 'for': ['rust'] }
 
 " Semi FAT
 Plug 'rgrinberg/vim-ocaml', { 'for': ['ocaml', 'jbuild', 'opam'] }
 Plug 'w0rp/ale', { 'for': ['js', 'ts', 'jsx', 'tsx', 'javascript', 'typescript', 'ocaml', 'sh' ] }
 Plug 'copy/deoplete-ocaml', { 'for': ['ocaml'] }
+Plug 'neoclide/coc.nvim', {'branch': 'release'}
 
 if ycm_enabled
-    Plug 'Valloric/YouCompleteMe', { 'for': ['cpp', 'c', 'python', 'objc', 'objcpp'] }
+    Plug 'Valloric/YouCompleteMe', { 'for': ['cpp', 'c', 'python', 'objc', 'objcpp', 'cs'] }
 endif
 
 " =============================================================================
@@ -186,6 +198,13 @@ call plug#end()
 " has to come after plug#end()
 if has_key(g:plugs, 'vim-yankstack')
     call yankstack#setup()
+endif
+
+" LUA
+if has('nvim')
+lua << EOF
+require('rust-tools').setup({})
+EOF
 endif
 
 " =============================================================================
@@ -539,6 +558,7 @@ autocmd FileType typescript set makeprg=tsc\ $*
 " Setup comment string
 autocmd FileType javascript setlocal commentstring=/*\ %s\ */
 autocmd FileType typescript setlocal commentstring=/*\ %s\ */
+autocmd FileType lalrpop setlocal commentstring=//\ %s
 
 " Use two spaces to indent json files
 autocmd FileType json setlocal tabstop=2
@@ -965,7 +985,7 @@ endif
 " vim-autoformat Settings.
 " =============================================================================
 if has_key(g:plugs, 'vim-autoformat')
-    noremap <C-f> :Autoformat<CR>
+    autocmd! User vim-autoformat noremap <C-f> :Autoformat<CR>
     let g:formatdef_astyle_objc = '"astyle --mode=c"'
     " let g:formatdef_prettier_ts = '"yarn --silent prettier --parser=typescript --stdin"'
     " let g:formatdef_prettier_js = '"yarn --silent prettier --stdin"'
@@ -976,17 +996,19 @@ if has_key(g:plugs, 'vim-autoformat')
     " let g:formatters_typescript = ['prettier_ts']
     let g:formatters_gn = ['gnformat']
     let g:formatters_ocaml = ['ocpindent']
+    " let g:formatters_rust = ['rustfmt']
 endif
 
 " =============================================================================
 " vim-prettier Settings.
 " =============================================================================
 if has_key(g:plugs, 'vim-prettier')
-    noremap <C-f> :Prettier<CR>
+    autocmd! User vim-prettier noremap <C-f> :Prettier<CR>
     let g:prettier#config#trailing_comma = 'all'
     let g:prettier#config#arrow_parens = 'always'
     let g:prettier#config#bracket_spacing = 'true'
 endif
+
 
 " =============================================================================
 " Uncrustify
@@ -1122,6 +1144,7 @@ let g:Lf_UseVersionControlTool = 0
 let g:Lf_ShowRelativePath = 1
 let g:Lf_PreviewCode = 0
 let g:Lf_WindowHeight = 0.2
+let g:Lf_ShowDevIcons = 0
 let g:Lf_StlSeparator = {
     \ 'left': '',
     \ 'right': ''
@@ -1345,6 +1368,7 @@ if has_key(g:plugs, 'deoplete.nvim')
     " other completion sources suggested to disable
     let g:deoplete#ignore_sources = {}
     let g:deoplete#ignore_sources.ocaml = ['buffer', 'around', 'member', 'tag']
+    let g:deoplete#ignore_sources.rust = ['buffer', 'around', 'member', 'tag']
     " no delay before completion
     let g:deoplete#auto_complete_delay = 0
 
@@ -1354,3 +1378,73 @@ if has_key(g:plugs, 'deoplete.nvim')
     " let g:deoplete#omni#input_patterns.ocaml = '[^. *\t]\.\w*|\s\w*|#'
 endif
 
+
+" =============================================================================
+" Rust
+" =============================================================================
+autocmd FileType rust noremap <C-f> :RustFmt<CR>
+
+
+" =============================================================================
+" Coc.nvim
+" =============================================================================
+
+" Always show the signcolumn, otherwise it would shift the text each time
+" diagnostics appear/become resolved.
+if has("nvim-0.5.0") || has("patch-8.1.1564")
+  " Recently vim can merge signcolumn and number column into one
+  set signcolumn=number
+else
+  set signcolumn=yes
+endif
+
+" Use tab for trigger completion with characters ahead and navigate.
+" NOTE: Use command ':verbose imap <tab>' to make sure tab is not mapped by
+" other plugin before putting this into your config.
+inoremap <silent><expr> <TAB>
+      \ pumvisible() ? "\<C-n>" :
+      \ <SID>check_back_space() ? "\<TAB>" :
+      \ coc#refresh()
+inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
+
+function! s:check_back_space() abort
+  let col = col('.') - 1
+  return !col || getline('.')[col - 1]  =~# '\s'
+endfunction
+
+" Use <c-space> to trigger completion.
+if has('nvim')
+  inoremap <silent><expr> <c-space> coc#refresh()
+else
+  inoremap <silent><expr> <c-@> coc#refresh()
+endif
+
+" Make <CR> auto-select the first completion item and notify coc.nvim to
+" format on enter, <cr> could be remapped by other vim plugin
+inoremap <silent><expr> <cr> pumvisible() ? coc#_select_confirm()
+                              \: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
+
+" GoTo code navigation.
+nmap <silent> gd <Plug>(coc-definition)
+nmap <silent> gy <Plug>(coc-type-definition)
+nmap <silent> gi <Plug>(coc-implementation)
+nmap <silent> gr <Plug>(coc-references)
+
+" Use K to show documentation in preview window.
+nnoremap <silent> K :call <SID>show_documentation()<CR>
+
+function! s:show_documentation()
+  if (index(['vim','help'], &filetype) >= 0)
+    execute 'h '.expand('<cword>')
+  elseif (coc#rpc#ready())
+    call CocActionAsync('doHover')
+  else
+    execute '!' . &keywordprg . " " . expand('<cword>')
+  endif
+endfunction
+
+" Highlight the symbol and its references when holding the cursor.
+autocmd CursorHold * silent call CocActionAsync('highlight')
+
+" Apply AutoFix to problem on the current line.
+nmap <leader>qf  <Plug>(coc-fix-current)

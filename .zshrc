@@ -433,6 +433,8 @@ PATH=$PATH:$ANDROID_ROOT/platform-tools
 PATH=$PATH:$NDK_ROOT
 PATH=$PATH:$NDK_CCACHE
 PATH=$PATH:$HOME/p4/depot/extern/bin/shared
+PATH=$PATH:$HOME/bin/depot_tools
+PATH=$PATH:$HOME/.cargo/bin
 
 # macOS specific
 PATH=$PATH:/Applications/p4merge.app/Contents/MacOS
