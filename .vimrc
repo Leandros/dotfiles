@@ -50,11 +50,8 @@ endif
 
 " Absolute Must Haves!
 Plug 'tpope/vim-commentary'
-" Overrides my <S-s> bind
-" Plug 'tpope/vim-surround'
 Plug 'terryma/vim-multiple-cursors'
 Plug 'Konfekt/FastFold'
-" Plug 'ervandew/supertab'
 Plug 'Yggdroot/LeaderF', { 'do': ':LeaderfInstallCExtension' }
 Plug 'mhinz/vim-grepper'
 Plug 'thirtythreeforty/lessspace.vim'
@@ -80,12 +77,14 @@ if has('nvim')
     Plug 'simrat39/rust-tools.nvim'
 endif
 
-" Syntax / File Plugins
-Plug 'Chiel92/vim-autoformat', { 'for': ['gn', 'ocaml', 'jbuild', 'opam', 'python'] }
+" Pretier
+Plug 'Chiel92/vim-autoformat', { 'for': ['gn', 'jbuild', 'opam', 'python'] }
 Plug 'prettier/vim-prettier', {
   \ 'do': 'yarn install',
   \ 'for': ['javascript', 'typescript', 'css', 'less', 'scss', 'json', 'graphql', 'markdown', 'vue', 'yaml', 'html'] }
 Plug 'cofyc/vim-uncrustify', { 'for': ['cpp', 'c', 'cs', 'objc', 'objcpp'] }
+
+" Syntax Plugins
 Plug 'dummyunit/vim-fastbuild', { 'for': ['fastbuild'] }
 Plug 'wlangstroth/vim-racket', { 'for': ['racket'] }
 Plug 'luochen1990/rainbow', { 'for': ['scheme', 'lisp', 'racket'] }
@@ -95,57 +94,15 @@ Plug 'aexpl/vim-aexpl', { 'for': ['aexpl'] }
 Plug 'jparise/vim-graphql', { 'for': ['graphql'] }
 Plug 'qnighy/lalrpop.vim', { 'for': ['lalrpop'] }
 Plug 'rust-lang/rust.vim', { 'for': ['rust'] }
+Plug 'cespare/vim-toml', { 'for': ['toml'], 'branch': 'main' }
 
 " Semi FAT
-Plug 'rgrinberg/vim-ocaml', { 'for': ['ocaml', 'jbuild', 'opam'] }
-Plug 'w0rp/ale', { 'for': ['js', 'ts', 'jsx', 'tsx', 'javascript', 'typescript', 'ocaml', 'sh' ] }
-Plug 'copy/deoplete-ocaml', { 'for': ['ocaml'] }
-Plug 'neoclide/coc.nvim', {'branch': 'release'}
+Plug 'w0rp/ale', { 'for': ['js', 'ts', 'jsx', 'tsx', 'javascript', 'typescript', 'sh' ] }
+Plug 'neoclide/coc.nvim', { 'branch': 'release'}
 
 if ycm_enabled
     Plug 'Valloric/YouCompleteMe', { 'for': ['cpp', 'c', 'python', 'objc', 'objcpp', 'cs'] }
 endif
-
-" =============================================================================
-" Merlin (OCaml)
-" =============================================================================
-" ## added by OPAM user-setup for vim / base ## 93ee63e278bdfc07d1139a748ed3fff2 ## you can edit, but keep this line
-" let s:opam_share_dir = system("opam config var share")
-" let s:opam_share_dir = substitute(s:opam_share_dir, '[\r\n]*$', '', '')
-
-" let s:opam_configuration = {}
-
-" function! OpamConfOcpIndent()
-"   execute "set rtp^=" . s:opam_share_dir . "/ocp-indent/vim"
-" endfunction
-" let s:opam_configuration['ocp-indent'] = function('OpamConfOcpIndent')
-
-" function! OpamConfOcpIndex()
-"   execute "set rtp+=" . s:opam_share_dir . "/ocp-index/vim"
-" endfunction
-" let s:opam_configuration['ocp-index'] = function('OpamConfOcpIndex')
-
-" function! OpamConfMerlin()
-"   let l:dir = s:opam_share_dir . "/merlin/vim"
-"   execute "set rtp+=" . l:dir
-"   execute "helptags " . l:dir . "/doc"
-" endfunction
-" let s:opam_configuration['merlin'] = function('OpamConfMerlin')
-
-" let s:opam_packages = ["ocp-indent", "ocp-index", "merlin"]
-" let s:opam_check_cmdline = ["opam list --installed --short --safe --color=never"] + s:opam_packages
-" let s:opam_available_tools = split(system(join(s:opam_check_cmdline)))
-" for tool in s:opam_packages
-"   " Respect package order (merlin should be after ocp-index)
-"   if count(s:opam_available_tools, tool) > 0
-"     call s:opam_configuration[tool]()
-"   endif
-" endfor
-" ## end of OPAM user-setup addition for vim / base ## keep this line
-
-let g:merlin_ignore_warnings = "true"
-let g:merlin_completion_dwim = 0
-let g:merlin_disable_default_keybindings = 1
 
 
 " =============================================================================
@@ -182,13 +139,7 @@ endif
 if js_dev_enabled
     Plug 'leafgarland/typescript-vim'
     Plug 'pangloss/vim-javascript'
-    Plug 'alvan/vim-closetag'
     Plug 'elzr/vim-json'
-
-    Plug 'Shougo/deoplete.nvim', { 'for': ['js', 'ts', 'jsx', 'tsx', 'javascript', 'typescript'], 'do': ':UpdateRemotePlugins' }
-
-    let g:closetag_filenames = '*.html,*.xhtml,*.phtml'
-    let g:closetag_xhtml_filenames = '*.xhtml,*.jsx,*.tsx'
 endif
 
 
@@ -569,13 +520,6 @@ autocmd FileType make setlocal noexpandtab
 " Use two spaces in gn files
 autocmd FileType gn setlocal tabstop=2
 autocmd FileType gn setlocal shiftwidth=2
-
-" Use two spaces in ocaml files
-autocmd FileType ocaml setlocal tabstop=2
-autocmd FileType ocaml setlocal shiftwidth=2
-autocmd FileType ocaml setlocal formatoptions-=cro
-autocmd BufNewFile,BufRead *.ml.inc set filetype=ocaml
-autocmd BufNewFile,BufRead *.mli.inc set filetype=ocaml
 
 " Use two spaces in yaml files
 autocmd FileType yaml setlocal tabstop=2
@@ -995,7 +939,6 @@ if has_key(g:plugs, 'vim-autoformat')
     " let g:formatters_javascript = ['prettier_js']
     " let g:formatters_typescript = ['prettier_ts']
     let g:formatters_gn = ['gnformat']
-    let g:formatters_ocaml = ['ocpindent']
     " let g:formatters_rust = ['rustfmt']
 endif
 
@@ -1289,20 +1232,11 @@ function! Multiple_cursors_before()
     if exists("*youcompleteme#DisableCursorMovedAutocommands")
         call youcompleteme#DisableCursorMovedAutocommands()
     endif
-    if exists("*deoplete#is_enabled") && deoplete#is_enabled()
-        call deoplete#disable()
-        let g:deoplete_is_enable_before_multi_cursors = 1
-    else
-        let g:deoplete_is_enable_before_multi_cursors = 0
-    endif
 endfunction
 function! Multiple_cursors_after()
     let g:yankring_record_enabled = 1
     if exists("*youcompleteme#EnableCursorMovedAutocommands")
         call youcompleteme#EnableCursorMovedAutocommands()
-    endif
-    if g:deoplete_is_enable_before_multi_cursors
-        call deoplete#enable()
     endif
 endfunction
 
@@ -1349,7 +1283,6 @@ let g:ale_fixers = {
 let g:ale_linters = {
     \ 'typescript': ['tslint', 'tsserver', 'typecheck'],
     \ 'javascript': ['eslint'],
-    \ 'ocaml': ['merlin'],
     \ }
 noremap <C-j> :ALEFix<CR>
 autocmd FileType typescript inoremap <expr><tab> pumvisible() ? "\<c-n>" : "\<tab>"
@@ -1359,92 +1292,75 @@ autocmd FileType typescript inoremap <expr><s-tab> pumvisible() ? "\<c-p>" : "\<
 let g:ale_completion_enabled = 0
 
 " =============================================================================
-" Deoplete
-" =============================================================================
-if has_key(g:plugs, 'deoplete.nvim')
-    let g:deoplete#enable_at_startup = 1
-    " this is the default, make sure it is not set to "omnifunc" somewhere else in your vimrc
-    let g:deoplete#complete_method = "complete"
-    " other completion sources suggested to disable
-    let g:deoplete#ignore_sources = {}
-    let g:deoplete#ignore_sources.ocaml = ['buffer', 'around', 'member', 'tag']
-    let g:deoplete#ignore_sources.rust = ['buffer', 'around', 'member', 'tag']
-    " no delay before completion
-    let g:deoplete#auto_complete_delay = 0
-
-    " if !exists('g:deoplete#omni_patterns')
-    "   let g:deoplete#omni#input_patterns = {}
-    " endif
-    " let g:deoplete#omni#input_patterns.ocaml = '[^. *\t]\.\w*|\s\w*|#'
-endif
-
-
-" =============================================================================
 " Rust
 " =============================================================================
 autocmd FileType rust noremap <C-f> :RustFmt<CR>
+autocmd BufNew,BufEnter * execute "silent! CocDisable"
+autocmd BufNew,BufEnter *.rs,*.toml execute "silent! CocEnable"
+autocmd BufLeave *.rs,*.toml execute "silent! CocDisable"
 
 
 " =============================================================================
 " Coc.nvim
 " =============================================================================
+if has_key(g:plugs, 'coc.nvim')
+    " Always show the signcolumn, otherwise it would shift the text each time
+    " diagnostics appear/become resolved.
+    if has("nvim-0.5.0") || has("patch-8.1.1564")
+        " Recently vim can merge signcolumn and number column into one
+        set signcolumn=number
+    else
+        set signcolumn=yes
+    endif
 
-" Always show the signcolumn, otherwise it would shift the text each time
-" diagnostics appear/become resolved.
-if has("nvim-0.5.0") || has("patch-8.1.1564")
-  " Recently vim can merge signcolumn and number column into one
-  set signcolumn=number
-else
-  set signcolumn=yes
+    " Use tab for trigger completion with characters ahead and navigate.
+    " NOTE: Use command ':verbose imap <tab>' to make sure tab is not mapped by
+    " other plugin before putting this into your config.
+    inoremap <silent><expr> <TAB>
+                \ pumvisible() ? "\<C-n>" :
+                \ <SID>check_back_space() ? "\<TAB>" :
+                \ coc#refresh()
+    inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
+
+    function! s:check_back_space() abort
+        let col = col('.') - 1
+        return !col || getline('.')[col - 1]  =~# '\s'
+    endfunction
+
+    " Use <c-space> to trigger completion.
+    if has('nvim')
+        inoremap <silent><expr> <c-space> coc#refresh()
+    else
+        inoremap <silent><expr> <c-@> coc#refresh()
+    endif
+
+    " Make <CR> auto-select the first completion item and notify coc.nvim to
+    " format on enter, <cr> could be remapped by other vim plugin
+    inoremap <silent><expr> <cr> pumvisible() ? coc#_select_confirm()
+                \: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
+
+    " GoTo code navigation.
+    nmap <silent> gd <Plug>(coc-definition)
+    nmap <silent> gy <Plug>(coc-type-definition)
+    nmap <silent> gi <Plug>(coc-implementation)
+    nmap <silent> gr <Plug>(coc-references)
+
+    " Use K to show documentation in preview window.
+    nnoremap <silent> K :call <SID>show_documentation()<CR>
+
+    function! s:show_documentation()
+        if (index(['vim','help'], &filetype) >= 0)
+            execute 'h '.expand('<cword>')
+        elseif (coc#rpc#ready())
+            call CocActionAsync('doHover')
+        else
+            execute '!' . &keywordprg . " " . expand('<cword>')
+        endif
+    endfunction
+
+    " Highlight the symbol and its references when holding the cursor.
+    autocmd CursorHold * silent call CocActionAsync('highlight')
+
+    " Apply AutoFix to problem on the current line.
+    nmap <leader>qf  <Plug>(coc-fix-current)
 endif
-
-" Use tab for trigger completion with characters ahead and navigate.
-" NOTE: Use command ':verbose imap <tab>' to make sure tab is not mapped by
-" other plugin before putting this into your config.
-inoremap <silent><expr> <TAB>
-      \ pumvisible() ? "\<C-n>" :
-      \ <SID>check_back_space() ? "\<TAB>" :
-      \ coc#refresh()
-inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
-
-function! s:check_back_space() abort
-  let col = col('.') - 1
-  return !col || getline('.')[col - 1]  =~# '\s'
-endfunction
-
-" Use <c-space> to trigger completion.
-if has('nvim')
-  inoremap <silent><expr> <c-space> coc#refresh()
-else
-  inoremap <silent><expr> <c-@> coc#refresh()
-endif
-
-" Make <CR> auto-select the first completion item and notify coc.nvim to
-" format on enter, <cr> could be remapped by other vim plugin
-inoremap <silent><expr> <cr> pumvisible() ? coc#_select_confirm()
-                              \: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
-
-" GoTo code navigation.
-nmap <silent> gd <Plug>(coc-definition)
-nmap <silent> gy <Plug>(coc-type-definition)
-nmap <silent> gi <Plug>(coc-implementation)
-nmap <silent> gr <Plug>(coc-references)
-
-" Use K to show documentation in preview window.
-nnoremap <silent> K :call <SID>show_documentation()<CR>
-
-function! s:show_documentation()
-  if (index(['vim','help'], &filetype) >= 0)
-    execute 'h '.expand('<cword>')
-  elseif (coc#rpc#ready())
-    call CocActionAsync('doHover')
-  else
-    execute '!' . &keywordprg . " " . expand('<cword>')
-  endif
-endfunction
-
-" Highlight the symbol and its references when holding the cursor.
-autocmd CursorHold * silent call CocActionAsync('highlight')
-
-" Apply AutoFix to problem on the current line.
-nmap <leader>qf  <Plug>(coc-fix-current)
