@@ -18,6 +18,7 @@ export CXX=g++
 export DEFAULT_USER=##NEWUSER##
 export LANG=en_us.UTF-8
 export LC_ALL=en_US.UTF-8
+export HOMEBREW_NO_AUTO_UPDATE=1
 
 # Profiling
 PROFILE_STARTUP=false
@@ -377,6 +378,13 @@ stopwatch() {
     echo -ne "$(date -u --date @$((`date +%s` - $date1)) +%H:%M:%S)\r";
     sleep 0.1
    done
+}
+
+install-rust-analyzer() {
+    local archive_name="rust-analyzer-x86_64-apple-darwin.gz"
+    curl -L https://github.com/rust-analyzer/rust-analyzer/releases/latest/download/$archive_name | \
+        gunzip -c - > ~/bin/rust-analyzer
+    chmod +x ~/bin/rust-analyzer
 }
 
 # extract any format
