@@ -1,0 +1,2 @@
+au! BufAdd,BufRead,BufNew,BufEnter *.json let g:indentLine_conceallevel=1
+au! BufLeave,BufUnload,BufDelete,BufHidden *.json let g:indentLine_conceallevel=2

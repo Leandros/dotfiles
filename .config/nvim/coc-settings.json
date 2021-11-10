@@ -1,0 +1,17 @@
+{
+  "rust-analyzer": {
+    "enable": true,
+    "inlayHints": {
+      "enable": false
+    },
+    "cargo": {
+      "runBuildScripts": true
+    },
+    "procMacro": {
+      "enable": true
+    },
+    "server": {
+      "path": "/Users/arvidgerstmann/bin/rust-analyzer"
+    }
+  }
+}
