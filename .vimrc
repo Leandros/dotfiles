@@ -60,7 +60,6 @@ Plug 'scrooloose/nerdtree'
 
 " General
 Plug 'SirVer/ultisnips'
-Plug 'tmux-plugins/vim-tmux-focus-events'
 Plug 'junegunn/vim-easy-align'
 Plug 'tpope/vim-fugitive'
 
@@ -81,7 +80,7 @@ endif
 Plug 'Chiel92/vim-autoformat', { 'for': ['gn', 'jbuild', 'opam', 'python'] }
 Plug 'prettier/vim-prettier', {
   \ 'do': 'yarn install',
-  \ 'for': ['javascript', 'typescript', 'css', 'less', 'scss', 'json', 'graphql', 'markdown', 'vue', 'yaml', 'html'] }
+  \ 'for': ['javascript', 'javascript.jsx', 'typescript', 'typescript.tsx', 'css', 'less', 'scss', 'json', 'graphql', 'markdown', 'vue', 'yaml', 'html'] }
 Plug 'cofyc/vim-uncrustify', { 'for': ['cpp', 'c', 'cs', 'objc', 'objcpp'] }
 
 " Syntax Plugins
@@ -97,8 +96,17 @@ Plug 'rust-lang/rust.vim', { 'for': ['rust'] }
 Plug 'cespare/vim-toml', { 'for': ['toml'], 'branch': 'main' }
 
 " Semi FAT
-Plug 'w0rp/ale', { 'for': ['js', 'ts', 'jsx', 'tsx', 'javascript', 'typescript', 'sh' ] }
 Plug 'neoclide/coc.nvim', { 'branch': 'release'}
+let g:coc_global_extensions = [
+  \ 'coc-rust-analyzer',
+  \ 'coc-tsserver'
+  \ ]
+if isdirectory('./node_modules') && isdirectory('./node_modules/eslint')
+  let g:coc_global_extensions += ['coc-eslint']
+endif
+" https://github.com/fannheyward/coc-rust-analyzer
+"   :CocInstall coc-rust-analyzer
+"   :CocInstall coc-tsserver
 
 if ycm_enabled
     Plug 'Valloric/YouCompleteMe', { 'for': ['cpp', 'c', 'python', 'objc', 'objcpp', 'cs'] }
@@ -200,6 +208,7 @@ set visualbell      " Don't beep.
 set noerrorbells    " Don't beep.
 
 set nobackup        " Disable backup. set noswapfile can disable the .swp file.
+set nowritebackup
 set noswapfile
 
 " Indentation is 4 spaces, and not a tab
@@ -215,9 +224,11 @@ set scrolloff=3     " 3 lines of buffer above and below the cursor
 set timeout
 set timeoutlen=1000 " timeout for leader key
 set ttimeoutlen=10  " timeout for esc key
+set updatetime=300
 
 " Show if leader key is pressed
 set showcmd
+set cmdheight=2     " Give more space for displaying messages.
 
 " Correct backspace
 set backspace=indent,eol,start
@@ -322,8 +333,8 @@ au BufRead,BufNewFile *.y,*.ypp,*.ym setlocal ft=yacc           " Bison
 au BufRead,BufNewFile *.man setlocal ft=groff                   " Groff/Troff
 au BufRead,BufNewFile *.mm setlocal ft=objcpp                   " Objective-C++
 au BufRead,BufNewFile *.m setlocal ft=objc                      " Objective-C
-au BufRead,BufNewFile *.jsx set ft=javascript                   " Javascript
-au BufRead,BufNewFile *.tsx set ft=typescript                   " TypescriptX
+au BufRead,BufNewFile *.jsx set ft=javascript.jsx               " Javascript
+au BufRead,BufNewFile *.tsx set ft=typescript.tsx               " TypescriptX
 au BufRead,BufNewFile *.ts set ft=typescript                    " Typescript
 
 " =============================================================================
@@ -455,12 +466,8 @@ nnoremap Y y$
 if ycm_enabled
     " let g:ycm_python_binary_path = 'python3'
     if js_dev_enabled
-        autocmd FileType javascript nnoremap <Leader>d :ALEGoToDefinition<CR>
-        autocmd FileType typescript nnoremap <Leader>d :ALEGoToDefinition<CR>
         autocmd FileType cpp nnoremap <Leader>d :YcmCompleter GoTo<CR>
         autocmd FileType c nnoremap <Leader>d :YcmCompleter GoTo<CR>
-        autocmd FileType javascript nnoremap <Leader>, :ALEFindReferences<CR>
-        autocmd FileType typescript nnoremap <Leader>, :ALEFindReferences<CR>
         autocmd FileType cpp nnoremap <Leader>, :YcmCompleter GetType<CR>
         autocmd FileType c nnoremap <Leader>, :YcmCompleter GetType<CR>
         nnoremap <Leader>t :YcmCompleter GetDoc<CR>
@@ -502,13 +509,20 @@ cabbrev tabv tab sview +setlocal\ nomodifiable
 " Use two spaces to indent js/ts files
 autocmd FileType javascript setlocal tabstop=2
 autocmd FileType javascript setlocal shiftwidth=2
+autocmd FileType javascript.jsx setlocal tabstop=2
+autocmd FileType javascript.jsx setlocal shiftwidth=2
 autocmd FileType typescript setlocal tabstop=2
 autocmd FileType typescript setlocal shiftwidth=2
 autocmd FileType typescript set makeprg=tsc\ $*
+autocmd FileType typescript.tsx setlocal tabstop=2
+autocmd FileType typescript.tsx setlocal shiftwidth=2
+autocmd FileType typescript.tsx set makeprg=tsc\ $*
 
 " Setup comment string
 autocmd FileType javascript setlocal commentstring=/*\ %s\ */
+autocmd FileType javascript.jsx setlocal commentstring=/*\ %s\ */
 autocmd FileType typescript setlocal commentstring=/*\ %s\ */
+autocmd FileType typescript.tsx setlocal commentstring=/*\ %s\ */
 autocmd FileType lalrpop setlocal commentstring=//\ %s
 
 " Use two spaces to indent json files
@@ -1273,23 +1287,6 @@ let g:rainbow_conf = {
 \   }
 \}
 
-" =============================================================================
-" ALE
-" =============================================================================
-let g:ale_fixers = {
-    \ 'typescript': ['tslint'],
-    \ 'javascript': ['eslint'],
-    \ }
-let g:ale_linters = {
-    \ 'typescript': ['tslint', 'tsserver', 'typecheck'],
-    \ 'javascript': ['eslint'],
-    \ }
-noremap <C-j> :ALEFix<CR>
-autocmd FileType typescript inoremap <expr><tab> pumvisible() ? "\<c-n>" : "\<tab>"
-autocmd FileType typescript inoremap <expr><s-tab> pumvisible() ? "\<c-p>" : "\<s-tab>"
-
-" Disable, we use deoplete.
-let g:ale_completion_enabled = 0
 
 " =============================================================================
 " Rust
@@ -1340,10 +1337,10 @@ if has_key(g:plugs, 'coc.nvim')
                 \: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
 
     " GoTo code navigation.
-    nmap <silent> gd <Plug>(coc-definition)
-    nmap <silent> gy <Plug>(coc-type-definition)
-    nmap <silent> gi <Plug>(coc-implementation)
-    nmap <silent> gr <Plug>(coc-references)
+    nmap <silent> <leader>d <Plug>(coc-definition)
+    nmap <silent> <leader>y <Plug>(coc-type-definition)
+    nmap <silent> <leader>i <Plug>(coc-implementation)
+    nmap <silent> <leader>r <Plug>(coc-references)
 
     " Use K to show documentation in preview window.
     nnoremap <silent> K :call <SID>show_documentation()<CR>
@@ -1361,6 +1358,22 @@ if has_key(g:plugs, 'coc.nvim')
     " Highlight the symbol and its references when holding the cursor.
     autocmd CursorHold * silent call CocActionAsync('highlight')
 
+    " Symbol renaming.
+    nmap <leader>rn <Plug>(coc-rename)
+
     " Apply AutoFix to problem on the current line.
     nmap <leader>qf  <Plug>(coc-fix-current)
+
+    " Remap <C-f> and <C-b> for scroll float windows/popups.
+    if has('nvim-0.4.0') || has('patch-8.2.0750')
+        nnoremap <silent><nowait><expr> <C-n> coc#float#has_scroll() ? coc#float#scroll(1) : "\<C-n>"
+        nnoremap <silent><nowait><expr> <C-r> coc#float#has_scroll() ? coc#float#scroll(0) : "\<C-r>"
+        inoremap <silent><nowait><expr> <C-n> coc#float#has_scroll() ? "\<c-r>=coc#float#scroll(1)\<cr>" : "\<Right>"
+        inoremap <silent><nowait><expr> <C-r> coc#float#has_scroll() ? "\<c-r>=coc#float#scroll(0)\<cr>" : "\<Left>"
+        vnoremap <silent><nowait><expr> <C-n> coc#float#has_scroll() ? coc#float#scroll(1) : "\<C-n>"
+        vnoremap <silent><nowait><expr> <C-r> coc#float#has_scroll() ? coc#float#scroll(0) : "\<C-r>"
+    endif
+
+    " Fix colors of popup menu
+    hi Pmenu ctermfg=12 ctermbg=7 cterm=none
 endif
