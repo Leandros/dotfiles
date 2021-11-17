@@ -468,7 +468,8 @@ export GOPATH=$HOME/gopath
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
 
 # Homebrew
-export HOMEBREW_GITHUB_API_TOKEN=$(security find-generic-password -a 'homebrew-token' -l 'github.com' -w)
+command -v security > /dev/null \
+    && export HOMEBREW_GITHUB_API_TOKEN=$(security find-generic-password -a 'homebrew-token' -l 'github.com' -w)
 
 # =============================================================================
 # MANPATH
@@ -477,23 +478,10 @@ export MANPATH=$BREW_PREFIX/opt/coreutils/libexec/gnuman:$MANPATH
 function mman { MANPATH=$HOME/p4/depot/liba/docs man $* | less }
 
 # =============================================================================
-# NVM
+# fnm
 # =============================================================================
-export NVM_DIR="$HOME/.nvm"
-declare -a NODE_GLOBALS=(`find $NVM_DIR/versions/node -maxdepth 3 -type l -wholename '*/bin/*' | xargs -n1 basename | sort | uniq`)
-NODE_GLOBALS+=("node")
-NODE_GLOBALS+=("nvm")
-NODE_GLOBALS+=("yarn")
-
-load_nvm () {
-    mkdir -p "$NVM_DIR"
-    [ -s "/usr/local/opt/nvm/nvm.sh" ] && source "/usr/local/opt/nvm/nvm.sh"
-    [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
-}
-
-for cmd in "${NODE_GLOBALS[@]}"; do
-    eval "${cmd}(){ unset -f ${NODE_GLOBALS}; load_nvm; ${cmd} \$@ }"
-done
+export PATH=/root/.fnm:$PATH
+eval "`fnm env`"
 
 # =============================================================================
 # External
