@@ -281,6 +281,7 @@ alias gb2='goobook -c ~/.mutt/goobook/goobookrc_appico'
 alias gb3='goobook -c ~/.mutt/goobook/goobookrc_arvidio'
 alias ccp='rsync -ah --progress'
 alias ytdl="youtube-dl -f 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'"
+alias vim='nvim'
 
 # Less modes
 export LESS="-R"
@@ -381,7 +382,13 @@ stopwatch() {
 }
 
 install-rust-analyzer() {
-    local archive_name="rust-analyzer-x86_64-apple-darwin.gz"
+    local archive_name
+    if [[ "Darwin" == "`uname`" ]]; then
+        archive_name="rust-analyzer-x86_64-apple-darwin.gz"
+    elif [[ "Linux" == "`uname`" ]]; then
+        archive_name="rust-analyzer-x86_64-unknown-linux-gnu.gz"
+    fi
+
     curl -L https://github.com/rust-analyzer/rust-analyzer/releases/latest/download/$archive_name | \
         gunzip -c - > ~/bin/rust-analyzer
     chmod +x ~/bin/rust-analyzer
