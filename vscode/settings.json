@@ -1,0 +1,25 @@
+{
+  "workbench.colorTheme": "Solarized Dark+",
+  "vim.vimrc.enable": true,
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+},
+"[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+},
+"files.exclude": {
+  "**/node_modules": true
+},
+"[jsonc]": {
+  "editor.defaultFormatter": "esbenp.prettier-vscode"
+},
+"editor.fontFamily": "Input, 'Courier New', monospace",
+"editor.fontSize": 14,
+"terminal.integrated.fontSize": 14
+}
