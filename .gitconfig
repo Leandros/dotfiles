@@ -72,7 +72,7 @@
     lazy = commit --allow-empty-message -am \"\"
     out = push
 [core]
-    editor = vim
+    editor = nvim
     excludesfile = ~/.gitignore_global
 [mergetool "Kaleidoscope"]
     cmd = ksdiff --merge --output \"$MERGED\" --base \"$BASE\" -- \"$LOCAL\" --snapshot \"$REMOTE\" --snapshot

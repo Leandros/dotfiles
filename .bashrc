@@ -38,6 +38,7 @@ pbcopy() { read data; echo "$data" > /dev/clipboard; }
 pbpaste() { cat /dev/clipboard; }
 nvim-qt() { NVIM_GUI=1 command nvim-qt "$@"; }
 alias ti='tig status'
+alias vim='nvim'
 
 # Source perforce (if any process ends up using bash instead of zsh)
 if [ -f "$HOME/.p4creds" ]; then
