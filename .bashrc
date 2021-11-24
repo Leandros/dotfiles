@@ -40,6 +40,18 @@ nvim-qt() { NVIM_GUI=1 command nvim-qt "$@"; }
 alias ti='tig status'
 alias vim='nvim'
 
+lg()
+{
+    export LAZYGIT_NEW_DIR_FILE=~/.lazygit/newdir
+
+    lazygit "$@"
+
+    if [ -f $LAZYGIT_NEW_DIR_FILE ]; then
+            cd "$(cat $LAZYGIT_NEW_DIR_FILE)"
+            rm -f $LAZYGIT_NEW_DIR_FILE > /dev/null
+    fi
+}
+
 # Source perforce (if any process ends up using bash instead of zsh)
 if [ -f "$HOME/.p4creds" ]; then
     source "$HOME/.p4creds"
