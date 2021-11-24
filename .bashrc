@@ -10,7 +10,7 @@ export HISTCONTROL=ignoreboth:erasedups
 export HISTTIMEFORMAT="%F %T: "
 
 # Defaults
-export EDITOR=gvim
+export EDITOR=nvim-qt
 # export TERM=xterm-256color
 
 # General settings (i don't know if this is bash or readline specific)
@@ -36,6 +36,8 @@ stty -ixon
 # Aliases
 pbcopy() { read data; echo "$data" > /dev/clipboard; }
 pbpaste() { cat /dev/clipboard; }
+nvim-qt() { NVIM_GUI=1 command nvim-qt "$@"; }
+alias ti='tig status'
 
 # Source perforce (if any process ends up using bash instead of zsh)
 if [ -f "$HOME/.p4creds" ]; then
@@ -43,6 +45,9 @@ if [ -f "$HOME/.p4creds" ]; then
 fi
 
 # Path
+export PATH=$PATH:$HOME/bin
+export PATH=$PATH:$HOME/.cargo/bin
+
 if [[ "$(uname)" =~ MINGW* ]]; then
     export PATH=$PATH:"C:/Perforce"
 fi

@@ -498,16 +498,10 @@ if [ -f "$HOME/.p4creds" ]; then
 fi
 
 # =============================================================================
-# Completion
+# RVM
 # =============================================================================
-# opam configuration
-if [ -f "$HOME/.opam/opam-init/init.zsh" ]; then
-    source $HOME/.opam/opam-init/init.zsh > /dev/null 2> /dev/null || true
-fi
-
-
-# RVM. Keep at BOTTOM!
-[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
+# Load RVM into a shell session *as a function*
+[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
 
 
 
