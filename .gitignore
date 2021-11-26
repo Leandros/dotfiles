@@ -17,3 +17,5 @@ cache_*
 auth_*.json
 
 AppData/Roaming/lazygit/state.yml
+.config/configstore/update-notifier-@aws-amplify
+.config/configstore/update-notifier-npm.json

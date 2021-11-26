@@ -10,7 +10,7 @@ export HISTCONTROL=ignoreboth:erasedups
 export HISTTIMEFORMAT="%F %T: "
 
 # Defaults
-export EDITOR=nvim-qt
+export EDITOR=nvim
 # export TERM=xterm-256color
 
 # General settings (i don't know if this is bash or readline specific)

@@ -28,8 +28,11 @@ endif
 
 " Python paths
 if has('nvim')
-    let g:python_host_prog = '/usr/local/bin/python2'
-    let g:python3_host_prog = '/usr/local/bin/python3'
+    if !has("win32") && !has("win16")
+        let g:python3_host_prog = '/usr/local/bin/python3'
+    else
+        let g:python3_host_prog = 'C:\Windows\py.exe'
+    endif
 endif
 
 " Ugly workaround until vim fixes
@@ -38,9 +41,6 @@ if has('python3')
 endif
 
 " Visual Plugins
-if has('nvim')
-    " Plug 'iCyMind/NeoSolarized'
-endif
 if has('nvim') && !empty($NVIM_GUI)
     Plug 'frankier/neovim-colors-solarized-truecolor-only'
     Plug 'equalsraf/neovim-gui-shim'
