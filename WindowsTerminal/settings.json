@@ -8,7 +8,7 @@
 {
   "$schema": "https://aka.ms/terminal-profiles-schema",
 
-  "defaultProfile": "{0caa0dad-35be-5f56-a8ff-afceeeaa6101}",
+  "defaultProfile": "{00000000-0000-0000-ba54-000000000002}",
 
   // You can add more global application settings here.
   // To learn more about global settings, visit https://aka.ms/terminal-global-settings
@@ -19,7 +19,7 @@
   // If enabled, formatted data is also copied to your clipboard
   "copyFormatting": false,
 
-  "startupActions": "FOR /f \"tokens=*\" %i IN ('fnm env --use-on-cd') DO CALL %i",
+  "startupActions": "",
 
   // A profile specifies a command to execute paired with information about how it should look and feel.
   // Each one of them will appear in the 'New Tab' dropdown,
@@ -30,7 +30,7 @@
       // Put settings here that you want to apply to all profiles.
       "colorScheme": "Solarized Dark Fixed",
       "fontFace": "Input",
-      "fontSize": 12
+      "fontSize": 10
     },
     "list": [
       {
@@ -46,6 +46,13 @@
         "name": "Command Prompt",
         "commandline": "cmd.exe /k \"C:\\Users\\leandros\\init.bat\"",
         "hidden": false
+      },
+      {
+        "guid": "{00000000-0000-0000-ba54-000000000002}",
+        "commandline": "%PROGRAMFILES%/git/usr/bin/bash.exe -i -l",
+        "icon": "%PROGRAMFILES%/Git/mingw64/share/git/git-for-windows.ico",
+        "name": "Bash",
+        "startingDirectory": "%USERPROFILE%"
       },
       {
         "guid": "{2c4de342-38b7-51cf-b940-2309a097f518}",
@@ -101,6 +108,33 @@
 
     // Press Ctrl+Shift+F to open the search box
     { "command": "find", "keys": "ctrl+shift+f" },
+
+    // Switch tabs
+    { "command": { "action": "switchToTab", "index": 0 }, "keys": "alt+1" },
+    { "command": { "action": "switchToTab", "index": 1 }, "keys": "alt+2" },
+    { "command": { "action": "switchToTab", "index": 2 }, "keys": "alt+3" },
+    { "command": { "action": "switchToTab", "index": 3 }, "keys": "alt+4" },
+    { "command": { "action": "switchToTab", "index": 4 }, "keys": "alt+5" },
+    { "command": { "action": "switchToTab", "index": 5 }, "keys": "alt+6" },
+    { "command": { "action": "switchToTab", "index": 6 }, "keys": "alt+7" },
+    { "command": { "action": "switchToTab", "index": 7 }, "keys": "alt+8" },
+    { "command": { "action": "switchToTab", "index": 8 }, "keys": "alt+9" },
+
+    // Pane management.
+    { "command": { "action": "moveFocus", "direction": "down" }, "keys": "alt+n" },
+    { "command": { "action": "moveFocus", "direction": "left" }, "keys": "alt+b" },
+    { "command": { "action": "moveFocus", "direction": "right" }, "keys": "alt+s" },
+    { "command": { "action": "moveFocus", "direction": "up" }, "keys": "alt+r" },
+
+    { "command": { "action": "resizePane", "direction": "down" }, "keys": "alt+shift+n" },
+    { "command": { "action": "resizePane", "direction": "left" }, "keys": "alt+shift+b" },
+    { "command": { "action": "resizePane", "direction": "right" }, "keys": "alt+shift+s" },
+    { "command": { "action": "resizePane", "direction": "up" }, "keys": "alt+shift+r" },
+
+    { "command": { "action": "splitPane", "split": "horizontal" }, "keys": "alt+i" },
+    { "command": { "action": "splitPane", "split": "vertical" }, "keys": "alt+t" },
+
+    { "command": "togglePaneZoom", "keys": "alt+f" },
 
     // Press Alt+Shift+D to open a new pane.
     // - "split": "auto" makes this pane open in the direction that provides the most surface area.
