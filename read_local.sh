@@ -33,7 +33,6 @@ cpix $HOME/.gdb.py .
 cpix $HOME/.gdbinit .
 cpix $HOME/.gdbinit.local .
 cpix $HOME/.gitconfig .
-cpix $HOME/.gitignore .
 cpix $HOME/.gitignore_global .
 cpix $HOME/.inputrc .
 cpix $HOME/.lessfilter .
