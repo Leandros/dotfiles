@@ -15,3 +15,5 @@ tags.lock
 # Goobook cache / credentials
 cache_*
 auth_*.json
+
+AppData/Roaming/lazygit/state.yml

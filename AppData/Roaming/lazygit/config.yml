@@ -1,0 +1,10 @@
+keybinding:
+  universal:
+    nextTab: 'S'
+    prevTab: 'B'
+gui:
+  theme:
+    selectedLineBgColor:
+      - reverse
+    selectedRangeBgColor:
+      - reverse
