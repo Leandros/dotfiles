@@ -12,8 +12,9 @@ cpix() {
 
 # Copy all Windows specific files.
 if [[ `uname` = MSYS_NT* ]]; then
-    cp -r $APPDATA/lazygit AppData/Roaming
-    cp -r $APPDATA/alacritty AppData/Roaming
+    cpix $APPDATA/lazygit AppData/Roaming
+    cpix $APPDATA/alacritty AppData/Roaming
+    cpix $APPDATA/Code/User AppData/Roaming/Code
     # cp -r $APPDATA/../Local/Packages/Microsoft.WindowsTerminal_*/LocalState/settings.json WindowsTerminal/
 
     cpix $HOME/_vimrc .vimrc
