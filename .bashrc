@@ -57,6 +57,12 @@ if [ -f "$HOME/.p4creds" ]; then
     source "$HOME/.p4creds"
 fi
 
+# Use fnm, if it exists
+if command -v fnm &> /dev/null; then
+    # export PATH=$HOME/.fnm:$PATH
+    eval "`fnm env`"
+fi
+
 # Path
 export PATH=$PATH:$HOME/bin
 export PATH=$PATH:$HOME/.cargo/bin
