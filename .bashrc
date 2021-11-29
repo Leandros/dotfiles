@@ -23,6 +23,13 @@ set menu-complete-display-prefix on
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 
+# XDG
+export XDG_CONFIG_HOME=$HOME/.config
+export XDG_CACHE_HOME=$HOME/.cache
+export XDG_DATA_HOME=$HOME/.local/share
+export XDG_STATE_HOME=$HOME/.local/state
+
+
 # Less config
 export LESS="-R"
 export LESSOPEN="|~/.lessfilter %s"
