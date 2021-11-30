@@ -13,6 +13,11 @@ export HISTTIMEFORMAT="%F %T: "
 export EDITOR=nvim
 # export TERM=xterm-256color
 
+# Detect Windows
+if [[ "$OS" =~ Windows* ]]; then
+    export IS_WINDOWS=1
+fi
+
 # General settings (i don't know if this is bash or readline specific)
 set bell-style none
 set show-all-if-ambiguous on
@@ -24,10 +29,12 @@ export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 
 # XDG
-export XDG_CONFIG_HOME=$HOME/.config
-export XDG_CACHE_HOME=$HOME/.cache
-export XDG_DATA_HOME=$HOME/.local/share
-export XDG_STATE_HOME=$HOME/.local/state
+if [ "$IS_WINDOWS" = "1" ]; then
+    export XDG_CONFIG_HOME=$APPDATA
+    export XDG_CACHE_HOME=$LOCALAPPDATA/Temp
+    export XDG_DATA_HOME=$LOCALAPPDATA
+    export XDG_STATE_HOME=$LOCALAPPDATA
+fi
 
 
 # Less config

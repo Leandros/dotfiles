@@ -602,7 +602,9 @@ if has('gui_running')
         " has('gui_running') is always false.
     else
         set t_Co=256
-        set guifont=Input:h11
+        " set guifont=Input:h11
+        " set lsp=0
+        set guifont=JetBrains\ Mono:h9
         set lsp=0
         " HighDPI
         " set guifont=Input:h9:w4.5

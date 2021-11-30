@@ -22,3 +22,4 @@ AppData/Roaming/lazygit/state.yml
 AppData/Roaming/Code/User/globalStorage
 AppData/Roaming/Code/User/sync
 AppData/Roaming/Code/User/workspaceStorage
+.config/coc/extensions/node_modules
