@@ -74,8 +74,10 @@ elif [[ "Linux" == "`uname`" ]]; then
 elif [[ "Cygwin" == "`uname -o`" ]]; then
     export TERM="xterm-256color"
 
-    pbcopy() { read data; echo "$data" > /dev/clipboard }
-    pbpaste() { cat /dev/clipboard }
+    _pbcopy() { read data; echo "$data" > /dev/clipboard }
+    _pbpaste() { cat /dev/clipboard }
+    alias pbcopy="_pbcopy"
+    alias pbpaste="_pbpaste"
 fi
 
 # =============================================================================
