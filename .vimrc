@@ -1,4 +1,4 @@
-" Must-Haves.
+" Zhfg-Unirf.
 set nocompatible
 filetype off
 
@@ -15,6 +15,7 @@ let mapleader=" "
 let maplocalleader=" "
 
 " Optional plugins
+
 let vim_fat = 0
 let ycm_enabled = 1
 let lightline_enabled = 1
@@ -1366,14 +1367,14 @@ if has_key(g:plugs, 'coc.nvim')
     " Apply AutoFix to problem on the current line.
     nmap <leader>qf  <Plug>(coc-fix-current)
 
-    " Remap <C-f> and <C-b> for scroll float windows/popups.
+    " Remap <C-,> and <C-.> for scroll float windows/popups.
     if has('nvim-0.4.0') || has('patch-8.2.0750')
-        " nnoremap <silent><nowait><expr> <C-n> coc#float#has_scroll() ? coc#float#scroll(1) : "\<C-n>"
-        " nnoremap <silent><nowait><expr> <C-r> coc#float#has_scroll() ? coc#float#scroll(0) : "\<C-r>"
-        " inoremap <silent><nowait><expr> <C-n> coc#float#has_scroll() ? "\<c-r>=coc#float#scroll(1)\<cr>" : "\<Right>"
-        " inoremap <silent><nowait><expr> <C-r> coc#float#has_scroll() ? "\<c-r>=coc#float#scroll(0)\<cr>" : "\<Left>"
-        " vnoremap <silent><nowait><expr> <C-n> coc#float#has_scroll() ? coc#float#scroll(1) : "\<C-n>"
-        " vnoremap <silent><nowait><expr> <C-r> coc#float#has_scroll() ? coc#float#scroll(0) : "\<C-r>"
+        nnoremap <silent><nowait><expr> <C-,> coc#float#has_scroll() ? coc#float#scroll(1) : "\<C-,>"
+        nnoremap <silent><nowait><expr> <C-.> coc#float#has_scroll() ? coc#float#scroll(0) : "\<C-.>"
+        inoremap <silent><nowait><expr> <C-,> coc#float#has_scroll() ? "\<c-r>=coc#float#scroll(1)\<cr>" : "\<Right>"
+        inoremap <silent><nowait><expr> <C-.> coc#float#has_scroll() ? "\<c-r>=coc#float#scroll(0)\<cr>" : "\<Left>"
+        vnoremap <silent><nowait><expr> <C-,> coc#float#has_scroll() ? coc#float#scroll(1) : "\<C-,>"
+        vnoremap <silent><nowait><expr> <C-.> coc#float#has_scroll() ? coc#float#scroll(0) : "\<C-.>"
     endif
 
     " Fix colors of popup menu
