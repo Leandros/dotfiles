@@ -1,6 +1,5 @@
-" Zhfg-Unirf.
-set nocompatible
-filetype off
+set nocompatible " be iMproved, required
+filetype off     " required
 
 " Vundle Stuff
 if has("win32") || has("win16")
@@ -29,11 +28,8 @@ endif
 
 " Python paths
 if has('nvim')
-    if !has("win32") && !has("win16")
-        let g:python3_host_prog = '/usr/local/bin/python3'
-    else
-        let g:python3_host_prog = 'C:\Windows\py.exe'
-    endif
+    let g:python_host_prog = '/usr/local/bin/python2'
+    let g:python3_host_prog = '/usr/local/bin/python3'
 endif
 
 " Ugly workaround until vim fixes
@@ -45,6 +41,8 @@ endif
 if has('nvim') && !empty($NVIM_GUI)
     Plug 'frankier/neovim-colors-solarized-truecolor-only'
     Plug 'equalsraf/neovim-gui-shim'
+elseif has('nvim')
+    Plug 'ishan9299/nvim-solarized-lua'
 else
     Plug 'altercation/vim-colors-solarized'
 endif
@@ -62,7 +60,6 @@ Plug 'scrooloose/nerdtree'
 " General
 Plug 'SirVer/ultisnips'
 Plug 'junegunn/vim-easy-align'
-Plug 'tpope/vim-fugitive'
 
 " My own plugins
 Plug 'leandros/vim-misc'
@@ -73,11 +70,24 @@ Plug 'leandros/vim-bufkill'
 
 " Rust
 if has('nvim')
-    Plug 'neovim/nvim-lspconfig'
+    " Basically all for LSP support.
+    Plug 'neovim/nvim-lspconfig' " Collection of common configurations for the Nvim LSP client
+    Plug 'williamboman/nvim-lsp-installer'
+    Plug 'hrsh7th/nvim-cmp'      " Completion framework
+    Plug 'hrsh7th/cmp-nvim-lsp'  " LSP completion source for nvim-cmp
+    Plug 'hrsh7th/cmp-vsnip'     " Snippet completion source for nvim-cmp
+    Plug 'hrsh7th/cmp-path'      " Other usefull completion sources
+    Plug 'hrsh7th/cmp-buffer'
+    Plug 'hrsh7th/vim-vsnip'     " Snippet engine
+    Plug 'leandros/lspsaga.nvim' " Better UI
+    Plug 'kyazdani42/nvim-web-devicons'
+    Plug 'folke/lsp-colors.nvim'
+    Plug 'folke/trouble.nvim'
+
     Plug 'simrat39/rust-tools.nvim'
 endif
 
-" Pretier
+" Prettier
 Plug 'Chiel92/vim-autoformat', { 'for': ['gn', 'jbuild', 'opam', 'python'] }
 Plug 'prettier/vim-prettier', {
   \ 'do': 'yarn install',
@@ -97,14 +107,14 @@ Plug 'rust-lang/rust.vim', { 'for': ['rust'] }
 Plug 'cespare/vim-toml', { 'for': ['toml'], 'branch': 'main' }
 
 " Semi FAT
-Plug 'neoclide/coc.nvim', { 'branch': 'release'}
-let g:coc_global_extensions = [
-  \ 'coc-rust-analyzer',
-  \ 'coc-tsserver'
-  \ ]
-if isdirectory('./node_modules') && isdirectory('./node_modules/eslint')
-  let g:coc_global_extensions += ['coc-eslint']
-endif
+" Plug 'neoclide/coc.nvim', { 'branch': 'release'}
+" let g:coc_global_extensions = [
+"   \ 'coc-rust-analyzer',
+"   \ 'coc-tsserver'
+"   \ ]
+" if isdirectory('./node_modules') && isdirectory('./node_modules/eslint')
+"   let g:coc_global_extensions += ['coc-eslint']
+" endif
 " https://github.com/fannheyward/coc-rust-analyzer
 "   :CocInstall coc-rust-analyzer
 "   :CocInstall coc-tsserver
@@ -160,11 +170,247 @@ if has_key(g:plugs, 'vim-yankstack')
     call yankstack#setup()
 endif
 
-" LUA
+" =============================================================================
+" NEOVIM
+" =============================================================================
 if has('nvim')
+    " Set completeopt to have a better completion experience
+    " :help completeopt
+    " menuone: popup even when there's only one match
+    " noinsert: Do not insert text until a selection is made
+    " noselect: Do not select, force user to select one from the menu
+    set completeopt=menuone,noinsert,noselect
+
+    " Avoid showing extra messages when using completion
+    set shortmess+=c
+
+" =============================================================================
+" LSP Installer
+" =============================================================================
 lua << EOF
-require('rust-tools').setup({})
+local lsp_installer = require 'nvim-lsp-installer'
+
+-- Include the servers you want to have installed by default below
+local servers = {
+  "rust_analyzer",
+  "tsserver",
+  --"bashls",
+  --"pyright",
+}
+
+lsp_installer.settings({
+    ui = {
+        icons = {
+            server_installed = "✓",
+            server_pending = "➜",
+            server_uninstalled = "✗"
+        }
+    }
+})
+
+-- Register a handler that will be called for all installed servers.
+-- Alternatively, you may also register handlers on specific server instances instead (see example below).
+lsp_installer.on_server_ready(function(server)
+    local opts = {}
+
+    -- Customize the options passed to the server
+    if server.name == "tsserver" then
+    elseif server.name == "rust_analyzer" then
+    end
+
+    -- This setup() function is exactly the same as lspconfig's setup function.
+    -- Refer to https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md
+    server:setup(opts)
+end)
 EOF
+
+" =============================================================================
+" LSP
+" =============================================================================
+" Configure LSP through rust-tools.nvim plugin.
+" rust-tools will configure and enable certain LSP features for us.
+" See https://github.com/simrat39/rust-tools.nvim#configuration
+lua << EOF
+local nvim_lsp = require 'lspconfig'
+
+local opts = {
+    tools = { -- rust-tools options
+        autoSetHints = true,
+        hover_with_actions = true,
+        inlay_hints = {
+            show_parameter_hints = false,
+            parameter_hints_prefix = "",
+            other_hints_prefix = "",
+        },
+    },
+
+    -- all the opts to send to nvim-lspconfig
+    -- these override the defaults set by rust-tools.nvim
+    -- see https://github.com/neovim/nvim-lspconfig/blob/master/CONFIG.md#rust_analyzer
+    server = {
+        -- on_attach is a callback called when the language server attachs to the buffer
+        -- on_attach = on_attach,
+        settings = {
+            -- to enable rust-analyzer settings visit:
+            -- https://github.com/rust-analyzer/rust-analyzer/blob/master/docs/user/generated_config.adoc
+            ["rust-analyzer"] = {
+                -- enable clippy on save
+                checkOnSave = {
+                    command = "clippy"
+                },
+            }
+        }
+    },
+}
+
+require('rust-tools').setup(opts)
+EOF
+
+" =============================================================================
+" Completion
+" =============================================================================
+" See https://github.com/hrsh7th/nvim-cmp#basic-configuration
+lua <<EOF
+local cmp = require 'cmp'
+cmp.setup({
+  -- Enable LSP snippets
+  snippet = {
+    expand = function(args)
+        vim.fn["vsnip#anonymous"](args.body)
+    end,
+  },
+  mapping = {
+    ['<C-r>'] = cmp.mapping.select_prev_item(),
+    ['<C-n>'] = cmp.mapping.select_next_item(),
+    -- Add tab support
+    ['<S-Tab>'] = cmp.mapping.select_prev_item(),
+    ['<Tab>'] = cmp.mapping.select_next_item(),
+    ['<C-,>'] = cmp.mapping.scroll_docs(-4),
+    ['<C-.>'] = cmp.mapping.scroll_docs(4),
+    ['<C-Space>'] = cmp.mapping.complete(),
+    ['<C-j>'] = cmp.mapping.close(),
+    ['<CR>'] = cmp.mapping.confirm({
+      behavior = cmp.ConfirmBehavior.Insert,
+      select = true,
+    })
+  },
+
+  -- Installed sources
+  sources = {
+    { name = 'nvim_lsp' },
+    { name = 'vsnip' },
+    { name = 'path' },
+    { name = 'buffer' },
+  },
+})
+EOF
+
+
+" =============================================================================
+" LSPSAGA
+" =============================================================================
+lua <<EOF
+local saga = require 'lspsaga'
+saga.init_lsp_saga {
+    use_saga_diagnostic_sign = true,
+    -- diagnostic signs
+    error_sign = 'E',
+    warn_sign = 'W',
+    hint_sign = 'H',
+    infor_sign = 'I',
+    dianostic_header_icon = ' ⚠ ',
+    -- code action title icon
+    code_action_icon = '⚐ ',
+    code_action_prompt = {
+      enable = true,
+      sign = false,
+      sign_priority = 40,
+      virtual_text = true,
+    },
+    finder_definition_icon = '⚡',
+    finder_reference_icon = '⚡',
+    max_preview_lines = 10,
+    finder_action_keys = {
+      open = 'o', vsplit = 'i',split = 't',quit = 'q',
+      scroll_down = '<C-f>',scroll_up = '<C-b>'
+    },
+    code_action_keys = {
+      quit = 'q',exec = '<CR>'
+    },
+    rename_action_keys = {
+      quit = '<C-c>',exec = '<CR>'
+    },
+    definition_preview_icon = '➤',
+    border_style = "single",
+    rename_prompt_prefix = '➤',
+    server_filetype_map = {}
+}
+EOF
+
+" =============================================================================
+" TROUBLE
+" =============================================================================
+lua << EOF
+  require("trouble").setup {
+    -- your configuration comes here
+    -- or leave it empty to use the default settings
+    -- refer to the configuration section below
+  }
+EOF
+
+" =============================================================================
+" LSPCOLORS
+" =============================================================================
+lua << EOF
+require("lsp-colors").setup({
+  Error = "#db4b4b",
+  Warning = "#e0af68",
+  Information = "#0db9d7",
+  Hint = "#10B981"
+})
+EOF
+
+    " Code navigation shortcuts
+    nnoremap <silent> <leader>d <cmd>lua vim.lsp.buf.definition()<CR>
+    nnoremap <silent> <leader>i <cmd>lua vim.lsp.buf.implementation()<CR>
+    nnoremap <silent> <leader>y <cmd>lua vim.lsp.buf.type_definition()<CR>
+    nnoremap <silent> <leader>r <cmd>lua vim.lsp.buf.references()<CR>
+    " nnoremap <silent> K         <cmd>lua vim.lsp.buf.hover()<CR>
+    " nnoremap <silent> <c-k>     <cmd>lua vim.lsp.buf.signature_help()<CR>
+    " nnoremap <silent> g0    <cmd>lua vim.lsp.buf.document_symbol()<CR>
+    " nnoremap <silent> gW    <cmd>lua vim.lsp.buf.workspace_symbol()<CR>
+    " nnoremap <silent> ge    <cmd>lua vim.lsp.buf.code_action()<CR>
+
+    nnoremap <silent> gh :Lspsaga lsp_finder<CR>
+    nnoremap <silent> ge :Lspsaga code_action<CR>
+    nnoremap <silent> K :Lspsaga hover_doc<CR>
+    nnoremap <silent> <S-h> <cmd>lua require('lspsaga.action').smart_scroll_with_saga(1)<CR>
+    nnoremap <silent> <S-l> <cmd>lua require('lspsaga.action').smart_scroll_with_saga(-1)<CR>
+    nnoremap <silent> <leader>s :Lspsaga signature_help<CR>
+    nnoremap <silent> <leader>rn :Lspsaga rename<CR>
+    nnoremap <silent> gd :Lspsaga preview_definition<CR>
+    nnoremap <silent> <leader>cd :Lspsaga show_line_diagnostics<CR>
+    " nnoremap <silent> [e :Lspsaga diagnostic_jump_next<CR>
+    " nnoremap <silent> ]e :Lspsaga diagnostic_jump_prev<CR>
+
+    " Always show the signcolumn, otherwise it would shift the text each time
+    " diagnostics appear/become resolved.
+    if has("nvim-0.5.0") || has("patch-8.1.1564")
+        " Recently vim can merge signcolumn and number column into one
+        set signcolumn=number
+    else
+        set signcolumn=yes
+    endif
+
+    " Fix colors of popup menu
+    hi Pmenu ctermfg=12 ctermbg=7 cterm=none
+
+    " Show diagnostic popup on cursor hold
+    autocmd CursorHold * lua require'lspsaga.diagnostic'.show_line_diagnostics()
+
+    " Goto previous/next diagnostic warning/error
+    nnoremap <silent> gr <cmd>lua vim.lsp.diagnostic.goto_prev()<CR>
+    nnoremap <silent> gn <cmd>lua vim.lsp.diagnostic.goto_next()<CR>
 endif
 
 " =============================================================================
@@ -225,7 +471,7 @@ set scrolloff=3     " 3 lines of buffer above and below the cursor
 set timeout
 set timeoutlen=1000 " timeout for leader key
 set ttimeoutlen=10  " timeout for esc key
-set updatetime=300
+set updatetime=300  " 300ms of no cursor movement to trigger CursorHold
 
 " Show if leader key is pressed
 set showcmd
@@ -243,6 +489,10 @@ set mouse=c
 set guioptions+=lrbmTLce
 set guioptions-=lrbmTLce
 set guioptions+=c
+
+" Disable ZZ to close vim
+nnoremap Z <Nop>
+nnoremap ZZ <Nop>
 
 " =============================================================================
 " Performance
@@ -314,7 +564,7 @@ if &diff
 endif
 
 " Theme
-if has('nvim') && !empty($NVIM_GUI)
+if has('nvim')
     set termguicolors
     let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
     let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
@@ -603,9 +853,7 @@ if has('gui_running')
         " has('gui_running') is always false.
     else
         set t_Co=256
-        " set guifont=Input:h11
-        " set lsp=0
-        set guifont=JetBrains\ Mono:h9
+        set guifont=PragmataPro\ Mono:h9
         set lsp=0
         " HighDPI
         " set guifont=Input:h9:w4.5
@@ -1299,84 +1547,3 @@ autocmd BufNew,BufEnter * execute "silent! CocDisable"
 autocmd BufNew,BufEnter *.rs,*.toml execute "silent! CocEnable"
 autocmd BufLeave *.rs,*.toml execute "silent! CocDisable"
 
-
-" =============================================================================
-" Coc.nvim
-" =============================================================================
-if has_key(g:plugs, 'coc.nvim')
-    " Always show the signcolumn, otherwise it would shift the text each time
-    " diagnostics appear/become resolved.
-    if has("nvim-0.5.0") || has("patch-8.1.1564")
-        " Recently vim can merge signcolumn and number column into one
-        set signcolumn=number
-    else
-        set signcolumn=yes
-    endif
-
-    " Use tab for trigger completion with characters ahead and navigate.
-    " NOTE: Use command ':verbose imap <tab>' to make sure tab is not mapped by
-    " other plugin before putting this into your config.
-    inoremap <silent><expr> <TAB>
-                \ pumvisible() ? "\<C-n>" :
-                \ <SID>check_back_space() ? "\<TAB>" :
-                \ coc#refresh()
-    inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
-
-    function! s:check_back_space() abort
-        let col = col('.') - 1
-        return !col || getline('.')[col - 1]  =~# '\s'
-    endfunction
-
-    " Use <c-space> to trigger completion.
-    if has('nvim')
-        inoremap <silent><expr> <c-space> coc#refresh()
-    else
-        inoremap <silent><expr> <c-@> coc#refresh()
-    endif
-
-    " Make <CR> auto-select the first completion item and notify coc.nvim to
-    " format on enter, <cr> could be remapped by other vim plugin
-    inoremap <silent><expr> <cr> pumvisible() ? coc#_select_confirm()
-                \: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
-
-    " GoTo code navigation.
-    nmap <silent> <leader>d <Plug>(coc-definition)
-    nmap <silent> <leader>y <Plug>(coc-type-definition)
-    nmap <silent> <leader>i <Plug>(coc-implementation)
-    nmap <silent> <leader>r <Plug>(coc-references)
-
-    " Use K to show documentation in preview window.
-    nnoremap <silent> K :call <SID>show_documentation()<CR>
-
-    function! s:show_documentation()
-        if (index(['vim','help'], &filetype) >= 0)
-            execute 'h '.expand('<cword>')
-        elseif (coc#rpc#ready())
-            call CocActionAsync('doHover')
-        else
-            execute '!' . &keywordprg . " " . expand('<cword>')
-        endif
-    endfunction
-
-    " Highlight the symbol and its references when holding the cursor.
-    autocmd CursorHold * silent call CocActionAsync('highlight')
-
-    " Symbol renaming.
-    nmap <leader>rn <Plug>(coc-rename)
-
-    " Apply AutoFix to problem on the current line.
-    nmap <leader>qf  <Plug>(coc-fix-current)
-
-    " Remap <C-,> and <C-.> for scroll float windows/popups.
-    if has('nvim-0.4.0') || has('patch-8.2.0750')
-        nnoremap <silent><nowait><expr> <C-,> coc#float#has_scroll() ? coc#float#scroll(1) : "\<C-,>"
-        nnoremap <silent><nowait><expr> <C-.> coc#float#has_scroll() ? coc#float#scroll(0) : "\<C-.>"
-        inoremap <silent><nowait><expr> <C-,> coc#float#has_scroll() ? "\<c-r>=coc#float#scroll(1)\<cr>" : "\<Right>"
-        inoremap <silent><nowait><expr> <C-.> coc#float#has_scroll() ? "\<c-r>=coc#float#scroll(0)\<cr>" : "\<Left>"
-        vnoremap <silent><nowait><expr> <C-,> coc#float#has_scroll() ? coc#float#scroll(1) : "\<C-,>"
-        vnoremap <silent><nowait><expr> <C-.> coc#float#has_scroll() ? coc#float#scroll(0) : "\<C-.>"
-    endif
-
-    " Fix colors of popup menu
-    hi Pmenu ctermfg=12 ctermbg=7 cterm=none
-endif
