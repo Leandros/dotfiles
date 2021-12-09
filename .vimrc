@@ -43,6 +43,8 @@ if has('nvim') && !empty($NVIM_GUI)
     Plug 'equalsraf/neovim-gui-shim'
 elseif has('nvim')
     Plug 'ishan9299/nvim-solarized-lua'
+    " I prefer the nvim-solarized-lua
+    " Plug 'lifepillar/vim-solarized8'
 else
     Plug 'altercation/vim-colors-solarized'
 endif
@@ -571,9 +573,9 @@ if has('nvim')
 endif
 set background=dark
 colorscheme solarized
+" colorscheme solarized8
 
-" let g:neosolarized_vertSplitBgTrans = 0
-" colorscheme NeoSolarized
+
 
 " =============================================================================
 " Custom Filetypes
