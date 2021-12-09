@@ -28,8 +28,11 @@ endif
 
 " Python paths
 if has('nvim')
-    let g:python_host_prog = '/usr/local/bin/python2'
-    let g:python3_host_prog = '/usr/local/bin/python3'
+    if has("win32") || has("win16")
+        let g:python3_host_prog = 'C:\Users\leandros\AppData\Local\Programs\Python\Python310\python.exe'
+    else
+        let g:python3_host_prog = '/usr/local/bin/python3'
+    endif
 endif
 
 " Ugly workaround until vim fixes
@@ -81,7 +84,7 @@ if has('nvim')
     Plug 'hrsh7th/cmp-path'      " Other usefull completion sources
     Plug 'hrsh7th/cmp-buffer'
     Plug 'hrsh7th/vim-vsnip'     " Snippet engine
-    Plug 'leandros/lspsaga.nvim' " Better UI
+    Plug 'tami5/lspsaga.nvim' " Better UI
     Plug 'kyazdani42/nvim-web-devicons'
     Plug 'folke/lsp-colors.nvim'
     Plug 'folke/trouble.nvim'
