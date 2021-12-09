@@ -74,6 +74,7 @@ Plug 'leandros/vim-bufkill'
 if has('nvim')
     " Basically all for LSP support.
     Plug 'neovim/nvim-lspconfig' " Collection of common configurations for the Nvim LSP client
+    Plug 'williamboman/nvim-lsp-installer'
     Plug 'nvim-lua/plenary.nvim' " Lua library
     Plug 'hrsh7th/nvim-cmp'      " Completion framework
     Plug 'hrsh7th/cmp-nvim-lsp'  " LSP completion source for nvim-cmp
@@ -181,6 +182,25 @@ if has('nvim')
 
     " Avoid showing extra messages when using completion
     set shortmess+=c
+
+" =============================================================================
+" LSP INSTALLER
+" =============================================================================
+lua << EOF
+local lsp_installer = require("nvim-lsp-installer")
+
+lsp_installer.settings({
+    ui = {
+        icons = {
+            server_installed = "✓",
+            server_pending = "➜",
+            server_uninstalled = "✗"
+        }
+    }
+})
+
+-- Don't call the lsp_installer setup here, since navigator.nvim will call it.
+EOF
 
 " =============================================================================
 " LSP
@@ -406,7 +426,7 @@ require'navigator'.setup({
         {key = "<Leader>go", func = "outgoing_calls()"},
         --{key = "gi", func = "implementation()"},
         --{key = "<Leader>d", func = "type_definition()"},
-        --{key = "gL", func = "require('navigator.diagnostics').show_diagnostics()"},
+        {key = "<Leader>k", func = "require('navigator.diagnostics').show_diagnostics()"},
         --{key = "gG", func = "require('navigator.diagnostics').show_buf_diagnostics()"},
         --{key = "<Leader>dt", func = "require('navigator.diagnostics').toggle_diagnostics()"},
         --{key = "]d", func = "diagnostic.goto_next({ border = 'rounded', max_width = 80})"},
@@ -461,6 +481,7 @@ require'navigator'.setup({
         },
         treesitter_defult = '',
     },
+    lsp_installer = true,
     lsp = {
         code_action = {enable = true, sign = false, sign_priority = 40, virtual_text = true},
         code_lens_action = {enable = true, sign = false, sign_priority = 40, virtual_text = true},
@@ -468,6 +489,8 @@ require'navigator'.setup({
     },
 })
 EOF
+
+nnoremap <silent> <Leader>k <cmd>lua require('navigator.diagnostics').show_diagnostics()<CR>
 
 lua << EOF
 require('gitsigns').setup({
@@ -523,7 +546,7 @@ EOF
 
     " Show diagnostic popup on cursor hold
     " autocmd CursorHold * lua require'lspsaga.diagnostic'.show_line_diagnostics()
-    autocmd CursorHold * lua require('navigator.diagnostics').show_diagnostics()
+    " autocmd CursorHold * lua require('navigator.diagnostics').show_diagnostics()
 
     " Goto previous/next diagnostic warning/error
     nnoremap <silent> gr <cmd>lua vim.lsp.diagnostic.goto_prev()<CR>
@@ -828,6 +851,9 @@ nnoremap <Leader>qo :copen<CR>
 
 " Map Y to y$, to behave like D and C
 nnoremap Y y$
+
+" Jump back in time
+nnoremap <Leader>. <C-t>
 
 " =============================================================================
 " Tab navigation
