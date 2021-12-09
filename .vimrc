@@ -88,6 +88,7 @@ if has('nvim')
     Plug 'ray-x/guihua.lua', {'do': 'cd lua/fzy && make' }
     Plug 'ray-x/navigator.lua'
     Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+    Plug 'lewis6991/gitsigns.nvim'
 
     Plug 'simrat39/rust-tools.nvim'
 
@@ -464,6 +465,25 @@ require'navigator'.setup({
         code_action = {enable = true, sign = false, sign_priority = 40, virtual_text = true},
         code_lens_action = {enable = true, sign = false, sign_priority = 40, virtual_text = true},
         format_on_save = false,
+    },
+})
+EOF
+
+lua << EOF
+require('gitsigns').setup({
+    keymaps = {
+        noremap = true,
+
+        ['n <leader>hs'] = '<cmd>Gitsigns stage_hunk<CR>',
+        ['v <leader>hs'] = ':Gitsigns stage_hunk<CR>',
+        ['n <leader>hu'] = '<cmd>Gitsigns undo_stage_hunk<CR>',
+        ['n <leader>hr'] = '<cmd>Gitsigns reset_hunk<CR>',
+        ['v <leader>hr'] = ':Gitsigns reset_hunk<CR>',
+        ['n <leader>hR'] = '<cmd>Gitsigns reset_buffer<CR>',
+        ['n <leader>hp'] = '<cmd>Gitsigns preview_hunk<CR>',
+        ['n <leader>hb'] = '<cmd>lua require"gitsigns".blame_line{full=true}<CR>',
+        ['n <leader>hS'] = '<cmd>Gitsigns stage_buffer<CR>',
+        ['n <leader>hU'] = '<cmd>Gitsigns reset_buffer_index<CR>',
     },
 })
 EOF
