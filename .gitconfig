@@ -58,6 +58,10 @@
     noff = merge --no-ff
 
     # Archiving
+    # $ git mirror <URL>
+    # $ cd repo.git
+    # $ git arch repo.bundle
+    # $ tar czf repo.bundle.tar.gz repo.bundle
     mirror = clone --mirror
     arch = "!f() { git bundle create \"${GIT_PREFIX}$1\" --all; }; f"
 
@@ -74,6 +78,7 @@
 [core]
     editor = nvim
     excludesfile = ~/.gitignore_global
+	precomposeUnicode = true
 [mergetool "Kaleidoscope"]
     cmd = ksdiff --merge --output \"$MERGED\" --base \"$BASE\" -- \"$LOCAL\" --snapshot \"$REMOTE\" --snapshot
     trustExitCode = true
@@ -126,3 +131,5 @@
 [filter "media"]
     clean = git-media-clean %f
     smudge = git-media-smudge %f
+[init]
+	defaultBranch = master
