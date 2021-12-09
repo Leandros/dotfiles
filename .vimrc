@@ -74,17 +74,20 @@ Plug 'leandros/vim-bufkill'
 if has('nvim')
     " Basically all for LSP support.
     Plug 'neovim/nvim-lspconfig' " Collection of common configurations for the Nvim LSP client
-    Plug 'williamboman/nvim-lsp-installer'
+    Plug 'nvim-lua/plenary.nvim' " Lua library
     Plug 'hrsh7th/nvim-cmp'      " Completion framework
     Plug 'hrsh7th/cmp-nvim-lsp'  " LSP completion source for nvim-cmp
     Plug 'hrsh7th/cmp-vsnip'     " Snippet completion source for nvim-cmp
     Plug 'hrsh7th/cmp-path'      " Other usefull completion sources
     Plug 'hrsh7th/cmp-buffer'
     Plug 'hrsh7th/vim-vsnip'     " Snippet engine
-    Plug 'tami5/lspsaga.nvim' " Better UI
+    " Plug 'tami5/lspsaga.nvim' " Better UI
     Plug 'kyazdani42/nvim-web-devicons'
     Plug 'folke/lsp-colors.nvim'
     Plug 'folke/trouble.nvim'
+    Plug 'ray-x/guihua.lua', {'do': 'cd lua/fzy && make' }
+    Plug 'ray-x/navigator.lua'
+    Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
 
     Plug 'simrat39/rust-tools.nvim'
 
@@ -179,46 +182,6 @@ if has('nvim')
     set shortmess+=c
 
 " =============================================================================
-" LSP Installer
-" =============================================================================
-lua << EOF
-local lsp_installer = require 'nvim-lsp-installer'
-
--- Include the servers you want to have installed by default below
-local servers = {
-  "rust_analyzer",
-  "tsserver",
-  --"bashls",
-  --"pyright",
-}
-
-lsp_installer.settings({
-    ui = {
-        icons = {
-            server_installed = "✓",
-            server_pending = "➜",
-            server_uninstalled = "✗"
-        }
-    }
-})
-
--- Register a handler that will be called for all installed servers.
--- Alternatively, you may also register handlers on specific server instances instead (see example below).
-lsp_installer.on_server_ready(function(server)
-    local opts = {}
-
-    -- Customize the options passed to the server
-    if server.name == "tsserver" then
-    elseif server.name == "rust_analyzer" then
-    end
-
-    -- This setup() function is exactly the same as lspconfig's setup function.
-    -- Refer to https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md
-    server:setup(opts)
-end)
-EOF
-
-" =============================================================================
 " LSP
 " =============================================================================
 " Configure LSP through rust-tools.nvim plugin.
@@ -304,7 +267,7 @@ EOF
 " LSPSAGA
 " =============================================================================
 lua <<EOF
-local saga = require 'lspsaga'
+--[[local saga = require 'lspsaga'
 saga.init_lsp_saga {
     use_saga_diagnostic_sign = true,
     -- diagnostic signs
@@ -339,6 +302,7 @@ saga.init_lsp_saga {
     rename_prompt_prefix = '➤',
     server_filetype_map = {}
 }
+]]--
 EOF
 
 " =============================================================================
@@ -404,10 +368,7 @@ local custom_solarized = {
 require'lualine'.setup {
   options = {
     icons_enabled = false,
-    --theme = 'solarized_dark',
     theme = custom_solarized,
-    --component_separators = { left = '', right = ''},
-    --section_separators = { left = '', right = ''},
     component_separators = '│',
     section_separators = '',
     disabled_filetypes = {},
@@ -417,6 +378,94 @@ require'lualine'.setup {
     lualine_b = {'branch', {'diagnostics', sources={'nvim_lsp', 'coc'}}},
   },
 }
+EOF
+
+lua <<EOF
+require'navigator'.setup({
+    border = {"╭", "─", "╮", "│", "╯", "─", "╰", "│"},
+    transparency = nil,
+    default_mapping = false,
+    keymaps = {
+        {key = "gr", func = "require('navigator.reference').reference()"},
+        {mode = "i", key = "<leader>s", func = "signature_help()"},
+        {key = "<c-k>", func = "signature_help()"},
+        --{key = "g0", func = "require('navigator.symbols').document_symbols()"},
+        --{key = "gW", func = "workspace_symbol()"},
+        {key = "<c-]>", func = "require('navigator.definition').definition()"},
+        --{key = "gD", func = "declaration({ border = 'rounded', max_width = 80 })"},
+        {key = "gd", func = "require('navigator.definition').definition_preview()"},
+        --{key = "gT", func = "require('navigator.treesitter').buf_ts()"},
+        --{key = "<Leader>gT", func = "require('navigator.treesitter').bufs_ts()"},
+        {key = "K", func = "hover({ popup_opts = { border = single, max_width = 80 }})"},
+        {key = "<Leader>ca", mode = "n", func = "require('navigator.codeAction').code_action()"},
+        {key = "<Leader>cA", mode = "v", func = "range_code_action()"},
+        {key = "<Leader>re", func = "rename()"},
+        {key = "<Leader>rn", func = "require('navigator.rename').rename()"},
+        {key = "<Leader>gi", func = "incoming_calls()"},
+        {key = "<Leader>go", func = "outgoing_calls()"},
+        --{key = "gi", func = "implementation()"},
+        --{key = "<Leader>d", func = "type_definition()"},
+        --{key = "gL", func = "require('navigator.diagnostics').show_diagnostics()"},
+        --{key = "gG", func = "require('navigator.diagnostics').show_buf_diagnostics()"},
+        --{key = "<Leader>dt", func = "require('navigator.diagnostics').toggle_diagnostics()"},
+        --{key = "]d", func = "diagnostic.goto_next({ border = 'rounded', max_width = 80})"},
+        --{key = "[d", func = "diagnostic.goto_prev({ border = 'rounded', max_width = 80})"},
+        --{key = "]r", func = "require('navigator.treesitter').goto_next_usage()"},
+        --{key = "[r", func = "require('navigator.treesitter').goto_previous_usage()"},
+        --{key = "<C-LeftMouse>", func = "definition()"},
+        --{key = "g<LeftMouse>", func = "implementation()"},
+        --{key = "<Leader>k", func = "require('navigator.dochighlight').hi_symbol()"},
+        --{key = '<Space>wa', func = 'add_workspace_folder()'},
+        --{key = '<Space>wr', func = 'remove_workspace_folder()'},
+        --{key = '<Space>ff', func = 'formatting()', mode='n'},
+        --{key = '<Space>ff', func = 'range_formatting()', mode='v'},
+        --{key = '<Space>wl', func = 'print(vim.inspect(vim.lsp.buf.list_workspace_folders()))'},
+        --{key = "<Space>la", mode = "n", func = "require('navigator.codelens').run_action()"},
+    },
+    icons = {
+        icons = true, -- set to false to use system default ( if you using a terminal does not have nerd/icon)
+        -- Code action
+        code_action_icon = '⚐ ',
+        -- code lens
+        code_lens_action_icon = '',
+
+        -- Diagnostics
+        diagnostic_head = ' ⚠ ',
+        diagnostic_err = 'E',
+        diagnostic_warn = 'W',
+        diagnostic_info = 'I',
+        diagnostic_hint = 'H',
+
+        diagnostic_head_severity_1 = ' ⚠ ',
+        diagnostic_head_severity_2 = ' ⚠ ',
+        diagnostic_head_severity_3 = ' ⚠ ',
+        diagnostic_head_description = ' ⚠ ',
+        diagnostic_virtual_text = '▷',
+        diagnostic_file = ' ⚠ ',
+
+        -- Values
+        value_changed = '',
+        value_definition = '',
+
+        -- Treesitter
+        match_kinds = {
+            ['function'] = 'f',
+            var = 'v',
+            method = 'm',
+            parameter = 'p',
+            associated = '',
+            namespace = 'n',
+            type = 't',
+            field = '',
+        },
+        treesitter_defult = '',
+    },
+    lsp = {
+        code_action = {enable = true, sign = false, sign_priority = 40, virtual_text = true},
+        code_lens_action = {enable = true, sign = false, sign_priority = 40, virtual_text = true},
+        format_on_save = false,
+    },
+})
 EOF
 
     " Code navigation shortcuts
@@ -430,15 +479,16 @@ EOF
     " nnoremap <silent> gW    <cmd>lua vim.lsp.buf.workspace_symbol()<CR>
     " nnoremap <silent> ge    <cmd>lua vim.lsp.buf.code_action()<CR>
 
-    nnoremap <silent> gh :Lspsaga lsp_finder<CR>
-    nnoremap <silent> ge :Lspsaga code_action<CR>
-    nnoremap <silent> K :Lspsaga hover_doc<CR>
-    nnoremap <silent> <S-h> <cmd>lua require('lspsaga.action').smart_scroll_with_saga(1)<CR>
-    nnoremap <silent> <S-l> <cmd>lua require('lspsaga.action').smart_scroll_with_saga(-1)<CR>
-    nnoremap <silent> <leader>s :Lspsaga signature_help<CR>
-    nnoremap <silent> <leader>rn :Lspsaga rename<CR>
-    nnoremap <silent> gd :Lspsaga preview_definition<CR>
-    nnoremap <silent> <leader>cd :Lspsaga show_line_diagnostics<CR>
+    " nnoremap <silent> gh :Lspsaga lsp_finder<CR>
+    " nnoremap <silent> ge :Lspsaga code_action<CR>
+    " nnoremap <silent> K :Lspsaga hover_doc<CR>
+    " nnoremap <silent> <S-h> <cmd>lua require('lspsaga.action').smart_scroll_with_saga(1)<CR>
+    " nnoremap <silent> <S-l> <cmd>lua require('lspsaga.action').smart_scroll_with_saga(-1)<CR>
+    " nnoremap <silent> <leader>s :Lspsaga signature_help<CR>
+    " nnoremap <silent> <leader>rn :Lspsaga rename<CR>
+    " nnoremap <silent> gd :Lspsaga preview_definition<CR>
+    " nnoremap <silent> <leader>cd :Lspsaga show_line_diagnostics<CR>
+
     " nnoremap <silent> [e :Lspsaga diagnostic_jump_next<CR>
     " nnoremap <silent> ]e :Lspsaga diagnostic_jump_prev<CR>
 
@@ -451,11 +501,9 @@ EOF
         set signcolumn=yes
     endif
 
-    " Fix colors of popup menu
-    hi Pmenu ctermfg=12 ctermbg=7 cterm=none
-
     " Show diagnostic popup on cursor hold
-    autocmd CursorHold * lua require'lspsaga.diagnostic'.show_line_diagnostics()
+    " autocmd CursorHold * lua require'lspsaga.diagnostic'.show_line_diagnostics()
+    autocmd CursorHold * lua require('navigator.diagnostics').show_diagnostics()
 
     " Goto previous/next diagnostic warning/error
     nnoremap <silent> gr <cmd>lua vim.lsp.diagnostic.goto_prev()<CR>
@@ -726,6 +774,7 @@ vnoremap <S-r> <C-y>
 " inoremap <C-O> <Esc>o
 
 " Split switching
+nnoremap <C-p> <C-W>w
 nnoremap <C-n> <C-W>j
 nnoremap <C-r> <C-W>k
 nnoremap <C-b> <C-W>h
@@ -1314,23 +1363,6 @@ if has_key(g:plugs, 'YouCompleteMe')
 endif
 
 " =============================================================================
-" SuperTab
-" =============================================================================
-if has_key(g:plugs, 'supertab')
-    " inoremap <C-n> <Plug>SuperTabForward
-    " inoremap <C-r> <Plug>SuperTabBackward
-    let g:SuperTabCrMapping = 1
-
-    " Up & down mapping
-    " inoremap <expr> <c-r> ((pumvisible()) ? ("\<c-n>") : ("\<c-n>"))
-    " inoremap <expr> <c-n> ((pumvisible()) ? ("\<c-p>") : ("\<c-r>"))
-
-    " To map <s-tab> to the real tab:
-    runtime! plugin/supertab.vim
-    inoremap <s-tab> <tab>
-endif
-
-" =============================================================================
 " UltiSnips
 " =============================================================================
 if has_key(g:plugs, 'ultisnips')
@@ -1548,3 +1580,24 @@ autocmd BufNew,BufEnter * execute "silent! CocDisable"
 autocmd BufNew,BufEnter *.rs,*.toml execute "silent! CocEnable"
 autocmd BufLeave *.rs,*.toml execute "silent! CocDisable"
 
+" Must be after setting the color scheme.
+" Pmenu:
+" PmenuSel: selection
+" GHListHl: Guihua List Highlight
+" GHListDark: Guihui List
+hi! Pmenu ctermfg=12 ctermbg=0 guifg=#839496 guibg=#073642 guisp=none
+hi! FloatBorder ctermfg=1 guifg=#ffffff guibg=none guisp=none
+hi! GHTextViewDark ctermfg=12 ctermbg=0 guifg=#839496 guibg=#073642 guisp=none
+hi! NormalFloat ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
+" hi! PmenuSel ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
+" hi! PmenuThumb ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
+" hi! GHListHl ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
+" hi! GHListDark ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
+" hi! GHBgDark ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
+
+function! SynStack()
+  if !exists("*synstack")
+    return
+  endif
+  echo map(synstack(line('.'), col('.')), 'synIDattr(v:val, "name")')
+endfunc
