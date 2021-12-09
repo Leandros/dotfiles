@@ -16,9 +16,6 @@ let maplocalleader=" "
 " Optional plugins
 
 let vim_fat = 0
-let ycm_enabled = 1
-let lightline_enabled = 1
-let airline_enabled = 0
 let js_dev_enabled = 1
 
 " Vim Internal Plugins
@@ -90,6 +87,9 @@ if has('nvim')
     Plug 'folke/trouble.nvim'
 
     Plug 'simrat39/rust-tools.nvim'
+
+    " Lightline
+    Plug 'nvim-lualine/lualine.nvim'
 endif
 
 " Prettier
@@ -124,22 +124,11 @@ Plug 'cespare/vim-toml', { 'for': ['toml'], 'branch': 'main' }
 "   :CocInstall coc-rust-analyzer
 "   :CocInstall coc-tsserver
 
-if ycm_enabled
-    Plug 'Valloric/YouCompleteMe', { 'for': ['cpp', 'c', 'python', 'objc', 'objcpp', 'cs'] }
-endif
-
 
 " =============================================================================
 " FAT VIM
 " =============================================================================
 if vim_fat
-    if lightline_enabled
-        Plug 'itchyny/lightline.vim'
-    elseif airline_enabled
-        Plug 'vim-airline/vim-airline'
-        Plug 'vim-airline/vim-airline-themes'
-    endif
-
     Plug 'easymotion/vim-easymotion'
     Plug 'jeffkreeftmeijer/vim-numbertoggle'
 
@@ -323,7 +312,7 @@ saga.init_lsp_saga {
     warn_sign = 'W',
     hint_sign = 'H',
     infor_sign = 'I',
-    dianostic_header_icon = ' ⚠ ',
+    diagnostic_header_icon = ' ⚠ ',
     -- code action title icon
     code_action_icon = '⚐ ',
     code_action_prompt = {
@@ -373,6 +362,61 @@ require("lsp-colors").setup({
   Information = "#0db9d7",
   Hint = "#10B981"
 })
+EOF
+
+" =============================================================================
+" LUALINE
+" =============================================================================
+lua << EOF
+local colors = {
+  base03  =  '#002b36',
+  base02  =  '#073642',
+  base01  =  '#586e75',
+  base00  =  '#657b83',
+  base0   =  '#839496',
+  base1   =  '#93a1a1',
+  base2   =  '#eee8d5',
+  base3   =  '#fdf6e3',
+  yellow  =  '#b58900',
+  orange  =  '#cb4b16',
+  red     =  '#dc322f',
+  magenta =  '#d33682',
+  violet  =  '#6c71c4',
+  blue    =  '#268bd2',
+  cyan    =  '#2aa198',
+  green   =  '#859900',
+}
+local custom_solarized = {
+  normal = {
+    a = { fg = colors.base03, bg = colors.blue, gui = 'bold' },
+    b = { fg = colors.base0, bg = colors.base03 },
+    c = { fg = colors.base0, bg = colors.base02 },
+  },
+  insert = { a = { fg = colors.base03, bg = colors.green, gui = 'bold' } },
+  visual = { a = { fg = colors.base03, bg = colors.magenta, gui = 'bold' } },
+  replace = { a = { fg = colors.base03, bg = colors.red, gui = 'bold' } },
+  inactive = {
+    a = { fg = colors.base0, bg = colors.base02, gui = 'bold' },
+    b = { fg = colors.base03, bg = colors.base00 },
+    c = { fg = colors.base01, bg = colors.base02 },
+  },
+}
+require'lualine'.setup {
+  options = {
+    icons_enabled = false,
+    --theme = 'solarized_dark',
+    theme = custom_solarized,
+    --component_separators = { left = '', right = ''},
+    --section_separators = { left = '', right = ''},
+    component_separators = '│',
+    section_separators = '',
+    disabled_filetypes = {},
+    always_divide_middle = true,
+  },
+  sections = {
+    lualine_b = {'branch', {'diagnostics', sources={'nvim_lsp', 'coc'}}},
+  },
+}
 EOF
 
     " Code navigation shortcuts
@@ -715,34 +759,6 @@ nnoremap <Leader>qo :copen<CR>
 
 " Map Y to y$, to behave like D and C
 nnoremap Y y$
-
-" =============================================================================
-" Tag navigation keys
-" =============================================================================
-if ycm_enabled
-    " let g:ycm_python_binary_path = 'python3'
-    if js_dev_enabled
-        autocmd FileType cpp nnoremap <Leader>d :YcmCompleter GoTo<CR>
-        autocmd FileType c nnoremap <Leader>d :YcmCompleter GoTo<CR>
-        autocmd FileType cpp nnoremap <Leader>, :YcmCompleter GetType<CR>
-        autocmd FileType c nnoremap <Leader>, :YcmCompleter GetType<CR>
-        nnoremap <Leader>t :YcmCompleter GetDoc<CR>
-        nnoremap <Leader>i :YcmCompleter GoToInclude<CR>
-        " jump back after go to definition
-        nnoremap <Leader>.  <C-O>
-    else
-        nnoremap <Leader>d :YcmCompleter GoTo<CR>
-        nnoremap <Leader>, :YcmCompleter GetType<CR>
-        nnoremap <Leader>t :YcmCompleter GetDoc<CR>
-        nnoremap <Leader>i :YcmCompleter GoToInclude<CR>
-        " jump back after go to definition
-        nnoremap <Leader>.  <C-O>
-    endif
-else
-    nnoremap <Leader>d <C-]>
-    nnoremap <Leader>. <C-t>
-endif
-nnoremap <Leader>c :TlistToggle<CR>
 
 " =============================================================================
 " Tab navigation
@@ -1438,26 +1454,6 @@ if has_key(g:plugs, 'vim-gutentags')
     "let g:gutentags_ctags_exclude_wildignore = [ '*.meta' ]
 endif
 
-" =============================================================================
-" TagList
-" =============================================================================
-let g:Tlist_Inc_Winwidth=0
-let g:Tlist_WinWidth=40
-let g:Tlist_Use_Right_Window=1
-let g:Tlist_Enable_Fold_Column=0
-let g:Tlist_Compact_Format=1
-let g:Tlist_Exit_OnlyWindow=1
-let g:Tlist_GainFocus_On_ToggleOpen=1
-let g:Tlist_File_Fold_Auto_Close=1
-let g:Tlist_Process_File_Always=1
-let g:tlist_c_settings = 'c;d:macro;f:function;g:enums;p:prototype;s:struct;t:typedef;x:external'
-let g:tlist_cpp_settings = 'c++;d:macro;f:function;g:enums;p:prototype;s:struct;t:typedef;x:external'
-autocmd FileType taglist set nonumber
-autocmd FileType taglist set norelativenumber
-autocmd FileType taglist nnoremap <buffer> <C-a> :TlistUpdate<CR>
-
-" Show only current buffer?
-" let g:Tlist_Show_One_File=1
 
 " =============================================================================
 " YankRing / YankStack
