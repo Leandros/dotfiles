@@ -412,7 +412,7 @@ require'navigator'.setup({
     default_mapping = false,
     keymaps = {
         {key = "gr", func = "require('navigator.reference').reference()"},
-        {mode = "i", key = "<leader>s", func = "signature_help()"},
+        --{mode = "i", key = "<leader>s", func = "signature_help()"},
         {key = "<c-k>", func = "signature_help()"},
         --{key = "g0", func = "require('navigator.symbols').document_symbols()"},
         --{key = "gW", func = "workspace_symbol()"},
