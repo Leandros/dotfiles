@@ -399,7 +399,7 @@ require'lualine'.setup {
     always_divide_middle = true,
   },
   sections = {
-    lualine_b = {'branch', {'diagnostics', sources={'nvim_lsp', 'coc'}}},
+    lualine_b = {'branch', {'diagnostics', sources={'nvim_diagnostic', 'coc'}}},
     lualine_c = {{'filename', file_status = true, path = 1}},
   },
 }
