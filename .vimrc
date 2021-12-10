@@ -400,6 +400,7 @@ require'lualine'.setup {
   },
   sections = {
     lualine_b = {'branch', {'diagnostics', sources={'nvim_lsp', 'coc'}}},
+    lualine_c = {{'filename', file_status = true, path = 1}},
   },
 }
 EOF
