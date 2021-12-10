@@ -251,6 +251,9 @@ EOF
 lua <<EOF
 local cmp = require 'cmp'
 cmp.setup({
+  documentation = {
+    border = { '╭', '─', '╮', '│', '╯', '─', '╰', '│' },
+  },
   -- Enable LSP snippets
   snippet = {
     expand = function(args)
