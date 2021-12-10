@@ -1637,7 +1637,7 @@ autocmd BufLeave *.rs,*.toml execute "silent! CocDisable"
 " GHListDark: Guihui List
 hi! Pmenu ctermfg=12 ctermbg=0 guifg=#839496 guibg=#073642 guisp=none
 hi! FloatBorder ctermfg=1 guifg=#ffffff guibg=none guisp=none
-hi! GHTextViewDark ctermfg=12 ctermbg=0 guifg=#839496 guibg=#073642 guisp=none
+hi! GHTextViewDark ctermfg=12 ctermbg=0 guifg=#93a1a1 guibg=#002b36 guisp=none
 hi! NormalFloat ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
 " hi! PmenuSel ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
 " hi! PmenuThumb ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
