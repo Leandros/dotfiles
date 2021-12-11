@@ -62,6 +62,10 @@ Plug 'scrooloose/nerdtree'
 " General
 Plug 'SirVer/ultisnips'
 Plug 'junegunn/vim-easy-align'
+Plug 'junegunn/vim-peekaboo'
+" Required for 'EnhancedJumps'
+Plug 'vim-scripts/ingo-library'
+Plug 'vim-scripts/EnhancedJumps'
 
 " My own plugins
 Plug 'leandros/vim-misc'
@@ -136,18 +140,6 @@ Plug 'cespare/vim-toml', { 'for': ['toml'], 'branch': 'main' }
 if vim_fat
     Plug 'easymotion/vim-easymotion'
     Plug 'jeffkreeftmeijer/vim-numbertoggle'
-
-    " Pinned, due to deoplete incompatability.
-    Plug 'ludovicchabant/vim-gutentags', { 'tag': '0423321dc4fa80b41eaa41295b609186bb1eb5fb' }
-
-    " Required for 'EnhancedJumps'
-    Plug 'vim-scripts/ingo-library'
-    Plug 'vim-scripts/EnhancedJumps'
-
-    " My forks
-    Plug 'leandros/taglist.vim'
-    Plug 'leandros/YankRing.vim'
-    Plug 'leandros/zoomwin'
 
     if !has("win32") && !has("win16")
         Plug 'Xuyuanp/nerdtree-git-plugin'
@@ -1513,46 +1505,6 @@ let g:qfenter_keep_quickfixfocus = {
             \ 'cprev': 0,
             \ }
 nnoremap <Leader>qf :copen<CR>
-
-" =============================================================================
-" Gutentags
-" =============================================================================
-if has_key(g:plugs, 'vim-gutentags')
-    set statusline+=%{gutentags#statusline('[Generating...]')}
-    function! GenTags()
-    :   w
-    :   GutentagsUpdate
-    :   redraw!
-    endfunction
-    function! GenTagsAll()
-    :   w
-    :   GutentagsUpdate!
-    :   redraw!
-    endfunction
-    command! -nargs=* GenTags call GenTags()
-    command! -nargs=* GenTagsAll call GenTagsAll()
-
-    let g:gutentags_project_root = [ '.git', '.svn', '.hg', '.p4', '.p4project', '.plastic', '.depotroot' ]
-    "let g:gutentags_ctags_exclude_wildignore = [ '*.meta' ]
-endif
-
-
-" =============================================================================
-" YankRing / YankStack
-" =============================================================================
-if has_key(g:plugs, 'YankRing.vim')
-    " p for paste
-    " <C-P> maps to next paste
-    " <C-N> maps to previous paste
-    nnoremap <Leader>y :YRShow<CR>
-    let g:yankring_replace_n_pkey = '<C-H>'
-    let g:yankring_replace_n_nkey = '<C-L>'
-elseif has_key(g:plugs, 'vim-yankstack')
-    let g:yankstack_yank_keys = ['y', 'd', 'c', 'yy', 'dd', 'cc', 'Y', 'D', 'C']
-    nmap <Leader>p <Plug>yankstack_substitute_older_paste
-    nmap <Leader>P <Plug>yankstack_substitute_newer_paste
-    nnoremap <Leader>y :Yanks<CR>
-endif
 
 " =============================================================================
 " EnhancedJumps
