@@ -1,13 +1,8 @@
 #!/bin/sh
 
-# Custom keyboard layout
-xmodmap $HOME/.Xmodmap
-
-# Custom Media keys
-xbindkeys -p
-
-# Key Repeat: xset r rate <delay before repeat> <repeat rate>
-xset r rate 300 50
+# Make sure this is before the 'exec' command or it won't be sourced.
+[ -f /etc/xprofile ] && . /etc/xprofile
+[ -f ~/.xprofile ] && . ~/.xprofile
 
 # Window manager, always last
 exec i3

@@ -49,10 +49,13 @@
 "amixer sset Master togglemute"
     XF86AudioMute
 
-"gmux_backlight -100"
+# "amixer sset Master togglemute"
+#     XF86AudioPlay
+
+"sudo /home/leandros/.backlight.sh -50"
     XF86MonBrightnessDown
 
-"gmux_backlight +100"
+"sudo /home/leandros/.backlight.sh +50"
     XF86MonBrightnessUp
 
 "kbdlight down 10"

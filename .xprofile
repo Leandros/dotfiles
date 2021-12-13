@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# Disable bell
+xset -b
+
+# Custom Media keys
+xbindkeys -p
+
+# Key Repeat: xset r rate <delay before repeat> <repeat rate>
+xset r rate 200 50
+
+# Kill X with Ctrl+Alt+Backspace
+setxkbmap -option terminate:ctrl_alt_bksp
+setxkbmap de bone

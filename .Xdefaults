@@ -54,15 +54,15 @@ URxvt.allow_bold:       true
 URxvt.letterSpace:      -1
 
 ! Xft
-Xft.dpi:                144
+Xft.dpi:                192
 Xft.antialias:          true
 Xft.rgba:               rgb
 Xft.hinting:            true
 Xft.hintstyle:          hintslight
 
 ! Font
-URxvt.font:             xft:Input:size=10
-URxvt.font:             xft:Input:size=10
+URxvt.font:             xft:PragmataPro\ Mono:size=10
+URxvt.font:             xft:PragmataPro\ Mono:size=10
 
 
 ! =============================================================================
