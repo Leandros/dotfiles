@@ -32,5 +32,10 @@ if [ -d "$HOME/.local/bin" ] ; then
     PATH="$HOME/.local/bin:$PATH"
 fi
 
+# Execute xprofile
+if [ -d "$HOME/.xprofile" ] ; then
+    . $HOME/.xprofile
+fi
+
 # Execute cargo env
 . "$HOME/.cargo/env"
