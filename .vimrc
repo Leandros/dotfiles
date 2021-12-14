@@ -100,6 +100,11 @@ if has('nvim')
 
     " Lightline
     Plug 'nvim-lualine/lualine.nvim'
+
+    " Debugging
+    " Plug 'mfussenegger/nvim-dap' " debug adapter for debugging
+    " Plug 'theHamsta/nvim-dap-virtual-text' " virtual text during debugging
+    " Plug 'rcarriga/nvim-dap-ui' " for nvim-dap
 endif
 
 " Prettier
