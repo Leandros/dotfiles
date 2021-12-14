@@ -55,7 +55,8 @@ Plug 'terryma/vim-multiple-cursors'
 Plug 'Konfekt/FastFold'
 Plug 'Yggdroot/LeaderF', { 'do': ':LeaderfInstallCExtension' }
 Plug 'mhinz/vim-grepper'
-Plug 'thirtythreeforty/lessspace.vim'
+" Interferes with telescope.
+" Plug 'thirtythreeforty/lessspace.vim'
 Plug 'maxbrunsfeld/vim-yankstack'
 Plug 'scrooloose/nerdtree'
 
@@ -86,8 +87,8 @@ if has('nvim')
     Plug 'hrsh7th/cmp-path'      " Other usefull completion sources
     Plug 'hrsh7th/cmp-buffer'
     Plug 'hrsh7th/vim-vsnip'     " Snippet engine
-    " Plug 'tami5/lspsaga.nvim' " Better UI
     Plug 'kyazdani42/nvim-web-devicons'
+    Plug 'nvim-telescope/telescope.nvim'
     Plug 'folke/lsp-colors.nvim'
     Plug 'folke/trouble.nvim'
     Plug 'ray-x/guihua.lua', {'do': 'cd lua/fzy && make' }
@@ -119,19 +120,6 @@ Plug 'jparise/vim-graphql', { 'for': ['graphql'] }
 Plug 'qnighy/lalrpop.vim', { 'for': ['lalrpop'] }
 Plug 'rust-lang/rust.vim', { 'for': ['rust'] }
 Plug 'cespare/vim-toml', { 'for': ['toml'], 'branch': 'main' }
-
-" Semi FAT
-" Plug 'neoclide/coc.nvim', { 'branch': 'release'}
-" let g:coc_global_extensions = [
-"   \ 'coc-rust-analyzer',
-"   \ 'coc-tsserver'
-"   \ ]
-" if isdirectory('./node_modules') && isdirectory('./node_modules/eslint')
-"   let g:coc_global_extensions += ['coc-eslint']
-" endif
-" https://github.com/fannheyward/coc-rust-analyzer
-"   :CocInstall coc-rust-analyzer
-"   :CocInstall coc-tsserver
 
 
 " =============================================================================
@@ -1435,13 +1423,44 @@ endif
 let g:fastfold_fold_command_suffixes = []
 
 " =============================================================================
+" Telescope
+" =============================================================================
+lua << EOF
+local actions = require 'telescope.actions'
+require('telescope').setup {
+  defaults = {
+    -- Default configuration for telescope goes here:
+    mappings = {
+      i = {
+        ["<C-n>"] = actions.move_selection_next,
+        ["<C-r>"] = actions.move_selection_previous,
+      },
+
+      n = {
+        ["<Tab>"] = actions.toggle_selection + actions.move_selection_worse,
+        ["<S-Tab>"] = actions.toggle_selection + actions.move_selection_better,
+        ["n"] = actions.move_selection_next,
+        ["r"] = actions.move_selection_previous,
+        ["gg"] = actions.move_to_top,
+        ["G"] = actions.move_to_bottom,
+      }
+    }
+  }
+}
+EOF
+
+nnoremap <leader>ff <cmd>lua require('telescope.builtin').find_files()<cr>
+nnoremap <leader>fg <cmd>lua require('telescope.builtin').live_grep()<cr>
+nnoremap <leader>fb <cmd>lua require('telescope.builtin').buffers()<cr>
+nnoremap <leader>fh <cmd>lua require('telescope.builtin').help_tags()<cr>
+
+" =============================================================================
 " LeaderF
 " =============================================================================
 let g:Lf_ShortcutF = '<Leader>o'
 nnoremap <Leader>o :LeaderfFile<CR>
 nnoremap <Leader>b :LeaderfBuffer<CR>
 nnoremap <Leader>z :LeaderfMruCwd<CR>
-nnoremap <Leader>f :LeaderfBufTag<CR>
 nnoremap <Leader>v :LeaderfTag<CR>
 let g:Lf_UseVersionControlTool = 0
 let g:Lf_ShowRelativePath = 1
@@ -1578,9 +1597,6 @@ let g:rainbow_conf = {
 " Rust
 " =============================================================================
 autocmd FileType rust noremap <C-f> :RustFmt<CR>
-autocmd BufNew,BufEnter * execute "silent! CocDisable"
-autocmd BufNew,BufEnter *.rs,*.toml execute "silent! CocEnable"
-autocmd BufLeave *.rs,*.toml execute "silent! CocDisable"
 
 " Must be after setting the color scheme.
 " Pmenu:
