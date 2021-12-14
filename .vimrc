@@ -89,6 +89,9 @@ if has('nvim')
     Plug 'hrsh7th/vim-vsnip'     " Snippet engine
     Plug 'kyazdani42/nvim-web-devicons'
     Plug 'nvim-telescope/telescope.nvim'
+    if has('unix')
+        Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
+    endif
     Plug 'folke/lsp-colors.nvim'
     Plug 'folke/trouble.nvim'
     Plug 'ray-x/guihua.lua', {'do': 'cd lua/fzy && make' }
@@ -396,26 +399,36 @@ require'navigator'.setup({
     transparency = nil,
     default_mapping = false,
     keymaps = {
-        {key = "gr", func = "require('navigator.reference').reference()"},
-        --{mode = "i", key = "<leader>s", func = "signature_help()"},
         {key = "<c-k>", func = "signature_help()"},
-        --{key = "g0", func = "require('navigator.symbols').document_symbols()"},
-        --{key = "gW", func = "workspace_symbol()"},
         {key = "<c-]>", func = "require('navigator.definition').definition()"},
-        --{key = "gD", func = "declaration({ border = 'rounded', max_width = 80 })"},
         {key = "gd", func = "require('navigator.definition').definition_preview()"},
-        --{key = "gT", func = "require('navigator.treesitter').buf_ts()"},
-        --{key = "<Leader>gT", func = "require('navigator.treesitter').bufs_ts()"},
         {key = "K", func = "hover({ popup_opts = { border = single, max_width = 80 }})"},
-        {key = "<Leader>ca", mode = "n", func = "require('navigator.codeAction').code_action()"},
-        {key = "<Leader>cA", mode = "v", func = "range_code_action()"},
         {key = "<Leader>re", func = "rename()"},
         {key = "<Leader>rn", func = "require('navigator.rename').rename()"},
-        {key = "<Leader>gi", func = "incoming_calls()"},
-        {key = "<Leader>go", func = "outgoing_calls()"},
+        --{key = "<Leader>gi", func = "incoming_calls()"},
+        --{key = "<Leader>go", func = "outgoing_calls()"},
+        {key = "<Leader>k", func = "require('navigator.diagnostics').show_diagnostics()"},
+
+        -- =========
+        -- Enabled in telescope.nvim:
+        -- =========
+
+        --{key = "gr", func = "require('navigator.reference').reference()"},
+        --{key = "<Leader>ca", mode = "n", func = "require('navigator.codeAction').code_action()"},
+        --{key = "<Leader>cA", mode = "v", func = "range_code_action()"},
+
+        -- =========
+        -- Unused:
+        -- =========
+
+        --{mode = "i", key = "<leader>s", func = "signature_help()"},
+        --{key = "g0", func = "require('navigator.symbols').document_symbols()"},
+        --{key = "gW", func = "workspace_symbol()"},
+        --{key = "gD", func = "declaration({ border = 'rounded', max_width = 80 })"},
+        --{key = "gT", func = "require('navigator.treesitter').buf_ts()"},
+        --{key = "<Leader>gT", func = "require('navigator.treesitter').bufs_ts()"},
         --{key = "gi", func = "implementation()"},
         --{key = "<Leader>d", func = "type_definition()"},
-        {key = "<Leader>k", func = "require('navigator.diagnostics').show_diagnostics()"},
         --{key = "gG", func = "require('navigator.diagnostics').show_buf_diagnostics()"},
         --{key = "<Leader>dt", func = "require('navigator.diagnostics').toggle_diagnostics()"},
         --{key = "]d", func = "diagnostic.goto_next({ border = 'rounded', max_width = 80})"},
@@ -498,6 +511,12 @@ require('gitsigns').setup({
         ['n <leader>hU'] = '<cmd>Gitsigns reset_buffer_index<CR>',
     },
 })
+EOF
+
+lua <<EOF
+require'nvim-treesitter.configs'.setup {
+    ensure_installed = {'rust', 'json', 'javascript', 'typescript', 'tsx', 'vim'},
+}
 EOF
 
     " Code navigation shortcuts
@@ -1435,8 +1454,10 @@ local actions = require 'telescope.actions'
 require('telescope').setup {
   defaults = {
     -- Default configuration for telescope goes here:
+    disable_devicons = true,
     mappings = {
       i = {
+        ["<esc>"] = actions.close,
         ["<C-n>"] = actions.move_selection_next,
         ["<C-r>"] = actions.move_selection_previous,
       },
@@ -1450,14 +1471,58 @@ require('telescope').setup {
         ["G"] = actions.move_to_bottom,
       }
     }
+  },
+  pickers = {
+    find_files = {
+      theme = "dropdown",
+      disable_devicons = true,
+    },
+    live_grep = {
+      theme = "dropdown",
+      disable_devicons = true,
+    },
+    buffers = {
+      theme = "dropdown",
+      disable_devicons = true,
+    },
+    file_browser = {
+      disable_devicons = true,
+    },
+  },
+  extensions = {
+    fzf = {
+      fuzzy = true,                    -- false will only do exact matching
+      override_generic_sorter = true,  -- override the generic sorter
+      override_file_sorter = true,     -- override the file sorter
+      case_mode = "smart_case",        -- or "ignore_case" or "respect_case"
+                                       -- the default case_mode is "smart_case"
+    }
   }
 }
+
+-- To get fzf loaded and working with telescope, you need to call
+-- load_extension, somewhere after setup function:
+require('telescope').load_extension('fzf')
+
 EOF
 
-nnoremap <leader>ff <cmd>lua require('telescope.builtin').find_files()<cr>
+" Doubled with navigator:
+nnoremap <leader>gr <cmd>lua require('telescope.builtin').lsp_references()<cr>
+nnoremap <leader>gD <cmd>lua require('telescope.builtin').diagnostics()<cr>
+nnoremap <leader>ca <cmd>lua require('telescope.builtin').lsp_code_actions()<cr>
+nnoremap <leader>cA <cmd>lua require('telescope.builtin').lsp_range_code_actions()<cr>
+nnoremap <leader>gi <cmd>lua require('telescope.builtin').lsp_implementations()<cr>
+
+" Telescope.nvim:
+nnoremap <leader>fe <cmd>lua require('telescope.builtin').file_browser()<cr>
 nnoremap <leader>fg <cmd>lua require('telescope.builtin').live_grep()<cr>
-nnoremap <leader>fb <cmd>lua require('telescope.builtin').buffers()<cr>
 nnoremap <leader>fh <cmd>lua require('telescope.builtin').help_tags()<cr>
+
+" LeaderF replacement:
+nnoremap <leader>ff <cmd>lua require('telescope.builtin').find_files()<cr>
+nnoremap <leader>fb <cmd>lua require('telescope.builtin').buffers()<cr>
+nnoremap <leader>fz <cmd>lua require('telescope.builtin').buffers()<cr>
+nnoremap <leader>v <cmd>lua require('telescope.builtin').treesitter()<cr>
 
 " =============================================================================
 " LeaderF
@@ -1466,7 +1531,6 @@ let g:Lf_ShortcutF = '<Leader>o'
 nnoremap <Leader>o :LeaderfFile<CR>
 nnoremap <Leader>b :LeaderfBuffer<CR>
 nnoremap <Leader>z :LeaderfMruCwd<CR>
-nnoremap <Leader>v :LeaderfTag<CR>
 let g:Lf_UseVersionControlTool = 0
 let g:Lf_ShowRelativePath = 1
 let g:Lf_PreviewCode = 0
