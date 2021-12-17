@@ -1474,15 +1474,15 @@ require('telescope').setup {
   },
   pickers = {
     find_files = {
-      theme = "dropdown",
+      --theme = "dropdown",
       disable_devicons = true,
     },
     live_grep = {
-      theme = "dropdown",
+      --theme = "dropdown",
       disable_devicons = true,
     },
     buffers = {
-      theme = "dropdown",
+      --theme = "dropdown",
       disable_devicons = true,
     },
     file_browser = {
