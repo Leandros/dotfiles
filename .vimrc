@@ -80,20 +80,23 @@ if has('nvim')
     " Basically all for LSP support.
     Plug 'neovim/nvim-lspconfig' " Collection of common configurations for the Nvim LSP client
     Plug 'williamboman/nvim-lsp-installer'
+    Plug 'kyazdani42/nvim-web-devicons'
     Plug 'nvim-lua/plenary.nvim' " Lua library
     Plug 'hrsh7th/nvim-cmp'      " Completion framework
     Plug 'hrsh7th/cmp-nvim-lsp'  " LSP completion source for nvim-cmp
     Plug 'hrsh7th/cmp-vsnip'     " Snippet completion source for nvim-cmp
-    Plug 'hrsh7th/cmp-path'      " Other usefull completion sources
-    Plug 'hrsh7th/cmp-buffer'
+    Plug 'hrsh7th/cmp-path'      " Completion for paths
+    Plug 'hrsh7th/cmp-buffer'    " Completion from buffer
     Plug 'hrsh7th/vim-vsnip'     " Snippet engine
-    Plug 'kyazdani42/nvim-web-devicons'
+
     Plug 'nvim-telescope/telescope.nvim'
     if has('unix')
         Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
     endif
-    Plug 'folke/lsp-colors.nvim'
-    Plug 'folke/trouble.nvim'
+
+    Plug 'folke/lsp-colors.nvim'    " Highlight groups for trouble.nvim
+    Plug 'folke/trouble.nvim'       " Pretty diagnostics
+
     Plug 'ray-x/guihua.lua', {'do': 'cd lua/fzy && make' }
     Plug 'ray-x/navigator.lua'
     Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
@@ -187,49 +190,44 @@ lsp_installer.settings({
     }
 })
 
--- Don't call the lsp_installer setup here, since navigator.nvim will call it.
-EOF
+lsp_installer.on_server_ready(function(server)
+    local opts = {}
 
-" =============================================================================
-" LSP
-" =============================================================================
-" Configure LSP through rust-tools.nvim plugin.
-" rust-tools will configure and enable certain LSP features for us.
-" See https://github.com/simrat39/rust-tools.nvim#configuration
-lua << EOF
-local nvim_lsp = require 'lspconfig'
-
-local opts = {
-    tools = { -- rust-tools options
-        autoSetHints = true,
-        hover_with_actions = true,
-        inlay_hints = {
-            show_parameter_hints = false,
-            parameter_hints_prefix = "",
-            other_hints_prefix = "",
-        },
-    },
-
-    -- all the opts to send to nvim-lspconfig
-    -- these override the defaults set by rust-tools.nvim
-    -- see https://github.com/neovim/nvim-lspconfig/blob/master/CONFIG.md#rust_analyzer
-    server = {
-        -- on_attach is a callback called when the language server attachs to the buffer
-        -- on_attach = on_attach,
-        settings = {
-            -- to enable rust-analyzer settings visit:
-            -- https://github.com/rust-analyzer/rust-analyzer/blob/master/docs/user/generated_config.adoc
-            ["rust-analyzer"] = {
-                -- enable clippy on save
-                checkOnSave = {
-                    command = "clippy"
+    -- Configure LSP through rust-tools.nvim plugin.
+    -- rust-tools will configure and enable certain LSP features for us.
+    -- See https://github.com/simrat39/rust-tools.nvim#configuration
+    if server.name == "rust_analyzer" then
+        local rust_opts = {
+            tools = { -- rust-tools options
+                autoSetHints = true,
+                hover_with_actions = true,
+                inlay_hints = {
+                    show_parameter_hints = false,
+                    parameter_hints_prefix = "",
+                    other_hints_prefix = "",
                 },
-            }
+            },
+            server = vim.tbl_deep_extend("force", server:get_default_options(), opts, {
+                settings = {
+                    -- to enable rust-analyzer settings visit:
+                    -- https://github.com/rust-analyzer/rust-analyzer/blob/master/docs/user/generated_config.adoc
+                    ["rust-analyzer"] = {
+                        -- enable clippy on save
+                        checkOnSave = {
+                            command = "clippy"
+                        },
+                    }
+                }
+            }),
         }
-    },
-}
-
-require('rust-tools').setup(opts)
+        require("rust-tools").setup(rust_opts)
+        server:attach_buffers()
+    else
+        -- This setup() function is exactly the same as lspconfig's setup function.
+        -- Refer to https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md
+        server:setup(opts)
+    end
+end)
 EOF
 
 " =============================================================================
@@ -272,49 +270,6 @@ cmp.setup({
     { name = 'buffer' },
   },
 })
-EOF
-
-
-" =============================================================================
-" LSPSAGA
-" =============================================================================
-lua <<EOF
---[[local saga = require 'lspsaga'
-saga.init_lsp_saga {
-    use_saga_diagnostic_sign = true,
-    -- diagnostic signs
-    error_sign = 'E',
-    warn_sign = 'W',
-    hint_sign = 'H',
-    infor_sign = 'I',
-    diagnostic_header_icon = ' ⚠ ',
-    -- code action title icon
-    code_action_icon = '⚐ ',
-    code_action_prompt = {
-      enable = true,
-      sign = false,
-      sign_priority = 40,
-      virtual_text = true,
-    },
-    finder_definition_icon = '⚡',
-    finder_reference_icon = '⚡',
-    max_preview_lines = 10,
-    finder_action_keys = {
-      open = 'o', vsplit = 'i',split = 't',quit = 'q',
-      scroll_down = '<C-f>',scroll_up = '<C-b>'
-    },
-    code_action_keys = {
-      quit = 'q',exec = '<CR>'
-    },
-    rename_action_keys = {
-      quit = '<C-c>',exec = '<CR>'
-    },
-    definition_preview_icon = '➤',
-    border_style = "single",
-    rename_prompt_prefix = '➤',
-    server_filetype_map = {}
-}
-]]--
 EOF
 
 " =============================================================================
@@ -399,15 +354,16 @@ require'navigator'.setup({
     transparency = nil,
     default_mapping = false,
     keymaps = {
-        {key = "<c-k>", func = "signature_help()"},
-        {key = "<c-]>", func = "require('navigator.definition').definition()"},
-        {key = "gd", func = "require('navigator.definition').definition_preview()"},
-        {key = "K", func = "hover({ popup_opts = { border = single, max_width = 80 }})"},
-        {key = "<Leader>re", func = "rename()"},
-        {key = "<Leader>rn", func = "require('navigator.rename').rename()"},
-        --{key = "<Leader>gi", func = "incoming_calls()"},
-        --{key = "<Leader>go", func = "outgoing_calls()"},
-        {key = "<Leader>k", func = "require('navigator.diagnostics').show_diagnostics()"},
+        -- Keymaps defined below:
+        -- {key = "<c-k>", func = "signature_help()"},
+        -- {key = "<c-]>", func = "require('navigator.definition').definition()"},
+        -- {key = "gd", func = "require('navigator.definition').definition_preview()"},
+        -- {key = "K", func = "hover({ popup_opts = { border = single, max_width = 80 }})"},
+        -- {key = "<Leader>re", func = "rename()"},
+        -- {key = "<Leader>rn", func = "require('navigator.rename').rename()"},
+        -- --{key = "<Leader>gi", func = "incoming_calls()"},
+        -- --{key = "<Leader>go", func = "outgoing_calls()"},
+        -- {key = "<Leader>k", func = "require('navigator.diagnostics').show_diagnostics()"},
 
         -- =========
         -- Enabled in telescope.nvim:
@@ -445,6 +401,7 @@ require'navigator'.setup({
         --{key = '<Space>wl', func = 'print(vim.inspect(vim.lsp.buf.list_workspace_folders()))'},
         --{key = "<Space>la", mode = "n", func = "require('navigator.codelens').run_action()"},
     },
+
     icons = {
         icons = true, -- set to false to use system default ( if you using a terminal does not have nerd/icon)
         -- Code action
@@ -483,7 +440,8 @@ require'navigator'.setup({
         },
         treesitter_defult = '',
     },
-    lsp_installer = true,
+
+    lsp_installer = false,
     lsp = {
         code_action = {enable = true, sign = false, sign_priority = 40, virtual_text = true},
         code_lens_action = {enable = true, sign = false, sign_priority = 40, virtual_text = true},
@@ -493,6 +451,13 @@ require'navigator'.setup({
 EOF
 
 nnoremap <silent> <Leader>k <cmd>lua require('navigator.diagnostics').show_diagnostics()<CR>
+nnoremap <silent><c-k> <cmd>lua vim.lsp.buf.signature_help()<CR>
+nnoremap <silent><c-]> <cmd>lua require('navigator.definition').definition()<CR>
+nnoremap <silent>gd <cmd>lua require('navigator.definition').definition_preview()<CR>
+nnoremap <silent>K <cmd>lua vim.lsp.buf.hover({ popup_opts = { border = single, max_width = 80 }})<CR>
+nnoremap <silent><Leader>re <cmd>lua vim.lsp.buf.rename()<CR>
+nnoremap <silent><Leader>rn <cmd>lua require('navigator.rename').rename()<CR>
+nnoremap <silent><Leader>k <cmd>lua require('navigator.diagnostics').show_diagnostics()<CR>
 
 lua << EOF
 require('gitsigns').setup({
@@ -524,6 +489,7 @@ EOF
     nnoremap <silent> <leader>i <cmd>lua vim.lsp.buf.implementation()<CR>
     nnoremap <silent> <leader>y <cmd>lua vim.lsp.buf.type_definition()<CR>
     nnoremap <silent> <leader>r <cmd>lua vim.lsp.buf.references()<CR>
+
     " nnoremap <silent> K         <cmd>lua vim.lsp.buf.hover()<CR>
     " nnoremap <silent> <c-k>     <cmd>lua vim.lsp.buf.signature_help()<CR>
     " nnoremap <silent> g0    <cmd>lua vim.lsp.buf.document_symbol()<CR>
@@ -1503,7 +1469,6 @@ require('telescope').setup {
 -- To get fzf loaded and working with telescope, you need to call
 -- load_extension, somewhere after setup function:
 require('telescope').load_extension('fzf')
-
 EOF
 
 " Doubled with navigator:
