@@ -14,8 +14,6 @@ let mapleader=" "
 let maplocalleader=" "
 
 " Optional plugins
-
-let vim_fat = 0
 let js_dev_enabled = 1
 
 " Vim Internal Plugins
@@ -90,9 +88,9 @@ if has('nvim')
     Plug 'hrsh7th/vim-vsnip'     " Snippet engine
 
     Plug 'nvim-telescope/telescope.nvim'
-    if has('unix')
+    " if has('unix')
         Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
-    endif
+    " endif
 
     Plug 'folke/lsp-colors.nvim'    " Highlight groups for trouble.nvim
     Plug 'folke/trouble.nvim'       " Pretty diagnostics
@@ -132,25 +130,11 @@ Plug 'qnighy/lalrpop.vim', { 'for': ['lalrpop'] }
 Plug 'rust-lang/rust.vim', { 'for': ['rust'] }
 Plug 'cespare/vim-toml', { 'for': ['toml'], 'branch': 'main' }
 
-
-" =============================================================================
-" FAT VIM
-" =============================================================================
-if vim_fat
-    Plug 'easymotion/vim-easymotion'
-    Plug 'jeffkreeftmeijer/vim-numbertoggle'
-
-    if !has("win32") && !has("win16")
-        Plug 'Xuyuanp/nerdtree-git-plugin'
-    endif
-endif
-
 if js_dev_enabled
     Plug 'leafgarland/typescript-vim'
     Plug 'pangloss/vim-javascript'
     Plug 'elzr/vim-json'
 endif
-
 
 call plug#end()
 
@@ -197,30 +181,37 @@ lsp_installer.on_server_ready(function(server)
     -- rust-tools will configure and enable certain LSP features for us.
     -- See https://github.com/simrat39/rust-tools.nvim#configuration
     if server.name == "rust_analyzer" then
-        local rust_opts = {
+        require("rust-tools").setup {
             tools = { -- rust-tools options
                 autoSetHints = true,
                 hover_with_actions = true,
                 inlay_hints = {
-                    show_parameter_hints = false,
-                    parameter_hints_prefix = "",
-                    other_hints_prefix = "",
+                    -- Only show inlay hints for the current line
+                    only_current_line = false,
+                    -- wheter to show parameter hints with the inlay hints or not
+                    show_parameter_hints = true,
+                    -- prefix for parameter hints
+                    parameter_hints_prefix = "<- ",
+                    -- prefix for all the other hints (type, chaining)
+                    other_hints_prefix = "=> ",
+                    -- whether to align to the length of the longest line in the file
+                    max_len_align = false,
+                    -- padding from the left if max_len_align is true
+                    max_len_align_padding = 1,
+                    -- whether to align to the extreme right or not
+                    right_align = false,
+                    -- The color of the hints
+                    highlight = "Comment",
+                },
+                runnables = {
+                    use_telescope = true,
+                },
+                debuggables = {
+                    use_telescope = true,
                 },
             },
-            server = vim.tbl_deep_extend("force", server:get_default_options(), opts, {
-                settings = {
-                    -- to enable rust-analyzer settings visit:
-                    -- https://github.com/rust-analyzer/rust-analyzer/blob/master/docs/user/generated_config.adoc
-                    ["rust-analyzer"] = {
-                        -- enable clippy on save
-                        checkOnSave = {
-                            command = "clippy"
-                        },
-                    }
-                }
-            }),
+            server = vim.tbl_deep_extend("force", server:get_default_options(), opts),
         }
-        require("rust-tools").setup(rust_opts)
         server:attach_buffers()
     else
         -- This setup() function is exactly the same as lspconfig's setup function.
@@ -450,7 +441,6 @@ require'navigator'.setup({
 })
 EOF
 
-nnoremap <silent> <Leader>k <cmd>lua require('navigator.diagnostics').show_diagnostics()<CR>
 nnoremap <silent><c-k> <cmd>lua vim.lsp.buf.signature_help()<CR>
 nnoremap <silent><c-]> <cmd>lua require('navigator.definition').definition()<CR>
 nnoremap <silent>gd <cmd>lua require('navigator.definition').definition_preview()<CR>
