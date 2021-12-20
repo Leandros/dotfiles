@@ -53,10 +53,12 @@ Plug 'terryma/vim-multiple-cursors'
 Plug 'Konfekt/FastFold'
 Plug 'Yggdroot/LeaderF', { 'do': ':LeaderfInstallCExtension' }
 Plug 'mhinz/vim-grepper'
+Plug 'axelf4/vim-strip-trailing-whitespace'
 " Interferes with telescope.
 " Plug 'thirtythreeforty/lessspace.vim'
 Plug 'maxbrunsfeld/vim-yankstack'
 Plug 'scrooloose/nerdtree'
+Plug 'ggandor/lightspeed.nvim'
 
 " General
 Plug 'SirVer/ultisnips'
@@ -339,6 +341,9 @@ require'lualine'.setup {
 }
 EOF
 
+" =============================================================================
+" Navigator
+" =============================================================================
 lua <<EOF
 require'navigator'.setup({
     border = {"╭", "─", "╮", "│", "╯", "─", "╰", "│"},
@@ -449,6 +454,9 @@ nnoremap <silent><Leader>re <cmd>lua vim.lsp.buf.rename()<CR>
 nnoremap <silent><Leader>rn <cmd>lua require('navigator.rename').rename()<CR>
 nnoremap <silent><Leader>k <cmd>lua require('navigator.diagnostics').show_diagnostics()<CR>
 
+" =============================================================================
+" GitSigns
+" =============================================================================
 lua << EOF
 require('gitsigns').setup({
     keymaps = {
@@ -473,6 +481,30 @@ require'nvim-treesitter.configs'.setup {
     ensure_installed = {'rust', 'json', 'javascript', 'typescript', 'tsx', 'vim'},
 }
 EOF
+
+lua <<EOF
+require'lightspeed'.setup {
+    highlight_unique_chars = true,
+}
+EOF
+
+nmap <silent>t <Plug>Lightspeed_s
+nmap <silent>T <Plug>Lightspeed_S
+nmap <silent>v <Plug>Lightspeed_x
+nmap <silent>V <Plug>Lightspeed_X
+nmap <silent>e <Plug>Lightspeed_f
+nmap <silent>E <Plug>Lightspeed_F
+nmap <silent>x <Plug>Lightspeed_t
+nmap <silent>X <Plug>Lightspeed_T
+
+vmap <silent>t <Plug>Lightspeed_s
+vmap <silent>T <Plug>Lightspeed_S
+vmap <silent>v <Plug>Lightspeed_x
+vmap <silent>V <Plug>Lightspeed_X
+vmap <silent>e <Plug>Lightspeed_f
+vmap <silent>E <Plug>Lightspeed_F
+vmap <silent>x <Plug>Lightspeed_t
+vmap <silent>X <Plug>Lightspeed_T
 
     " Code navigation shortcuts
     nnoremap <silent> <leader>d <cmd>lua vim.lsp.buf.definition()<CR>
