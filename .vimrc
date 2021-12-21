@@ -90,9 +90,8 @@ if has('nvim')
     Plug 'hrsh7th/vim-vsnip'     " Snippet engine
 
     Plug 'nvim-telescope/telescope.nvim'
-    " if has('unix')
-        Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
-    " endif
+    " Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
+    Plug 'leandros/telescope-fzf-native.nvim', { 'do': 'make', 'branch': 'feature/windows_build_support' }
 
     Plug 'folke/lsp-colors.nvim'    " Highlight groups for trouble.nvim
     Plug 'folke/trouble.nvim'       " Pretty diagnostics
@@ -183,10 +182,10 @@ lsp_installer.on_server_ready(function(server)
     -- rust-tools will configure and enable certain LSP features for us.
     -- See https://github.com/simrat39/rust-tools.nvim#configuration
     if server.name == "rust_analyzer" then
-        require("rust-tools").setup {
+        local rust_opts = {
             tools = { -- rust-tools options
                 autoSetHints = true,
-                hover_with_actions = true,
+                hover_with_actions = false,
                 inlay_hints = {
                     -- Only show inlay hints for the current line
                     only_current_line = false,
@@ -212,8 +211,17 @@ lsp_installer.on_server_ready(function(server)
                     use_telescope = true,
                 },
             },
-            server = vim.tbl_deep_extend("force", server:get_default_options(), opts),
+            server = vim.tbl_deep_extend("force", server:get_default_options(), opts, {
+                settings = {
+                    ["rust_analyzer"] = {
+                        checkOnSave = {
+                            command = "clippy"
+                        }
+                    }
+                }
+            }),
         }
+        require("rust-tools").setup(rust_opts)
         server:attach_buffers()
     else
         -- This setup() function is exactly the same as lspconfig's setup function.
@@ -222,6 +230,15 @@ lsp_installer.on_server_ready(function(server)
     end
 end)
 EOF
+
+command! RustSetInlayHints lua require"rust-tools.inlay_hints".set_inlay_hints()
+command! RustDisableInlayHints lua require"rust-tools.inlay_hints".disable_inlay_hints()
+command! RustToggleInlayHints lua require"rust-tools.inlay_hints".toggle_inlay_hints()
+command! RustReloadWorkspace lua require"rust-tools/workspace_refresh".reload_workspace()
+augroup RustInlayHints
+    autocmd!
+    autocmd BufEnter,BufWinEnter,TabEnter,BufWritePost *.rs lua require"rust-tools.inlay_hints".set_inlay_hints()
+augroup END
 
 " =============================================================================
 " Completion
@@ -399,7 +416,7 @@ require'navigator'.setup({
     },
 
     icons = {
-        icons = true, -- set to false to use system default ( if you using a terminal does not have nerd/icon)
+        icons = true, -- set to false to use system default (if you using a terminal does not have nerd/icon)
         -- Code action
         code_action_icon = '⚐ ',
         -- code lens
@@ -439,8 +456,8 @@ require'navigator'.setup({
 
     lsp_installer = false,
     lsp = {
-        code_action = {enable = true, sign = false, sign_priority = 40, virtual_text = true},
-        code_lens_action = {enable = true, sign = false, sign_priority = 40, virtual_text = true},
+        code_action = {enable = true, sign = true, sign_priority = 40, virtual_text = false},
+        code_lens_action = {enable = true, sign = true, sign_priority = 40, virtual_text = false},
         format_on_save = false,
     },
 })
@@ -488,23 +505,29 @@ require'lightspeed'.setup {
 }
 EOF
 
+" 2-character search (x/x) (Normal)
 nmap <silent>t <Plug>Lightspeed_s
 nmap <silent>T <Plug>Lightspeed_S
-nmap <silent>v <Plug>Lightspeed_x
-nmap <silent>V <Plug>Lightspeed_X
-nmap <silent>e <Plug>Lightspeed_f
-nmap <silent>E <Plug>Lightspeed_F
-nmap <silent>x <Plug>Lightspeed_t
-nmap <silent>X <Plug>Lightspeed_T
+nmap <silent>x <Plug>Lightspeed_x
+nmap <silent>X <Plug>Lightspeed_X
 
+" 2-character search (x/x) (Visual)
 vmap <silent>t <Plug>Lightspeed_s
 vmap <silent>T <Plug>Lightspeed_S
-vmap <silent>v <Plug>Lightspeed_x
-vmap <silent>V <Plug>Lightspeed_X
+vmap <silent>x <Plug>Lightspeed_x
+vmap <silent>X <Plug>Lightspeed_X
+
+" 1-character search (f/t) (Normal)
+nmap <silent>e <Plug>Lightspeed_f
+nmap <silent>E <Plug>Lightspeed_F
+nmap <silent>ä <Plug>Lightspeed_t
+nmap <silent>Ä <Plug>Lightspeed_T
+
+" 1-character search (f/t) (Visual)
 vmap <silent>e <Plug>Lightspeed_f
 vmap <silent>E <Plug>Lightspeed_F
-vmap <silent>x <Plug>Lightspeed_t
-vmap <silent>X <Plug>Lightspeed_T
+vmap <silent>Ä <Plug>Lightspeed_t
+vmap <silent>Ä <Plug>Lightspeed_T
 
     " Code navigation shortcuts
     nnoremap <silent> <leader>d <cmd>lua vim.lsp.buf.definition()<CR>
@@ -639,6 +662,9 @@ let g:loaded_matchparen = 1         " Don't show matching parens.
 set noshowmatch                     " Don't show matching braces.
 let g:matchparen_timeout = 2
 let g:matchparen_insert_timeout = 2
+
+" Syntax highlighting for lua in .vimrc
+let g:vimsyn_embed = 'l'
 
 " Improve performance (not necessary on iTerm2 Beta)
 " set lazyredraw
@@ -1240,8 +1266,8 @@ let g:NERDTreeShowLineNumbers = 0
 let g:NERDTreeIgnore = ['\.meta$','^\.DS_Store$']
 
 " Open NERDTree when no files specified.
-autocmd StdinReadPre * let s:std_in=1
-autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
+" autocmd StdinReadPre * let s:std_in=1
+" autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
 
 " Close VIM if only tab left is NERDTree
 autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
@@ -1506,10 +1532,11 @@ nnoremap <leader>fg <cmd>lua require('telescope.builtin').live_grep()<cr>
 nnoremap <leader>fh <cmd>lua require('telescope.builtin').help_tags()<cr>
 
 " LeaderF replacement:
-nnoremap <leader>ff <cmd>lua require('telescope.builtin').find_files()<cr>
-nnoremap <leader>fb <cmd>lua require('telescope.builtin').buffers()<cr>
-nnoremap <leader>fz <cmd>lua require('telescope.builtin').buffers()<cr>
-nnoremap <leader>v <cmd>lua require('telescope.builtin').treesitter()<cr>
+" Previously: ff, fb, fz
+"nnoremap <leader>o <cmd>lua require('telescope.builtin').find_files()<cr>
+"nnoremap <leader>b <cmd>lua require('telescope.builtin').buffers()<cr>
+"nnoremap <leader>z <cmd>lua require('telescope.builtin').buffers()<cr>
+"nnoremap <leader>v <cmd>lua require('telescope.builtin').treesitter()<cr>
 
 " =============================================================================
 " LeaderF
