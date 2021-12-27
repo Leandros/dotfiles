@@ -15,6 +15,8 @@ let maplocalleader=" "
 
 " Optional plugins
 let js_dev_enabled = 1
+let has_navigator = 0
+let has_lspsaga = 1
 
 " Vim Internal Plugins
 if !has('nvim')
@@ -24,7 +26,7 @@ endif
 " Python paths
 if has('nvim')
     if has("win32") || has("win16")
-        let g:python3_host_prog = 'C:\Users\leandros\AppData\Local\Programs\Python\Python310\python.exe'
+        let g:python3_host_prog = 'C:\Python310\python.exe'
     else
         let g:python3_host_prog = '/usr/local/bin/python3'
     endif
@@ -53,12 +55,13 @@ Plug 'terryma/vim-multiple-cursors'
 Plug 'Konfekt/FastFold'
 Plug 'Yggdroot/LeaderF', { 'do': ':LeaderfInstallCExtension' }
 Plug 'mhinz/vim-grepper'
-Plug 'axelf4/vim-strip-trailing-whitespace'
+Plug 'ntpeters/vim-better-whitespace'
 " Interferes with telescope.
 " Plug 'thirtythreeforty/lessspace.vim'
 Plug 'maxbrunsfeld/vim-yankstack'
 Plug 'scrooloose/nerdtree'
 Plug 'ggandor/lightspeed.nvim'
+Plug 'mbbill/undotree'
 
 " General
 Plug 'SirVer/ultisnips'
@@ -96,15 +99,22 @@ if has('nvim')
     Plug 'folke/lsp-colors.nvim'    " Highlight groups for trouble.nvim
     Plug 'folke/trouble.nvim'       " Pretty diagnostics
 
-    Plug 'ray-x/guihua.lua', {'do': 'cd lua/fzy && make' }
-    Plug 'ray-x/navigator.lua'
+    if has_navigator
+        Plug 'ray-x/guihua.lua', {'do': 'cd lua/fzy && make' }
+        Plug 'ray-x/navigator.lua'
+    endif
+    if has_lspsaga
+        Plug 'tami5/lspsaga.nvim' " chose either lspsaga or navigator
+    endif
     Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
     Plug 'lewis6991/gitsigns.nvim'
 
     Plug 'simrat39/rust-tools.nvim'
 
-    " Lightline
-    Plug 'nvim-lualine/lualine.nvim'
+    Plug 'nvim-lualine/lualine.nvim' " Statusline
+    Plug 'nvim-lua/lsp-status.nvim'  " Plugin to show lsp status in statusline
+
+    Plug 'lukas-reineke/indent-blankline.nvim'
 
     " Debugging
     " Plug 'mfussenegger/nvim-dap' " debug adapter for debugging
@@ -130,6 +140,7 @@ Plug 'jparise/vim-graphql', { 'for': ['graphql'] }
 Plug 'qnighy/lalrpop.vim', { 'for': ['lalrpop'] }
 Plug 'rust-lang/rust.vim', { 'for': ['rust'] }
 Plug 'cespare/vim-toml', { 'for': ['toml'], 'branch': 'main' }
+Plug 'NoahTheDuke/vim-just'
 
 if js_dev_enabled
     Plug 'leafgarland/typescript-vim'
@@ -164,6 +175,8 @@ if has('nvim')
 " =============================================================================
 lua << EOF
 local lsp_installer = require("nvim-lsp-installer")
+local lsp_installer_servers = require("nvim-lsp-installer.servers")
+local lsp_status = require("lsp-status")
 
 lsp_installer.settings({
     ui = {
@@ -175,53 +188,68 @@ lsp_installer.settings({
     }
 })
 
-lsp_installer.on_server_ready(function(server)
+local server_available, requested_server = lsp_installer_servers.get_server("rust_analyzer")
+
+if server_available then
     local opts = {}
+    local rust_opts = {
+        tools = { -- rust-tools options
+            autoSetHints = true,
+            hover_with_actions = false,
+            inlay_hints = {
+                -- Only show inlay hints for the current line
+                only_current_line = false,
+                -- wheter to show parameter hints with the inlay hints or not
+                show_parameter_hints = true,
+                -- prefix for parameter hints
+                parameter_hints_prefix = "<- ",
+                -- prefix for all the other hints (type, chaining)
+                other_hints_prefix = "=> ",
+                -- whether to align to the length of the longest line in the file
+                max_len_align = false,
+                -- padding from the left if max_len_align is true
+                max_len_align_padding = 1,
+                -- whether to align to the extreme right or not
+                right_align = false,
+                -- The color of the hints
+                highlight = "Comment",
+            },
+            runnables = {
+                use_telescope = true,
+            },
+            debuggables = {
+                use_telescope = true,
+            },
+        },
+        server = vim.tbl_deep_extend("force", requested_server:get_default_options(), opts, {
+            on_attach = function(client)
+                lsp_status.on_attach(client)
+            end,
+            capabilities = lsp_status.capabilities,
+            settings = {
+                ["rust_analyzer"] = {
+                    checkOnSave = {
+                        command = "clippy"
+                    }
+                }
+            }
+        }),
+    }
+    require("rust-tools").setup(rust_opts)
+end
+
+lsp_installer.on_server_ready(function(server)
+    local opts = {
+        on_attach = function(client)
+            lsp_status.on_attach(client)
+        end,
+        capabilities = lsp_status.capabilities,
+    }
 
     -- Configure LSP through rust-tools.nvim plugin.
     -- rust-tools will configure and enable certain LSP features for us.
     -- See https://github.com/simrat39/rust-tools.nvim#configuration
     if server.name == "rust_analyzer" then
-        local rust_opts = {
-            tools = { -- rust-tools options
-                autoSetHints = true,
-                hover_with_actions = false,
-                inlay_hints = {
-                    -- Only show inlay hints for the current line
-                    only_current_line = false,
-                    -- wheter to show parameter hints with the inlay hints or not
-                    show_parameter_hints = true,
-                    -- prefix for parameter hints
-                    parameter_hints_prefix = "<- ",
-                    -- prefix for all the other hints (type, chaining)
-                    other_hints_prefix = "=> ",
-                    -- whether to align to the length of the longest line in the file
-                    max_len_align = false,
-                    -- padding from the left if max_len_align is true
-                    max_len_align_padding = 1,
-                    -- whether to align to the extreme right or not
-                    right_align = false,
-                    -- The color of the hints
-                    highlight = "Comment",
-                },
-                runnables = {
-                    use_telescope = true,
-                },
-                debuggables = {
-                    use_telescope = true,
-                },
-            },
-            server = vim.tbl_deep_extend("force", server:get_default_options(), opts, {
-                settings = {
-                    ["rust_analyzer"] = {
-                        checkOnSave = {
-                            command = "clippy"
-                        }
-                    }
-                }
-            }),
-        }
-        require("rust-tools").setup(rust_opts)
         server:attach_buffers()
     else
         -- This setup() function is exactly the same as lspconfig's setup function.
@@ -231,14 +259,13 @@ lsp_installer.on_server_ready(function(server)
 end)
 EOF
 
-command! RustSetInlayHints lua require"rust-tools.inlay_hints".set_inlay_hints()
-command! RustDisableInlayHints lua require"rust-tools.inlay_hints".disable_inlay_hints()
-command! RustToggleInlayHints lua require"rust-tools.inlay_hints".toggle_inlay_hints()
-command! RustReloadWorkspace lua require"rust-tools/workspace_refresh".reload_workspace()
-augroup RustInlayHints
-    autocmd!
-    autocmd BufEnter,BufWinEnter,TabEnter,BufWritePost *.rs lua require"rust-tools.inlay_hints".set_inlay_hints()
-augroup END
+" command! RustSetInlayHints lua require"rust-tools.inlay_hints".set_inlay_hints()
+" command! RustDisableInlayHints lua require"rust-tools.inlay_hints".disable_inlay_hints()
+" command! RustToggleInlayHints lua require"rust-tools.inlay_hints".toggle_inlay_hints()
+" command! RustReloadWorkspace lua require"rust-tools/workspace_refresh".reload_workspace()
+" augroup RustInlayHints
+"     autocmd BufEnter,BufWinEnter,TabEnter,BufWritePost *.rs lua require"rust-tools.inlay_hints".set_inlay_hints()
+" augroup END
 
 " =============================================================================
 " Completion
@@ -309,6 +336,18 @@ EOF
 " LUALINE
 " =============================================================================
 lua << EOF
+local lsp_status = require('lsp-status')
+lsp_status.config({
+    --component_separator = ' │ ',
+    status_symbol = '',
+    indicator_errors = 'E',
+    indicator_warnings = 'W',
+    indicator_info = 'i',
+    indicator_hint = '?',
+    indicator_ok = '',
+})
+lsp_status.register_progress()
+
 local colors = {
   base03  =  '#002b36',
   base02  =  '#073642',
@@ -354,6 +393,8 @@ require'lualine'.setup {
   sections = {
     lualine_b = {'branch', {'diagnostics', sources={'nvim_diagnostic', 'coc'}}},
     lualine_c = {{'filename', file_status = true, path = 1}},
+    lualine_x = {"require'lsp-status'.status()"},
+    lualine_y = {},
   },
 }
 EOF
@@ -362,13 +403,21 @@ EOF
 " Navigator
 " =============================================================================
 lua <<EOF
+if not vim.g['has_navigator'] then
+    return
+end
+
+--[[
 require'navigator'.setup({
     border = {"╭", "─", "╮", "│", "╯", "─", "╰", "│"},
     transparency = nil,
     default_mapping = false,
+    on_attach = function(client, bufnr)
+        print("navigator on_attach")
+    end,
     keymaps = {
         -- Keymaps defined below:
-        -- {key = "<c-k>", func = "signature_help()"},
+        -- {mode = "i", key = "<c-k>", func = "signature_help({border = single})"},
         -- {key = "<c-]>", func = "require('navigator.definition').definition()"},
         -- {key = "gd", func = "require('navigator.definition').definition_preview()"},
         -- {key = "K", func = "hover({ popup_opts = { border = single, max_width = 80 }})"},
@@ -461,15 +510,74 @@ require'navigator'.setup({
         format_on_save = false,
     },
 })
+]]--
 EOF
 
-nnoremap <silent><c-k> <cmd>lua vim.lsp.buf.signature_help()<CR>
-nnoremap <silent><c-]> <cmd>lua require('navigator.definition').definition()<CR>
-nnoremap <silent>gd <cmd>lua require('navigator.definition').definition_preview()<CR>
-nnoremap <silent>K <cmd>lua vim.lsp.buf.hover({ popup_opts = { border = single, max_width = 80 }})<CR>
-nnoremap <silent><Leader>re <cmd>lua vim.lsp.buf.rename()<CR>
-nnoremap <silent><Leader>rn <cmd>lua require('navigator.rename').rename()<CR>
-nnoremap <silent><Leader>k <cmd>lua require('navigator.diagnostics').show_diagnostics()<CR>
+
+" =============================================================================
+" LSPSAGA
+" =============================================================================
+lua <<EOF
+if not vim.g['has_lspsaga'] then
+    return
+end
+
+local saga = require 'lspsaga'
+saga.init_lsp_saga {
+    use_saga_diagnostic_sign = true,
+    -- diagnostic signs
+    error_sign = 'E',
+    warn_sign = 'W',
+    hint_sign = 'H',
+    infor_sign = 'I',
+    diagnostic_header_icon = ' ⚠ ',
+    -- code action title icon
+    code_action_icon = '⚐ ',
+    code_action_prompt = {
+      enable = true,
+      sign = false,
+      sign_priority = 40,
+      virtual_text = true,
+    },
+    finder_definition_icon = '⚡',
+    finder_reference_icon = '⚡',
+    max_preview_lines = 10,
+    finder_action_keys = {
+      open = 'o', vsplit = 'i',split = 't',quit = 'q',
+      scroll_down = '<C-f>',scroll_up = '<C-b>'
+    },
+    code_action_keys = {
+      quit = 'q',exec = '<CR>'
+    },
+    rename_action_keys = {
+      quit = '<C-c>',exec = '<CR>'
+    },
+    definition_preview_icon = '➤',
+    border_style = "single",
+    rename_prompt_prefix = '➤',
+    server_filetype_map = {}
+}
+EOF
+
+if has_navigator
+    inoremap <silent><c-k> <cmd>lua vim.lsp.buf.signature_help()<CR>
+    nnoremap <silent><c-k> <cmd>lua vim.lsp.buf.signature_help()<CR>
+    nnoremap <silent><c-]> <cmd>lua require('navigator.definition').definition()<CR>
+    nnoremap <silent>gd <cmd>lua require('navigator.definition').definition_preview()<CR>
+    nnoremap <silent>K <cmd>lua vim.lsp.buf.hover({ popup_opts = { border = single, max_width = 80 }})<CR>
+    nnoremap <silent><Leader>re <cmd>lua vim.lsp.buf.rename()<CR>
+    nnoremap <silent><Leader>rn <cmd>lua require('navigator.rename').rename()<CR>
+    nnoremap <silent><Leader>k <cmd>lua require('navigator.diagnostics').show_diagnostics()<CR>
+elseif has_lspsaga
+    inoremap <silent><c-k> <cmd>:Lspsaga signature_help<CR>
+    nnoremap <silent><c-k> <cmd>:Lspsaga signature_help<CR>
+    nnoremap <silent>gd <cmd>:Lspsaga preview_definition<CR>
+    nnoremap <silent>K <cmd>:Lspsaga hover_doc<CR>
+    nnoremap <silent><Leader>re <cmd>lua vim.lsp.buf.rename()<CR>
+    nnoremap <silent><Leader>rn <cmd>:Lspsaga rename<CR>
+    nnoremap <silent><Leader>k <cmd>lua require'lspsaga.diagnostic'.show_cursor_diagnostics()<CR>
+endif
+
 
 " =============================================================================
 " GitSigns
@@ -502,6 +610,21 @@ EOF
 lua <<EOF
 require'lightspeed'.setup {
     highlight_unique_chars = true,
+}
+EOF
+
+" hi! IndentBlanklineChar ctermfg=92 guifg=#586e75 gui=nocombine
+" hi! IndentBlanklineSpaceChar ctermfg=92 guifg=#586e75 gui=nocombine
+
+lua << EOF
+require("indent_blankline").setup {
+    show_end_of_line = false,
+    show_first_indent_level = false,
+    filetype = {'yaml'},
+    filetype_exclude = {'help'},
+    buftype_exclude = {'terminal'},
+    --show_current_context = true,
+    --show_current_context_start = true,
 }
 EOF
 
@@ -705,16 +828,6 @@ let &t_ti.="\e[1 q"
 let &t_SI.="\e[5 q"
 let &t_EI.="\e[1 q"
 let &t_te.="\e[0 q"
-
-" Write undo tree to a file to resume from next time the file is opened.
-if has("persistent_undo")
-  set undolevels=2000            " The number of undo items to remember
-  set undofile                   " Save undo history to files locally
-  set undodir=$HOME/.vimundo     " Set the directory of the undofile
-  if !isdirectory(expand(&undodir))
-    call mkdir(expand(&undodir), "p")
-  endif
-endif
 
 " When running as diff.
 if &diff
@@ -925,8 +1038,8 @@ autocmd FileType gn setlocal tabstop=2
 autocmd FileType gn setlocal shiftwidth=2
 
 " Use two spaces in yaml files
-autocmd FileType yaml setlocal tabstop=2
-autocmd FileType yaml setlocal shiftwidth=2
+autocmd FileType yaml setlocal ts=2 sts=2 sw=2 expandtab
+
 
 " =============================================================================
 " Folding Config
@@ -1052,12 +1165,10 @@ command! JsonMinify call MinifyJson()
 " =============================================================================
 " Highlight whitespace
 " =============================================================================
-" if version >= 704 && has('patch712')
-"     set listchars=tab:--,trail:~,extends:>,precedes:<,space:·
-"     set nolist
-"     " Highlight whitespace color config
-"     hi Conceal ctermfg=NONE ctermbg=NONE guifg=NONE guibg=NONE
-" endif
+let g:better_whitespace_enabled=1
+let g:strip_whitespace_on_save=1
+let g:strip_only_modified_lines=1
+let g:strip_whitespace_confirm=0
 
 " =============================================================================
 " Shell command
@@ -1201,6 +1312,22 @@ vnoremap <C-a> :call Incr()<CR>
 "                      |_|   |_|\__,_|\__, |_|_| |_|___/
 "                                     |___/
 " =============================================================================
+"
+" =============================================================================
+" UndoTree
+" =============================================================================
+nnoremap <F9> :UndotreeToggle<CR>
+
+" Write undo tree to a file to resume from next time the file is opened.
+if has("persistent_undo")
+  set undolevels=2000            " The number of undo items to remember
+  set undofile                   " Save undo history to files locally
+  set undodir=$HOME/.vimundo     " Set the directory of the undofile
+  if !isdirectory(expand(&undodir))
+    call mkdir(expand(&undodir), "p")
+  endif
+endif
+
 
 " =============================================================================
 " Statusline
@@ -1677,9 +1804,20 @@ let g:rainbow_conf = {
 
 
 " =============================================================================
+" Colors
+" =============================================================================
+hi! IndentBlanklineChar ctermfg=15 guifg=#073642 gui=nocombine
+hi! IndentBlanklineSpaceChar ctermfg=15 guifg=#073642 gui=nocombine
+
+" =============================================================================
+" YAML
+" =============================================================================
+autocmd FileType yaml nnoremap <C-f> :Prettier<CR>
+
+" =============================================================================
 " Rust
 " =============================================================================
-autocmd FileType rust noremap <C-f> :RustFmt<CR>
+autocmd FileType rust nnoremap <C-f> :RustFmt<CR>
 
 " Must be after setting the color scheme.
 " Pmenu:
