@@ -259,14 +259,6 @@ lsp_installer.on_server_ready(function(server)
 end)
 EOF
 
-" command! RustSetInlayHints lua require"rust-tools.inlay_hints".set_inlay_hints()
-" command! RustDisableInlayHints lua require"rust-tools.inlay_hints".disable_inlay_hints()
-" command! RustToggleInlayHints lua require"rust-tools.inlay_hints".toggle_inlay_hints()
-" command! RustReloadWorkspace lua require"rust-tools/workspace_refresh".reload_workspace()
-" augroup RustInlayHints
-"     autocmd BufEnter,BufWinEnter,TabEnter,BufWritePost *.rs lua require"rust-tools.inlay_hints".set_inlay_hints()
-" augroup END
-
 " =============================================================================
 " Completion
 " =============================================================================
