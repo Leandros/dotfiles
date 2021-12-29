@@ -177,6 +177,9 @@ lua << EOF
 local lsp_installer = require("nvim-lsp-installer")
 local lsp_installer_servers = require("nvim-lsp-installer.servers")
 local lsp_status = require("lsp-status")
+local capabilities = vim.lsp.protocol.make_client_capabilities()
+capabilities = vim.tbl_deep_extend("keep", capabilities, lsp_status.capabilities)
+capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
 
 lsp_installer.settings({
     ui = {
@@ -225,12 +228,22 @@ if server_available then
             on_attach = function(client)
                 lsp_status.on_attach(client)
             end,
-            capabilities = lsp_status.capabilities,
+            capabilities = capabilities,
             settings = {
                 ["rust_analyzer"] = {
-                    checkOnSave = {
+                    assist = {
+                        importGranularity = "module",
+                        importPrefix = "by_self",
+                    },
+                    cargo = {
+                        loadOutDirsFromCheck = true,
+                    },
+                    procMacro = {
+                        enable = true
+                    },
+                    --[[checkOnSave = {
                         command = "clippy"
-                    }
+                    }]]--
                 }
             }
         }),
@@ -243,7 +256,7 @@ lsp_installer.on_server_ready(function(server)
         on_attach = function(client)
             lsp_status.on_attach(client)
         end,
-        capabilities = lsp_status.capabilities,
+        capabilities = capabilities,
     }
 
     -- Configure LSP through rust-tools.nvim plugin.
@@ -269,6 +282,7 @@ cmp.setup({
   documentation = {
     border = { '╭', '─', '╮', '│', '╯', '─', '╰', '│' },
   },
+
   -- Enable LSP snippets
   snippet = {
     expand = function(args)
