@@ -133,3 +133,5 @@
     smudge = git-media-smudge %f
 [init]
 	defaultBranch = master
+[commit]
+	template = ~/.committemplate.txt
