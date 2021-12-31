@@ -1666,10 +1666,10 @@ nnoremap <leader>fh <cmd>lua require('telescope.builtin').help_tags()<cr>
 
 " LeaderF replacement:
 " Previously: ff, fb, fz
-"nnoremap <leader>o <cmd>lua require('telescope.builtin').find_files()<cr>
-"nnoremap <leader>b <cmd>lua require('telescope.builtin').buffers()<cr>
-"nnoremap <leader>z <cmd>lua require('telescope.builtin').buffers()<cr>
-"nnoremap <leader>v <cmd>lua require('telescope.builtin').treesitter()<cr>
+" nnoremap <leader>o <cmd>lua require('telescope.builtin').find_files()<cr>
+" nnoremap <leader>b <cmd>lua require('telescope.builtin').buffers()<cr>
+" nnoremap <leader>z <cmd>lua require('telescope.builtin').buffers()<cr>
+nnoremap <leader>v <cmd>lua require('telescope.builtin').treesitter()<cr>
 
 " =============================================================================
 " LeaderF
@@ -1819,11 +1819,13 @@ hi! Comment cterm=NONE ctermfg=92 gui=NONE guifg=#586e75 guibg=NONE guisp=NONE
 " =============================================================================
 " YAML
 " =============================================================================
+" TODO: Fix that it only affects yaml files
 autocmd FileType yaml nnoremap <C-f> :Prettier<CR>
 
 " =============================================================================
 " Rust
 " =============================================================================
+" TODO: Fix that it only affects rust files
 autocmd FileType rust nnoremap <C-f> :RustFmt<CR>
 
 " Must be after setting the color scheme.
