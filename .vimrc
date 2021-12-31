@@ -1814,6 +1814,7 @@ let g:rainbow_conf = {
 " =============================================================================
 hi! IndentBlanklineChar ctermfg=15 guifg=#073642 gui=nocombine
 hi! IndentBlanklineSpaceChar ctermfg=15 guifg=#073642 gui=nocombine
+hi! Comment cterm=NONE ctermfg=92 gui=NONE guifg=#586e75 guibg=NONE guisp=NONE
 
 " =============================================================================
 " YAML
