@@ -2,6 +2,7 @@ keybinding:
   universal:
     nextTab: 'S'
     prevTab: 'B'
+    appendNewline: '<tab>'
 gui:
   theme:
     selectedLineBgColor:
