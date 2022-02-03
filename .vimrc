@@ -43,8 +43,6 @@ if has('nvim') && !empty($NVIM_GUI)
     Plug 'equalsraf/neovim-gui-shim'
 elseif has('nvim')
     Plug 'ishan9299/nvim-solarized-lua'
-    " I prefer the nvim-solarized-lua
-    " Plug 'lifepillar/vim-solarized8'
 else
     Plug 'altercation/vim-colors-solarized'
 endif
@@ -56,12 +54,10 @@ Plug 'Konfekt/FastFold'
 Plug 'Yggdroot/LeaderF', { 'do': ':LeaderfInstallCExtension' }
 Plug 'mhinz/vim-grepper'
 Plug 'ntpeters/vim-better-whitespace'
-" Interferes with telescope.
-" Plug 'thirtythreeforty/lessspace.vim'
 Plug 'maxbrunsfeld/vim-yankstack'
 Plug 'scrooloose/nerdtree'
 Plug 'ggandor/lightspeed.nvim'
-Plug 'mbbill/undotree'
+" Plug 'mbbill/undotree'
 
 " General
 Plug 'SirVer/ultisnips'
@@ -70,7 +66,6 @@ Plug 'junegunn/vim-peekaboo'
 " Required for 'EnhancedJumps'
 Plug 'vim-scripts/ingo-library'
 Plug 'vim-scripts/EnhancedJumps'
-" Plug 'chrisbra/Colorizer'
 
 " My own plugins
 Plug 'leandros/vim-misc'
@@ -109,6 +104,7 @@ if has('nvim')
     endif
     Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
     Plug 'lewis6991/gitsigns.nvim'
+    Plug 'danymat/neogen'
 
     Plug 'simrat39/rust-tools.nvim'
 
@@ -224,6 +220,7 @@ set updatetime=300  " 300ms of no cursor movement to trigger CursorHold
 " Show if leader key is pressed
 set showcmd
 set cmdheight=2     " Give more space for displaying messages.
+set laststatus=2
 
 " Correct backspace
 set backspace=indent,eol,start
@@ -312,7 +309,6 @@ if has('nvim')
 endif
 set background=dark
 colorscheme solarized
-" colorscheme solarized8
 
 " =============================================================================
 " Custom Filetypes
@@ -633,14 +629,6 @@ fun! MinifyJson()
 endfunction
 
 command! JsonMinify call MinifyJson()
-
-" =============================================================================
-" Highlight whitespace
-" =============================================================================
-let g:better_whitespace_enabled=1
-let g:strip_whitespace_on_save=1
-let g:strip_only_modified_lines=1
-let g:strip_whitespace_confirm=0
 
 " =============================================================================
 " Shell command
@@ -1249,11 +1237,20 @@ require('gitsigns').setup({
 })
 EOF
 
+
+" =============================================================================
+" Treesitter
+" =============================================================================
+
 lua <<EOF
 require'nvim-treesitter.configs'.setup {
     ensure_installed = {'rust', 'json', 'javascript', 'typescript', 'tsx', 'vim'},
 }
 EOF
+
+" =============================================================================
+" Lightspeed
+" =============================================================================
 
 lua <<EOF
 require'lightspeed'.setup {
@@ -1263,6 +1260,11 @@ EOF
 
 " hi! IndentBlanklineChar ctermfg=92 guifg=#586e75 gui=nocombine
 " hi! IndentBlanklineSpaceChar ctermfg=92 guifg=#586e75 gui=nocombine
+
+
+" =============================================================================
+" Indent Blankline
+" =============================================================================
 
 lua << EOF
 require("indent_blankline").setup {
@@ -1275,6 +1277,11 @@ require("indent_blankline").setup {
     --show_current_context_start = true,
 }
 EOF
+
+
+" =============================================================================
+" Lightspeed
+" =============================================================================
 
 " 2-character search (x/x) (Normal)
 nmap <silent>t <Plug>Lightspeed_s
@@ -1336,6 +1343,15 @@ endif " if has(nvim)
 
 
 " =============================================================================
+" Vim Better Whitespace
+" =============================================================================
+let g:better_whitespace_enabled=1
+let g:strip_whitespace_on_save=1
+let g:strip_only_modified_lines=1
+let g:strip_whitespace_confirm=0
+
+
+" =============================================================================
 " UndoTree
 " =============================================================================
 nnoremap <F9> :UndotreeToggle<CR>
@@ -1350,35 +1366,6 @@ if has("persistent_undo")
   endif
 endif
 
-
-" =============================================================================
-" Statusline
-" =============================================================================
-set laststatus=2
-
-if has_key(g:plugs, 'lightline-vim')
-    " Lightline settings
-    let g:lightline = {
-        \ 'colorscheme': 'solarized',
-        \ 'active': {
-        \   'left': [ [ 'mode', 'paste' ], [ 'readonly', 'relativepath', 'modified' ] ],
-        \ },
-        \ 'inactive': {
-        \   'left': [ [ ], [ 'relativepath' ] ],
-        \ },
-        \ }
-endif
-
-if has_key(g:plugs, 'vim-airline')
-    " Airline Settings
-    let g:airline_highlighting_cache = 1
-    let g:airline_inactive_collapse = 1
-    let g:airline_extensions = []
-    let g:airline#extensions#tabline#enabled = 1
-    let g:airline#extensions#tabline#buffer_nr_show = 1
-    let g:airline#extensions#whitespace#mixed_indent_algo = 0
-    let g:airline_powerline_fonts = 1
-endif
 
 " =============================================================================
 " ReMap NERDTree Keys.
@@ -1461,21 +1448,6 @@ call NERDTreeHighlightFile('js', '\.js',            '3',  'NONE', 'NONE', 'NONE'
 call NERDTreeHighlightFile('jsx', '\.jsx',          '3',  'NONE', 'NONE', 'NONE')
 call NERDTreeHighlightFile('ts', '\.ts',            '5',  'NONE', 'NONE', 'NONE')
 call NERDTreeHighlightFile('tsx', '\.tsx',          '5',  'NONE', 'NONE', 'NONE')
-
-" =============================================================================
-" Easy Motion Settings
-" =============================================================================
-if has_key(g:plugs, 'vim-easymotion')
-    map <Leader> <Plug>(easymotion-prefix)
-    map <Leader>s <Plug>(easymotion-lineforward)
-    map <Leader>n <Plug>(easymotion-j)
-    map <Leader>r <Plug>(easymotion-k)
-    map <Leader>b <Plug>(easymotion-linebackward)
-    nmap e <Plug>(easymotion-s2)
-
-    let g:EasyMotion_smartcase = 1
-    let g:EasyMotion_startofline = 0 " keep cursor column when JK motion
-endif
 
 " =============================================================================
 " vim-autoformat Settings.
@@ -1594,14 +1566,6 @@ if has_key(g:plugs, 'ultisnips')
     endif
     let g:UltiSnipsSnippetDirectories = ['UltiSnips']
     let g:UltiSnipsEditSplit = "vertical"
-endif
-
-" =============================================================================
-" NumberToggle config
-" =============================================================================
-if has_key(g:plugs, 'vim-numbertoggle')
-    set relativenumber
-    let g:NumberToggleTrigger = "<C-o>"
 endif
 
 " =============================================================================
