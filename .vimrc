@@ -87,6 +87,7 @@ if has('nvim')
     Plug 'hrsh7th/cmp-path'      " Completion for paths
     Plug 'hrsh7th/cmp-buffer'    " Completion from buffer
     Plug 'hrsh7th/vim-vsnip'     " Snippet engine
+    Plug 'hrsh7th/vim-vsnip-integ'
 
     Plug 'nvim-telescope/telescope.nvim'
     " Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
@@ -1223,20 +1224,19 @@ require('gitsigns').setup({
     keymaps = {
         noremap = true,
 
-        ['n <leader>hs'] = '<cmd>Gitsigns stage_hunk<CR>',
-        ['v <leader>hs'] = ':Gitsigns stage_hunk<CR>',
-        ['n <leader>hu'] = '<cmd>Gitsigns undo_stage_hunk<CR>',
-        ['n <leader>hr'] = '<cmd>Gitsigns reset_hunk<CR>',
-        ['v <leader>hr'] = ':Gitsigns reset_hunk<CR>',
-        ['n <leader>hR'] = '<cmd>Gitsigns reset_buffer<CR>',
-        ['n <leader>hp'] = '<cmd>Gitsigns preview_hunk<CR>',
-        ['n <leader>hb'] = '<cmd>lua require"gitsigns".blame_line{full=true}<CR>',
-        ['n <leader>hS'] = '<cmd>Gitsigns stage_buffer<CR>',
-        ['n <leader>hU'] = '<cmd>Gitsigns reset_buffer_index<CR>',
+        ['n <leader>ss'] = '<cmd>Gitsigns stage_hunk<CR>',
+        ['v <leader>ss'] = ':Gitsigns stage_hunk<CR>',
+        ['n <leader>su'] = '<cmd>Gitsigns undo_stage_hunk<CR>',
+        ['n <leader>sr'] = '<cmd>Gitsigns reset_hunk<CR>',
+        ['v <leader>sr'] = ':Gitsigns reset_hunk<CR>',
+        ['n <leader>sR'] = '<cmd>Gitsigns reset_buffer<CR>',
+        ['n <leader>sp'] = '<cmd>Gitsigns preview_hunk<CR>',
+        ['n <leader>sb'] = '<cmd>lua require"gitsigns".blame_line{full=true}<CR>',
+        ['n <leader>sS'] = '<cmd>Gitsigns stage_buffer<CR>',
+        ['n <leader>sU'] = '<cmd>Gitsigns reset_buffer_index<CR>',
     },
 })
 EOF
-
 
 " =============================================================================
 " Treesitter
@@ -1338,6 +1338,19 @@ vim.diagnostic.config({
     float = { border = "single" },
 })
 EOF
+
+" =============================================================================
+" Neogen
+" =============================================================================
+lua <<EOF
+require('neogen').setup {
+    enabled = true
+}
+EOF
+
+nnoremap <Leader>ng <cmd>lua require('neogen').generate()<cr>
+nnoremap <Leader>nf <cmd>lua require('neogen').generate({ type = "file" })<cr>
+nnoremap <Leader>nc <cmd>lua require('neogen').generate({ type = "class" })<cr>
 
 endif " if has(nvim)
 
@@ -1569,6 +1582,29 @@ if has_key(g:plugs, 'ultisnips')
 endif
 
 " =============================================================================
+" Vsnip
+" =============================================================================
+
+" Expand
+imap <expr> <C-n>   vsnip#expandable()  ? '<Plug>(vsnip-expand)'         : '<C-n>'
+smap <expr> <C-n>   vsnip#expandable()  ? '<Plug>(vsnip-expand)'         : '<C-n>'
+
+" Expand or jump
+imap <expr> <C-s>   vsnip#available(1)  ? '<Plug>(vsnip-expand-or-jump)' : '<C-s>'
+smap <expr> <C-s>   vsnip#available(1)  ? '<Plug>(vsnip-expand-or-jump)' : '<C-s>'
+
+" Jump forward or backward
+imap <expr> <Tab>   vsnip#jumpable(1)   ? '<Plug>(vsnip-jump-next)'      : '<Tab>'
+smap <expr> <Tab>   vsnip#jumpable(1)   ? '<Plug>(vsnip-jump-next)'      : '<Tab>'
+imap <expr> <S-Tab> vsnip#jumpable(-1)  ? '<Plug>(vsnip-jump-prev)'      : '<S-Tab>'
+smap <expr> <S-Tab> vsnip#jumpable(-1)  ? '<Plug>(vsnip-jump-prev)'      : '<S-Tab>'
+
+" If you want to use snippet for multiple filetypes, you can `g:vsnip_filetypes` for it.
+let g:vsnip_filetypes = {}
+let g:vsnip_filetypes.javascriptreact = ['javascript']
+let g:vsnip_filetypes.typescriptreact = ['typescript']
+
+" =============================================================================
 " FastFold
 " =============================================================================
 let g:fastfold_fold_command_suffixes = []
@@ -1787,7 +1823,6 @@ let g:rainbow_conf = {
 \       'css': 0,
 \   }
 \}
-
 
 " =============================================================================
 " Colors
