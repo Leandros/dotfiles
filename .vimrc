@@ -70,6 +70,7 @@ Plug 'junegunn/vim-peekaboo'
 " Required for 'EnhancedJumps'
 Plug 'vim-scripts/ingo-library'
 Plug 'vim-scripts/EnhancedJumps'
+" Plug 'chrisbra/Colorizer'
 
 " My own plugins
 Plug 'leandros/vim-misc'
@@ -141,6 +142,7 @@ Plug 'qnighy/lalrpop.vim', { 'for': ['lalrpop'] }
 Plug 'rust-lang/rust.vim', { 'for': ['rust'] }
 Plug 'cespare/vim-toml', { 'for': ['toml'], 'branch': 'main' }
 Plug 'NoahTheDuke/vim-just'
+Plug 'jvirtanen/vim-hcl'
 
 if js_dev_enabled
     Plug 'leafgarland/typescript-vim'
@@ -155,6 +157,633 @@ call plug#end()
 if has_key(g:plugs, 'vim-yankstack')
     call yankstack#setup()
 endif
+
+" =============================================================================
+" Language / Shell
+" =============================================================================
+set langmenu=en_US.UTF-8
+let $LANG='en_US'
+
+" Set the default shell
+if has("win32") || has("win16")
+    source $VIMRUNTIME/delmenu.vim
+    source $VIMRUNTIME/menu.vim
+    set shell=cmd.exe
+    set shellcmdflag=/C
+else
+    set shell=$SHELL
+endif
+
+" =============================================================================
+" General
+" =============================================================================
+set fileencoding=utf-8 " Set the encoding written to file
+set termencoding=utf-8 " Set the default encodings just in case $LANG isn't set
+set encoding=utf-8  " Set the default encodings just in case $LANG isn't set
+set cursorline      " Hightlight current selected line.
+set ttyfast         " Set that we have a fast terminal
+set emoji           " enable emoji's on Vim8
+set clipboard+=unnamed " enabled system clipboard
+
+syntax enable
+set hidden          " Hide buffer, instead of closing it.
+set number          " Always show line numbers.
+set hlsearch        " Hightlight found searches.
+set incsearch       " Show matched searches as you type.
+set ignorecase      " Ignore case when searching.
+set smartcase       " Ignore case if search pattern is all lowercase, case-sensitive otherwise.
+set nowrapscan      " Do not wrap when searching
+
+set history=1000    " Larger command history.
+set undolevels=1000 " Undo ALL the changes.
+set visualbell      " Don't beep.
+set noerrorbells    " Don't beep.
+
+set nobackup        " Disable backup. set noswapfile can disable the .swp file.
+set nowritebackup
+set noswapfile
+
+" Indentation is 4 spaces, and not a tab
+set tabstop=4       " A tab is 4 spaces.
+set autoindent      " Autoindent.
+set copyindent      " Copy the previous indent on autoindenting.
+set shiftwidth=4    " Number of spaces used for autoindent.
+set expandtab       " Expand <Tab> into spaces
+set smarttab        " Insert 'tabs' on start of line, according to shiftwidth instead of tabstop.
+set scrolloff=3     " 3 lines of buffer above and below the cursor
+
+" Don't automatically insert line breaks
+set textwidth=0
+
+" Set mapping and key timeouts
+set timeout
+set timeoutlen=1000 " timeout for leader key
+set ttimeoutlen=10  " timeout for esc key
+set updatetime=300  " 300ms of no cursor movement to trigger CursorHold
+
+" Show if leader key is pressed
+set showcmd
+set cmdheight=2     " Give more space for displaying messages.
+
+" Correct backspace
+set backspace=indent,eol,start
+
+" Improve breaks
+set showbreak=>>>
+set breakindent
+
+" Disable mouse
+set mouse=c
+set guioptions+=lrbmTLce
+set guioptions-=lrbmTLce
+set guioptions+=c
+
+" Disable ZZ to close vim
+nnoremap Z <Nop>
+nnoremap ZZ <Nop>
+
+" =============================================================================
+" Performance
+" =============================================================================
+" Improve performance of matchparen plugin
+" This is DISABLING it!
+let g:loaded_matchparen = 1         " Don't show matching parens.
+set noshowmatch                     " Don't show matching braces.
+let g:matchparen_timeout = 2
+let g:matchparen_insert_timeout = 2
+
+" Syntax highlighting for lua in .vimrc
+let g:vimsyn_embed = 'l'
+
+" Improve performance (not necessary on iTerm2 Beta)
+" set lazyredraw
+
+" Disable syntax highlighting long lines
+set synmaxcol=300
+
+" Disable syntax highlighting in large files
+autocmd BufReadPre * if getfsize(expand("%")) > 10000000 | set syntax=OFF | endif
+
+" =============================================================================
+" Buffer Switching
+" =============================================================================
+" Improve :b switch menu
+set wildchar=<Tab> wildmenu wildmode=full
+
+" Buffer switching
+nnoremap <Leader>1 :1b<CR>
+nnoremap <Leader>2 :2b<CR>
+nnoremap <Leader>3 :3b<CR>
+nnoremap <Leader>4 :4b<CR>
+nnoremap <Leader>5 :5b<CR>
+nnoremap <Leader>6 :6b<CR>
+nnoremap <Leader>7 :7b<CR>
+nnoremap <Leader>8 :8b<CR>
+nnoremap <Leader>9 :9b<CR>
+nnoremap <Leader>0 :10b<CR>
+
+" Jump to buffers with Ngb
+let c = 1
+while c <= 99
+  execute "nnoremap " . c . "gb :" . c . "b\<CR>"
+  let c += 1
+endwhile
+
+" Cygwin cursor fix.
+let &t_ti.="\e[1 q"
+let &t_SI.="\e[5 q"
+let &t_EI.="\e[1 q"
+let &t_te.="\e[0 q"
+
+" When running as diff.
+if &diff
+  set modifiable
+  set noreadonly
+  if tabpagenr('$') == 1
+    nnoremap ZZ :wqall<cr>
+  endif
+endif
+
+" Theme
+if has('nvim')
+    set termguicolors
+    let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
+    let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
+endif
+set background=dark
+colorscheme solarized
+" colorscheme solarized8
+
+" =============================================================================
+" Custom Filetypes
+" =============================================================================
+au BufRead,BufNewFile *.ds set filetype=rgbds                   " GameBoy Assembly
+au BufRead,BufNewFile *.fl,*.flex,*.l,*.lm setlocal ft=lex      " Flex
+au BufRead,BufNewFile *.y,*.ypp,*.ym setlocal ft=yacc           " Bison
+au BufRead,BufNewFile *.man setlocal ft=groff                   " Groff/Troff
+au BufRead,BufNewFile *.mm setlocal ft=objcpp                   " Objective-C++
+au BufRead,BufNewFile *.m setlocal ft=objc                      " Objective-C
+au BufRead,BufNewFile *.jsx set ft=javascript.jsx               " Javascript
+au BufRead,BufNewFile *.tsx set ft=typescript.tsx               " TypescriptX
+au BufRead,BufNewFile *.ts set ft=typescript                    " Typescript
+au BufRead,BufNewFile *.nomad set ft=hcl                        " HCL
+au BufRead,BufNewFile *.tf set ft=hcl                           " HCL
+au BufRead,BufNewFile *.hcl set ft=hcl                          " HCL
+au BufRead,BufNewFile *.tfvars set ft=hcl                        " HCL
+
+" =============================================================================
+" Set syntax options
+" =============================================================================
+" Highlight trailing whitespace in c files
+let c_space_errors = 1
+" Custom no-fold in my c.vim
+let c_no_block_fold = 1
+" Don't fold comments
+let c_no_comment_fold = 1
+" Don't fold #if 0 blocks
+let c_no_if0_fold = 1
+
+" =============================================================================
+" Bindings
+" =============================================================================
+" Warn about doing the wrong undo (U instead of u).
+nnoremap U :echo " < < ===== C H E C K C A P S L O C K ===== > > "<CR>
+
+" Map redo to r instead of C-r
+nnoremap j <C-r>
+
+" Map Vim Expression valuation
+inoremap <c-a> <c-r>
+
+" Convenient pasting.
+set pastetoggle=<F2>
+
+" Removed due to blocking super awesome multiline edit mode.
+" Convenient copy to clipboard.
+" vnoremap <C-c> :w !pbcopy<CR><CR>
+" noremap <C-v> :r !pbpaste<CR><CR>
+
+" Unhighlight searches
+" using <esc> for this, behaves weird
+nnoremap <C-d> :noh<return>
+
+" Reselect visual blocks after movement
+vnoremap < <gv
+vnoremap > >gv
+
+" Keep search matches in the middle of the window.
+nnoremap ? nzzzv
+nnoremap - Nzzzv
+
+" Move by words
+" nnoremap B B
+" nnoremap S W
+nnoremap <S-b> b
+nnoremap <S-s> w
+vnoremap <S-b> b
+vnoremap <S-s> w
+" Go to end of word
+nnoremap w e
+vnoremap w e
+
+" Key map optimizations for Bone 2 Layout
+" Normal Mode remaps.
+nnoremap b <Left>
+nnoremap r <Up>
+nnoremap n <Down>
+nnoremap s <Right>
+nnoremap gn gj
+nnoremap gr gk
+
+" Visual and Select Mode remaps.
+vnoremap b <Left>
+vnoremap r <Up>
+vnoremap n <Down>
+vnoremap s <Right>
+vnoremap gn gj
+vnoremap gr gk
+
+" Move half page up / down
+nnoremap ( <C-D>
+nnoremap ) <C-U>
+vnoremap ( <C-D>
+vnoremap ) <C-U>
+
+" Move line up down
+nnoremap <S-n> <C-e>
+nnoremap <S-r> <C-y>
+vnoremap <S-n> <C-e>
+vnoremap <S-r> <C-y>
+
+" Insert newline
+" nnoremap <CR> o<Esc>
+" inoremap <C-O> <Esc>o
+
+" Split switching
+nnoremap <C-p> <C-W>w
+nnoremap <C-n> <C-W>j
+nnoremap <C-r> <C-W>k
+nnoremap <C-b> <C-W>h
+nnoremap <C-s> <C-W>l
+
+" Split resizing
+nnoremap ! :vertical resize -5<CR>
+nnoremap = :vertical resize +5<CR>
+nnoremap < :resize +5<CR>
+nnoremap > :resize -5<CR>
+
+" Even out splits
+nnoremap <C-y>w <C-W>=
+nnoremap <C-y>m <C-W>_
+nnoremap <C-y>t <C-W>T
+nnoremap <C-y>l :ZoomWin<CR>
+
+" Split Creating
+nnoremap <C-i> :vsplit<CR>
+nnoremap <C-t> :split<CR>
+
+" Split killing
+command! Bd bp\|bd \#
+nnoremap <C-q> :BD<CR>
+nnoremap <C-w> :bd<CR>
+
+" Close / Open quickfix
+nnoremap <Leader>qq :cclose<CR>
+nnoremap <Leader>qc :cclose<CR>
+nnoremap <Leader>qo :copen<CR>
+
+" Map Y to y$, to behave like D and C
+nnoremap Y y$
+
+" Jump back in time
+nnoremap <Leader>. <C-t>
+
+" =============================================================================
+" Tab navigation
+" =============================================================================
+nnoremap <C-u>b :tabprevious<CR>
+nnoremap <C-u>s :tabnext<CR>
+nnoremap <C-u>n :tabedit<CR>
+nnoremap <C-u>c :tabclose<CR>
+nnoremap <C-u>1 1gt
+nnoremap <C-u>2 2gt
+nnoremap <C-u>3 3gt
+nnoremap <C-u>4 4gt
+nnoremap <C-u>5 5gt
+nnoremap <C-u>6 6gt
+cabbrev tabv tab sview +setlocal\ nomodifiable
+
+" =============================================================================
+" Indent
+" =============================================================================
+" Use two spaces to indent js/ts files
+autocmd FileType javascript setlocal tabstop=2
+autocmd FileType javascript setlocal shiftwidth=2
+autocmd FileType javascript.jsx setlocal tabstop=2
+autocmd FileType javascript.jsx setlocal shiftwidth=2
+autocmd FileType typescript setlocal tabstop=2
+autocmd FileType typescript setlocal shiftwidth=2
+autocmd FileType typescript set makeprg=tsc\ $*
+autocmd FileType typescript.tsx setlocal tabstop=2
+autocmd FileType typescript.tsx setlocal shiftwidth=2
+autocmd FileType typescript.tsx set makeprg=tsc\ $*
+
+" Setup comment string
+autocmd FileType javascript setlocal commentstring=/*\ %s\ */
+autocmd FileType javascript.jsx setlocal commentstring=/*\ %s\ */
+autocmd FileType typescript setlocal commentstring=/*\ %s\ */
+autocmd FileType typescript.tsx setlocal commentstring=/*\ %s\ */
+autocmd FileType lalrpop setlocal commentstring=//\ %s
+autocmd FileType hcl setlocal commentstring=#\ %s
+
+" Use two spaces to indent json files
+autocmd FileType json setlocal tabstop=2
+autocmd FileType json setlocal shiftwidth=2
+" Use Tabs in Makefiles
+autocmd FileType make setlocal noexpandtab
+
+" Use two spaces in gn files
+autocmd FileType gn setlocal tabstop=2
+autocmd FileType gn setlocal shiftwidth=2
+
+" Use two spaces in yaml files
+autocmd FileType yaml setlocal ts=2 sts=2 sw=2 expandtab
+
+" Use two spaces in hcl files
+autocmd FileType hcl setlocal ts=2 sts=2 sw=2 expandtab
+
+
+" =============================================================================
+" Folding Config
+" =============================================================================
+nnoremap z( zj
+nnoremap z) zk
+augroup vimrc
+    autocmd!
+
+    " Set foldmethod indent AND manual
+    autocmd BufReadPre * setlocal foldmethod=indent
+    autocmd BufWinEnter * if &fdm == 'indent' | setlocal foldmethod=manual | endif
+
+    " Open all folds at startup
+    autocmd BufRead * normal zR
+augroup END
+
+augroup filetype_cs
+    autocmd!
+
+    " Set folding by syntax for C# (Unity) files
+    autocmd FileType cs setlocal foldmethod=syntax
+    autocmd FileType cs let b:match_words = '\s*#\s*region.*$:\s*#\s*endregion'
+
+    " Close all folds
+    autocmd BufRead *.cs normal zM
+augroup END
+
+augroup filetype_cpp
+    autocmd!
+
+    " Create custom doxygen comment style
+    autocmd FileType cpp syn region doxygenComment start="/\*\!" end="\*/" fold
+    autocmd FileType cpp hi link doxygenComment cError
+
+    " Fold based on our custom syntax.
+    autocmd FileType cpp setlocal foldmethod=syntax
+
+    " Close all folds.
+    autocmd BufRead *.cxx,*.hxx,*.cpp,*.hpp normal zM
+augroup END
+
+" =============================================================================
+" Set 80 column limit.
+" =============================================================================
+if exists('+colorcolumn')
+  set colorcolumn=80
+  highlight ColorColumn guibg=#004653
+
+  " except for mail
+  autocmd FileType mail set colorcolumn=72
+else
+  au BufWinEnter * let w:m2=matchadd('ErrorMsg', '\%>80v.\+', -1)
+endif
+
+" =============================================================================
+" Setup GUI font
+" =============================================================================
+if has('gui_running')
+    if has('nvim')
+        " Done in ginit.vim
+        " has('gui_running') is always false.
+    else
+        set t_Co=256
+        set guifont=PragmataPro\ Mono:h9
+        set lsp=0
+        " HighDPI
+        " set guifont=Input:h9:w4.5
+        " set lsp=-2
+    endif
+endif
+
+" =============================================================================
+" Commands
+" =============================================================================
+" Invoke p4
+command -nargs=+ P4 :cexpr system('p4.py <args> '.expand('%:p')) | e! | copen
+
+" Change current working directory
+nnoremap ,cd :cd %:p:h<CR>:pwd<CR>
+
+" Never mess when file opened without sudo.
+cmap w!! w !sudo tee % >/dev/null
+
+" =============================================================================
+" Profiling
+" =============================================================================
+fun! ProfileStart()
+:   profile start profile.log
+:   profile func *
+:   profile file *
+endfun
+command! ProfileStart call ProfileStart()
+
+fun! ProfileEnd()
+:   profile pause
+:   noautocmd qall!
+endfun
+command! ProfileEnd call ProfileEnd()
+
+" =============================================================================
+" Strip trailing whitespace
+" =============================================================================
+fun! StripTrailingWhitespaces()
+    let l = line(".")
+    let c = col(".")
+    %s/\s\+$//e
+    call cursor(l, c)
+endfun
+
+command! StripWhitespace call StripTrailingWhitespaces()
+
+" =============================================================================
+" Minifier functions
+" =============================================================================
+fun! MinifyJson()
+  %s/\ //g
+  %s/\n//g
+endfunction
+
+command! JsonMinify call MinifyJson()
+
+" =============================================================================
+" Highlight whitespace
+" =============================================================================
+let g:better_whitespace_enabled=1
+let g:strip_whitespace_on_save=1
+let g:strip_only_modified_lines=1
+let g:strip_whitespace_confirm=0
+
+" =============================================================================
+" Shell command
+" =============================================================================
+command! -complete=shellcmd -nargs=+ Shell call s:RunShellCommand(<q-args>)
+function! s:RunShellCommand(cmdline)
+  let expanded_cmdline = a:cmdline
+  for part in split(a:cmdline, ' ')
+     if part[0] =~ '\v[%#<]'
+        let expanded_part = fnameescape(expand(part))
+        let expanded_cmdline = substitute(expanded_cmdline, part, expanded_part, '')
+     endif
+  endfor
+  botright new
+  setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap
+  execute '$read !'. expanded_cmdline
+  execute 1 'delete _'
+  setlocal nomodifiable
+  1
+endfunction
+
+" =============================================================================
+" Compile and Run code. The primitive way.
+" =============================================================================
+command! -nargs=1 Silent execute ':silent !'.<q-args> | execute ':redraw!'
+function! CompileCC()
+   write
+   let src = expand('%:p')
+   let exe = expand('%:r')
+   call s:RunShellCommand('clang++ -std=c++17 '.src.' -o '.exe.' && ./'.exe)
+   exec 'Silent rm '.exe
+endfunction
+autocmd filetype cpp nnoremap <F5> :call CompileCC()<CR>
+autocmd filetype cpp command! Run :call CompileCC()
+
+" =============================================================================
+" Make
+" =============================================================================
+function! RunMake(...)
+   write
+   echo 'make ' . join(a:000, ' ')
+   call s:RunShellCommand('make '.join(a:000, ' '))
+endfunction
+command! -nargs=* Make :call RunMake(<f-args>)
+
+
+" =============================================================================
+" Focus Mode
+" =============================================================================
+function! ToggleFocusMode()
+  if (&foldcolumn != 12)
+    set laststatus=0
+    set numberwidth=10
+    set foldcolumn=12
+    set noruler
+    hi FoldColumn ctermbg=none
+    hi LineNr ctermfg=0 ctermbg=none
+    hi NonText ctermfg=0
+  else
+    set laststatus=2
+    set numberwidth=4
+    set foldcolumn=0
+    set ruler
+    execute 'colorscheme ' . g:colors_name
+  endif
+endfunc
+nnoremap <F1> :call ToggleFocusMode()<cr>
+
+" =============================================================================
+" Buffer Moving
+" =============================================================================
+function! MarkWindowSwap()
+    let g:markedWinNum = winnr()
+endfunction
+
+function! DoWindowSwap()
+    "Mark destination
+    let curNum = winnr()
+    let curBuf = bufnr( "%" )
+    exe g:markedWinNum . "wincmd w"
+    "Switch to source and shuffle dest->source
+    let markedBuf = bufnr( "%" )
+    "Hide and open so that we aren't prompted and keep history
+    exe 'hide buf' curBuf
+    "Switch to dest and shuffle source->dest
+    exe curNum . "wincmd w"
+    "Hide and open so that we aren't prompted and keep history
+    exe 'hide buf' markedBuf
+endfunction
+
+nnoremap <silent> <Leader>m :call MarkWindowSwap()<CR>
+nnoremap <silent> <Leader>u :call DoWindowSwap()<CR>
+
+" =============================================================================
+" Generate CTags manually
+" =============================================================================
+function! GenerateTags()
+:   w
+:   exec '!ctags -R -f tags .'
+endfunction
+command! -nargs=* GenTagsManual call GenerateTags()
+
+" =============================================================================
+" Quit if quickfix is last window
+" =============================================================================
+augroup QFClose
+    autocmd!
+    autocmd WinEnter * if winnr('$') == 1 && getbufvar(winbufnr(winnr()), "&buftype") == "quickfix" | q | endif
+augroup END
+
+" =============================================================================
+" Close all buffers
+" =============================================================================
+function! CloseBuffers()
+    let curr = bufnr("%")
+    let last = bufnr("$")
+    if curr > 1     | silent! execute "1,".(curr-1)."bd"        | endif
+    if curr < last  | silent! execute (curr+1).",".last."bd"    | endif
+endfunction
+nmap <Leader>w :call CloseBuffers()<CR>
+
+" =============================================================================
+" Increment numbers in rows
+" =============================================================================
+function! Incr()
+    let a = line('.') - line("'<")
+    let c = virtcol("'<")
+    if a > 0
+        execute 'normal! '.c.'|'.a."\<C-a>"
+    endif
+    normal `<
+endfunction
+vnoremap <C-a> :call Incr()<CR>
+
+
+" =============================================================================
+"                       ____  _             _
+"                      |  _ \| |_   _  __ _(_)_ __  ___
+"                      | |_) | | | | |/ _` | | '_ \/ __|
+"                      |  __/| | |_| | (_| | | | | \__ \
+"                      |_|   |_|\__,_|\__, |_|_| |_|___/
+"                                     |___/
+" =============================================================================
 
 " =============================================================================
 " NEOVIM
@@ -194,7 +823,9 @@ lsp_installer.settings({
 local server_available, requested_server = lsp_installer_servers.get_server("rust_analyzer")
 
 if server_available then
-    local opts = {}
+    local opts = {
+        flags = { allow_incremental_sync = false }
+    }
     local rust_opts = {
         tools = { -- rust-tools options
             autoSetHints = true,
@@ -271,6 +902,13 @@ lsp_installer.on_server_ready(function(server)
     end
 end)
 EOF
+
+function Refresh()
+    lua vim.lsp.stop_client(vim.lsp.get_active_clients())
+    sleep 500m
+    edit
+endfunction
+command RefreshLSP call Refresh()
 
 " =============================================================================
 " Completion
@@ -582,6 +1220,10 @@ elseif has_lspsaga
     nnoremap <silent><Leader>re <cmd>lua vim.lsp.buf.rename()<CR>
     nnoremap <silent><Leader>rn <cmd>:Lspsaga rename<CR>
     nnoremap <silent><Leader>k <cmd>lua require'lspsaga.diagnostic'.show_cursor_diagnostics()<CR>
+    nnoremap <silent> <S-h> <cmd>lua require('lspsaga.action').smart_scroll_with_saga(1)<CR>
+    nnoremap <silent> <S-l> <cmd>lua require('lspsaga.action').smart_scroll_with_saga(-1)<CR>
+    nnoremap <silent> [e :Lspsaga diagnostic_jump_next<CR>
+    nnoremap <silent> ]e :Lspsaga diagnostic_jump_prev<CR>
 endif
 
 
@@ -658,667 +1300,41 @@ vmap <silent>E <Plug>Lightspeed_F
 vmap <silent>Ä <Plug>Lightspeed_t
 vmap <silent>Ä <Plug>Lightspeed_T
 
-    " Code navigation shortcuts
-    nnoremap <silent> <leader>d <cmd>lua vim.lsp.buf.definition()<CR>
-    nnoremap <silent> <leader>i <cmd>lua vim.lsp.buf.implementation()<CR>
-    nnoremap <silent> <leader>y <cmd>lua vim.lsp.buf.type_definition()<CR>
-    nnoremap <silent> <leader>r <cmd>lua vim.lsp.buf.references()<CR>
+" Code navigation shortcuts
+nnoremap <silent> <leader>d <cmd>lua vim.lsp.buf.definition()<CR>
+nnoremap <silent> <leader>i <cmd>lua vim.lsp.buf.implementation()<CR>
+nnoremap <silent> <leader>y <cmd>lua vim.lsp.buf.type_definition()<CR>
+nnoremap <silent> <leader>r <cmd>lua vim.lsp.buf.references()<CR>
 
-    " nnoremap <silent> K         <cmd>lua vim.lsp.buf.hover()<CR>
-    " nnoremap <silent> <c-k>     <cmd>lua vim.lsp.buf.signature_help()<CR>
-    " nnoremap <silent> g0    <cmd>lua vim.lsp.buf.document_symbol()<CR>
-    " nnoremap <silent> gW    <cmd>lua vim.lsp.buf.workspace_symbol()<CR>
-    " nnoremap <silent> ge    <cmd>lua vim.lsp.buf.code_action()<CR>
-
-    " nnoremap <silent> gh :Lspsaga lsp_finder<CR>
-    " nnoremap <silent> ge :Lspsaga code_action<CR>
-    " nnoremap <silent> K :Lspsaga hover_doc<CR>
-    " nnoremap <silent> <S-h> <cmd>lua require('lspsaga.action').smart_scroll_with_saga(1)<CR>
-    " nnoremap <silent> <S-l> <cmd>lua require('lspsaga.action').smart_scroll_with_saga(-1)<CR>
-    " nnoremap <silent> <leader>s :Lspsaga signature_help<CR>
-    " nnoremap <silent> <leader>rn :Lspsaga rename<CR>
-    " nnoremap <silent> gd :Lspsaga preview_definition<CR>
-    " nnoremap <silent> <leader>cd :Lspsaga show_line_diagnostics<CR>
-
-    " nnoremap <silent> [e :Lspsaga diagnostic_jump_next<CR>
-    " nnoremap <silent> ]e :Lspsaga diagnostic_jump_prev<CR>
-
-    " Always show the signcolumn, otherwise it would shift the text each time
-    " diagnostics appear/become resolved.
-    if has("nvim-0.5.0") || has("patch-8.1.1564")
-        " Recently vim can merge signcolumn and number column into one
-        set signcolumn=number
-    else
-        set signcolumn=yes
-    endif
-
-    " Show diagnostic popup on cursor hold
-    " autocmd CursorHold * lua require'lspsaga.diagnostic'.show_line_diagnostics()
-    " autocmd CursorHold * lua require('navigator.diagnostics').show_diagnostics()
-
-    " Goto previous/next diagnostic warning/error
-    nnoremap <silent> gr <cmd>lua vim.lsp.diagnostic.goto_prev()<CR>
-    nnoremap <silent> gn <cmd>lua vim.lsp.diagnostic.goto_next()<CR>
-endif
-
-" =============================================================================
-" Language / Shell
-" =============================================================================
-set langmenu=en_US.UTF-8
-let $LANG='en_US'
-
-" Set the default shell
-if has("win32") || has("win16")
-    source $VIMRUNTIME/delmenu.vim
-    source $VIMRUNTIME/menu.vim
-    set shell=cmd.exe
-    set shellcmdflag=/C
+" Always show the signcolumn, otherwise it would shift the text each time
+" diagnostics appear/become resolved.
+if has("nvim-0.5.0") || has("patch-8.1.1564")
+    " Recently vim can merge signcolumn and number column into one
+    set signcolumn=number
 else
-    set shell=$SHELL
+    set signcolumn=yes
 endif
 
-" =============================================================================
-" General
-" =============================================================================
-set fileencoding=utf-8 " Set the encoding written to file
-set termencoding=utf-8 " Set the default encodings just in case $LANG isn't set
-set encoding=utf-8  " Set the default encodings just in case $LANG isn't set
-set cursorline      " Hightlight current selected line.
-set ttyfast         " Set that we have a fast terminal
-set emoji           " enable emoji's on Vim8
-set clipboard+=unnamed " enabled system clipboard
+" Show diagnostic popup on cursor hold
+" autocmd CursorHold * lua require'lspsaga.diagnostic'.show_line_diagnostics()
+" autocmd CursorHold * lua require('navigator.diagnostics').show_diagnostics()
+" au CursorHold * lua vim.diagnostic.open_float(0,{scope = "cursor"})
+
+" Disable virtual text for diagnostics.
+lua <<EOF
+vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
+    vim.lsp.diagnostic.on_publish_diagnostics, { virtual_text = false, }
+)
+vim.diagnostic.config({
+    virtual_text = false,
+    signs = true,
+    float = { border = "single" },
+})
+EOF
+
+endif " if has(nvim)
 
-syntax enable
-set hidden          " Hide buffer, instead of closing it.
-set number          " Always show line numbers.
-set hlsearch        " Hightlight found searches.
-set incsearch       " Show matched searches as you type.
-set ignorecase      " Ignore case when searching.
-set smartcase       " Ignore case if search pattern is all lowercase, case-sensitive otherwise.
-set nowrapscan      " Do not wrap when searching
 
-set history=1000    " Larger command history.
-set undolevels=1000 " Undo ALL the changes.
-set visualbell      " Don't beep.
-set noerrorbells    " Don't beep.
-
-set nobackup        " Disable backup. set noswapfile can disable the .swp file.
-set nowritebackup
-set noswapfile
-
-" Indentation is 4 spaces, and not a tab
-set tabstop=4       " A tab is 4 spaces.
-set autoindent      " Autoindent.
-set copyindent      " Copy the previous indent on autoindenting.
-set shiftwidth=4    " Number of spaces used for autoindent.
-set expandtab       " Expand <Tab> into spaces
-set smarttab        " Insert 'tabs' on start of line, according to shiftwidth instead of tabstop.
-set scrolloff=3     " 3 lines of buffer above and below the cursor
-
-" Set mapping and key timeouts
-set timeout
-set timeoutlen=1000 " timeout for leader key
-set ttimeoutlen=10  " timeout for esc key
-set updatetime=300  " 300ms of no cursor movement to trigger CursorHold
-
-" Show if leader key is pressed
-set showcmd
-set cmdheight=2     " Give more space for displaying messages.
-
-" Correct backspace
-set backspace=indent,eol,start
-
-" Improve breaks
-set showbreak=>>>
-set breakindent
-
-" Disable mouse
-set mouse=c
-set guioptions+=lrbmTLce
-set guioptions-=lrbmTLce
-set guioptions+=c
-
-" Disable ZZ to close vim
-nnoremap Z <Nop>
-nnoremap ZZ <Nop>
-
-" =============================================================================
-" Performance
-" =============================================================================
-" Improve performance of matchparen plugin
-" This is DISABLING it!
-let g:loaded_matchparen = 1         " Don't show matching parens.
-set noshowmatch                     " Don't show matching braces.
-let g:matchparen_timeout = 2
-let g:matchparen_insert_timeout = 2
-
-" Syntax highlighting for lua in .vimrc
-let g:vimsyn_embed = 'l'
-
-" Improve performance (not necessary on iTerm2 Beta)
-" set lazyredraw
-
-" Disable syntax highlighting long lines
-set synmaxcol=300
-
-" Disable syntax highlighting in large files
-autocmd BufReadPre * if getfsize(expand("%")) > 10000000 | set syntax=OFF | endif
-
-" =============================================================================
-" Buffer Switching
-" =============================================================================
-" Improve :b switch menu
-set wildchar=<Tab> wildmenu wildmode=full
-
-" Buffer switching
-nnoremap <Leader>1 :1b<CR>
-nnoremap <Leader>2 :2b<CR>
-nnoremap <Leader>3 :3b<CR>
-nnoremap <Leader>4 :4b<CR>
-nnoremap <Leader>5 :5b<CR>
-nnoremap <Leader>6 :6b<CR>
-nnoremap <Leader>7 :7b<CR>
-nnoremap <Leader>8 :8b<CR>
-nnoremap <Leader>9 :9b<CR>
-nnoremap <Leader>0 :10b<CR>
-
-" Jump to buffers with Ngb
-let c = 1
-while c <= 99
-  execute "nnoremap " . c . "gb :" . c . "b\<CR>"
-  let c += 1
-endwhile
-
-" Cygwin cursor fix.
-let &t_ti.="\e[1 q"
-let &t_SI.="\e[5 q"
-let &t_EI.="\e[1 q"
-let &t_te.="\e[0 q"
-
-" When running as diff.
-if &diff
-  set modifiable
-  set noreadonly
-  if tabpagenr('$') == 1
-    nnoremap ZZ :wqall<cr>
-  endif
-endif
-
-" Theme
-if has('nvim')
-    set termguicolors
-    let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
-    let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
-endif
-set background=dark
-colorscheme solarized
-" colorscheme solarized8
-
-
-
-" =============================================================================
-" Custom Filetypes
-" =============================================================================
-au BufRead,BufNewFile *.ds set filetype=rgbds                   " GameBoy Assembly
-au BufRead,BufNewFile *.fl,*.flex,*.l,*.lm setlocal ft=lex      " Flex
-au BufRead,BufNewFile *.y,*.ypp,*.ym setlocal ft=yacc           " Bison
-au BufRead,BufNewFile *.man setlocal ft=groff                   " Groff/Troff
-au BufRead,BufNewFile *.mm setlocal ft=objcpp                   " Objective-C++
-au BufRead,BufNewFile *.m setlocal ft=objc                      " Objective-C
-au BufRead,BufNewFile *.jsx set ft=javascript.jsx               " Javascript
-au BufRead,BufNewFile *.tsx set ft=typescript.tsx               " TypescriptX
-au BufRead,BufNewFile *.ts set ft=typescript                    " Typescript
-
-" =============================================================================
-" Set syntax options
-" =============================================================================
-" Highlight trailing whitespace in c files
-let c_space_errors = 1
-" Custom no-fold in my c.vim
-let c_no_block_fold = 1
-" Don't fold comments
-let c_no_comment_fold = 1
-" Don't fold #if 0 blocks
-let c_no_if0_fold = 1
-
-" =============================================================================
-" Bindings
-" =============================================================================
-" Warn about doing the wrong undo (U instead of u).
-nnoremap U :echo " < < ===== C H E C K C A P S L O C K ===== > > "<CR>
-
-" Map redo to r instead of C-r
-nnoremap j <C-r>
-
-" Map Vim Expression valuation
-inoremap <c-a> <c-r>
-
-" Convenient pasting.
-set pastetoggle=<F2>
-
-" Removed due to blocking super awesome multiline edit mode.
-" Convenient copy to clipboard.
-" vnoremap <C-c> :w !pbcopy<CR><CR>
-" noremap <C-v> :r !pbpaste<CR><CR>
-
-" Unhighlight searches
-" using <esc> for this, behaves weird
-nnoremap <C-d> :noh<return>
-
-" Reselect visual blocks after movement
-vnoremap < <gv
-vnoremap > >gv
-
-" Keep search matches in the middle of the window.
-nnoremap ? nzzzv
-nnoremap - Nzzzv
-
-" Move by words
-" nnoremap B B
-" nnoremap S W
-nnoremap <S-b> b
-nnoremap <S-s> w
-vnoremap <S-b> b
-vnoremap <S-s> w
-" Go to end of word
-nnoremap w e
-vnoremap w e
-
-" Key map optimizations for Bone 2 Layout
-" Normal Mode remaps.
-nnoremap b <Left>
-nnoremap r <Up>
-nnoremap n <Down>
-nnoremap s <Right>
-nnoremap gn gj
-nnoremap gr gk
-
-" Visual and Select Mode remaps.
-vnoremap b <Left>
-vnoremap r <Up>
-vnoremap n <Down>
-vnoremap s <Right>
-vnoremap gn gj
-vnoremap gr gk
-
-" Move half page up / down
-nnoremap ( <C-D>
-nnoremap ) <C-U>
-vnoremap ( <C-D>
-vnoremap ) <C-U>
-
-" Move line up down
-nnoremap <S-n> <C-e>
-nnoremap <S-r> <C-y>
-vnoremap <S-n> <C-e>
-vnoremap <S-r> <C-y>
-
-" Insert newline
-" nnoremap <CR> o<Esc>
-" inoremap <C-O> <Esc>o
-
-" Split switching
-nnoremap <C-p> <C-W>w
-nnoremap <C-n> <C-W>j
-nnoremap <C-r> <C-W>k
-nnoremap <C-b> <C-W>h
-nnoremap <C-s> <C-W>l
-
-" Split resizing
-nnoremap ! :vertical resize -5<CR>
-nnoremap = :vertical resize +5<CR>
-nnoremap < :resize +5<CR>
-nnoremap > :resize -5<CR>
-
-" Even out splits
-nnoremap <C-y>w <C-W>=
-nnoremap <C-y>m <C-W>_
-nnoremap <C-y>t <C-W>T
-nnoremap <C-y>l :ZoomWin<CR>
-
-" Split Creating
-nnoremap <C-i> :vsplit<CR>
-nnoremap <C-t> :split<CR>
-
-" Split killing
-command! Bd bp\|bd \#
-nnoremap <C-q> :BD<CR>
-nnoremap <C-w> :bd<CR>
-
-" Close / Open quickfix
-nnoremap <Leader>qq :cclose<CR>
-nnoremap <Leader>qc :cclose<CR>
-nnoremap <Leader>qo :copen<CR>
-
-" Map Y to y$, to behave like D and C
-nnoremap Y y$
-
-" Jump back in time
-nnoremap <Leader>. <C-t>
-
-" =============================================================================
-" Tab navigation
-" =============================================================================
-nnoremap <C-u>b :tabprevious<CR>
-nnoremap <C-u>s :tabnext<CR>
-nnoremap <C-u>n :tabedit<CR>
-nnoremap <C-u>c :tabclose<CR>
-nnoremap <C-u>1 1gt
-nnoremap <C-u>2 2gt
-nnoremap <C-u>3 3gt
-nnoremap <C-u>4 4gt
-nnoremap <C-u>5 5gt
-nnoremap <C-u>6 6gt
-cabbrev tabv tab sview +setlocal\ nomodifiable
-
-" =============================================================================
-" Indent
-" =============================================================================
-" Use two spaces to indent js/ts files
-autocmd FileType javascript setlocal tabstop=2
-autocmd FileType javascript setlocal shiftwidth=2
-autocmd FileType javascript.jsx setlocal tabstop=2
-autocmd FileType javascript.jsx setlocal shiftwidth=2
-autocmd FileType typescript setlocal tabstop=2
-autocmd FileType typescript setlocal shiftwidth=2
-autocmd FileType typescript set makeprg=tsc\ $*
-autocmd FileType typescript.tsx setlocal tabstop=2
-autocmd FileType typescript.tsx setlocal shiftwidth=2
-autocmd FileType typescript.tsx set makeprg=tsc\ $*
-
-" Setup comment string
-autocmd FileType javascript setlocal commentstring=/*\ %s\ */
-autocmd FileType javascript.jsx setlocal commentstring=/*\ %s\ */
-autocmd FileType typescript setlocal commentstring=/*\ %s\ */
-autocmd FileType typescript.tsx setlocal commentstring=/*\ %s\ */
-autocmd FileType lalrpop setlocal commentstring=//\ %s
-
-" Use two spaces to indent json files
-autocmd FileType json setlocal tabstop=2
-autocmd FileType json setlocal shiftwidth=2
-" Use Tabs in Makefiles
-autocmd FileType make setlocal noexpandtab
-
-" Use two spaces in gn files
-autocmd FileType gn setlocal tabstop=2
-autocmd FileType gn setlocal shiftwidth=2
-
-" Use two spaces in yaml files
-autocmd FileType yaml setlocal ts=2 sts=2 sw=2 expandtab
-
-
-" =============================================================================
-" Folding Config
-" =============================================================================
-nnoremap z( zj
-nnoremap z) zk
-augroup vimrc
-    autocmd!
-
-    " Set foldmethod indent AND manual
-    autocmd BufReadPre * setlocal foldmethod=indent
-    autocmd BufWinEnter * if &fdm == 'indent' | setlocal foldmethod=manual | endif
-
-    " Open all folds at startup
-    autocmd BufRead * normal zR
-augroup END
-
-augroup filetype_cs
-    autocmd!
-
-    " Set folding by syntax for C# (Unity) files
-    autocmd FileType cs setlocal foldmethod=syntax
-    autocmd FileType cs let b:match_words = '\s*#\s*region.*$:\s*#\s*endregion'
-
-    " Close all folds
-    autocmd BufRead *.cs normal zM
-augroup END
-
-augroup filetype_cpp
-    autocmd!
-
-    " Create custom doxygen comment style
-    autocmd FileType cpp syn region doxygenComment start="/\*\!" end="\*/" fold
-    autocmd FileType cpp hi link doxygenComment cError
-
-    " Fold based on our custom syntax.
-    autocmd FileType cpp setlocal foldmethod=syntax
-
-    " Close all folds.
-    autocmd BufRead *.cxx,*.hxx,*.cpp,*.hpp normal zM
-augroup END
-
-" =============================================================================
-" Set 80 column limit.
-" =============================================================================
-if exists('+colorcolumn')
-  set colorcolumn=80
-  highlight ColorColumn guibg=#004653
-
-  " except for mail
-  autocmd FileType mail set colorcolumn=72
-else
-  au BufWinEnter * let w:m2=matchadd('ErrorMsg', '\%>80v.\+', -1)
-endif
-
-" =============================================================================
-" Setup GUI font
-" =============================================================================
-if has('gui_running')
-    if has('nvim')
-        " Done in ginit.vim
-        " has('gui_running') is always false.
-    else
-        set t_Co=256
-        set guifont=PragmataPro\ Mono:h9
-        set lsp=0
-        " HighDPI
-        " set guifont=Input:h9:w4.5
-        " set lsp=-2
-    endif
-endif
-
-" =============================================================================
-" Commands
-" =============================================================================
-" Invoke p4
-command -nargs=+ P4 :cexpr system('p4.py <args> '.expand('%:p')) | e! | copen
-
-" Change current working directory
-nnoremap ,cd :cd %:p:h<CR>:pwd<CR>
-
-" Never mess when file opened without sudo.
-cmap w!! w !sudo tee % >/dev/null
-
-" =============================================================================
-" Profiling
-" =============================================================================
-fun! ProfileStart()
-:   profile start profile.log
-:   profile func *
-:   profile file *
-endfun
-command! ProfileStart call ProfileStart()
-
-fun! ProfileEnd()
-:   profile pause
-:   noautocmd qall!
-endfun
-command! ProfileEnd call ProfileEnd()
-
-" =============================================================================
-" Strip trailing whitespace
-" =============================================================================
-fun! StripTrailingWhitespaces()
-    let l = line(".")
-    let c = col(".")
-    %s/\s\+$//e
-    call cursor(l, c)
-endfun
-
-command! StripWhitespace call StripTrailingWhitespaces()
-
-" =============================================================================
-" Minifier functions
-" =============================================================================
-fun! MinifyJson()
-  %s/\ //g
-  %s/\n//g
-endfunction
-
-command! JsonMinify call MinifyJson()
-
-" =============================================================================
-" Highlight whitespace
-" =============================================================================
-let g:better_whitespace_enabled=1
-let g:strip_whitespace_on_save=1
-let g:strip_only_modified_lines=1
-let g:strip_whitespace_confirm=0
-
-" =============================================================================
-" Shell command
-" =============================================================================
-command! -complete=shellcmd -nargs=+ Shell call s:RunShellCommand(<q-args>)
-function! s:RunShellCommand(cmdline)
-  let expanded_cmdline = a:cmdline
-  for part in split(a:cmdline, ' ')
-     if part[0] =~ '\v[%#<]'
-        let expanded_part = fnameescape(expand(part))
-        let expanded_cmdline = substitute(expanded_cmdline, part, expanded_part, '')
-     endif
-  endfor
-  botright new
-  setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap
-  execute '$read !'. expanded_cmdline
-  execute 1 'delete _'
-  setlocal nomodifiable
-  1
-endfunction
-
-" =============================================================================
-" Compile and Run code. The primitive way.
-" =============================================================================
-command! -nargs=1 Silent execute ':silent !'.<q-args> | execute ':redraw!'
-function! CompileCC()
-   write
-   let src = expand('%:p')
-   let exe = expand('%:r')
-   call s:RunShellCommand('clang++ -std=c++17 '.src.' -o '.exe.' && ./'.exe)
-   exec 'Silent rm '.exe
-endfunction
-autocmd filetype cpp nnoremap <F5> :call CompileCC()<CR>
-autocmd filetype cpp command! Run :call CompileCC()
-
-" =============================================================================
-" Make
-" =============================================================================
-function! RunMake(...)
-   write
-   echo 'make ' . join(a:000, ' ')
-   call s:RunShellCommand('make '.join(a:000, ' '))
-endfunction
-command! -nargs=* Make :call RunMake(<f-args>)
-
-
-" =============================================================================
-" Focus Mode
-" =============================================================================
-function! ToggleFocusMode()
-  if (&foldcolumn != 12)
-    set laststatus=0
-    set numberwidth=10
-    set foldcolumn=12
-    set noruler
-    hi FoldColumn ctermbg=none
-    hi LineNr ctermfg=0 ctermbg=none
-    hi NonText ctermfg=0
-  else
-    set laststatus=2
-    set numberwidth=4
-    set foldcolumn=0
-    set ruler
-    execute 'colorscheme ' . g:colors_name
-  endif
-endfunc
-nnoremap <F1> :call ToggleFocusMode()<cr>
-
-" =============================================================================
-" Buffer Moving
-" =============================================================================
-function! MarkWindowSwap()
-    let g:markedWinNum = winnr()
-endfunction
-
-function! DoWindowSwap()
-    "Mark destination
-    let curNum = winnr()
-    let curBuf = bufnr( "%" )
-    exe g:markedWinNum . "wincmd w"
-    "Switch to source and shuffle dest->source
-    let markedBuf = bufnr( "%" )
-    "Hide and open so that we aren't prompted and keep history
-    exe 'hide buf' curBuf
-    "Switch to dest and shuffle source->dest
-    exe curNum . "wincmd w"
-    "Hide and open so that we aren't prompted and keep history
-    exe 'hide buf' markedBuf
-endfunction
-
-nnoremap <silent> <Leader>m :call MarkWindowSwap()<CR>
-nnoremap <silent> <Leader>u :call DoWindowSwap()<CR>
-
-" =============================================================================
-" Generate CTags manually
-" =============================================================================
-function! GenerateTags()
-:   w
-:   exec '!ctags -R -f tags .'
-endfunction
-command! -nargs=* GenTagsManual call GenerateTags()
-
-" =============================================================================
-" Quit if quickfix is last window
-" =============================================================================
-augroup QFClose
-    autocmd!
-    autocmd WinEnter * if winnr('$') == 1 && getbufvar(winbufnr(winnr()), "&buftype") == "quickfix" | q | endif
-augroup END
-
-" =============================================================================
-" Close all buffers
-" =============================================================================
-function! CloseBuffers()
-    let curr = bufnr("%")
-    let last = bufnr("$")
-    if curr > 1     | silent! execute "1,".(curr-1)."bd"        | endif
-    if curr < last  | silent! execute (curr+1).",".last."bd"    | endif
-endfunction
-nmap <Leader>w :call CloseBuffers()<CR>
-
-" =============================================================================
-" Increment numbers in rows
-" =============================================================================
-function! Incr()
-    let a = line('.') - line("'<")
-    let c = virtcol("'<")
-    if a > 0
-        execute 'normal! '.c.'|'.a."\<C-a>"
-    endif
-    normal `<
-endfunction
-vnoremap <C-a> :call Incr()<CR>
-
-
-" =============================================================================
-"                       ____  _             _
-"                      |  _ \| |_   _  __ _(_)_ __  ___
-"                      | |_) | | | | |/ _` | | '_ \/ __|
-"                      |  __/| | |_| | (_| | | | | \__ \
-"                      |_|   |_|\__,_|\__, |_|_| |_|___/
-"                                     |___/
-" =============================================================================
-"
 " =============================================================================
 " UndoTree
 " =============================================================================
@@ -1819,14 +1835,12 @@ hi! Comment cterm=NONE ctermfg=92 gui=NONE guifg=#586e75 guibg=NONE guisp=NONE
 " =============================================================================
 " YAML
 " =============================================================================
-" TODO: Fix that it only affects yaml files
-autocmd FileType yaml nnoremap <C-f> :Prettier<CR>
+autocmd FileType yaml nnoremap <buffer> <C-f> :Prettier<CR>
 
 " =============================================================================
 " Rust
 " =============================================================================
-" TODO: Fix that it only affects rust files
-autocmd FileType rust nnoremap <C-f> :RustFmt<CR>
+autocmd FileType rust nnoremap <buffer> <C-f> :RustFmt<CR>
 
 " Must be after setting the color scheme.
 " Pmenu:
