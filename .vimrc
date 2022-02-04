@@ -49,6 +49,9 @@ endif
 
 " Absolute Must Haves!
 Plug 'tpope/vim-commentary'
+Plug 'tpope/vim-repeat'
+Plug 'tpope/vim-surround'
+Plug 'tpope/vim-speeddating'
 Plug 'terryma/vim-multiple-cursors'
 Plug 'Konfekt/FastFold'
 Plug 'Yggdroot/LeaderF', { 'do': ':LeaderfInstallCExtension' }
@@ -66,6 +69,7 @@ Plug 'junegunn/vim-peekaboo'
 " Required for 'EnhancedJumps'
 Plug 'vim-scripts/ingo-library'
 Plug 'vim-scripts/EnhancedJumps'
+Plug 'MattesGroeger/vim-bookmarks'
 
 " My own plugins
 Plug 'leandros/vim-misc'
@@ -77,24 +81,31 @@ Plug 'leandros/vim-bufkill'
 " Rust
 if has('nvim')
     " Basically all for LSP support.
-    Plug 'neovim/nvim-lspconfig' " Collection of common configurations for the Nvim LSP client
-    Plug 'williamboman/nvim-lsp-installer'
+    Plug 'neovim/nvim-lspconfig'               " Collection of common configurations for the Nvim LSP client
+    Plug 'williamboman/nvim-lsp-installer'     " Easily install LSP Server
     Plug 'kyazdani42/nvim-web-devicons'
-    Plug 'nvim-lua/plenary.nvim' " Lua library
-    Plug 'hrsh7th/nvim-cmp'      " Completion framework
-    Plug 'hrsh7th/cmp-nvim-lsp'  " LSP completion source for nvim-cmp
-    Plug 'hrsh7th/cmp-vsnip'     " Snippet completion source for nvim-cmp
-    Plug 'hrsh7th/cmp-path'      " Completion for paths
-    Plug 'hrsh7th/cmp-buffer'    " Completion from buffer
-    Plug 'hrsh7th/vim-vsnip'     " Snippet engine
-    Plug 'hrsh7th/vim-vsnip-integ'
-
-    Plug 'nvim-telescope/telescope.nvim'
+    Plug 'nvim-lua/plenary.nvim'               " Lua library
+    Plug 'hrsh7th/nvim-cmp'                    " Completion framework
+    Plug 'hrsh7th/cmp-nvim-lsp'                " LSP completion source for nvim-cmp
+    Plug 'hrsh7th/cmp-vsnip'                   " Snippet completion source for nvim-cmp
+    Plug 'hrsh7th/cmp-path'                    " Completion for paths
+    Plug 'hrsh7th/cmp-buffer'                  " Completion from buffer
+    Plug 'hrsh7th/vim-vsnip'                   " Snippet engine
+    " Plug 'hrsh7th/vim-vsnip-integ'             " Snippet integration with compe
+    Plug 'simrat39/rust-tools.nvim'            " Improved LSP support for Rust
+    Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+    Plug 'lewis6991/gitsigns.nvim'             " Showins git changes in the gutter
+    Plug 'danymat/neogen'                      " Generating documentation comments
+    Plug 'nvim-lualine/lualine.nvim'           " Statusline (bottom)
+    Plug 'kdheepak/tabline.nvim'               " Tabline (top)
+    Plug 'nvim-lua/lsp-status.nvim'            " Plugin to show lsp status in statusline
+    Plug 'lukas-reineke/indent-blankline.nvim' " Showing indentation lines
+    Plug 'MattesGroeger/vim-bookmarks'         " Bookmarks
+    Plug 'folke/lsp-colors.nvim'               " Highlight groups for trouble.nvim
+    Plug 'folke/trouble.nvim'                  " Pretty diagnostics
+    Plug 'nvim-telescope/telescope.nvim'       " Improved LSP actions
     " Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
     Plug 'leandros/telescope-fzf-native.nvim', { 'do': 'make', 'branch': 'feature/windows_build_support' }
-
-    Plug 'folke/lsp-colors.nvim'    " Highlight groups for trouble.nvim
-    Plug 'folke/trouble.nvim'       " Pretty diagnostics
 
     if has_navigator
         Plug 'ray-x/guihua.lua', {'do': 'cd lua/fzy && make' }
@@ -103,16 +114,6 @@ if has('nvim')
     if has_lspsaga
         Plug 'tami5/lspsaga.nvim' " chose either lspsaga or navigator
     endif
-    Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
-    Plug 'lewis6991/gitsigns.nvim'
-    Plug 'danymat/neogen'
-
-    Plug 'simrat39/rust-tools.nvim'
-
-    Plug 'nvim-lualine/lualine.nvim' " Statusline
-    Plug 'nvim-lua/lsp-status.nvim'  " Plugin to show lsp status in statusline
-
-    Plug 'lukas-reineke/indent-blankline.nvim'
 
     " Debugging
     " Plug 'mfussenegger/nvim-dap' " debug adapter for debugging
@@ -235,6 +236,7 @@ set mouse=c
 set guioptions+=lrbmTLce
 set guioptions-=lrbmTLce
 set guioptions+=c
+set sessionoptions+=tabpages,globals " store tabpages and globals in session
 
 " Disable ZZ to close vim
 nnoremap Z <Nop>
@@ -1031,6 +1033,28 @@ require'lualine'.setup {
   },
 }
 EOF
+
+" =============================================================================
+" TABLINE
+" =============================================================================
+" Should be below lualine.
+
+lua <<EOF
+require'tabline'.setup {
+    -- Defaults configuration options
+    enable = true,
+    options = {
+        max_bufferline_percent = 66, -- set to nil by default, and it uses vim.o.columns * 2/3
+        show_tabs_always = false, -- this shows tabs only when there are more than one tab or if the first tab is named
+        show_devicons = false, -- this shows devicons in buffer section
+        show_bufnr = false, -- this appends [bufnr] to buffer section,
+        show_filename_only = true, -- shows base filename only instead of relative path in filename
+        modified_icon = "+ ", -- change the default modified icon
+        modified_italic = false, -- set to true by default; this determines whether the filename turns italic if modified
+    }
+}
+EOF
+
 
 " =============================================================================
 " Navigator
