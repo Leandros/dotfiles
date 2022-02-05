@@ -49,7 +49,7 @@ endif
 
 " Absolute Must Haves!
 Plug 'tpope/vim-commentary'
-Plug 'tpope/vim-repeat'
+" Plug 'tpope/vim-repeat' " remaps <c-r>
 Plug 'tpope/vim-surround'
 Plug 'tpope/vim-speeddating'
 Plug 'terryma/vim-multiple-cursors'
@@ -63,7 +63,6 @@ Plug 'ggandor/lightspeed.nvim'
 " Plug 'mbbill/undotree'
 
 " General
-Plug 'SirVer/ultisnips'
 Plug 'junegunn/vim-easy-align'
 Plug 'junegunn/vim-peekaboo'
 " Required for 'EnhancedJumps'
@@ -177,10 +176,10 @@ endif
 " =============================================================================
 set fileencoding=utf-8 " Set the encoding written to file
 set termencoding=utf-8 " Set the default encodings just in case $LANG isn't set
-set encoding=utf-8  " Set the default encodings just in case $LANG isn't set
-set cursorline      " Hightlight current selected line.
-set ttyfast         " Set that we have a fast terminal
-set emoji           " enable emoji's on Vim8
+set encoding=utf-8     " Set the default encodings just in case $LANG isn't set
+set cursorline         " Hightlight current selected line.
+set ttyfast            " Set that we have a fast terminal
+set emoji              " enable emoji's on Vim8
 set clipboard+=unnamed " enabled system clipboard
 
 syntax enable
@@ -1586,23 +1585,6 @@ if has_key(g:plugs, 'YouCompleteMe')
     let g:ycm_always_populate_location_list = 1
     let g:ycm_use_ultisnips_completer = 1
     set completeopt-=preview
-endif
-
-" =============================================================================
-" UltiSnips
-" =============================================================================
-if has_key(g:plugs, 'ultisnips')
-    let g:UltiSnipsExpandTrigger = "<c-z>"
-    let g:UltiSnipsJumpForwardTrigger = "<c-z>"
-    let g:UltiSnipsJumpBackwardTrigger = "<c-y>"
-    let g:UltiSnipsListSnippets = "<c-tab>"
-    if has("win32") || has("win16")
-        let g:UltiSnipsSnippetsDir = $HOME . '/vimfiles/bundle/vim-misc/UltiSnips'
-    else
-        let g:UltiSnipsSnippetsDir = $HOME . '/.vim/bundle/vim-misc/UltiSnips'
-    endif
-    let g:UltiSnipsSnippetDirectories = ['UltiSnips']
-    let g:UltiSnipsEditSplit = "vertical"
 endif
 
 " =============================================================================
