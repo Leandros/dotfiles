@@ -99,7 +99,6 @@ if has('nvim')
     Plug 'kdheepak/tabline.nvim'               " Tabline (top)
     Plug 'nvim-lua/lsp-status.nvim'            " Plugin to show lsp status in statusline
     Plug 'lukas-reineke/indent-blankline.nvim' " Showing indentation lines
-    Plug 'MattesGroeger/vim-bookmarks'         " Bookmarks
     Plug 'folke/lsp-colors.nvim'               " Highlight groups for trouble.nvim
     Plug 'folke/trouble.nvim'                  " Pretty diagnostics
     Plug 'nvim-telescope/telescope.nvim'       " Improved LSP actions
@@ -1802,6 +1801,46 @@ endfunction
 " =============================================================================
 xmap ga <Plug>(EasyAlign)
 nmap ga <Plug>(EasyAlign)
+
+" =============================================================================
+" vim-bookmarks
+" =============================================================================
+" We disable default keybinding to create our own binding which is not active
+" in NERDTree
+let g:bookmark_no_default_key_mappings = 1
+
+fun! SetVimBookmarkMappings()
+    " Don't set mappings in nerdtree
+    if &ft =~ 'nerdtree'
+        return
+    endif
+    nnoremap <buffer> mm :BookmarkToggle<CR>
+    nnoremap <buffer> mi :BookmarkAnnotate<CR>
+    nnoremap <buffer> mn :BookmarkNext<CR>
+    nnoremap <buffer> mr :BookmarkPrev<CR>
+    nnoremap <buffer> ma :BookmarkShowAll<CR>
+    nnoremap <buffer> md :BookmarkClear<CR>
+    nnoremap <buffer> mx :BookmarkClearAll<CR>
+    nnoremap <buffer> mrr :BookmarkMoveUp<CR>
+    nnoremap <buffer> mnn :BookmarkMoveDown<CR>
+    nnoremap <buffer> mg :BookmarkMoveToLine<CR>
+endfun
+
+fun! UnsetVimBookmarkMappings()
+    silent! nunmap <buffer> mm
+    silent! nunmap <buffer> mi
+    silent! nunmap <buffer> mn
+    silent! nunmap <buffer> mr
+    silent! nunmap <buffer> ma
+    silent! nunmap <buffer> md
+    silent! nunmap <buffer> mx
+    silent! nunmap <buffer> mrr
+    silent! nunmap <buffer> mnn
+    silent! nunmap <buffer> mg
+endfun
+
+au BufEnter * call SetVimBookmarkMappings()
+autocmd FileType nerdtree call UnsetVimBookmarkMappings()
 
 " =============================================================================
 " Rainbow
