@@ -102,6 +102,7 @@ if has('nvim')
     Plug 'folke/lsp-colors.nvim'               " Highlight groups for trouble.nvim
     Plug 'folke/trouble.nvim'                  " Pretty diagnostics
     Plug 'nvim-telescope/telescope.nvim'       " Improved LSP actions
+    " Plug 'nvim-telescope/telescope-ui-select.nvim' " Use telescope as native vim select popup
     " Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
     Plug 'leandros/telescope-fzf-native.nvim', { 'do': 'make', 'branch': 'feature/windows_build_support' }
 
@@ -114,6 +115,7 @@ if has('nvim')
     endif
 
     " Debugging
+    Plug 'puremourning/vimspector'
     " Plug 'mfussenegger/nvim-dap' " debug adapter for debugging
     " Plug 'theHamsta/nvim-dap-virtual-text' " virtual text during debugging
     " Plug 'rcarriga/nvim-dap-ui' " for nvim-dap
@@ -815,6 +817,9 @@ if server_available then
     local opts = {
         flags = { allow_incremental_sync = false }
     }
+    -- local extension_path = 'C:/Users/leandros/bin/codelldb-x86_64-windows/extension/'
+    -- local codelldb_path = extension_path .. 'adapter/codelldb.exe'
+    -- local liblldb_path = extension_path .. 'lldb/lib/liblldb.lib'
     local rust_opts = {
         tools = { -- rust-tools options
             autoSetHints = true,
@@ -844,6 +849,9 @@ if server_available then
                 use_telescope = true,
             },
         },
+        -- dap = {
+        --     adapter = require('rust-tools.dap').get_codelldb_adapter(codelldb_path, liblldb_path)
+        -- },
         server = vim.tbl_deep_extend("force", requested_server:get_default_options(), opts, {
             on_attach = function(client)
                 lsp_status.on_attach(client)
@@ -921,6 +929,29 @@ function Refresh()
     edit
 endfunction
 command RefreshLSP call Refresh()
+
+" =============================================================================
+" Debugging
+" =============================================================================
+let g:vimspector_enable_mappings = 'HUMAN'
+let g:vimspector_install_gadgets = [ 'CodeLLDB' ]
+
+nmap <leader>bl :call vimspector#Launch()<CR>
+nmap <leader>bq :VimspectorReset<CR>
+nmap <leader>bz <Plug>VimpectorRestart
+nmap <leader>bc <Plug>VimspectorContinue
+nmap <leader>bd <Plug>VimspectorStop
+nmap <leader>bt <Plug>VimspectorRunToCursor
+nmap <leader>bn <Plug>VimspectorStepOver
+nmap <leader>bsi <Plug>VimspectorStepInto
+nmap <leader>bso <Plug>VimspectorStepOut
+nmap <leader>br <Plug>VimspectorToggleBreakpoint
+nmap <leader>be :VimspectorEval
+nmap <leader>bw :VimspectorWatch
+nmap <leader>bo :VimspectorShowOutput
+nmap <leader>bi <Plug>VimspectorBalloonEval
+xmap <leader>bi <Plug>VimspectorBalloonEval
+
 
 " =============================================================================
 " Completion
@@ -1687,13 +1718,19 @@ require('telescope').setup {
       override_file_sorter = true,     -- override the file sorter
       case_mode = "smart_case",        -- or "ignore_case" or "respect_case"
                                        -- the default case_mode is "smart_case"
-    }
+    },
+    --["ui-select"] = {
+    --  require("telescope.themes").get_dropdown {
+    --    -- even more opts
+    --  }
+    --}
   }
 }
 
 -- To get fzf loaded and working with telescope, you need to call
 -- load_extension, somewhere after setup function:
 require('telescope').load_extension('fzf')
+-- require('telescope').load_extension('ui-select')
 EOF
 
 " Doubled with navigator:
@@ -1720,7 +1757,7 @@ nnoremap <leader>v <cmd>lua require('telescope.builtin').treesitter()<cr>
 " =============================================================================
 let g:Lf_ShortcutF = '<Leader>o'
 nnoremap <Leader>o :LeaderfFile<CR>
-nnoremap <Leader>b :LeaderfBuffer<CR>
+nnoremap <Leader>bb :LeaderfBuffer<CR>
 nnoremap <Leader>z :LeaderfMruCwd<CR>
 let g:Lf_UseVersionControlTool = 0
 let g:Lf_ShowRelativePath = 1
@@ -1844,8 +1881,8 @@ fun! SetVimBookmarkMappings()
     nnoremap <buffer> ma :BookmarkShowAll<CR>
     nnoremap <buffer> md :BookmarkClear<CR>
     nnoremap <buffer> mx :BookmarkClearAll<CR>
-    nnoremap <buffer> mrr :BookmarkMoveUp<CR>
-    nnoremap <buffer> mnn :BookmarkMoveDown<CR>
+    nnoremap <buffer> mh :BookmarkMoveUp<CR>
+    nnoremap <buffer> ml :BookmarkMoveDown<CR>
     nnoremap <buffer> mg :BookmarkMoveToLine<CR>
 endfun
 
@@ -1857,8 +1894,8 @@ fun! UnsetVimBookmarkMappings()
     silent! nunmap <buffer> ma
     silent! nunmap <buffer> md
     silent! nunmap <buffer> mx
-    silent! nunmap <buffer> mrr
-    silent! nunmap <buffer> mnn
+    silent! nunmap <buffer> mh
+    silent! nunmap <buffer> ml
     silent! nunmap <buffer> mg
 endfun
 
