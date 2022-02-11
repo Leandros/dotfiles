@@ -102,9 +102,10 @@ if has('nvim')
     Plug 'folke/lsp-colors.nvim'               " Highlight groups for trouble.nvim
     Plug 'folke/trouble.nvim'                  " Pretty diagnostics
     Plug 'nvim-telescope/telescope.nvim'       " Improved LSP actions
-    " Plug 'nvim-telescope/telescope-ui-select.nvim' " Use telescope as native vim select popup
+    " Plug 'nvim-telescope/telescope-ui-select.nvim' " Use telescope as native vim select popup, required from NVIM v0.7.0
     " Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
     Plug 'leandros/telescope-fzf-native.nvim', { 'do': 'make', 'branch': 'feature/windows_build_support' }
+    Plug 'kevinhwang91/nvim-bqf'               " Get preview in quickfix
 
     if has_navigator
         Plug 'ray-x/guihua.lua', {'do': 'cd lua/fzy && make' }
@@ -311,6 +312,7 @@ if has('nvim')
     let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
 endif
 set background=dark
+let g:solarized_italics = 0
 colorscheme solarized
 
 " =============================================================================
@@ -1320,7 +1322,18 @@ EOF
 
 lua <<EOF
 require'nvim-treesitter.configs'.setup {
-    ensure_installed = {'rust', 'json', 'javascript', 'typescript', 'tsx', 'vim'},
+    ensure_installed = {'rust', 'json', 'javascript', 'typescript', 'tsx', 'vim', 'lua'},
+    highlight = {
+        enable = true,
+        disable = { "rust" },
+        additional_vim_regex_highlighting = false,
+        custom_captures = {
+            ["punctuation.bracket"] = "Variable",
+            ["punctuation.delimiter"] = "Variable",
+            ["include"] = "Keyword",
+            ["keyword.function"] = "Keyword",
+        },
+    },
 }
 EOF
 
@@ -1346,7 +1359,7 @@ lua << EOF
 require("indent_blankline").setup {
     show_end_of_line = false,
     show_first_indent_level = false,
-    filetype = {'yaml'},
+    filetype = {'yaml', 'rust'},
     filetype_exclude = {'help'},
     buftype_exclude = {'terminal'},
     --show_current_context = true,
@@ -1932,8 +1945,9 @@ let g:rainbow_conf = {
 " =============================================================================
 " Colors
 " =============================================================================
-hi! IndentBlanklineChar ctermfg=15 guifg=#073642 gui=nocombine
-hi! IndentBlanklineSpaceChar ctermfg=15 guifg=#073642 gui=nocombine
+" Color was previously: #073642
+hi! IndentBlanklineChar ctermfg=15 guifg=#234854  gui=nocombine
+hi! IndentBlanklineSpaceChar ctermfg=15 guifg=#234854 gui=nocombine
 hi! Comment cterm=NONE ctermfg=92 gui=NONE guifg=#586e75 guibg=NONE guisp=NONE
 
 " =============================================================================
