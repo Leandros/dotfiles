@@ -1635,25 +1635,6 @@ EOF
 endif
 
 " =============================================================================
-" YouCompleteMe
-" =============================================================================
-if has_key(g:plugs, 'YouCompleteMe')
-    let g:ycm_key_list_select_completion  = ['<Tab>', '<Down>']
-    let g:ycm_key_list_previous_completion  = ['<S-Tab>', '<Up>']
-    let g:ycm_key_list_stop_completion = ['<Enter>']
-    let g:ycm_key_invoke_completion = '<C-Space>'
-    let g:ycm_add_preview_to_completeopt = 1
-    let g:ycm_error_symbol = 'E>'
-    let g:ycm_warning_symbol = 'W>'
-    let g:ycm_complete_in_comments = 1
-    let g:ycm_min_num_of_chars_for_completion = 2
-    let g:ycm_echo_current_diagnostic = 1
-    let g:ycm_always_populate_location_list = 1
-    let g:ycm_use_ultisnips_completer = 1
-    set completeopt-=preview
-endif
-
-" =============================================================================
 " Vsnip
 " =============================================================================
 
@@ -1858,15 +1839,9 @@ vnoremap <silent> <C-j> :MultipleCursorsFind <C-R>/<CR>
 " Disable youcompleteme while multiple cursors are active
 function! Multiple_cursors_before()
     let g:yankring_record_enabled = 0
-    if exists("*youcompleteme#DisableCursorMovedAutocommands")
-        call youcompleteme#DisableCursorMovedAutocommands()
-    endif
 endfunction
 function! Multiple_cursors_after()
     let g:yankring_record_enabled = 1
-    if exists("*youcompleteme#EnableCursorMovedAutocommands")
-        call youcompleteme#EnableCursorMovedAutocommands()
-    endif
 endfunction
 
 " =============================================================================
