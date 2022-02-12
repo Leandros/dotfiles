@@ -3,11 +3,28 @@
 #################
 
 # History
+shopt -u histappend
 export HISTFILE=~/.bash_history
 export HISTSIZE=
 export HISTFILESIZE=
 export HISTCONTROL=ignoreboth:erasedups
 export HISTTIMEFORMAT="%F %T: "
+
+# Persistent history.
+# Will be run in PROMPT_COMMAND
+log_bash_persistent_history()
+{
+  [[
+    $(history 1) =~ ^\ *[0-9]+\ +([^\ ]+\ [^\ ]+)\ +(.*)$
+  ]]
+  local date_part="${BASH_REMATCH[1]}"
+  local command_part="${BASH_REMATCH[2]}"
+  if [ "$command_part" != "$PERSISTENT_HISTORY_LAST" ]
+  then
+    echo $date_part "|" "$command_part" >> ~/.persistent_history
+    export PERSISTENT_HISTORY_LAST="$command_part"
+  fi
+}
 
 # Defaults
 export EDITOR=nvim
@@ -24,9 +41,24 @@ set show-all-if-ambiguous on
 set completion-ignore-case on
 set menu-complete-display-prefix on
 
+# Enable advanced globbing
+shopt -s globstar
+
+# Disable stupid old stuff (enables c-s)
+stty -ixon -ixoff
+
 # Set Locale. LOL
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
+
+# Path
+export PATH=$PATH:$HOME/bin
+export PATH=$PATH:$HOME/.cargo/bin
+
+if [[ "$IS_WINDOWS" = "1" ]]; then
+    export PATH=$PATH:/c/Python310/Scripts
+    export PATH=$PATH:/c/Perforce
+fi
 
 # XDG
 if [ "$IS_WINDOWS" = "1" ]; then
@@ -36,23 +68,22 @@ if [ "$IS_WINDOWS" = "1" ]; then
     export XDG_STATE_HOME=$LOCALAPPDATA
 fi
 
-
 # Less config
 export LESS="-R"
 export LESSOPEN="|~/.lessfilter %s"
 
-# Enable advanced globbing
-shopt -s globstar
-
-# Disable stupid old stuff (enables c-s)
-stty -ixon
-
 # Aliases
-pbcopy() { read data; echo "$data" > /dev/clipboard; }
-pbpaste() { cat /dev/clipboard; }
 nvim-qt() { NVIM_GUI=1 command nvim-qt "$@"; }
 alias ti='tig status'
 alias vim='nvim'
+alias vimdiff='nvim -d'
+alias tf='terraform'
+alias pkc='packer'
+if [ "$IS_WINDOWS" = "1" ]; then
+    alias http='winpty http'
+    pbcopy() { read data; echo "$data" > /dev/clipboard; }
+    pbpaste() { cat /dev/clipboard; }
+fi
 
 lg()
 {
@@ -77,12 +108,9 @@ if command -v fnm &> /dev/null; then
     eval "`fnm env`"
 fi
 
-# Path
-export PATH=$PATH:$HOME/bin
-export PATH=$PATH:$HOME/.cargo/bin
-
-if [[ "$(uname)" =~ MINGW* ]]; then
-    export PATH=$PATH:"C:/Perforce"
+# Use zoxide if installed.
+if command -v zoxide &> /dev/null; then
+    eval "$(zoxide init bash)"
 fi
 
 # Prompt
@@ -95,6 +123,8 @@ function __bash_prompt {
     local Y="\[\033[0;33m\]"        # Yellow
     local C="\[\033[0;36m\]"        # Cyan
     PS1="${G}\n\u@\h ${Y}\w${C}`__git_ps1`${NONE}\n$ "
+
+    log_bash_persistent_history
 }
 PROMPT_COMMAND=__bash_prompt
 
