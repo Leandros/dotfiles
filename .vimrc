@@ -106,6 +106,7 @@ if has('nvim')
     " Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
     Plug 'leandros/telescope-fzf-native.nvim', { 'do': 'make', 'branch': 'feature/windows_build_support' }
     Plug 'kevinhwang91/nvim-bqf'               " Get preview in quickfix
+    Plug 'windwp/nvim-autopairs'               " Automatically close braces
 
     if has_navigator
         Plug 'ray-x/guihua.lua', {'do': 'cd lua/fzy && make' }
@@ -270,18 +271,6 @@ autocmd BufReadPre * if getfsize(expand("%")) > 10000000 | set syntax=OFF | endi
 " =============================================================================
 " Improve :b switch menu
 set wildchar=<Tab> wildmenu wildmode=full
-
-" Buffer switching
-nnoremap <Leader>1 :1b<CR>
-nnoremap <Leader>2 :2b<CR>
-nnoremap <Leader>3 :3b<CR>
-nnoremap <Leader>4 :4b<CR>
-nnoremap <Leader>5 :5b<CR>
-nnoremap <Leader>6 :6b<CR>
-nnoremap <Leader>7 :7b<CR>
-nnoremap <Leader>8 :8b<CR>
-nnoremap <Leader>9 :9b<CR>
-nnoremap <Leader>0 :10b<CR>
 
 " Jump to buffers with Ngb
 let c = 1
@@ -472,6 +461,18 @@ nnoremap <C-u>3 3gt
 nnoremap <C-u>4 4gt
 nnoremap <C-u>5 5gt
 nnoremap <C-u>6 6gt
+
+" Tab switching.
+nnoremap <Leader>1 1gt
+nnoremap <Leader>2 2gt
+nnoremap <Leader>3 3gt
+nnoremap <Leader>4 4gt
+nnoremap <Leader>5 5gt
+nnoremap <Leader>6 6gt
+nnoremap <Leader>7 7gt
+nnoremap <Leader>8 8gt
+nnoremap <Leader>9 9gt
+
 cabbrev tabv tab sview +setlocal\ nomodifiable
 
 " =============================================================================
@@ -907,7 +908,7 @@ vim.g.diagnostics_active = true
 function _G.toggle_diagnostics()
   if vim.g.diagnostics_active then
     vim.g.diagnostics_active = false
-    vim.lsp.diagnostic.clear(0)
+    viam.diagnostic.reset()
     vim.lsp.handlers["textDocument/publishDiagnostics"] = function() end
   else
     vim.g.diagnostics_active = true
@@ -960,6 +961,7 @@ xmap <leader>bi <Plug>VimspectorBalloonEval
 " =============================================================================
 " See https://github.com/hrsh7th/nvim-cmp#basic-configuration
 lua <<EOF
+local cmp_autopairs = require('nvim-autopairs.completion.cmp')
 local cmp = require 'cmp'
 cmp.setup({
   documentation = {
@@ -996,6 +998,10 @@ cmp.setup({
     { name = 'buffer' },
   },
 })
+
+-- Doesn't work, for some reason
+-- cmp.event:on( 'confirm_done', cmp_autopairs.on_confirm_done({  map_char = { tex = '' } }))
+
 EOF
 
 " =============================================================================
@@ -1347,9 +1353,6 @@ require'lightspeed'.setup {
 }
 EOF
 
-" hi! IndentBlanklineChar ctermfg=92 guifg=#586e75 gui=nocombine
-" hi! IndentBlanklineSpaceChar ctermfg=92 guifg=#586e75 gui=nocombine
-
 
 " =============================================================================
 " Indent Blankline
@@ -1440,6 +1443,17 @@ EOF
 nnoremap <Leader>ng <cmd>lua require('neogen').generate()<cr>
 nnoremap <Leader>nf <cmd>lua require('neogen').generate({ type = "file" })<cr>
 nnoremap <Leader>nc <cmd>lua require('neogen').generate({ type = "class" })<cr>
+
+
+" =============================================================================
+" Auto Pairs
+" =============================================================================
+
+lua <<EOF
+require('nvim-autopairs').setup({
+  disable_filetype = { "TelescopePrompt" , "vim" },
+})
+EOF
 
 endif " if has(nvim)
 
@@ -1920,10 +1934,14 @@ let g:rainbow_conf = {
 " =============================================================================
 " Colors
 " =============================================================================
+" hi! IndentBlanklineChar ctermfg=92 guifg=#586e75 gui=nocombine
+" hi! IndentBlanklineSpaceChar ctermfg=92 guifg=#586e75 gui=nocombine
+
 " Color was previously: #073642
-hi! IndentBlanklineChar ctermfg=15 guifg=#234854  gui=nocombine
+hi! IndentBlanklineChar ctermfg=15 guifg=#234854 gui=nocombine
 hi! IndentBlanklineSpaceChar ctermfg=15 guifg=#234854 gui=nocombine
 hi! Comment cterm=NONE ctermfg=92 gui=NONE guifg=#586e75 guibg=NONE guisp=NONE
+hi! Visual ctermbg=92 ctermfg=7 guibg=#586e75 guifg=#002b36 gui=nocombine guisp=none
 
 " =============================================================================
 " YAML
