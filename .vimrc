@@ -158,6 +158,10 @@ if has_key(g:plugs, 'vim-yankstack')
     call yankstack#setup()
 endif
 
+" Update plugins and save snapshot
+command UpdatePlugins
+  \ PlugUpdate | PlugSnapshot! ~/github/dotfiles/Vim/plug.snapshot
+
 " =============================================================================
 " Language / Shell
 " =============================================================================
@@ -872,9 +876,9 @@ if server_available then
                     procMacro = {
                         enable = true
                     },
-                    --[[checkOnSave = {
+                    checkOnSave = {
                         command = "clippy"
-                    }]]--
+                    },
                 }
             }
         }),
@@ -908,7 +912,7 @@ vim.g.diagnostics_active = true
 function _G.toggle_diagnostics()
   if vim.g.diagnostics_active then
     vim.g.diagnostics_active = false
-    viam.diagnostic.reset()
+    vim.diagnostic.reset()
     vim.lsp.handlers["textDocument/publishDiagnostics"] = function() end
   else
     vim.g.diagnostics_active = true
@@ -1349,7 +1353,7 @@ EOF
 
 lua <<EOF
 require'lightspeed'.setup {
-    highlight_unique_chars = true,
+    jump_to_unique_chars = true,
 }
 EOF
 
@@ -1375,15 +1379,18 @@ EOF
 " Lightspeed
 " =============================================================================
 
+" down/right (successors in the window tree)
+nmap <silent>gt <Plug>Lightspeed_gs
+" up/left (predecessors in the window tree)
+nmap <silent>gT <Plug>Lightspeed_gS
+
 " 2-character search (x/x) (Normal)
-nmap <silent>t <Plug>Lightspeed_s
-nmap <silent>T <Plug>Lightspeed_S
+nmap <silent>t <Plug>Lightspeed_omni_s
 nmap <silent>x <Plug>Lightspeed_x
 nmap <silent>X <Plug>Lightspeed_X
 
 " 2-character search (x/x) (Visual)
-vmap <silent>t <Plug>Lightspeed_s
-vmap <silent>T <Plug>Lightspeed_S
+vmap <silent>t <Plug>Lightspeed_omni_s
 vmap <silent>x <Plug>Lightspeed_x
 vmap <silent>X <Plug>Lightspeed_X
 
