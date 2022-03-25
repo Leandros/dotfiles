@@ -143,6 +143,7 @@ Plug 'rust-lang/rust.vim', { 'for': ['rust'] }
 Plug 'cespare/vim-toml', { 'for': ['toml'], 'branch': 'main' }
 Plug 'NoahTheDuke/vim-just'
 Plug 'jvirtanen/vim-hcl'
+Plug 'towolf/vim-helm'
 
 if js_dev_enabled
     Plug 'leafgarland/typescript-vim'
@@ -160,7 +161,7 @@ endif
 
 " Update plugins and save snapshot
 command UpdatePlugins
-  \ PlugUpdate | PlugSnapshot! ~/github/dotfiles/Vim/plug.snapshot
+  \ PlugUpdate | PlugSnapshot! ~/github/dotfiles/plug.snapshot
 
 " =============================================================================
 " Language / Shell
@@ -978,6 +979,7 @@ cmp.setup({
         vim.fn["vsnip#anonymous"](args.body)
     end,
   },
+
   mapping = {
     ['<C-r>'] = cmp.mapping.select_prev_item(),
     ['<C-n>'] = cmp.mapping.select_next_item(),
