@@ -57,6 +57,34 @@ elif [[ "Linux" == "`uname`" ]]; then
     alias startx='startx -- -dpi 144'
     alias pbpaste='xclip -o'
     alias pbcopy='xclip -i'
+    n ()
+    {
+        # Block nesting of nnn in subshells
+        if [ -n $NNNLVL ] && [ "${NNNLVL:-0}" -ge 1 ]; then
+            echo "nnn is already running"
+            return
+        fi
+
+        # The behaviour is set to cd on quit (nnn checks if NNN_TMPFILE is set)
+        # If NNN_TMPFILE is set to a custom path, it must be exported for nnn to
+        # see. To cd on quit only on ^G, remove the "export" and make sure not to
+        # use a custom path, i.e. set NNN_TMPFILE *exactly* as follows:
+        #     NNN_TMPFILE="${XDG_CONFIG_HOME:-$HOME/.config}/nnn/.lastd"
+        export NNN_TMPFILE="${XDG_CONFIG_HOME:-$HOME/.config}/nnn/.lastd"
+
+        # Unmask ^Q (, ^V etc.) (if required, see `stty -a`) to Quit nnn
+        # stty start undef
+        # stty stop undef
+        # stty lwrap undef
+        # stty lnext undef
+
+        nnn "$@"
+
+        if [ -f "$NNN_TMPFILE" ]; then
+                . "$NNN_TMPFILE"
+                rm -f "$NNN_TMPFILE" > /dev/null
+        fi
+    }
 
     # Browser
     export BROWSER="/usr/bin/google-chrome-stable"
@@ -262,7 +290,6 @@ export KEYTIMEOUT=1
 # Aliases
 # =============================================================================
 # alias l=' ls -lah'
-alias l='exa'
 alias g=git
 alias ti='tig status'
 alias tigs='tig status'
@@ -291,7 +318,12 @@ export LESSOPEN="|~/.lessfilter %s"
 
 # Ignore these commands in history
 alias cd=' cd'
-alias ls=' ls --color=auto'
+
+if [[ "Linux" == "`uname`" ]]; then
+    alias ls=' n'
+else
+    alias ls=' ls --color=auto'
+fi
 
 # Highlight current day
 cal() {
