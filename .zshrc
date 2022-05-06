@@ -43,8 +43,14 @@ if [[ "Darwin" == "`uname`" ]]; then
     stty -ixon -ixoff
 
     # Terminal Colors
-    # I could call `brew --prefix`, but that's slow, and it's `/usr/local` anyway.
-    BREW_PREFIX="/usr/local"
+
+    # Homebrew
+    if [[ $(uname -m) == "arm64" ]]; then
+	eval "$(/opt/homebrew/bin/brew shellenv)"
+    else
+        BREW_PREFIX="/usr/local"
+    fi
+
     export FLAGS_GETOPT_CMD="$BREW_PREFIX/opt/gnu-getopt/bin/getopt"
     export GREP_OPTIONS='--color=always'
     export GREP_COLOR='1;35;40'
@@ -418,7 +424,11 @@ stopwatch() {
 install-rust-analyzer() {
     local archive_name
     if [[ "Darwin" == "`uname`" ]]; then
-        archive_name="rust-analyzer-x86_64-apple-darwin.gz"
+        if [[ $(uname -m) == "arm64" ]]; then
+            archive_name="rust-analyzer-aarch64-apple-darwin.gz"
+        else
+            archive_name="rust-analyzer-x86_64-apple-darwin.gz"
+        fi
     elif [[ "Linux" == "`uname`" ]]; then
         archive_name="rust-analyzer-x86_64-unknown-linux-gnu.gz"
     fi
@@ -468,6 +478,8 @@ export USE_CCACHE=1
 # PATH
 # =============================================================================
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+PATH="/opt/homebrew/bin:/opt/homebrew/sbin${PATH+:$PATH}"
+PATH="/opt/homebrew/opt/binutils/bin:$PATH"
 PATH="$BREW_PREFIX/opt/coreutils/libexec/gnubin:$PATH"
 
 PATH=$PATH:/usr/bin/core_perl
