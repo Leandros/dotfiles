@@ -563,6 +563,13 @@ fi
 [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
 
 
+# =============================================================================
+# Nix
+# =============================================================================
+if [ -e '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh' ]; then
+  . '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh'
+fi
+
 
 # KEEP AT BOTTOM!
 # Entirety of my startup file... then
