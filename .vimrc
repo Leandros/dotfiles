@@ -210,6 +210,7 @@ set noswapfile
 
 " Indentation is 4 spaces, and not a tab
 set tabstop=4       " A tab is 4 spaces.
+set softtabstop=0   " How tabs behave when editing
 set autoindent      " Autoindent.
 set copyindent      " Copy the previous indent on autoindenting.
 set shiftwidth=4    " Number of spaces used for autoindent.
@@ -453,6 +454,7 @@ nnoremap Y y$
 " Jump back in time
 nnoremap <Leader>. <C-t>
 
+
 " =============================================================================
 " Tab navigation
 " =============================================================================
@@ -483,16 +485,8 @@ cabbrev tabv tab sview +setlocal\ nomodifiable
 " =============================================================================
 " Indent
 " =============================================================================
-" Use two spaces to indent js/ts files
-autocmd FileType javascript setlocal tabstop=2
-autocmd FileType javascript setlocal shiftwidth=2
-autocmd FileType javascript.jsx setlocal tabstop=2
-autocmd FileType javascript.jsx setlocal shiftwidth=2
-autocmd FileType typescript setlocal tabstop=2
-autocmd FileType typescript setlocal shiftwidth=2
+" Set makprg for typescript.
 autocmd FileType typescript set makeprg=tsc\ $*
-autocmd FileType typescript.tsx setlocal tabstop=2
-autocmd FileType typescript.tsx setlocal shiftwidth=2
 autocmd FileType typescript.tsx set makeprg=tsc\ $*
 
 " Setup comment string
@@ -503,22 +497,25 @@ autocmd FileType typescript.tsx setlocal commentstring=/*\ %s\ */
 autocmd FileType lalrpop setlocal commentstring=//\ %s
 autocmd FileType hcl setlocal commentstring=#\ %s
 
-" Use two spaces to indent json files
-autocmd FileType json setlocal tabstop=2
-autocmd FileType json setlocal shiftwidth=2
 " Use Tabs in Makefiles
 autocmd FileType make setlocal noexpandtab
 
-" Use two spaces in gn files
-autocmd FileType gn setlocal tabstop=2
-autocmd FileType gn setlocal shiftwidth=2
-
-" Use two spaces in yaml files
+" Use two space
+" ts = tabstop
+" sts = softtabstop (delete in pairs of N)
+" sw = shiftwidth (shift in pairs of N)
 autocmd FileType yaml setlocal ts=2 sts=2 sw=2 expandtab
-
-" Use two spaces in hcl files
 autocmd FileType hcl setlocal ts=2 sts=2 sw=2 expandtab
+autocmd FileType helm setlocal ts=2 sts=2 sw=2 expandtab
+autocmd FileType gn setlocal ts=2 sts=2 sw=2 expandtab
+autocmd FileType json setlocal ts=2 sts=2 sw=2 expandtab
+autocmd FileType javascript setlocal ts=2 sts=2 sw=2 expandtab
+autocmd FileType javascript.jsx setlocal ts=2 sts=2 sw=2 expandtab
+autocmd FileType typescript setlocal ts=2 sts=2 sw=2 expandtab
+autocmd FileType typescript.tsx setlocal ts=2 sts=2 sw=2 expandtab
 
+" Disable automatic line breaking
+autocmd FileType helm setlocal tw=0
 
 " =============================================================================
 " Folding Config
@@ -992,7 +989,7 @@ cmp.setup({
     ['<C-j>'] = cmp.mapping.close(),
     ['<CR>'] = cmp.mapping.confirm({
       behavior = cmp.ConfirmBehavior.Insert,
-      select = true,
+      select = false,
     })
   },
 
@@ -1368,7 +1365,7 @@ lua << EOF
 require("indent_blankline").setup {
     show_end_of_line = false,
     show_first_indent_level = false,
-    filetype = {'yaml', 'rust'},
+    filetype = {'yaml', 'rust', 'helm'},
     filetype_exclude = {'help'},
     buftype_exclude = {'terminal'},
     --show_current_context = true,
