@@ -151,7 +151,7 @@ COMPLETION_WAITING_DOTS=false
 export ZSH_THEME=""
 export UPDATE_ZSH_DAYS=7
 
-plugins=(git)
+plugins=(git git-machete)
 source $ZSH/oh-my-zsh.sh
 
 function __git_prompt {
