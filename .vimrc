@@ -818,29 +818,136 @@ if has('nvim')
     set shortmess+=c
 
 " =============================================================================
+" Completion
+" =============================================================================
+" Must come before LSP.
+" See https://github.com/hrsh7th/nvim-cmp#basic-configuration
+lua <<EOF
+local cmp_autopairs = require('nvim-autopairs.completion.cmp')
+local cmp = require 'cmp'
+cmp.setup({
+  window = {
+    completion = cmp.config.window.bordered(),
+    documentation = cmp.config.window.bordered(),
+  },
+
+  -- Enable LSP snippets
+  snippet = {
+    expand = function(args)
+        vim.fn["vsnip#anonymous"](args.body)
+    end,
+  },
+
+  --formatting = {
+  --  format = function (entry, vim_item)
+  --    vim_item.dup = { buffer = 1, path = 1, nvim_lsp = 0 }
+  --  end
+  --},
+
+  mapping = {
+    ['<C-r>'] = cmp.mapping.select_prev_item(),
+    ['<C-n>'] = cmp.mapping.select_next_item(),
+    -- Add tab support
+    ['<S-Tab>'] = cmp.mapping.select_prev_item(),
+    ['<Tab>'] = cmp.mapping.select_next_item(),
+    ['<C-,>'] = cmp.mapping.scroll_docs(-4),
+    ['<C-.>'] = cmp.mapping.scroll_docs(4),
+    ['<C-Space>'] = cmp.mapping.complete(),
+    ['<C-j>'] = cmp.mapping.close(),
+    ['<CR>'] = cmp.mapping.confirm({
+      behavior = cmp.ConfirmBehavior.Insert,
+      select = false,
+    })
+  },
+
+  -- Installed sources
+  sources = cmp.config.sources({
+    { name = 'nvim_lsp' },
+    { name = 'vsnip' },
+  }, {
+    { name = 'buffer' },
+    { name = 'path' },
+  }),
+})
+
+-- Set configuration for specific filetype.
+cmp.setup.filetype('gitcommit', {
+  sources = cmp.config.sources({
+    -- { name = 'cmp_git' }, -- You can specify the `cmp_git` source if you were installed it.
+  }, {
+    { name = 'buffer' },
+  })
+})
+
+-- Use buffer source for `/` and `?` (if you enabled `native_menu`, this won't work anymore).
+cmp.setup.cmdline({ '/', '?' }, {
+  mapping = cmp.mapping.preset.cmdline(),
+  sources = {
+    { name = 'buffer' }
+  }
+})
+
+-- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
+cmp.setup.cmdline(':', {
+  mapping = cmp.mapping.preset.cmdline(),
+  sources = cmp.config.sources({
+    { name = 'path' }
+  }, {
+    { name = 'cmdline' }
+  })
+})
+
+-- Doesn't work, for some reason
+--cmp.event:on(
+--  'confirm_done',
+--  cmp_autopairs.on_confirm_done()
+--)
+
+
+EOF
+
+
+" =============================================================================
 " LSP INSTALLER
 " =============================================================================
 lua << EOF
 require("mason").setup {
-    ui = {
-        icons = {
-            package_installed = "✓",
-            package_pending = "➜",
-            package_uninstalled = "✗",
-        }
+  ui = {
+    border = 'rounded',
+    icons = {
+        package_installed = "✓",
+        package_pending = "➜",
+        package_uninstalled = "✗",
     }
+  }
 }
 
-local mason_lspconfig = require("mason-lspconfig")
-mason_lspconfig.setup {
-    ensure_installed = { "rust_analyzer", "tsserver", "eslint", "gopls", "bashls", "sumneko_lua", "vimls", "yamlls" },
+require('mason-lspconfig').setup {
+  ensure_installed = {
+    "rust_analyzer",
+    "tsserver",
+    "eslint",
+    "gopls",
+    "bashls",
+    "sumneko_lua",
+    "vimls",
+    "yamlls",
+  },
 }
 
+local lspconfig = require('lspconfig')
+local lsp_defaults = lspconfig.util.default_config
 local lsp_status = require("lsp-status")
+
+lsp_defaults.capabilities = vim.tbl_deep_extend(
+  'force',
+  lsp_defaults.capabilities,
+  require('cmp_nvim_lsp').default_capabilities(),
+  lsp_status.capabilities
+)
+
 lsp_status.register_progress()
 
-local capabilities = require('cmp_nvim_lsp').default_capabilities()
-capabilities = vim.tbl_deep_extend("keep", capabilities, lsp_status.capabilities)
 
 -- Global `on_attach`
 local function on_attach(client, bufnr)
@@ -887,7 +994,7 @@ local rust_opts = {
     -- },
     server = {
       on_attach = on_attach,
-      capabilities = capabilities,
+      --capabilities = capabilities,
       flags = { allow_incremental_sync = false },
       settings = {
         ["rust-analyzer"] = {
@@ -911,12 +1018,10 @@ local rust_opts = {
 rust_tools.setup(rust_opts)
 
 -- Remaining servers
-local lspconfig = require("lspconfig")
-
 for _, server in ipairs { "tsserver", "eslint", "gopls", "bashls", "sumneko_lua", "vimls", "yamlls" } do
   lspconfig[server].setup {
     on_attach = on_attach,
-    capabilities = capabilities,
+    --capabilities = capabilities,
   }
 end
 
@@ -974,62 +1079,6 @@ nmap <leader>bo :VimspectorShowOutput
 nmap <leader>bi <Plug>VimspectorBalloonEval
 xmap <leader>bi <Plug>VimspectorBalloonEval
 
-
-" =============================================================================
-" Completion
-" =============================================================================
-" See https://github.com/hrsh7th/nvim-cmp#basic-configuration
-lua <<EOF
-local cmp_autopairs = require('nvim-autopairs.completion.cmp')
-local cmp = require 'cmp'
-cmp.setup({
-  window = {
-    documentation = {
-      border = { '╭', '─', '╮', '│', '╯', '─', '╰', '│' },
-    },
-  },
-
-  -- Enable LSP snippets
-  snippet = {
-    expand = function(args)
-        vim.fn["vsnip#anonymous"](args.body)
-    end,
-  },
-
-  mapping = {
-    ['<C-r>'] = cmp.mapping.select_prev_item(),
-    ['<C-n>'] = cmp.mapping.select_next_item(),
-    -- Add tab support
-    ['<S-Tab>'] = cmp.mapping.select_prev_item(),
-    ['<Tab>'] = cmp.mapping.select_next_item(),
-    ['<C-,>'] = cmp.mapping.scroll_docs(-4),
-    ['<C-.>'] = cmp.mapping.scroll_docs(4),
-    ['<C-Space>'] = cmp.mapping.complete(),
-    ['<C-j>'] = cmp.mapping.close(),
-    ['<CR>'] = cmp.mapping.confirm({
-      behavior = cmp.ConfirmBehavior.Insert,
-      select = false,
-    })
-  },
-
-  -- Installed sources
-  sources = {
-    { name = 'nvim_lsp' },
-    { name = 'vsnip' },
-    { name = 'path' },
-    { name = 'buffer' },
-  },
-})
-
--- Doesn't work, for some reason
-cmp.event:on(
-  'confirm_done',
-  cmp_autopairs.on_confirm_done()
-)
-
-
-EOF
-
 " =============================================================================
 " TROUBLE
 " =============================================================================
@@ -1067,7 +1116,6 @@ lsp_status.config({
     indicator_hint = '?',
     indicator_ok = '',
 })
-lsp_status.register_progress()
 
 local colors = {
   base03  =  '#002b36',
