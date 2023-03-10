@@ -19,6 +19,7 @@ export DEFAULT_USER=##NEWUSER##
 export LANG=en_us.UTF-8
 export LC_ALL=en_US.UTF-8
 export HOMEBREW_NO_AUTO_UPDATE=1
+export AWS_DEFAULT_REGION="us-east-1"
 
 # Profiling
 PROFILE_STARTUP=false
