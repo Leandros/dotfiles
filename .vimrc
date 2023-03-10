@@ -475,6 +475,7 @@ nnoremap <Leader>. <C-t>
 " =============================================================================
 " Tab navigation
 " =============================================================================
+nnoremap <C-u> :echo "nothing happened ..."<CR>
 nnoremap <C-u>b :tabprevious<CR>
 nnoremap <C-u>s :tabnext<CR>
 nnoremap <C-u>n :tabedit<CR>
