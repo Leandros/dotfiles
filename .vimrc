@@ -89,6 +89,7 @@ if has('nvim')
     Plug 'hrsh7th/cmp-vsnip'                   " Snippet completion source for nvim-cmp
     Plug 'hrsh7th/cmp-path'                    " Completion for paths
     Plug 'hrsh7th/cmp-buffer'                  " Completion from buffer
+    Plug 'hrsh7th/cmp-cmdline'                 " Completion for :... commands
     Plug 'hrsh7th/vim-vsnip'                   " Snippet engine
     " Plug 'hrsh7th/vim-vsnip-integ'             " Snippet integration with compe
 
