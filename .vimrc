@@ -253,6 +253,10 @@ set sessionoptions+=tabpages,globals " store tabpages and globals in session
 nnoremap Z <Nop>
 nnoremap ZZ <Nop>
 
+" Disable netrw
+let g:loaded_netrw = 1
+let g:loaded_netrwPlugin = 1
+
 " =============================================================================
 " Performance
 " =============================================================================
