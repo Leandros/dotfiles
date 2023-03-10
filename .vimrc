@@ -108,6 +108,7 @@ if has('nvim')
     Plug 'kevinhwang91/nvim-bqf'               " Get preview in quickfix
     Plug 'windwp/nvim-autopairs'               " Automatically close braces
     Plug 'voldikss/vim-floaterm'               " Floating terminals. Spooky!
+    Plug 'nvim-tree/nvim-tree.lua'
 
     " Telescope
     Plug 'nvim-telescope/telescope.nvim', { 'branch': '0.1.x' } " Improved LSP actions
@@ -953,6 +954,8 @@ require('mason-lspconfig').setup {
     "sumneko_lua",
     "vimls",
     "yamlls",
+    "jedi_language_server", -- python
+    "pylsp", -- depends on the above
   },
 }
 
@@ -1046,7 +1049,7 @@ require("flutter-tools").setup{
 }
 
 -- Remaining servers
-for _, server in ipairs { "tsserver", "eslint", "gopls", "bashls", "sumneko_lua", "vimls", "yamlls" } do
+for _, server in ipairs { "tsserver", "eslint", "gopls", "bashls", "sumneko_lua", "vimls", "yamlls", "jedi_language_server", "pylsp" } do
   lspconfig[server].setup {
     on_attach = on_attach,
     --capabilities = capabilities,
@@ -1208,7 +1211,7 @@ require'tabline'.setup {
     options = {
         max_bufferline_percent = 66, -- set to nil by default, and it uses vim.o.columns * 2/3
         show_tabs_always = false, -- this shows tabs only when there are more than one tab or if the first tab is named
-        show_devicons = false, -- this shows devicons in buffer section
+        show_devicons = true, -- this shows devicons in buffer section
         show_bufnr = false, -- this appends [bufnr] to buffer section,
         show_filename_only = true, -- shows base filename only instead of relative path in filename
         modified_icon = "+ ", -- change the default modified icon
@@ -1407,20 +1410,28 @@ endif
 " =============================================================================
 lua << EOF
 require('gitsigns').setup({
-    keymaps = {
-        noremap = true,
+  signs = {
+    add          = { text = '│' },
+    change       = { text = '│' },
+    delete       = { text = '_' },
+    topdelete    = { text = '‾' },
+    changedelete = { text = '~' },
+    untracked    = { text = '┆' },
+  },
+  keymaps = {
+    noremap = true,
 
-        ['n <leader>ss'] = '<cmd>Gitsigns stage_hunk<CR>',
-        ['v <leader>ss'] = ':Gitsigns stage_hunk<CR>',
-        ['n <leader>su'] = '<cmd>Gitsigns undo_stage_hunk<CR>',
-        ['n <leader>sr'] = '<cmd>Gitsigns reset_hunk<CR>',
-        ['v <leader>sr'] = ':Gitsigns reset_hunk<CR>',
-        ['n <leader>sR'] = '<cmd>Gitsigns reset_buffer<CR>',
-        ['n <leader>sp'] = '<cmd>Gitsigns preview_hunk<CR>',
-        ['n <leader>sb'] = '<cmd>lua require"gitsigns".blame_line{full=true}<CR>',
-        ['n <leader>sS'] = '<cmd>Gitsigns stage_buffer<CR>',
-        ['n <leader>sU'] = '<cmd>Gitsigns reset_buffer_index<CR>',
-    },
+    ['n <leader>ss'] = '<cmd>Gitsigns stage_hunk<CR>',
+    ['v <leader>ss'] = ':Gitsigns stage_hunk<CR>',
+    ['n <leader>su'] = '<cmd>Gitsigns undo_stage_hunk<CR>',
+    ['n <leader>sr'] = '<cmd>Gitsigns reset_hunk<CR>',
+    ['v <leader>sr'] = ':Gitsigns reset_hunk<CR>',
+    ['n <leader>sR'] = '<cmd>Gitsigns reset_buffer<CR>',
+    ['n <leader>sp'] = '<cmd>Gitsigns preview_hunk<CR>',
+    ['n <leader>sb'] = '<cmd>lua require"gitsigns".blame_line{full=true}<CR>',
+    ['n <leader>sS'] = '<cmd>Gitsigns stage_buffer<CR>',
+    ['n <leader>sU'] = '<cmd>Gitsigns reset_buffer_index<CR>',
+  },
 })
 EOF
 
@@ -1446,7 +1457,7 @@ require'nvim-treesitter.configs'.setup {
 EOF
 
 " =============================================================================
-" leap.nvim
+" svart
 " =============================================================================
 lua <<EOF
 vim.keymap.set({ "n", "x", "o" }, "t", "<Cmd>Svart<CR>")
@@ -1600,88 +1611,130 @@ if has("persistent_undo")
   endif
 endif
 
+lua <<EOF
+require("nvim-tree").setup({
+  sort_by = "case_sensitive",
+  --remove_keymaps = true, -- remove all default mapping
+  view = {
+    adaptive_size = true,
+    mappings = {
+      list = {
+        { key = { "C" }, action = "cd" },
+        { key = { "<C-a>" }, action = "refresh" },
+        { key = { "R" }, action = "rename" },
+        { key = { "u" }, action = "dir_up" },
+        { key = { "a" }, action = "create" },
+        { key = { "r" }, action = "" },
+        { key = { "e" }, action = "" },
+        { key = { "-" }, action = "" },
+        --{ key = { "<CR>", "o" }, action = "edit", mode = "n" },
+        --{ key = { "n" }, action = "next_sibling", mode = "n" },
+      },
+    },
+  },
+  renderer = {
+    group_empty = true,
+    add_trailing = true,
+    root_folder_label = ":~:s?$?/..?",
+    indent_width = 2,
+  },
+  filters = {
+    dotfiles = false,
+  },
+  actions = {
+    open_file = {
+      quit_on_open = true,
+    },
+    change_dir = {
+      global = true,
+    },
+  },
+})
+EOF
+
+map <Leader>e :NvimTreeToggle<CR>
 
 " =============================================================================
 " ReMap NERDTree Keys.
 " =============================================================================
-let g:NERDTreeMapRefresh='<C-a>'
-let g:NERDTreeMapRefreshRoot='<C-u>'
-let g:NERDTreeMapOpenSplit='t'
-let g:NERDTreeMapOpenVSplit='i'
-let g:NERDTreeMenuDown='n'
-let g:NERDTreeMenuUp='r'
+" let g:NERDTreeMapRefresh='<C-a>'
+" let g:NERDTreeMapRefreshRoot='<C-u>'
+" let g:NERDTreeMapOpenSplit='t'
+" let g:NERDTreeMapOpenVSplit='i'
+" let g:NERDTreeMenuDown='n'
+" let g:NERDTreeMenuUp='r'
 
-let g:NERDTreeMapChdir='C'
-let g:NERDTreeMapUpdir='u'
-" let g:NERDTreeMapActivateNode='<CR>'
-" let NERDTreeMapNextSibling='N'
-" let NERDTreeMapPrevSibling='R'
+" let g:NERDTreeMapChdir='C'
+" let g:NERDTreeMapUpdir='u'
+" " let g:NERDTreeMapActivateNode='<CR>'
+" " let NERDTreeMapNextSibling='N'
+" " let NERDTreeMapPrevSibling='R'
 
-" Custom bindings
-augroup nerdtreebuf
-    autocmd!
-    autocmd FileType nerdtree nnoremap <buffer> <silent> <CR> :call nerdtree#ui_glue#invokeKeyMap("o")<CR>
-augroup END
+" " Custom bindings
+" augroup nerdtreebuf
+"     autocmd!
+"     autocmd FileType nerdtree nnoremap <buffer> <silent> <CR> :call nerdtree#ui_glue#invokeKeyMap("o")<CR>
+" augroup END
 
-" Open NERDTree
-map <Leader>e :NERDTreeToggle<CR>
+" " Open NERDTree
+" map <Leader>e :NERDTreeToggle<CR>
 
-" NERDTree options
-let g:NERDTreeChDirMode = 2
-let g:NERDTreeShowHidden = 1
-let g:NERDTreeQuitOnOpen = 1
-let g:NERDTreeMinimalUI = 1
-let g:NERDTreeAutoDeleteBuffer = 1
-let g:NERDTreeShowLineNumbers = 0
-let g:NERDTreeIgnore = ['\.meta$','^\.DS_Store$']
+" " NERDTree options
+" let g:NERDTreeChDirMode = 2
+" let g:NERDTreeShowHidden = 1
+" let g:NERDTreeQuitOnOpen = 1
+" let g:NERDTreeMinimalUI = 1
+" let g:NERDTreeAutoDeleteBuffer = 1
+" let g:NERDTreeShowLineNumbers = 0
+" let g:NERDTreeIgnore = ['\.meta$','^\.DS_Store$']
 
-" Open NERDTree when no files specified.
-" autocmd StdinReadPre * let s:std_in=1
-" autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
+" " Open NERDTree when no files specified.
+" " autocmd StdinReadPre * let s:std_in=1
+" " autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
 
-" Close VIM if only tab left is NERDTree
-autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
+" " Close VIM if only tab left is NERDTree
+" autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
 
-" Hide Line Numbers
-augroup nerdtree
-    autocmd!
-    autocmd FileType nerdtree set nonumber
-    autocmd FileType nerdtree set norelativenumber
-augroup END
+" " Hide Line Numbers
+" augroup nerdtree
+"     autocmd!
+"     autocmd FileType nerdtree set nonumber
+"     autocmd FileType nerdtree set norelativenumber
+" augroup END
 
-" NERDTress File highlighting
-function! NERDTreeHighlightFile(extension, regex, fg, bg, guifg, guibg)
- exec 'autocmd filetype nerdtree highlight ' . a:extension .' ctermbg='. a:bg .' ctermfg='. a:fg .' guibg='. a:guibg .' guifg='. a:guifg
- exec 'autocmd filetype nerdtree syn match ' . a:extension .' #^.*\('. a:regex .'\)$#'
-endfunction
+" " NERDTress File highlighting
+" function! NERDTreeHighlightFile(extension, regex, fg, bg, guifg, guibg)
+"  exec 'autocmd filetype nerdtree highlight ' . a:extension .' ctermbg='. a:bg .' ctermfg='. a:fg .' guibg='. a:guibg .' guifg='. a:guifg
+"  exec 'autocmd filetype nerdtree syn match ' . a:extension .' #^.*\('. a:regex .'\)$#'
+" endfunction
 
-" source files
-" Fixing NeoVim color theme regression neovim/neovim#9019
-highlight NERDTreeFile ctermfg=14
-" C
-call NERDTreeHighlightFile('cfile', '\.c',          '11', 'NONE', 'NONE', 'NONE')
-call NERDTreeHighlightFile('cheader', '\.h',        '9',  'NONE', 'NONE', 'NONE')
-" C++
-call NERDTreeHighlightFile('cc', '\.cc',            '5',  'NONE', 'NONE', 'NONE')
-call NERDTreeHighlightFile('hh', '\.hh',            '9',  'NONE', 'NONE', 'NONE')
-call NERDTreeHighlightFile('cpp', '\.cpp',          '5',  'NONE', 'NONE', 'NONE')
-call NERDTreeHighlightFile('hpp', '\.hpp',          '9',  'NONE', 'NONE', 'NONE')
-" Objective-C
-call NERDTreeHighlightFile('mm', '\.mm',            '4',  'NONE', 'NONE', 'NONE')
-call NERDTreeHighlightFile('m', '\.m',              '4',  'NONE', 'NONE', 'NONE')
-" shell scripts
-call NERDTreeHighlightFile('sh', '\.sh',            '2',  'NONE', 'NONE', 'NONE')
-call NERDTreeHighlightFile('bash', '\.bash',        '2',  'NONE', 'NONE', 'NONE')
-call NERDTreeHighlightFile('zsh', '\.zsh',          '2',  'NONE', 'NONE', 'NONE')
-" makefiles
-call NERDTreeHighlightFile('mk', '\.mk',            '28', 'NONE', 'NONE', 'NONE')
-call NERDTreeHighlightFile('makefile', '\makefile', '28', 'NONE', 'NONE', 'NONE')
-call NERDTreeHighlightFile('Makefile', '\Makefile', '28', 'NONE', 'NONE', 'NONE')
-" JavaScript
-call NERDTreeHighlightFile('js', '\.js',            '3',  'NONE', 'NONE', 'NONE')
-call NERDTreeHighlightFile('jsx', '\.jsx',          '3',  'NONE', 'NONE', 'NONE')
-call NERDTreeHighlightFile('ts', '\.ts',            '5',  'NONE', 'NONE', 'NONE')
-call NERDTreeHighlightFile('tsx', '\.tsx',          '5',  'NONE', 'NONE', 'NONE')
+" " source files
+" " Fixing NeoVim color theme regression neovim/neovim#9019
+" highlight NERDTreeFile ctermfg=14
+" " C
+" call NERDTreeHighlightFile('cfile', '\.c',          '11', 'NONE', 'NONE', 'NONE')
+" call NERDTreeHighlightFile('cheader', '\.h',        '9',  'NONE', 'NONE', 'NONE')
+" " C++
+" call NERDTreeHighlightFile('cc', '\.cc',            '5',  'NONE', 'NONE', 'NONE')
+" call NERDTreeHighlightFile('hh', '\.hh',            '9',  'NONE', 'NONE', 'NONE')
+" call NERDTreeHighlightFile('cpp', '\.cpp',          '5',  'NONE', 'NONE', 'NONE')
+" call NERDTreeHighlightFile('hpp', '\.hpp',          '9',  'NONE', 'NONE', 'NONE')
+" " Objective-C
+" call NERDTreeHighlightFile('mm', '\.mm',            '4',  'NONE', 'NONE', 'NONE')
+" call NERDTreeHighlightFile('m', '\.m',              '4',  'NONE', 'NONE', 'NONE')
+" " shell scripts
+" call NERDTreeHighlightFile('sh', '\.sh',            '2',  'NONE', 'NONE', 'NONE')
+" call NERDTreeHighlightFile('bash', '\.bash',        '2',  'NONE', 'NONE', 'NONE')
+" call NERDTreeHighlightFile('zsh', '\.zsh',          '2',  'NONE', 'NONE', 'NONE')
+" " makefiles
+" call NERDTreeHighlightFile('mk', '\.mk',            '28', 'NONE', 'NONE', 'NONE')
+" call NERDTreeHighlightFile('makefile', '\makefile', '28', 'NONE', 'NONE', 'NONE')
+" call NERDTreeHighlightFile('Makefile', '\Makefile', '28', 'NONE', 'NONE', 'NONE')
+" " JavaScript
+" call NERDTreeHighlightFile('js', '\.js',            '3',  'NONE', 'NONE', 'NONE')
+" call NERDTreeHighlightFile('jsx', '\.jsx',          '3',  'NONE', 'NONE', 'NONE')
+" call NERDTreeHighlightFile('ts', '\.ts',            '5',  'NONE', 'NONE', 'NONE')
+" call NERDTreeHighlightFile('tsx', '\.tsx',          '5',  'NONE', 'NONE', 'NONE')
 
 
 " =============================================================================
@@ -1803,7 +1856,7 @@ local actions = require 'telescope.actions'
 require('telescope').setup {
   defaults = {
     -- Default configuration for telescope goes here:
-    disable_devicons = true,
+    --disable_devicons = true,
     mappings = {
       i = {
         ["<esc>"] = actions.close,
@@ -1824,18 +1877,18 @@ require('telescope').setup {
   pickers = {
     find_files = {
       --theme = "dropdown",
-      disable_devicons = true,
+      --disable_devicons = true,
     },
     live_grep = {
       --theme = "dropdown",
-      disable_devicons = true,
+      --disable_devicons = true,
     },
     buffers = {
       --theme = "dropdown",
-      disable_devicons = true,
+      --disable_devicons = true,
     },
     file_browser = {
-      disable_devicons = true,
+      --disable_devicons = true,
     },
   },
   extensions = {
@@ -2127,10 +2180,10 @@ EOF
 " =============================================================================
 " Floaterm
 " =============================================================================
-let g:floaterm_keymap_new    = '<Leader>tn'
-let g:floaterm_keymap_toggle = '<Leader>tt'
-let g:floaterm_keymap_prev   = '<Leader>tb'
-let g:floaterm_keymap_next   = '<Leader>ts'
+let g:floaterm_keymap_new    = ',n'
+let g:floaterm_keymap_toggle = ',t'
+let g:floaterm_keymap_prev   = ',b'
+let g:floaterm_keymap_next   = ',s'
 let g:floaterm_width = 0.8
 let g:floaterm_height = 0.8
 
