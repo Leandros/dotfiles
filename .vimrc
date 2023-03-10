@@ -2195,3 +2195,9 @@ let g:go_imports_autosave = 0
 " =============================================================================
 autocmd FileType haskell nnoremap <buffer> <C-f> :Hindent<CR>
 let g:hindent_on_save = 0
+
+
+" =============================================================================
+" Dart
+" =============================================================================
+autocmd FileType dart nnoremap <buffer> <C-f> :lua vim.lsp.buf.format({ async = true })<CR>
