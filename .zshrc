@@ -142,8 +142,12 @@ fpath=(/opt/homebrew/share/zsh/site-functions $fpath)
 # zmv is awesome
 alias mmv='noglob zmv -W'
 
+# Init fzf
+[ -f "$HOME/.fzf.zsh" ] && . "$HOME/.fzf.zsh"
+
 # zoxide (must appear after `compinit`)
 eval "$(zoxide init zsh)"
+
 
 # =============================================================================
 # OH-MY-ZSH
@@ -593,6 +597,7 @@ eval "$(direnv hook zsh)"
 # Broot
 # =============================================================================
 source /Users/arvidgerstmann/.config/broot/launcher/bash/br
+
 # =============================================================================
 # ghcup
 # =============================================================================
