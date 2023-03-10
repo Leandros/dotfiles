@@ -57,7 +57,6 @@ Plug 'Konfekt/FastFold'
 Plug 'Yggdroot/LeaderF', { 'do': ':LeaderfInstallCExtension' }
 Plug 'mhinz/vim-grepper'
 Plug 'maxbrunsfeld/vim-yankstack'
-Plug 'scrooloose/nerdtree'
 " Plug 'mbbill/undotree'
 
 " General
@@ -83,6 +82,7 @@ if has('nvim')
     Plug 'kyazdani42/nvim-web-devicons'
     Plug 'nvim-lua/plenary.nvim'               " Lua library
     Plug 'rcarriga/nvim-notify'                " Notification framework
+    Plug 's1n7ax/nvim-window-picker', {'tag': 'v1.*'}
 
     " Completion
     Plug 'hrsh7th/nvim-cmp'                    " Completion framework
@@ -353,7 +353,6 @@ endif
 set background=dark
 let g:solarized_italics = 0
 colorscheme solarized
-
 
 " =============================================================================
 " Custom Filetypes
@@ -820,7 +819,6 @@ function! Incr()
 endfunction
 vnoremap <C-a> :call Incr()<CR>
 
-
 " =============================================================================
 "                       ____  _             _
 "                      |  _ \| |_   _  __ _(_)_ __  ___
@@ -932,7 +930,6 @@ cmp.setup.cmdline(':', {
 
 
 EOF
-
 
 " =============================================================================
 " LSP INSTALLER
@@ -1443,7 +1440,6 @@ EOF
 " =============================================================================
 " Treesitter
 " =============================================================================
-
 lua <<EOF
 require'nvim-treesitter.configs'.setup {
     ensure_installed = {'rust', 'json', 'javascript', 'typescript', 'tsx', 'vim', 'lua', 'go', 'haskell', 'bash'},
@@ -1555,7 +1551,6 @@ EOF
 " =============================================================================
 " Indent Blankline
 " =============================================================================
-
 lua << EOF
 require("indent_blankline").setup {
     show_end_of_line = false,
@@ -1581,11 +1576,9 @@ nnoremap <Leader>ng <cmd>lua require('neogen').generate()<cr>
 nnoremap <Leader>nf <cmd>lua require('neogen').generate({ type = "file" })<cr>
 nnoremap <Leader>nc <cmd>lua require('neogen').generate({ type = "class" })<cr>
 
-
 " =============================================================================
 " Auto Pairs
 " =============================================================================
-
 lua <<EOF
 require('nvim-autopairs').setup({
   disable_filetype = { "TelescopePrompt" , "vim" },
@@ -1594,9 +1587,8 @@ EOF
 
 endif " if has(nvim)
 
-
 " =============================================================================
-" Vim Better Whitespace
+" whitespace nvim
 " =============================================================================
 lua <<EOF
 require('whitespace-nvim').setup({
@@ -1611,7 +1603,6 @@ require('whitespace-nvim').setup({
   ignored_filetypes = { 'TelescopePrompt', 'Trouble', 'help' },
 })
 EOF
-
 
 " =============================================================================
 " UndoTree
@@ -1628,7 +1619,28 @@ if has("persistent_undo")
   endif
 endif
 
+" =============================================================================
+" nvim-tree
+" =============================================================================
 lua <<EOF
+require'window-picker'.setup({
+    autoselect_one = true,
+    include_current_win = false,
+    selection_chars = 'ENCTIRSGOB',
+    use_winbar = 'never', -- "always" | "never" | "smart"
+
+    -- the foreground (text) color of the picker
+    fg_color = '#ededed',
+
+    -- if you have include_current_win == true, then current_win_hl_color will
+    -- be highlighted using this background color
+    current_win_hl_color = '#e35e4f',
+
+    -- all the windows except the current window will be highlighted using this
+    -- color
+    other_win_hl_color = '#44cc41',
+})
+
 require("nvim-tree").setup({
   sort_by = "case_sensitive",
   --remove_keymaps = true, -- remove all default mapping
@@ -1661,6 +1673,10 @@ require("nvim-tree").setup({
   actions = {
     open_file = {
       quit_on_open = true,
+      window_picker = {
+        enable = true,
+        picker = require('window-picker').pick_window,
+      },
     },
     change_dir = {
       global = true,
@@ -1670,89 +1686,6 @@ require("nvim-tree").setup({
 EOF
 
 map <Leader>e :NvimTreeToggle<CR>
-
-" =============================================================================
-" ReMap NERDTree Keys.
-" =============================================================================
-" let g:NERDTreeMapRefresh='<C-a>'
-" let g:NERDTreeMapRefreshRoot='<C-u>'
-" let g:NERDTreeMapOpenSplit='t'
-" let g:NERDTreeMapOpenVSplit='i'
-" let g:NERDTreeMenuDown='n'
-" let g:NERDTreeMenuUp='r'
-
-" let g:NERDTreeMapChdir='C'
-" let g:NERDTreeMapUpdir='u'
-" " let g:NERDTreeMapActivateNode='<CR>'
-" " let NERDTreeMapNextSibling='N'
-" " let NERDTreeMapPrevSibling='R'
-
-" " Custom bindings
-" augroup nerdtreebuf
-"     autocmd!
-"     autocmd FileType nerdtree nnoremap <buffer> <silent> <CR> :call nerdtree#ui_glue#invokeKeyMap("o")<CR>
-" augroup END
-
-" " Open NERDTree
-" map <Leader>e :NERDTreeToggle<CR>
-
-" " NERDTree options
-" let g:NERDTreeChDirMode = 2
-" let g:NERDTreeShowHidden = 1
-" let g:NERDTreeQuitOnOpen = 1
-" let g:NERDTreeMinimalUI = 1
-" let g:NERDTreeAutoDeleteBuffer = 1
-" let g:NERDTreeShowLineNumbers = 0
-" let g:NERDTreeIgnore = ['\.meta$','^\.DS_Store$']
-
-" " Open NERDTree when no files specified.
-" " autocmd StdinReadPre * let s:std_in=1
-" " autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
-
-" " Close VIM if only tab left is NERDTree
-" autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
-
-" " Hide Line Numbers
-" augroup nerdtree
-"     autocmd!
-"     autocmd FileType nerdtree set nonumber
-"     autocmd FileType nerdtree set norelativenumber
-" augroup END
-
-" " NERDTress File highlighting
-" function! NERDTreeHighlightFile(extension, regex, fg, bg, guifg, guibg)
-"  exec 'autocmd filetype nerdtree highlight ' . a:extension .' ctermbg='. a:bg .' ctermfg='. a:fg .' guibg='. a:guibg .' guifg='. a:guifg
-"  exec 'autocmd filetype nerdtree syn match ' . a:extension .' #^.*\('. a:regex .'\)$#'
-" endfunction
-
-" " source files
-" " Fixing NeoVim color theme regression neovim/neovim#9019
-" highlight NERDTreeFile ctermfg=14
-" " C
-" call NERDTreeHighlightFile('cfile', '\.c',          '11', 'NONE', 'NONE', 'NONE')
-" call NERDTreeHighlightFile('cheader', '\.h',        '9',  'NONE', 'NONE', 'NONE')
-" " C++
-" call NERDTreeHighlightFile('cc', '\.cc',            '5',  'NONE', 'NONE', 'NONE')
-" call NERDTreeHighlightFile('hh', '\.hh',            '9',  'NONE', 'NONE', 'NONE')
-" call NERDTreeHighlightFile('cpp', '\.cpp',          '5',  'NONE', 'NONE', 'NONE')
-" call NERDTreeHighlightFile('hpp', '\.hpp',          '9',  'NONE', 'NONE', 'NONE')
-" " Objective-C
-" call NERDTreeHighlightFile('mm', '\.mm',            '4',  'NONE', 'NONE', 'NONE')
-" call NERDTreeHighlightFile('m', '\.m',              '4',  'NONE', 'NONE', 'NONE')
-" " shell scripts
-" call NERDTreeHighlightFile('sh', '\.sh',            '2',  'NONE', 'NONE', 'NONE')
-" call NERDTreeHighlightFile('bash', '\.bash',        '2',  'NONE', 'NONE', 'NONE')
-" call NERDTreeHighlightFile('zsh', '\.zsh',          '2',  'NONE', 'NONE', 'NONE')
-" " makefiles
-" call NERDTreeHighlightFile('mk', '\.mk',            '28', 'NONE', 'NONE', 'NONE')
-" call NERDTreeHighlightFile('makefile', '\makefile', '28', 'NONE', 'NONE', 'NONE')
-" call NERDTreeHighlightFile('Makefile', '\Makefile', '28', 'NONE', 'NONE', 'NONE')
-" " JavaScript
-" call NERDTreeHighlightFile('js', '\.js',            '3',  'NONE', 'NONE', 'NONE')
-" call NERDTreeHighlightFile('jsx', '\.jsx',          '3',  'NONE', 'NONE', 'NONE')
-" call NERDTreeHighlightFile('ts', '\.ts',            '5',  'NONE', 'NONE', 'NONE')
-" call NERDTreeHighlightFile('tsx', '\.tsx',          '5',  'NONE', 'NONE', 'NONE')
-
 
 " =============================================================================
 " vim-autoformat Settings.
@@ -1780,7 +1713,6 @@ if has_key(g:plugs, 'vim-prettier')
     let g:prettier#config#arrow_parens = 'always'
     let g:prettier#config#bracket_spacing = 'true'
 endif
-
 
 " =============================================================================
 " Uncrustify
@@ -2100,7 +2032,6 @@ function! VM_Exit()
   " Example: nunmap <buffer> b
 endfunction
 
-
 " =============================================================================
 " Vim Easy Align
 " =============================================================================
@@ -2216,6 +2147,15 @@ hi! IndentBlanklineSpaceChar ctermfg=15 guifg=#234854 gui=nocombine
 hi! Comment cterm=NONE ctermfg=92 gui=NONE guifg=#586e75 guibg=NONE guisp=NONE
 hi! Visual ctermbg=92 ctermfg=7 guibg=#586e75 guifg=#002b36 gui=nocombine guisp=none
 
+
+" =============================================================================
+"             | |    __ _ _ __   __ _ _   _  __ _  __ _  ___  ___
+"             | |   / _` | '_ \ / _` | | | |/ _` |/ _` |/ _ \/ __|
+"             | |__| (_| | | | | (_| | |_| | (_| | (_| |  __/\__ \
+"             |_____\__,_|_| |_|\__, |\__,_|\__,_|\__, |\___||___/
+"                               |___/             |___/
+" =============================================================================
+
 " =============================================================================
 " YAML
 " =============================================================================
@@ -2248,7 +2188,6 @@ function! SynStack()
   echo map(synstack(line('.'), col('.')), 'synIDattr(v:val, "name")')
 endfunc
 
-
 " =============================================================================
 " Golang
 " =============================================================================
@@ -2263,7 +2202,6 @@ let g:go_fmt_options = {
     \ }
 let g:go_fmt_autosave = 0
 let g:go_imports_autosave = 0
-
 
 " =============================================================================
 " Haskell
