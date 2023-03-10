@@ -81,38 +81,58 @@ Plug 'leandros/vim-bufkill'
 
 " Rust
 if has('nvim')
-    " Basically all for LSP support.
-    Plug 'neovim/nvim-lspconfig'               " Collection of common configurations for the Nvim LSP client
-    Plug 'williamboman/mason.nvim'
-    Plug 'williamboman/mason-lspconfig.nvim'
+    " Libraries
     Plug 'kyazdani42/nvim-web-devicons'
     Plug 'nvim-lua/plenary.nvim'               " Lua library
+    Plug 'rcarriga/nvim-notify'                " Notification framework
+
+    " Completion
     Plug 'hrsh7th/nvim-cmp'                    " Completion framework
-    Plug 'hrsh7th/cmp-nvim-lsp'                " LSP completion source for nvim-cmp
     Plug 'hrsh7th/cmp-vsnip'                   " Snippet completion source for nvim-cmp
     Plug 'hrsh7th/cmp-path'                    " Completion for paths
     Plug 'hrsh7th/cmp-buffer'                  " Completion from buffer
     Plug 'hrsh7th/vim-vsnip'                   " Snippet engine
     " Plug 'hrsh7th/vim-vsnip-integ'             " Snippet integration with compe
-    Plug 'simrat39/rust-tools.nvim'            " Improved LSP support for Rust
-    Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
-    Plug 'lewis6991/gitsigns.nvim'             " Showins git changes in the gutter
-    Plug 'danymat/neogen'                      " Generating documentation comments
+
+    " Status/Tab Line
     Plug 'nvim-lualine/lualine.nvim'           " Statusline (bottom)
     Plug 'kdheepak/tabline.nvim'               " Tabline (top)
-    Plug 'nvim-lua/lsp-status.nvim'            " Plugin to show lsp status in statusline
+
+    " Treesitter
+    Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+
+    " Misc
+    Plug 'lewis6991/gitsigns.nvim'             " Showins git changes in the gutter
+    Plug 'danymat/neogen'                      " Generating documentation comments
     Plug 'lukas-reineke/indent-blankline.nvim' " Showing indentation lines
-    Plug 'folke/lsp-colors.nvim'               " Highlight groups for trouble.nvim
-    Plug 'folke/trouble.nvim'                  " Pretty diagnostics
-    Plug 'nvim-telescope/telescope.nvim', { 'branch': '0.1.x' } " Improved LSP actions
-    Plug 'nvim-telescope/telescope-ui-select.nvim' " Use telescope as native vim select popup, required from NVIM v0.7.0
-    " Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
-    Plug 'nvim-telescope/telescope-fzy-native.nvim'
-    " Plug 'leandros/telescope-fzf-native.nvim', { 'do': 'make', 'branch': 'feature/windows_build_support' }
     Plug 'kevinhwang91/nvim-bqf'               " Get preview in quickfix
     Plug 'windwp/nvim-autopairs'               " Automatically close braces
-    Plug 'voldikss/vim-floaterm'
+    Plug 'voldikss/vim-floaterm'               " Floating terminals. Spooky!
+
+    " Telescope
+    Plug 'nvim-telescope/telescope.nvim', { 'branch': '0.1.x' } " Improved LSP actions
+    Plug 'nvim-telescope/telescope-ui-select.nvim' " Use telescope as native vim select popup, required from NVIM v0.7.0
+    Plug 'nvim-telescope/telescope-fzy-native.nvim'
+    " Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
+    " Plug 'leandros/telescope-fzf-native.nvim', { 'do': 'make', 'branch': 'feature/windows_build_support' }
+
+    " Code navigation
     Plug 'https://gitlab.com/madyanov/svart.nvim.git'
+
+    " LSP Requirements
+    Plug 'neovim/nvim-lspconfig'               " Collection of common configurations for the Nvim LSP client
+    Plug 'williamboman/mason.nvim'
+    Plug 'williamboman/mason-lspconfig.nvim'
+
+    " LSP Tools
+    Plug 'hrsh7th/cmp-nvim-lsp'                " LSP completion source for nvim-cmp
+    Plug 'folke/lsp-colors.nvim'               " Highlight groups for trouble.nvim
+    Plug 'folke/trouble.nvim'                  " Pretty diagnostics
+    Plug 'nvim-lua/lsp-status.nvim'            " Plugin to show lsp status in statusline
+
+    " LSP Language Plugins
+    Plug 'simrat39/rust-tools.nvim'            " Improved LSP support for Rust
+    Plug 'akinsho/flutter-tools.nvim'
 
     if has_navigator
         Plug 'ray-x/guihua.lua', {'do': 'cd lua/fzy && make' }
@@ -1017,6 +1037,13 @@ local rust_opts = {
     },
 }
 rust_tools.setup(rust_opts)
+
+-- Flutter/Dart
+require("flutter-tools").setup{
+  lsp = {
+    on_attach = on_attach,
+  },
+}
 
 -- Remaining servers
 for _, server in ipairs { "tsserver", "eslint", "gopls", "bashls", "sumneko_lua", "vimls", "yamlls" } do
