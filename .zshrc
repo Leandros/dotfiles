@@ -137,10 +137,13 @@ zstyle ':completion:*' list-colors ''
 zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
 
 fpath=(/usr/local/share/zsh-completions $fpath)
+fpath=(/opt/homebrew/share/zsh/site-functions $fpath)
 
 # zmv is awesome
 alias mmv='noglob zmv -W'
 
+# zoxide (must appear after `compinit`)
+eval "$(zoxide init zsh)"
 
 # =============================================================================
 # OH-MY-ZSH
@@ -506,6 +509,7 @@ PATH=$PATH:$HOME/bin/depot_tools
 PATH=$PATH:$HOME/.cargo/bin
 PATH=$PATH:$HOME/.local/bin
 PATH=$PATH:$HOME/gopath/bin
+PATH=$PATH:$HOME/flutter/bin
 
 # macOS specific
 PATH=$PATH:/Applications/p4merge.app/Contents/MacOS
