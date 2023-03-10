@@ -572,7 +572,6 @@ fi
 # Load RVM into a shell session *as a function*
 [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
 
-
 # =============================================================================
 # Nix
 # =============================================================================
@@ -580,6 +579,11 @@ if [ -e /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
     export NIX_PROFILES="/nix/var/nix/profiles/default $HOME/.nix-profile"
     export PATH="$HOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:$PATH"
 fi
+
+# =============================================================================
+# ghcup
+# =============================================================================
+[ -f "/Users/arvidgerstmann/.ghcup/env" ] && source "$HOME/.ghcup/env" # ghcup-env
 
 
 # KEEP AT BOTTOM!
