@@ -81,7 +81,8 @@ Plug 'leandros/vim-bufkill'
 if has('nvim')
     " Basically all for LSP support.
     Plug 'neovim/nvim-lspconfig'               " Collection of common configurations for the Nvim LSP client
-    Plug 'williamboman/nvim-lsp-installer'     " Easily install LSP Server
+    Plug 'williamboman/mason.nvim'
+    Plug 'williamboman/mason-lspconfig.nvim'
     Plug 'kyazdani42/nvim-web-devicons'
     Plug 'nvim-lua/plenary.nvim'               " Lua library
     Plug 'hrsh7th/nvim-cmp'                    " Completion framework
@@ -816,109 +817,105 @@ if has('nvim')
 " LSP INSTALLER
 " =============================================================================
 lua << EOF
-local lsp_installer = require("nvim-lsp-installer")
-local lsp_installer_servers = require("nvim-lsp-installer.servers")
+require("mason").setup {
+    ui = {
+        icons = {
+            package_installed = "✓",
+            package_pending = "➜",
+            package_uninstalled = "✗",
+        }
+    }
+}
+
+local mason_lspconfig = require("mason-lspconfig")
+mason_lspconfig.setup {
+    ensure_installed = { "rust_analyzer", "tsserver", "eslint", "gopls", "bashls", "sumneko_lua", "vimls", "yamlls" },
+}
+
 local lsp_status = require("lsp-status")
+lsp_status.register_progress()
+
 local capabilities = require('cmp_nvim_lsp').default_capabilities()
 capabilities = vim.tbl_deep_extend("keep", capabilities, lsp_status.capabilities)
 
-lsp_installer.settings({
-    ui = {
-        icons = {
-            server_installed = "✓",
-            server_pending = "➜",
-            server_uninstalled = "✗"
-        }
-    }
-})
-
-local server_available, requested_server = lsp_installer_servers.get_server("rust_analyzer")
-
-if server_available then
-    local opts = {
-        flags = { allow_incremental_sync = false }
-    }
-    -- local extension_path = 'C:/Users/leandros/bin/codelldb-x86_64-windows/extension/'
-    -- local codelldb_path = extension_path .. 'adapter/codelldb.exe'
-    -- local liblldb_path = extension_path .. 'lldb/lib/liblldb.lib'
-    local rust_opts = {
-        tools = { -- rust-tools options
-            autoSetHints = true,
-            hover_with_actions = false,
-            inlay_hints = {
-                -- Only show inlay hints for the current line
-                only_current_line = false,
-                -- wheter to show parameter hints with the inlay hints or not
-                show_parameter_hints = true,
-                -- prefix for parameter hints
-                parameter_hints_prefix = "<- ",
-                -- prefix for all the other hints (type, chaining)
-                other_hints_prefix = "=> ",
-                -- whether to align to the length of the longest line in the file
-                max_len_align = false,
-                -- padding from the left if max_len_align is true
-                max_len_align_padding = 1,
-                -- whether to align to the extreme right or not
-                right_align = false,
-                -- The color of the hints
-                highlight = "Comment",
-            },
-            runnables = {
-                use_telescope = true,
-            },
-            debuggables = {
-                use_telescope = true,
-            },
-        },
-        -- dap = {
-        --     adapter = require('rust-tools.dap').get_codelldb_adapter(codelldb_path, liblldb_path)
-        -- },
-        server = vim.tbl_deep_extend("force", requested_server:get_default_options(), opts, {
-            on_attach = function(client)
-                lsp_status.on_attach(client)
-            end,
-            capabilities = capabilities,
-            settings = {
-                ["rust-analyzer"] = {
-                    assist = {
-                        importGranularity = "module",
-                        importPrefix = "by_self",
-                    },
-                    cargo = {
-                        loadOutDirsFromCheck = true,
-                    },
-                    procMacro = {
-                        enable = true
-                    },
-                    checkOnSave = {
-                        command = "clippy"
-                    },
-                }
-            }
-        }),
-    }
-    require("rust-tools").setup(rust_opts)
+-- Global `on_attach`
+local function on_attach(client, bufnr)
+  -- setup buffer keymaps etc.
+  lsp_status.on_attach(client)
 end
 
-lsp_installer.on_server_ready(function(server)
-    local opts = {
-        on_attach = function(client)
-            lsp_status.on_attach(client)
-        end,
-        capabilities = capabilities,
-    }
+-- Rust
+local rust_tools = require("rust-tools")
+-- local extension_path = 'C:/Users/leandros/bin/codelldb-x86_64-windows/extension/'
+-- local codelldb_path = extension_path .. 'adapter/codelldb.exe'
+-- local liblldb_path = extension_path .. 'lldb/lib/liblldb.lib'
+local rust_opts = {
+    tools = { -- rust-tools options
+        autoSetHints = true,
+        hover_with_actions = false,
+        inlay_hints = {
+            -- Only show inlay hints for the current line
+            only_current_line = false,
+            -- wheter to show parameter hints with the inlay hints or not
+            show_parameter_hints = true,
+            -- prefix for parameter hints
+            parameter_hints_prefix = "<- ",
+            -- prefix for all the other hints (type, chaining)
+            other_hints_prefix = "=> ",
+            -- whether to align to the length of the longest line in the file
+            max_len_align = false,
+            -- padding from the left if max_len_align is true
+            max_len_align_padding = 1,
+            -- whether to align to the extreme right or not
+            right_align = false,
+            -- The color of the hints
+            highlight = "Comment",
+        },
+        runnables = {
+            use_telescope = true,
+        },
+        debuggables = {
+            use_telescope = true,
+        },
+    },
+    -- dap = {
+    --     adapter = require('rust-tools.dap').get_codelldb_adapter(codelldb_path, liblldb_path)
+    -- },
+    server = {
+      on_attach = on_attach,
+      capabilities = capabilities,
+      flags = { allow_incremental_sync = false },
+      settings = {
+        ["rust-analyzer"] = {
+            assist = {
+                importGranularity = "module",
+                importPrefix = "by_self",
+            },
+            cargo = {
+                loadOutDirsFromCheck = true,
+            },
+            procMacro = {
+                enable = true
+            },
+            checkOnSave = {
+                command = "clippy"
+            },
+        }
+      }
+    },
+}
+rust_tools.setup(rust_opts)
 
-    -- Configure LSP through rust-tools.nvim plugin.
-    -- rust-tools will configure and enable certain LSP features for us.
-    -- See https://github.com/simrat39/rust-tools.nvim#configuration
-    if server.name == "rust_analyzer" then
-        server:attach_buffers()
-    else
-        -- This setup() function is exactly the same as lspconfig's setup function.
-        -- Refer to https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md
-        server:setup(opts)
-    end
-end)
+-- Remaining servers
+local lspconfig = require("lspconfig")
+
+for _, server in ipairs { "tsserver", "eslint", "gopls", "bashls", "sumneko_lua", "vimls", "yamlls" } do
+  lspconfig[server].setup {
+    on_attach = on_attach,
+    capabilities = capabilities,
+  }
+end
+
 EOF
 
 lua <<EOF
