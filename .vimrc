@@ -69,6 +69,8 @@ Plug 'junegunn/vim-peekaboo'
 Plug 'vim-scripts/ingo-library'
 Plug 'vim-scripts/EnhancedJumps'
 Plug 'MattesGroeger/vim-bookmarks'
+Plug 'dhruvasagar/vim-zoom'
+Plug 'shortcuts/no-neck-pain.nvim', { 'tag': '*' }
 
 " My own plugins
 Plug 'leandros/vim-misc'
@@ -1111,7 +1113,7 @@ require'lualine'.setup {
   sections = {
     lualine_b = {'branch', {'diagnostics', sources={'nvim_diagnostic', 'coc'}}},
     lualine_c = {{'filename', file_status = true, path = 1}},
-    lualine_x = {"require'lsp-status'.status()"},
+    lualine_x = {"vim.fn['zoom#statusline']()", "require'lsp-status'.status()"},
     lualine_y = {},
   },
 }
@@ -1402,7 +1404,7 @@ endif
 nnoremap <silent> <leader>d <cmd>lua vim.lsp.buf.definition()<CR>
 nnoremap <silent> <leader>i <cmd>lua vim.lsp.buf.implementation()<CR>
 nnoremap <silent> <leader>y <cmd>lua vim.lsp.buf.type_definition()<CR>
-nnoremap <silent> <leader>r <cmd>lua vim.lsp.buf.references()<CR>
+nnoremap <silent> <leader>rr <cmd>lua vim.lsp.buf.references()<CR>
 
 " Show diagnostic popup on cursor hold
 " autocmd CursorHold * lua require'lspsaga.diagnostic'.show_line_diagnostics()
@@ -1992,6 +1994,25 @@ let g:rainbow_conf = {
 \   }
 \}
 
+" =============================================================================
+" vim-zoom
+" =============================================================================
+nmap <leader>,f <Plug>(zoom-toggle)
+
+" =============================================================================
+" no-neck-pain
+" =============================================================================
+nmap <leader>,n :NoNeckPain<CR>
+
+lua <<EOF
+require("no-neck-pain").setup({
+  width = 100,
+  -- Disables NNP if the last valid buffer in the list has been closed.
+  disableOnLastBuffer = true,
+  -- When `true`, disabling NNP kills every split/vsplit buffers except the main NNP buffer.
+  killAllBuffersOnDisable = true,
+})
+EOF
 
 " =============================================================================
 " Floaterm
