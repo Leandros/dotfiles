@@ -56,7 +56,6 @@ Plug 'mg979/vim-visual-multi', {'branch': 'master'}
 Plug 'Konfekt/FastFold'
 Plug 'Yggdroot/LeaderF', { 'do': ':LeaderfInstallCExtension' }
 Plug 'mhinz/vim-grepper'
-" Plug 'ntpeters/vim-better-whitespace'
 Plug 'maxbrunsfeld/vim-yankstack'
 Plug 'scrooloose/nerdtree'
 " Plug 'mbbill/undotree'
@@ -108,6 +107,7 @@ if has('nvim')
     Plug 'windwp/nvim-autopairs'               " Automatically close braces
     Plug 'voldikss/vim-floaterm'               " Floating terminals. Spooky!
     Plug 'nvim-tree/nvim-tree.lua'
+    Plug 'johnfrankmorgan/whitespace.nvim'
 
     " Telescope
     Plug 'nvim-telescope/telescope.nvim', { 'branch': '0.1.x' } " Improved LSP actions
@@ -1598,10 +1598,19 @@ endif " if has(nvim)
 " =============================================================================
 " Vim Better Whitespace
 " =============================================================================
-let g:better_whitespace_enabled=1
-let g:strip_whitespace_on_save=1
-let g:strip_only_modified_lines=1
-let g:strip_whitespace_confirm=0
+lua <<EOF
+require('whitespace-nvim').setup({
+  -- configuration options and their defaults
+
+  -- `highlight` configures which highlight is used to display
+  -- trailing whitespace
+  highlight = 'errorMsg',
+
+  -- `ignored_filetypes` configures which filetypes to ignore when
+  -- displaying trailing whitespace
+  ignored_filetypes = { 'TelescopePrompt', 'Trouble', 'help' },
+})
+EOF
 
 
 " =============================================================================
