@@ -954,7 +954,7 @@ require('mason-lspconfig').setup {
     "eslint",
     "gopls",
     "bashls",
-    "sumneko_lua",
+    "lua_ls",
     "vimls",
     "yamlls",
     "jedi_language_server", -- python
@@ -1052,7 +1052,7 @@ require("flutter-tools").setup{
 }
 
 -- Remaining servers
-for _, server in ipairs { "tsserver", "eslint", "gopls", "bashls", "sumneko_lua", "vimls", "yamlls", "jedi_language_server", "pylsp" } do
+for _, server in ipairs { "tsserver", "eslint", "gopls", "bashls", "lua_ls", "vimls", "yamlls", "jedi_language_server", "pylsp" } do
   lspconfig[server].setup {
     on_attach = on_attach,
     --capabilities = capabilities,
