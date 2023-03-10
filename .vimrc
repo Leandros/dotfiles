@@ -109,6 +109,7 @@ if has('nvim')
     Plug 'voldikss/vim-floaterm'               " Floating terminals. Spooky!
     Plug 'nvim-tree/nvim-tree.lua'
     Plug 'johnfrankmorgan/whitespace.nvim'
+    Plug 'tzachar/local-highlight.nvim'
 
     " Telescope
     Plug 'nvim-telescope/telescope.nvim', { 'branch': '0.1.x' } " Improved LSP actions
@@ -1573,6 +1574,17 @@ require('whitespace-nvim').setup({
   -- `ignored_filetypes` configures which filetypes to ignore when
   -- displaying trailing whitespace
   ignored_filetypes = { 'TelescopePrompt', 'Trouble', 'help', 'mason', 'floaterm', 'Terminal', 'gitcommit', 'vim-plug' },
+})
+EOF
+
+" =============================================================================
+" local highlight
+" =============================================================================
+hi! TSDefinitionUsage guifg=none guibg=#073642 gui=underline guisp=none
+lua <<EOF
+require('local-highlight').setup({
+  file_types = {'rust', 'typescript', 'typescript.tsx', 'javascript', 'javascript.jsx', 'vim', 'bash'},
+  hlgroup = 'TSDefinitionUsage',
 })
 EOF
 
