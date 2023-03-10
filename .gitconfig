@@ -33,7 +33,8 @@
     sl = stash list
     sa = stash apply
     ss = stash save
-    stsh = stash --keep-index
+    sp = stash pop
+    stsh = stash --keep-index --include-untracked
     staash = stash --include-untracked
     staaash = stash --all
 
@@ -130,7 +131,7 @@
     autoStash = true
 [push]
     default = simple
-    autoSetupRemote = true
+	autoSetupRemote = true
 [filter "lfs"]
     smudge = git-lfs smudge -- %f
     process = git-lfs filter-process
