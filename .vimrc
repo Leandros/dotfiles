@@ -1627,6 +1627,8 @@ require'window-picker'.setup({
 
 require("nvim-tree").setup({
   sort_by = "case_sensitive",
+  sync_root_with_cwd = true, -- Changes the tree root directory on `DirChanged` and refreshes the tree.
+  reload_on_bufenter = true, -- Automatically reloads the tree on `BufEnter` nvim-tree.
   --remove_keymaps = true, -- remove all default mapping
   view = {
     adaptive_size = true,
