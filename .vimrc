@@ -939,7 +939,7 @@ function _G.toggle_diagnostics()
   end
 end
 
-vim.api.nvim_set_keymap('n', '<leader>tt', ':call v:lua.toggle_diagnostics()<CR>',  {noremap = true, silent = true})
+vim.api.nvim_set_keymap('n', '<leader>td', ':call v:lua.toggle_diagnostics()<CR>',  {noremap = true, silent = true})
 EOF
 
 function Refresh()
@@ -1019,7 +1019,11 @@ cmp.setup({
 })
 
 -- Doesn't work, for some reason
--- cmp.event:on( 'confirm_done', cmp_autopairs.on_confirm_done({  map_char = { tex = '' } }))
+cmp.event:on(
+  'confirm_done',
+  cmp_autopairs.on_confirm_done()
+)
+
 
 EOF
 
