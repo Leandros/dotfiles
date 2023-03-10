@@ -455,7 +455,7 @@ nnoremap <C-t> :split<CR>
 " Split killing
 command! Bd bp\|bd \#
 nnoremap <C-q> :BD<CR>
-nnoremap <C-w> :bd<CR>
+" nnoremap <C-w> :bd<CR>
 
 " Close / Open quickfix
 nnoremap <Leader>qq :cclose<CR>
@@ -819,9 +819,8 @@ lua << EOF
 local lsp_installer = require("nvim-lsp-installer")
 local lsp_installer_servers = require("nvim-lsp-installer.servers")
 local lsp_status = require("lsp-status")
-local capabilities = vim.lsp.protocol.make_client_capabilities()
+local capabilities = require('cmp_nvim_lsp').default_capabilities()
 capabilities = vim.tbl_deep_extend("keep", capabilities, lsp_status.capabilities)
-capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
 
 lsp_installer.settings({
     ui = {
@@ -1353,7 +1352,7 @@ require'nvim-treesitter.configs'.setup {
     ensure_installed = {'rust', 'json', 'javascript', 'typescript', 'tsx', 'vim', 'lua', 'go', 'haskell', 'bash'},
     highlight = {
         enable = true,
-        disable = { "rust" },
+        disable = { "rust", "typescript" },
         additional_vim_regex_highlighting = false,
         custom_captures = {
             ["punctuation.bracket"] = "Variable",
@@ -1377,8 +1376,9 @@ require('leap').setup {
   },
 }
 
-vim.keymap.set({"n", "x", "o"}, "t", "<Plug>(leap-forward-to)", {silent = true})
-vim.keymap.set({"n", "x", "o"}, "T", "<Plug>(leap-backward-to)", {silent = true})
+vim.keymap.set({"n", "x", "o"}, "t", "<cmd>lua require('leap').leap { target_windows = { vim.fn.win_getid() } }<CR>", {silent = true})
+--vim.keymap.set({"n", "x", "o"}, "t", "<Plug>(leap-forward-to)", {silent = true})
+--vim.keymap.set({"n", "x", "o"}, "T", "<Plug>(leap-backward-to)", {silent = true})
 vim.keymap.set({"n", "x", "o"}, "gt", "<Plug>(leap-cross-window)", {silent = true})
 
 EOF
@@ -1568,6 +1568,7 @@ call NERDTreeHighlightFile('js', '\.js',            '3',  'NONE', 'NONE', 'NONE'
 call NERDTreeHighlightFile('jsx', '\.jsx',          '3',  'NONE', 'NONE', 'NONE')
 call NERDTreeHighlightFile('ts', '\.ts',            '5',  'NONE', 'NONE', 'NONE')
 call NERDTreeHighlightFile('tsx', '\.tsx',          '5',  'NONE', 'NONE', 'NONE')
+
 
 " =============================================================================
 " vim-autoformat Settings.
