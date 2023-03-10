@@ -52,7 +52,7 @@ Plug 'tpope/vim-commentary'
 " Plug 'tpope/vim-repeat' " remaps <c-r>
 Plug 'tpope/vim-surround'
 Plug 'tpope/vim-speeddating'
-Plug 'terryma/vim-multiple-cursors'
+Plug 'mg979/vim-visual-multi', {'branch': 'master'}
 Plug 'Konfekt/FastFold'
 Plug 'Yggdroot/LeaderF', { 'do': ':LeaderfInstallCExtension' }
 Plug 'mhinz/vim-grepper'
@@ -1841,30 +1841,62 @@ nmap <Leader>gh <Plug>EnhancedJumpsLocalOlder
 nmap <Leader>gl <Plug>EnhancedJumpsLocalNewer
 
 " =============================================================================
-" MultipleCursor
+" Vim Visual Multi (VM)
 " =============================================================================
-let g:multi_cursor_use_default_mapping=0
-let g:multi_cursor_next_key='<C-g>'
-let g:multi_cursor_prev_key='<C-p>'
-let g:multi_cursor_skip_key='<C-x>'
-let g:multi_cursor_quit_key='<Esc>'
-let g:multi_cursor_start_key='<C-g>'
-nnoremap <silent> <C-j> :MultipleCursorsFind <C-R>/<CR>
-vnoremap <silent> <C-j> :MultipleCursorsFind <C-R>/<CR>
 
-" Disable youcompleteme while multiple cursors are active
-function! Multiple_cursors_before()
-    let g:yankring_record_enabled = 0
-    if exists("AutoPairsToggle")
-      call AutoPairsToggle()
-    endif
+let g:VM_default_mappings = 0
+let g:VM_mouse_mappings = 0
+let g:VM_maps = {}
+
+let g:VM_maps["Exit"]               = '<C-C>' " quit VM
+let g:VM_maps["Find Under"]         = '<C-g>' " replace C-n
+let g:VM_maps["Find Subword Under"] = '<C-g>' " replace visual C-n
+let g:VM_maps["Toggle Mappings"]    = '<CR>'  " toggle VM buffer mappings
+let g:VM_maps["Undo"]               = 'u'
+let g:VM_maps["Redo"]               = 'j'
+
+" let g:VM_maps["Reselect Last"]         = leader.'gS'
+" let g:VM_maps["Add Cursor At Pos"]     = leader.'\'
+" let g:VM_maps["Start Regex Search"]    = leader.'/'
+" let g:VM_maps["Select All"]            = leader.'A'
+let g:VM_maps["Add Cursor Down"]       = '<C-h>'
+let g:VM_maps["Add Cursor Up"]         = '<C-l>'
+" let g:VM_maps["Select l"]              = '<S-Right>'
+" let g:VM_maps["Select h"]              = '<S-Left>'
+" let g:VM_maps["Visual Regex"]          = visual.'/'
+" let g:VM_maps["Visual All"]            = visual.'A'
+" let g:VM_maps["Visual Add"]            = visual.'a'
+" let g:VM_maps["Visual Find"]           = visual.'f'
+" let g:VM_maps["Visual Cursors"]        = visual.'c'
+let g:VM_maps["Find Next"] = 'h'
+let g:VM_maps["Find Prev"] = 'l'
+let g:VM_maps["Replace"]   = ''
+let g:VM_maps["Motion h"]  = 'b'
+let g:VM_maps["Motion j"]  = 'n'
+let g:VM_maps["Motion k"]  = 'r'
+let g:VM_maps["Motion l"]  = 's'
+
+
+function! VM_Start()
+  let g:yankring_record_enabled = 0
+  if exists("AutoPairsToggle")
+    call AutoPairsToggle()
+  endif
+
+  " Add mappings here if desired:
+  " Example: nmap <buffer> b <Left>
 endfunction
-function! Multiple_cursors_after()
-    let g:yankring_record_enabled = 1
-    if exists("AutoPairsToggle")
-      call AutoPairsToggle()
-    endif
+
+function! VM_Exit()
+  let g:yankring_record_enabled = 1
+  if exists("AutoPairsToggle")
+    call AutoPairsToggle()
+  endif
+
+  " And unmap them again here:
+  " Example: nunmap <buffer> b
 endfunction
+
 
 " =============================================================================
 " Vim Easy Align
