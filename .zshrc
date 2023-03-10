@@ -47,12 +47,12 @@ if [[ "Darwin" == "`uname`" ]]; then
 
     # Homebrew
     if [[ $(uname -m) == "arm64" ]]; then
-	eval "$(/opt/homebrew/bin/brew shellenv)"
+	    eval "$(/opt/homebrew/bin/brew shellenv)"
     else
-        BREW_PREFIX="/usr/local"
+        HOMEBREW_PREFIX="/usr/local"
     fi
 
-    export FLAGS_GETOPT_CMD="$BREW_PREFIX/opt/gnu-getopt/bin/getopt"
+    export FLAGS_GETOPT_CMD="$HOMEBREW_PREFIX/opt/gnu-getopt/bin/getopt"
     export GREP_OPTIONS='--color=always'
     export GREP_COLOR='1;35;40'
 
@@ -483,8 +483,12 @@ export USE_CCACHE=1
 # =============================================================================
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 PATH="/opt/homebrew/bin:/opt/homebrew/sbin${PATH+:$PATH}"
-PATH="/opt/homebrew/opt/binutils/bin:$PATH"
-PATH="$BREW_PREFIX/opt/coreutils/libexec/gnubin:$PATH"
+# PATH="$HOMEBREW_PREFIX/opt/binutils/bin:$PATH"
+# PATH="$HOMEBREW_PREFIX/opt/coreutils/libexec/gnubin:$PATH"
+PATH="$HOMEBREW_PREFIX/opt/make/libexec/gnubin:$PATH"
+PATH="$HOMEBREW_PREFIX/opt/gnu-getopt/bin:$PATH"
+PATH="$HOMEBREW_PREFIX/opt/openjdk@11/bin:$PATH"
+PATH="$HOMEBREW_PREFIX/opt/mysql@5.7/bin:$PATH"
 
 PATH=$PATH:/usr/bin/core_perl
 PATH=$PATH:$HOME/bin
@@ -546,7 +550,7 @@ lg()
 # =============================================================================
 # MANPATH
 # =============================================================================
-export MANPATH=$BREW_PREFIX/opt/coreutils/libexec/gnuman:$MANPATH
+export MANPATH=$HOMEBREW_PREFIX/opt/coreutils/libexec/gnuman:$MANPATH
 function mman { MANPATH=$HOME/p4/depot/liba/docs man $* | less }
 
 # =============================================================================
@@ -572,8 +576,9 @@ fi
 # =============================================================================
 # Nix
 # =============================================================================
-if [ -e '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh' ]; then
-  . '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh'
+if [ -e /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
+    export NIX_PROFILES="/nix/var/nix/profiles/default $HOME/.nix-profile"
+    export PATH="$HOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:$PATH"
 fi
 
 
