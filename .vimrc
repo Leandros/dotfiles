@@ -1895,11 +1895,17 @@ let g:Lf_UseVersionControlTool = 0
 let g:Lf_ShowRelativePath = 1
 let g:Lf_PreviewCode = 0
 let g:Lf_WindowHeight = 0.2
-let g:Lf_ShowDevIcons = 0
+let g:Lf_ShowDevIcons = 1
+let g:Lf_ShowHidden = 1
+let g:Lf_UseCache = 0
 let g:Lf_StlSeparator = {
     \ 'left': '',
     \ 'right': ''
     \ }
+" let g:Lf_RgConfig = [
+"     \ "--glob=!git/*",
+"     \ "--hidden"
+" \ ]
 let g:Lf_WildIgnore = {
     \ 'dir': ['.svn','.git','.p4','.perforce','.plastic','node_modules','temp','Temp','out','_out','_build','extern'],
     \ 'file': ['*.sw?','~$*','*.bak','*.exe','*.o','*.so','*.pyco','*.dll','*.meta','AssemblyU2DCSharp*','*.a','*.lib']
@@ -1915,7 +1921,7 @@ let g:Lf_CommandMap = {
     \ '<C-L>': ['<C-D>'],
     \ '<F5>': ['<C-Z>']
     \ }
-let g:Lf_RootMarkers = ['.git', '.hg', '.svn', '.depotroot', '.projroot', '.p4', '.perforce', '.plastic']
+" let g:Lf_RootMarkers = ['.git', '.hg', '.svn', '.depotroot', '.projroot', '.p4', '.perforce', '.plastic']
 
 " =============================================================================
 " Vim Grep
