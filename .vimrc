@@ -59,8 +59,8 @@ Plug 'mhinz/vim-grepper'
 Plug 'ntpeters/vim-better-whitespace'
 Plug 'maxbrunsfeld/vim-yankstack'
 Plug 'scrooloose/nerdtree'
-Plug 'ggandor/lightspeed.nvim'
 " Plug 'mbbill/undotree'
+Plug 'ggandor/leap.nvim'
 
 " General
 Plug 'junegunn/vim-easy-align'
@@ -318,6 +318,7 @@ endif
 set background=dark
 let g:solarized_italics = 0
 colorscheme solarized
+
 
 " =============================================================================
 " Custom Filetypes
@@ -1078,7 +1079,7 @@ local colors = {
   cyan    =  '#2aa198',
   green   =  '#859900',
 }
-local custom_solarized = {
+local custom_solarized_dark = {
   normal = {
     a = { fg = colors.base03, bg = colors.blue, gui = 'bold' },
     b = { fg = colors.base0, bg = colors.base03 },
@@ -1096,7 +1097,7 @@ local custom_solarized = {
 require'lualine'.setup {
   options = {
     icons_enabled = false,
-    theme = custom_solarized,
+    theme = custom_solarized_dark,
     component_separators = '│',
     section_separators = '',
     disabled_filetypes = {},
@@ -1361,69 +1362,26 @@ require'nvim-treesitter.configs'.setup {
 EOF
 
 " =============================================================================
-" Lightspeed
+" leap.nvim
 " =============================================================================
-
 lua <<EOF
-require'lightspeed'.setup {
-    jump_to_unique_chars = true,
+require('leap').setup {
+  case_sensitive = false,
+  safe_labels = {
+    "t", "f", "u", "t", "/",
+    "T", "F", "L", "H", "M", "U", "G", "?", "Z"
+  },
 }
+
+vim.keymap.set({"n", "x", "o"}, "t", "<Plug>(leap-forward-to)", {silent = true})
+vim.keymap.set({"n", "x", "o"}, "T", "<Plug>(leap-backward-to)", {silent = true})
+vim.keymap.set({"n", "x", "o"}, "gt", "<Plug>(leap-cross-window)", {silent = true})
+
 EOF
 
-
 " =============================================================================
-" Indent Blankline
+" Signcolumn
 " =============================================================================
-
-lua << EOF
-require("indent_blankline").setup {
-    show_end_of_line = false,
-    show_first_indent_level = false,
-    filetype = {'yaml', 'rust', 'helm'},
-    filetype_exclude = {'help'},
-    buftype_exclude = {'terminal'},
-    --show_current_context = true,
-    --show_current_context_start = true,
-}
-EOF
-
-
-" =============================================================================
-" Lightspeed
-" =============================================================================
-
-" down/right (successors in the window tree)
-nmap <silent>gt <Plug>Lightspeed_gs
-" up/left (predecessors in the window tree)
-nmap <silent>gT <Plug>Lightspeed_gS
-
-" 2-character search (x/x) (Normal)
-nmap <silent>t <Plug>Lightspeed_omni_s
-nmap <silent>x <Plug>Lightspeed_x
-nmap <silent>X <Plug>Lightspeed_X
-
-" 2-character search (x/x) (Visual)
-vmap <silent>t <Plug>Lightspeed_omni_s
-vmap <silent>x <Plug>Lightspeed_x
-vmap <silent>X <Plug>Lightspeed_X
-
-" 1-character search (f/t) (Normal)
-nmap <silent>e <Plug>Lightspeed_f
-nmap <silent>E <Plug>Lightspeed_F
-nmap <silent>ä <Plug>Lightspeed_t
-nmap <silent>Ä <Plug>Lightspeed_T
-
-" 1-character search (f/t) (Visual)
-vmap <silent>e <Plug>Lightspeed_f
-vmap <silent>E <Plug>Lightspeed_F
-vmap <silent>Ä <Plug>Lightspeed_t
-vmap <silent>Ä <Plug>Lightspeed_T
-
-" Code navigation shortcuts
-nnoremap <silent> <leader>d <cmd>lua vim.lsp.buf.definition()<CR>
-nnoremap <silent> <leader>i <cmd>lua vim.lsp.buf.implementation()<CR>
-nnoremap <silent> <leader>y <cmd>lua vim.lsp.buf.type_definition()<CR>
-nnoremap <silent> <leader>r <cmd>lua vim.lsp.buf.references()<CR>
 
 " Always show the signcolumn, otherwise it would shift the text each time
 " diagnostics appear/become resolved.
@@ -1433,6 +1391,12 @@ if has("nvim-0.5.0") || has("patch-8.1.1564")
 else
     set signcolumn=yes
 endif
+
+" Code navigation shortcuts
+nnoremap <silent> <leader>d <cmd>lua vim.lsp.buf.definition()<CR>
+nnoremap <silent> <leader>i <cmd>lua vim.lsp.buf.implementation()<CR>
+nnoremap <silent> <leader>y <cmd>lua vim.lsp.buf.type_definition()<CR>
+nnoremap <silent> <leader>r <cmd>lua vim.lsp.buf.references()<CR>
 
 " Show diagnostic popup on cursor hold
 " autocmd CursorHold * lua require'lspsaga.diagnostic'.show_line_diagnostics()
@@ -1449,6 +1413,22 @@ vim.diagnostic.config({
     signs = true,
     float = { border = "single" },
 })
+EOF
+
+" =============================================================================
+" Indent Blankline
+" =============================================================================
+
+lua << EOF
+require("indent_blankline").setup {
+    show_end_of_line = false,
+    show_first_indent_level = false,
+    filetype = {'yaml', 'rust', 'helm'},
+    filetype_exclude = {'help'},
+    buftype_exclude = {'terminal'},
+    --show_current_context = true,
+    --show_current_context_start = true,
+}
 EOF
 
 " =============================================================================
