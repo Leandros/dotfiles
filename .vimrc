@@ -1424,6 +1424,7 @@ require('gitsigns').setup({
     changedelete = { text = '~' },
     untracked    = { text = '┆' },
   },
+  _signs_staged_enable = true,
   keymaps = {
     noremap = true,
 
