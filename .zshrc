@@ -317,6 +317,9 @@ alias gb3='goobook -c ~/.mutt/goobook/goobookrc_arvidio'
 alias ccp='rsync -ah --progress'
 alias ytdl="youtube-dl -f 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'"
 alias vim='nvim'
+alias tf='terraform'
+alias p='pnpm'
+alias pnx="pnpm nx"
 
 # Less modes
 export LESS="-R"
@@ -496,6 +499,8 @@ PATH=$PATH:$NDK_CCACHE
 PATH=$PATH:$HOME/p4/depot/extern/bin/shared
 PATH=$PATH:$HOME/bin/depot_tools
 PATH=$PATH:$HOME/.cargo/bin
+PATH=$PATH:$HOME/.local/bin
+PATH=$PATH:$HOME/gopath/bin
 
 # macOS specific
 PATH=$PATH:/Applications/p4merge.app/Contents/MacOS
