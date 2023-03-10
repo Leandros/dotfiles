@@ -1030,6 +1030,9 @@ local rust_opts = {
             },
             cargo = {
                 loadOutDirsFromCheck = true,
+                buildScripts = {
+                    enable = true,
+                },
             },
             procMacro = {
                 enable = true
