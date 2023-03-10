@@ -880,7 +880,7 @@ if server_available then
             end,
             capabilities = capabilities,
             settings = {
-                ["rust_analyzer"] = {
+                ["rust-analyzer"] = {
                     assist = {
                         importGranularity = "module",
                         importPrefix = "by_self",
