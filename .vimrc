@@ -28,7 +28,7 @@ if has('nvim')
     if has("win32") || has("win16")
         let g:python3_host_prog = 'C:\Python310\python.exe'
     else
-        let g:python3_host_prog = '/usr/local/bin/python3'
+        let g:python3_host_prog = '/usr/bin/python3'
     endif
 endif
 
@@ -102,11 +102,12 @@ if has('nvim')
     Plug 'folke/lsp-colors.nvim'               " Highlight groups for trouble.nvim
     Plug 'folke/trouble.nvim'                  " Pretty diagnostics
     Plug 'nvim-telescope/telescope.nvim'       " Improved LSP actions
-    " Plug 'nvim-telescope/telescope-ui-select.nvim' " Use telescope as native vim select popup, required from NVIM v0.7.0
+    Plug 'nvim-telescope/telescope-ui-select.nvim' " Use telescope as native vim select popup, required from NVIM v0.7.0
     " Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
     Plug 'leandros/telescope-fzf-native.nvim', { 'do': 'make', 'branch': 'feature/windows_build_support' }
     Plug 'kevinhwang91/nvim-bqf'               " Get preview in quickfix
     Plug 'windwp/nvim-autopairs'               " Automatically close braces
+    Plug 'voldikss/vim-floaterm'
 
     if has_navigator
         Plug 'ray-x/guihua.lua', {'do': 'cd lua/fzy && make' }
@@ -144,6 +145,8 @@ Plug 'cespare/vim-toml', { 'for': ['toml'], 'branch': 'main' }
 Plug 'NoahTheDuke/vim-just'
 Plug 'jvirtanen/vim-hcl'
 Plug 'towolf/vim-helm'
+Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }
+Plug 'alx741/vim-hindent'
 
 if js_dev_enabled
     Plug 'leafgarland/typescript-vim'
@@ -300,6 +303,12 @@ if &diff
   endif
 endif
 
+" C-I acting as Tab fix
+if $TERM ==# 'screen-256color'
+  autocmd UIEnter * if v:event.chan ==# 0 | call chansend(v:stderr, "\x1b[>1u") | endif
+  autocmd UILeave * if v:event.chan ==# 0 | call chansend(v:stderr, "\x1b[<1u") | endif
+endif
+
 " Theme
 if has('nvim')
     set termguicolors
@@ -454,7 +463,6 @@ nnoremap Y y$
 " Jump back in time
 nnoremap <Leader>. <C-t>
 
-
 " =============================================================================
 " Tab navigation
 " =============================================================================
@@ -485,7 +493,7 @@ cabbrev tabv tab sview +setlocal\ nomodifiable
 " =============================================================================
 " Indent
 " =============================================================================
-" Set makprg for typescript.
+" Set make
 autocmd FileType typescript set makeprg=tsc\ $*
 autocmd FileType typescript.tsx set makeprg=tsc\ $*
 
@@ -504,8 +512,11 @@ autocmd FileType make setlocal noexpandtab
 " ts = tabstop
 " sts = softtabstop (delete in pairs of N)
 " sw = shiftwidth (shift in pairs of N)
+autocmd FileType json setlocal ts=2 sts=2 sw=2 expandtab
+autocmd FileType gn setlocal ts=2 sts=2 sw=2 expandtab
 autocmd FileType yaml setlocal ts=2 sts=2 sw=2 expandtab
 autocmd FileType hcl setlocal ts=2 sts=2 sw=2 expandtab
+autocmd FileType vim setlocal ts=2 sts=2 sw=2 expandtab
 autocmd FileType helm setlocal ts=2 sts=2 sw=2 expandtab
 autocmd FileType gn setlocal ts=2 sts=2 sw=2 expandtab
 autocmd FileType json setlocal ts=2 sts=2 sw=2 expandtab
@@ -513,6 +524,7 @@ autocmd FileType javascript setlocal ts=2 sts=2 sw=2 expandtab
 autocmd FileType javascript.jsx setlocal ts=2 sts=2 sw=2 expandtab
 autocmd FileType typescript setlocal ts=2 sts=2 sw=2 expandtab
 autocmd FileType typescript.tsx setlocal ts=2 sts=2 sw=2 expandtab
+autocmd FileType haskell setlocal ts=2 sts=2 sw=2 expandtab
 
 " Disable automatic line breaking
 autocmd FileType helm setlocal tw=0
@@ -966,8 +978,10 @@ lua <<EOF
 local cmp_autopairs = require('nvim-autopairs.completion.cmp')
 local cmp = require 'cmp'
 cmp.setup({
-  documentation = {
-    border = { '╭', '─', '╮', '│', '╯', '─', '╰', '│' },
+  window = {
+    documentation = {
+      border = { '╭', '─', '╮', '│', '╯', '─', '╰', '│' },
+    },
   },
 
   -- Enable LSP snippets
@@ -1331,7 +1345,7 @@ EOF
 
 lua <<EOF
 require'nvim-treesitter.configs'.setup {
-    ensure_installed = {'rust', 'json', 'javascript', 'typescript', 'tsx', 'vim', 'lua'},
+    ensure_installed = {'rust', 'json', 'javascript', 'typescript', 'tsx', 'vim', 'lua', 'go', 'haskell', 'bash'},
     highlight = {
         enable = true,
         disable = { "rust" },
@@ -1667,10 +1681,10 @@ imap <expr> <C-s>   vsnip#available(1)  ? '<Plug>(vsnip-expand-or-jump)' : '<C-s
 smap <expr> <C-s>   vsnip#available(1)  ? '<Plug>(vsnip-expand-or-jump)' : '<C-s>'
 
 " Jump forward or backward
-imap <expr> <Tab>   vsnip#jumpable(1)   ? '<Plug>(vsnip-jump-next)'      : '<Tab>'
-smap <expr> <Tab>   vsnip#jumpable(1)   ? '<Plug>(vsnip-jump-next)'      : '<Tab>'
-imap <expr> <S-Tab> vsnip#jumpable(-1)  ? '<Plug>(vsnip-jump-prev)'      : '<S-Tab>'
-smap <expr> <S-Tab> vsnip#jumpable(-1)  ? '<Plug>(vsnip-jump-prev)'      : '<S-Tab>'
+" imap <expr> <Tab>   vsnip#jumpable(1)   ? '<Plug>(vsnip-jump-next)'      : '<Tab>'
+" smap <expr> <Tab>   vsnip#jumpable(1)   ? '<Plug>(vsnip-jump-next)'      : '<Tab>'
+" imap <expr> <S-Tab> vsnip#jumpable(-1)  ? '<Plug>(vsnip-jump-prev)'      : '<S-Tab>'
+" smap <expr> <S-Tab> vsnip#jumpable(-1)  ? '<Plug>(vsnip-jump-prev)'      : '<S-Tab>'
 
 " If you want to use snippet for multiple filetypes, you can `g:vsnip_filetypes` for it.
 let g:vsnip_filetypes = {}
@@ -1733,25 +1747,25 @@ require('telescope').setup {
       case_mode = "smart_case",        -- or "ignore_case" or "respect_case"
                                        -- the default case_mode is "smart_case"
     },
-    --["ui-select"] = {
-    --  require("telescope.themes").get_dropdown {
-    --    -- even more opts
-    --  }
-    --}
+    ["ui-select"] = {
+      require("telescope.themes").get_dropdown {
+        -- even more opts
+      }
+    }
   }
 }
 
 -- To get fzf loaded and working with telescope, you need to call
 -- load_extension, somewhere after setup function:
 require('telescope').load_extension('fzf')
--- require('telescope').load_extension('ui-select')
+require('telescope').load_extension('ui-select')
 EOF
 
 " Doubled with navigator:
 nnoremap <leader>gr <cmd>lua require('telescope.builtin').lsp_references()<cr>
 nnoremap <leader>gD <cmd>lua require('telescope.builtin').diagnostics()<cr>
-nnoremap <leader>ca <cmd>lua require('telescope.builtin').lsp_code_actions()<cr>
-nnoremap <leader>cA <cmd>lua require('telescope.builtin').lsp_range_code_actions()<cr>
+nnoremap <leader>ca <cmd>lua vim.lsp.buf.code_action()<cr>
+nnoremap <leader>cA <cmd>lua vim.lsp.buf.range_code_action()<cr>
 nnoremap <leader>gi <cmd>lua require('telescope.builtin').lsp_implementations()<cr>
 
 " Telescope.nvim:
@@ -1859,9 +1873,15 @@ vnoremap <silent> <C-j> :MultipleCursorsFind <C-R>/<CR>
 " Disable youcompleteme while multiple cursors are active
 function! Multiple_cursors_before()
     let g:yankring_record_enabled = 0
+    if exists("AutoPairsToggle")
+      call AutoPairsToggle()
+    endif
 endfunction
 function! Multiple_cursors_after()
     let g:yankring_record_enabled = 1
+    if exists("AutoPairsToggle")
+      call AutoPairsToggle()
+    endif
 endfunction
 
 " =============================================================================
@@ -1937,6 +1957,17 @@ let g:rainbow_conf = {
 \   }
 \}
 
+
+" =============================================================================
+" Floaterm
+" =============================================================================
+let g:floaterm_keymap_new    = '<Leader>fn'
+let g:floaterm_keymap_toggle = '<Leader>ff'
+let g:floaterm_keymap_prev   = '<Leader>fb'
+let g:floaterm_keymap_next   = '<Leader>fs'
+let g:floaterm_width = 0.8
+let g:floaterm_height = 0.8
+
 " =============================================================================
 " Colors
 " =============================================================================
@@ -1980,3 +2011,26 @@ function! SynStack()
   endif
   echo map(synstack(line('.'), col('.')), 'synIDattr(v:val, "name")')
 endfunc
+
+
+" =============================================================================
+" Golang
+" =============================================================================
+autocmd FileType go nnoremap <buffer> <C-f> :GoFmt<CR>
+let g:go_gopls_enabled = 0
+let g:go_doc_keywordprg_enabled = 0
+let g:go_metalinter_enabled = []
+let g:go_metalinter_command = "golangci-lint"
+let g:go_fmt_command = "golines"
+let g:go_fmt_options = {
+    \ 'golines': '-m 100',
+    \ }
+let g:go_fmt_autosave = 0
+let g:go_imports_autosave = 0
+
+
+" =============================================================================
+" Haskell
+" =============================================================================
+autocmd FileType haskell nnoremap <buffer> <C-f> :Hindent<CR>
+let g:hindent_on_save = 0
