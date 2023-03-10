@@ -102,10 +102,11 @@ if has('nvim')
     Plug 'lukas-reineke/indent-blankline.nvim' " Showing indentation lines
     Plug 'folke/lsp-colors.nvim'               " Highlight groups for trouble.nvim
     Plug 'folke/trouble.nvim'                  " Pretty diagnostics
-    Plug 'nvim-telescope/telescope.nvim'       " Improved LSP actions
+    Plug 'nvim-telescope/telescope.nvim', { 'branch': '0.1.x' } " Improved LSP actions
     Plug 'nvim-telescope/telescope-ui-select.nvim' " Use telescope as native vim select popup, required from NVIM v0.7.0
     " Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
-    Plug 'leandros/telescope-fzf-native.nvim', { 'do': 'make', 'branch': 'feature/windows_build_support' }
+    Plug 'nvim-telescope/telescope-fzy-native.nvim'
+    " Plug 'leandros/telescope-fzf-native.nvim', { 'do': 'make', 'branch': 'feature/windows_build_support' }
     Plug 'kevinhwang91/nvim-bqf'               " Get preview in quickfix
     Plug 'windwp/nvim-autopairs'               " Automatically close braces
     Plug 'voldikss/vim-floaterm'
@@ -1722,12 +1723,18 @@ require('telescope').setup {
     },
   },
   extensions = {
+    --[[
     fzf = {
       fuzzy = true,                    -- false will only do exact matching
       override_generic_sorter = true,  -- override the generic sorter
       override_file_sorter = true,     -- override the file sorter
       case_mode = "smart_case",        -- or "ignore_case" or "respect_case"
                                        -- the default case_mode is "smart_case"
+    },
+    ]]--
+    fzy_native = {
+      override_generic_sorter = true,
+      override_file_sorter = true,
     },
     ["ui-select"] = {
       require("telescope.themes").get_dropdown {
@@ -1739,21 +1746,31 @@ require('telescope').setup {
 
 -- To get fzf loaded and working with telescope, you need to call
 -- load_extension, somewhere after setup function:
-require('telescope').load_extension('fzf')
+--require('telescope').load_extension('fzf')
+require('telescope').load_extension('fzy_native')
 require('telescope').load_extension('ui-select')
 EOF
 
+" Builtins
+nnoremap <leader>fn <cmd>lua require('telescope.builtin').resume()<cr>
+
 " Doubled with navigator:
 nnoremap <leader>gr <cmd>lua require('telescope.builtin').lsp_references()<cr>
-nnoremap <leader>gD <cmd>lua require('telescope.builtin').diagnostics()<cr>
+nnoremap <leader>gd <cmd>lua require('telescope.builtin').diagnostics()<cr>
 nnoremap <leader>ca <cmd>lua vim.lsp.buf.code_action()<cr>
 nnoremap <leader>cA <cmd>lua vim.lsp.buf.range_code_action()<cr>
 nnoremap <leader>gi <cmd>lua require('telescope.builtin').lsp_implementations()<cr>
+nnoremap <leader>gn <cmd>lua require('telescope.builtin').lsp_document_symbols()<cr>
+nnoremap <leader>ge <cmd>lua require('telescope.builtin').lsp_workspace_symbols()<cr>
+nnoremap <leader>gt <cmd>lua require('telescope.builtin').lsp_type_definitions()<cr>
 
 " Telescope.nvim:
-nnoremap <leader>fe <cmd>lua require('telescope.builtin').file_browser()<cr>
+nnoremap <leader>ff <cmd>lua require('telescope.builtin').find_files()<cr>
 nnoremap <leader>fg <cmd>lua require('telescope.builtin').live_grep()<cr>
+nnoremap <leader>fb <cmd>lua require('telescope.builtin').buffers()<cr>
 nnoremap <leader>fh <cmd>lua require('telescope.builtin').help_tags()<cr>
+nnoremap <leader>fm <cmd>lua require('telescope.builtin').marks()<cr>
+nnoremap <leader>fs <cmd>lua require('telescope.builtin').current_buffer_fuzzy_find()<cr>
 
 " LeaderF replacement:
 " Previously: ff, fb, fz
@@ -1975,10 +1992,10 @@ let g:rainbow_conf = {
 " =============================================================================
 " Floaterm
 " =============================================================================
-let g:floaterm_keymap_new    = '<Leader>fn'
-let g:floaterm_keymap_toggle = '<Leader>ff'
-let g:floaterm_keymap_prev   = '<Leader>fb'
-let g:floaterm_keymap_next   = '<Leader>fs'
+let g:floaterm_keymap_new    = '<Leader>tn'
+let g:floaterm_keymap_toggle = '<Leader>tt'
+let g:floaterm_keymap_prev   = '<Leader>tb'
+let g:floaterm_keymap_next   = '<Leader>ts'
 let g:floaterm_width = 0.8
 let g:floaterm_height = 0.8
 
