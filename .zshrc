@@ -142,8 +142,34 @@ fpath=(/opt/homebrew/share/zsh/site-functions $fpath)
 # zmv is awesome
 alias mmv='noglob zmv -W'
 
+# =============================================================================
+# FZF
+export FZF_DEFAULT_COMMAND='fd --type f --strip-cwd-prefix --hidden --follow --exclude .git'
+
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+
+# Preview file content using bat (https://github.com/sharkdp/bat)
+export FZF_CTRL_T_OPTS="
+  --preview 'bat -n --color=always {}'
+  --bind 'ctrl-/:change-preview-window(down|hidden|)'"
+
+export FZF_DEFAULT_OPTS="--bind=ctrl-n:down,ctrl-r:up,ctrl-b:backward-char,ctrl-s:forward-char"
+
+export FZF_CTRL_R_OPTS="
+  --preview 'echo {}' --preview-window up:3:hidden:wrap
+  --bind 'ctrl-p:toggle-preview'
+  --bind 'ctrl-y:execute-silent(echo -n {2..} | pbcopy)+abort'
+  --bind=ctrl-n:down,ctrl-r:up,ctrl-b:backward-char,ctrl-s:forward-char
+  --bind=ctrl-t:toggle-sort
+  --color header:italic
+  --header 'Press CTRL-Y to copy command into clipboard'"
+
 # Init fzf
 [ -f "$HOME/.fzf.zsh" ] && . "$HOME/.fzf.zsh"
+
+function f {
+    fzf $*
+}
 
 # zoxide (must appear after `compinit`)
 eval "$(zoxide init zsh)"
@@ -233,8 +259,9 @@ bindkey -M vicmd ":" vi-rev-repeat-search # was execute-named-cmd
 #bindkey -M vicmd " " magic-space
 
 # Search on steroids.
-bindkey "^R" history-incremental-pattern-search-backward
-bindkey "^S" history-incremental-pattern-search-forward
+# Replaced by fzf
+# bindkey "^R" history-incremental-pattern-search-backward
+# bindkey "^S" history-incremental-pattern-search-forward
 
 # Bind Up and Down keys again
 bindkey -M vicmd "OA" up-line-or-beginning-search
@@ -288,15 +315,13 @@ function _history-incremental-preserving-pattern-search-backward {
     narrow-to-region -R state
 }
 zle -N _history-incremental-preserving-pattern-search-backward
-bindkey -M viins "" _history-incremental-preserving-pattern-search-backward
-bindkey -M vicmd "" _history-incremental-preserving-pattern-search-backward
-bindkey -M isearch "" history-incremental-pattern-search-backward
 
-foreground-vim() {
-    fg %nvim 2>/dev/null >/dev/null || fg %vim 2>/dev/null >/dev/null
-}
-zle -N foreground-vim
-bindkey '^Z' foreground-vim
+# Only overwrite ^R when `fzf` doesn't exist
+if [ -z "$(command -v fzf)" ]; then
+    bindkey -M viins "" _history-incremental-preserving-pattern-search-backward
+    bindkey -M vicmd "" _history-incremental-preserving-pattern-search-backward
+    bindkey -M isearch "" history-incremental-pattern-search-backward
+fi
 
 export KEYTIMEOUT=1
 
