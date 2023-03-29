@@ -1655,7 +1655,7 @@ require("nvim-tree").setup({
     indent_width = 2,
   },
   filters = {
-    dotfiles = false,
+    dotfiles = false, -- toggle via 'H'.
   },
   actions = {
     open_file = {
@@ -1668,6 +1668,9 @@ require("nvim-tree").setup({
     change_dir = {
       global = true,
     },
+  },
+  git = {
+    ignore = false, -- show files ignored by Git. Toggle via 'I'.
   },
 })
 EOF
