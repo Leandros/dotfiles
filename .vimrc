@@ -145,10 +145,10 @@ if has('nvim')
     endif
 
     " Debugging
-    Plug 'puremourning/vimspector'
-    " Plug 'mfussenegger/nvim-dap' " debug adapter for debugging
-    " Plug 'theHamsta/nvim-dap-virtual-text' " virtual text during debugging
-    " Plug 'rcarriga/nvim-dap-ui' " for nvim-dap
+    Plug 'puremourning/vimspector' " for vim (not neovim) support
+    Plug 'mfussenegger/nvim-dap' " debug adapter for debugging
+    Plug 'theHamsta/nvim-dap-virtual-text' " virtual text during debugging
+    Plug 'rcarriga/nvim-dap-ui' " for nvim-dap
 endif
 
 " Prettier
@@ -984,9 +984,26 @@ end
 
 -- Rust
 local rust_tools = require("rust-tools")
--- local extension_path = 'C:/Users/leandros/bin/codelldb-x86_64-windows/extension/'
--- local codelldb_path = extension_path .. 'adapter/codelldb.exe'
--- local liblldb_path = extension_path .. 'lldb/lib/liblldb.lib'
+local extension_path = ''
+local codelldb_path = ''
+local liblldb_path = ''
+
+-- Installing debugging capabilities:
+-- 1. Download the CodeLLDB vscode extension.
+-- 2. Find out where its installed. On linux, it's usually in $HOME/.vscode/extensions/...
+-- 3. Update your configuration:
+-- 4. Create a .vimspector.json
+
+if vim.fn.has('win32') then
+  extension_path = vim.env.HOME .. '/bin/codelldb-x86_64-windows/extension/'
+  codelldb_path = extension_path .. 'adapter/codelldb.exe'
+  liblldb_path = extension_path .. 'lldb/lib/liblldb.lib'
+elseif vim.loop.os_uname().sysname == "Darwin" then
+  extension_path = vim.env.HOME .. '/.vscode/extensions/vadimcn.vscode-lldb-1.9.0/'
+  codelldb_path = extension_path .. 'adapter/codelldb'
+  liblldb_path = extension_path .. 'lldb/lib/liblldb.dylib'
+end
+
 local rust_opts = {
     tools = { -- rust-tools options
         autoSetHints = true,
@@ -1016,9 +1033,9 @@ local rust_opts = {
             use_telescope = true,
         },
     },
-    -- dap = {
-    --     adapter = require('rust-tools.dap').get_codelldb_adapter(codelldb_path, liblldb_path)
-    -- },
+    dap = {
+      adapter = require('rust-tools.dap').get_codelldb_adapter(codelldb_path, liblldb_path)
+    },
     server = {
       on_attach = on_attach,
       --capabilities = capabilities,
