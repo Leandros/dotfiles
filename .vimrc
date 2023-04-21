@@ -1434,6 +1434,31 @@ elseif has_lspsaga
     nnoremap <silent> ]e :Lspsaga diagnostic_jump_prev<CR>
 endif
 
+lua <<EOF
+local _border = "single"
+
+vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(
+  vim.lsp.handlers.hover, {
+    border = _border
+  }
+)
+
+vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(
+  vim.lsp.handlers.signature_help, {
+    border = _border
+  }
+)
+
+vim.diagnostic.config{
+  float={border=_border}
+}
+
+require('lspconfig.ui.windows').default_options = {
+  border = _border
+}
+
+EOF
+
 
 " =============================================================================
 " GitSigns
@@ -1817,6 +1842,7 @@ let g:fastfold_fold_command_suffixes = []
 lua << EOF
 local actions = require 'telescope.actions'
 local lga_actions = require("telescope-live-grep-args.actions")
+
 require('telescope').setup {
   defaults = {
     -- Default configuration for telescope goes here:
