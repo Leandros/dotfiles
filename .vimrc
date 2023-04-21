@@ -1369,7 +1369,7 @@ if not vim.g['has_lspsaga'] then
 end
 
 local saga = require 'lspsaga'
-saga.init_lsp_saga {
+saga.setup {
     use_saga_diagnostic_sign = true,
     -- diagnostic signs
     error_sign = 'E',
@@ -1390,7 +1390,7 @@ saga.init_lsp_saga {
     max_preview_lines = 10,
     finder_action_keys = {
       open = 'o', vsplit = 'i',split = 't',quit = 'q',
-      scroll_down = '<C-f>',scroll_up = '<C-b>'
+      --scroll_down = '<C-f>',scroll_up = '<C-b>'
     },
     code_action_keys = {
       quit = 'q',exec = '<CR>'
@@ -1405,6 +1405,11 @@ saga.init_lsp_saga {
 }
 EOF
 
+inoremap <silent><c-k> <cmd>lua vim.lsp.buf.signature_help()<CR>
+nnoremap <silent><c-k> <cmd>lua vim.lsp.buf.signature_help()<CR>
+nnoremap <silent>K <cmd>lua vim.lsp.buf.hover({ popup_opts = { border = single, max_width = 80 }})<CR>
+nnoremap <silent><Leader>re <cmd>lua vim.lsp.buf.rename()<CR>
+
 if has_navigator
     inoremap <silent><c-k> <cmd>lua vim.lsp.buf.signature_help()<CR>
     nnoremap <silent><c-k> <cmd>lua vim.lsp.buf.signature_help()<CR>
@@ -1415,11 +1420,12 @@ if has_navigator
     nnoremap <silent><Leader>rn <cmd>lua require('navigator.rename').rename()<CR>
     nnoremap <silent><Leader>k <cmd>lua require('navigator.diagnostics').show_diagnostics()<CR>
 elseif has_lspsaga
-    inoremap <silent><c-k> <cmd>:Lspsaga signature_help<CR>
-    nnoremap <silent><c-k> <cmd>:Lspsaga signature_help<CR>
+    " Not avaliable in new lspsaga.
+    " inoremap <silent><c-k> <cmd>:Lspsaga signature_help<CR>
+    " nnoremap <silent><c-k> <cmd>:Lspsaga signature_help<CR>
+    " nnoremap <silent>K <cmd>:Lspsaga hover_doc<CR>
+
     nnoremap <silent>gd <cmd>:Lspsaga preview_definition<CR>
-    nnoremap <silent>K <cmd>:Lspsaga hover_doc<CR>
-    nnoremap <silent><Leader>re <cmd>lua vim.lsp.buf.rename()<CR>
     nnoremap <silent><Leader>rn <cmd>:Lspsaga rename<CR>
     nnoremap <silent><Leader>k <cmd>lua require'lspsaga.diagnostic'.show_cursor_diagnostics()<CR>
     nnoremap <silent> <S-h> <cmd>lua require('lspsaga.action').smart_scroll_with_saga(1)<CR>
@@ -1466,7 +1472,7 @@ EOF
 " =============================================================================
 lua <<EOF
 require'nvim-treesitter.configs'.setup {
-    ensure_installed = {'rust', 'json', 'javascript', 'typescript', 'tsx', 'vim', 'lua', 'go', 'haskell', 'bash'},
+    ensure_installed = {'rust', 'json', 'javascript', 'typescript', 'tsx', 'vim', 'lua', 'go', 'haskell', 'bash', 'markdown', 'markdown_inline'},
     highlight = {
         enable = true,
         disable = { "rust", "typescript" },
@@ -1699,7 +1705,7 @@ map <Leader>e :NvimTreeToggle<CR>
 " vim-autoformat Settings.
 " =============================================================================
 if has_key(g:plugs, 'vim-autoformat')
-    autocmd! User vim-autoformat noremap <C-f> :Autoformat<CR>
+    autocmd! User vim-autoformat nnoremap <buffer> <C-f> :Autoformat<CR>
     let g:formatdef_astyle_objc = '"astyle --mode=c"'
     " let g:formatdef_prettier_ts = '"yarn --silent prettier --parser=typescript --stdin"'
     " let g:formatdef_prettier_js = '"yarn --silent prettier --stdin"'
@@ -1716,7 +1722,7 @@ endif
 " vim-prettier Settings.
 " =============================================================================
 if has_key(g:plugs, 'vim-prettier')
-    autocmd! User vim-prettier noremap <C-f> :Prettier<CR>
+    autocmd! User vim-prettier nnoremap <buffer> <C-f> :Prettier<CR>
     let g:prettier#config#trailing_comma = 'all'
     let g:prettier#config#arrow_parens = 'always'
     let g:prettier#config#bracket_spacing = 'true'
@@ -1897,7 +1903,7 @@ nnoremap <leader>gd <cmd>lua require('telescope.builtin').diagnostics()<cr>
 nnoremap <leader>ca <cmd>lua vim.lsp.buf.code_action()<cr>
 nnoremap <leader>cA <cmd>lua vim.lsp.buf.range_code_action()<cr>
 nnoremap <leader>gi <cmd>lua require('telescope.builtin').lsp_implementations()<cr>
-nnoremap <leader>gn <cmd>lua require('telescope.builtin').lsp_document_symbols()<cr>
+nnoremap <leader>gg <cmd>lua require('telescope.builtin').lsp_document_symbols()<cr>
 nnoremap <leader>ge <cmd>lua require('telescope.builtin').lsp_workspace_symbols()<cr>
 nnoremap <leader>gt <cmd>lua require('telescope.builtin').lsp_type_definitions()<cr>
 
