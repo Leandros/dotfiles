@@ -628,6 +628,12 @@ source /Users/arvidgerstmann/.config/broot/launcher/bash/br
 # =============================================================================
 [ -f "/Users/arvidgerstmann/.ghcup/env" ] && source "$HOME/.ghcup/env" # ghcup-env
 
+# Terraform completion
+if command -v terraform >/dev/null 2>&1; then
+    autoload -U +X bashcompinit && bashcompinit
+    complete -o nospace -C $(command -v terraform) terraform
+fi
+
 
 # KEEP AT BOTTOM!
 # Entirety of my startup file... then
