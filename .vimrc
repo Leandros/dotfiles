@@ -113,6 +113,7 @@ if has('nvim')
 
     " Telescope
     Plug 'nvim-telescope/telescope.nvim', { 'branch': '0.1.x' } " Improved LSP actions
+    Plug 'nvim-telescope/telescope-live-grep-args.nvim'
     Plug 'nvim-telescope/telescope-ui-select.nvim' " Use telescope as native vim select popup, required from NVIM v0.7.0
     Plug 'nvim-telescope/telescope-fzy-native.nvim'
     " Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
@@ -1809,6 +1810,7 @@ let g:fastfold_fold_command_suffixes = []
 " =============================================================================
 lua << EOF
 local actions = require 'telescope.actions'
+local lga_actions = require("telescope-live-grep-args.actions")
 require('telescope').setup {
   defaults = {
     -- Default configuration for telescope goes here:
@@ -1861,6 +1863,15 @@ require('telescope').setup {
       override_generic_sorter = true,
       override_file_sorter = true,
     },
+    live_grep_args = {
+      auto_quoting = true, -- enable/disable auto-quoting
+      mappings = { -- extend mappings
+        i = {
+          ["<C-k>"] = lga_actions.quote_prompt(),
+          ["<C-i>"] = lga_actions.quote_prompt({ postfix = " --iglob " }),
+        },
+      },
+    },
     ["ui-select"] = {
       require("telescope.themes").get_dropdown {
         -- even more opts
@@ -1874,6 +1885,7 @@ require('telescope').setup {
 --require('telescope').load_extension('fzf')
 require('telescope').load_extension('fzy_native')
 require('telescope').load_extension('ui-select')
+require('telescope').load_extension('live_grep_args')
 EOF
 
 " Builtins
@@ -1891,7 +1903,8 @@ nnoremap <leader>gt <cmd>lua require('telescope.builtin').lsp_type_definitions()
 
 " Telescope.nvim:
 nnoremap <leader>ff <cmd>lua require('telescope.builtin').find_files()<cr>
-nnoremap <leader>fg <cmd>lua require('telescope.builtin').live_grep()<cr>
+" nnoremap <leader>fg <cmd>lua require('telescope.builtin').live_grep()<cr>
+nnoremap <leader>fg <cmd>lua require('telescope').extensions.live_grep_args.live_grep_args()<cr>
 nnoremap <leader>fb <cmd>lua require('telescope.builtin').buffers()<cr>
 nnoremap <leader>fh <cmd>lua require('telescope.builtin').help_tags()<cr>
 nnoremap <leader>fm <cmd>lua require('telescope.builtin').marks()<cr>
@@ -2214,7 +2227,6 @@ let g:go_imports_autosave = 0
 " =============================================================================
 autocmd FileType haskell nnoremap <buffer> <C-f> :Hindent<CR>
 let g:hindent_on_save = 0
-
 
 " =============================================================================
 " Dart
