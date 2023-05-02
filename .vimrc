@@ -1072,8 +1072,17 @@ require("flutter-tools").setup{
   },
 }
 
+-- Yaml
+lspconfig["yamlls"].setup {
+  settings = {
+    yaml = {
+      keyOrdering = false
+    }
+  }
+}
+
 -- Remaining servers
-for _, server in ipairs { "tsserver", "eslint", "gopls", "bashls", "lua_ls", "vimls", "yamlls", "jedi_language_server", "pylsp" } do
+for _, server in ipairs { "tsserver", "eslint", "gopls", "bashls", "lua_ls", "vimls", "jedi_language_server", "pylsp" } do
   lspconfig[server].setup {
     on_attach = on_attach,
     --capabilities = capabilities,
