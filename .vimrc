@@ -1738,8 +1738,8 @@ map <Leader>e :NvimTreeToggle<CR>
 " =============================================================================
 " vim-autoformat Settings.
 " =============================================================================
+autocmd! User vim-autoformat nnoremap <buffer> <C-f> :Autoformat<CR>
 if has_key(g:plugs, 'vim-autoformat')
-    autocmd! User vim-autoformat nnoremap <buffer> <C-f> :Autoformat<CR>
     let g:formatdef_astyle_objc = '"astyle --mode=c"'
     " let g:formatdef_prettier_ts = '"yarn --silent prettier --parser=typescript --stdin"'
     " let g:formatdef_prettier_js = '"yarn --silent prettier --stdin"'
@@ -1755,8 +1755,8 @@ endif
 " =============================================================================
 " vim-prettier Settings.
 " =============================================================================
+autocmd! User vim-prettier nnoremap <buffer> <C-f> :Prettier<CR>
 if has_key(g:plugs, 'vim-prettier')
-    autocmd! User vim-prettier nnoremap <buffer> <C-f> :Prettier<CR>
     let g:prettier#config#trailing_comma = 'all'
     let g:prettier#config#arrow_parens = 'always'
     let g:prettier#config#bracket_spacing = 'true'
