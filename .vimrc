@@ -155,7 +155,7 @@ endif
 " Prettier
 Plug 'Chiel92/vim-autoformat', { 'for': ['gn', 'jbuild', 'opam', 'python'] }
 Plug 'prettier/vim-prettier', {
-  \ 'do': 'yarn install',
+  \ 'do': 'yarn install --frozen-lockfile --production',
   \ 'for': ['javascript', 'javascript.jsx', 'typescript', 'typescript.tsx', 'css', 'less', 'scss', 'json', 'graphql', 'markdown', 'vue', 'yaml', 'html'] }
 Plug 'cofyc/vim-uncrustify', { 'for': ['cpp', 'c', 'cs', 'objc', 'objcpp'] }
 
