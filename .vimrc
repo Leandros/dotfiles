@@ -1041,26 +1041,47 @@ local rust_opts = {
       on_attach = on_attach,
       --capabilities = capabilities,
       flags = { allow_incremental_sync = false },
+      commands = {
+        RustOpenDocs = {
+          function()
+            vim.lsp.buf_request(
+              vim.api.nvim_get_current_buf(),
+              'experimental/externalDocs',
+              vim.lsp.util.make_position_params(),
+              function(err, url)
+                if err then
+                  error(tostring(err))
+                elseif url then
+                  vim.loop.spawn('open', { args = { '-a', 'firefox', '--args', url }})
+                else
+                  print('no documentation found')
+                end
+              end
+            )
+          end,
+          description = 'Open documentation for the symbol under the cursor in default browser',
+        },
+      },
       settings = {
         ["rust-analyzer"] = {
-            assist = {
-                importGranularity = "module",
-                importPrefix = "by_self",
+          assist = {
+            importGranularity = "module",
+            importPrefix = "by_self",
+          },
+          cargo = {
+            loadOutDirsFromCheck = true,
+            buildScripts = {
+                enable = true,
             },
-            cargo = {
-                loadOutDirsFromCheck = true,
-                buildScripts = {
-                    enable = true,
-                },
-            },
-            procMacro = {
-                enable = true
-            },
-            checkOnSave = {
-                command = "clippy"
-            },
-        }
-      }
+          },
+          procMacro = {
+            enable = true
+          },
+          checkOnSave = {
+            command = "clippy"
+          },
+        },
+      },
     },
 }
 rust_tools.setup(rust_opts)
