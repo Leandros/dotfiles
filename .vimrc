@@ -691,6 +691,7 @@ endfunction
 
 command! JsonMinify call MinifyJson()
 
+
 " =============================================================================
 " Shell command
 " =============================================================================
@@ -954,14 +955,16 @@ require("mason").setup {
 require('mason-lspconfig').setup {
   automatic_installation = true,
   ensure_installed = {
+    -- require separate setup
     "rust_analyzer",
+    "yamlls",
+    -- automatically setup
     "tsserver",
     "eslint",
     "gopls",
     "bashls",
     "lua_ls",
     "vimls",
-    "yamlls",
     "jedi_language_server", -- python
     "pylsp", -- depends on the above
     "rnix",
