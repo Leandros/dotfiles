@@ -153,7 +153,8 @@ if has('nvim')
 endif
 
 " Prettier
-Plug 'Chiel92/vim-autoformat', { 'for': ['gn', 'jbuild', 'opam', 'python'] }
+" Make sure to also update the `autocmd` if a new `for` language is added.
+Plug 'Chiel92/vim-autoformat', { 'for': ['gn', 'jbuild', 'opam', 'python', 'nix', 'hcl', 'elixir'] }
 Plug 'prettier/vim-prettier', {
   \ 'do': 'yarn install --frozen-lockfile --production',
   \ 'for': ['javascript', 'javascript.jsx', 'typescript', 'typescript.tsx', 'css', 'less', 'scss', 'json', 'graphql', 'markdown', 'vue', 'yaml', 'html'] }
@@ -371,7 +372,7 @@ au BufRead,BufNewFile *.ts set ft=typescript                    " Typescript
 au BufRead,BufNewFile *.nomad set ft=hcl                        " HCL
 au BufRead,BufNewFile *.tf set ft=hcl                           " HCL
 au BufRead,BufNewFile *.hcl set ft=hcl                          " HCL
-au BufRead,BufNewFile *.tfvars set ft=hcl                        " HCL
+au BufRead,BufNewFile *.tfvars set ft=hcl                       " HCL
 
 " =============================================================================
 " Set syntax options
@@ -1756,21 +1757,41 @@ EOF
 
 map <Leader>e :NvimTreeToggle<CR>
 
+" Fallback
+nnoremap <C-f> :echo " == NO FORMATTER == "<CR>
+
+
 " =============================================================================
 " vim-autoformat Settings.
 " =============================================================================
-autocmd! User vim-autoformat nnoremap <buffer> <C-f> :Autoformat<CR>
 if has_key(g:plugs, 'vim-autoformat')
     let g:formatdef_astyle_objc = '"astyle --mode=c"'
-    " let g:formatdef_prettier_ts = '"yarn --silent prettier --parser=typescript --stdin"'
-    " let g:formatdef_prettier_js = '"yarn --silent prettier --stdin"'
     let g:formatdef_gnformat = '"gn format --stdin"'
     let g:formatdef_ocpindent = '"ocp-indent"'
+    let g:formatdef_tffmt = '"terraform fmt -"'
+    let g:formatdef_nixfmt = '"nixpkgs-fmt"'
+    let g:formatdef_mixfmt = '"mix format -"'
+
     let g:formatters_objc = ['astyle_objc']
+    let g:formatters_gn = ['gnformat']
+    let g:formatters_hcl = ['tffmt']
+    let g:formatters_nix = ['nixfmt']
+    let g:formatters_elixir = ['mixfmt']
+
+    " let g:formatdef_prettier_ts = '"yarn --silent prettier --parser=typescript --stdin"'
+    " let g:formatdef_prettier_js = '"yarn --silent prettier --stdin"'
     " let g:formatters_javascript = ['prettier_js']
     " let g:formatters_typescript = ['prettier_ts']
-    let g:formatters_gn = ['gnformat']
     " let g:formatters_rust = ['rustfmt']
+
+    autocmd FileType gn nnoremap <buffer> <C-f> :Autoformat<CR>
+    autocmd FileType jbuild nnoremap <buffer> <C-f> :Autoformat<CR>
+    autocmd FileType opam nnoremap <buffer> <C-f> :Autoformat<CR>
+    autocmd FileType python nnoremap <buffer> <C-f> :Autoformat<CR>
+    autocmd FileType nix nnoremap <buffer> <C-f> :Autoformat<CR>
+    autocmd FileType hcl nnoremap <buffer> <C-f> :Autoformat<CR>
+    autocmd FileType elixir nnoremap <buffer> <C-f> :Autoformat<CR>
+    autocmd FileType gn nnoremap <buffer> <C-f> :Autoformat<CR>
 endif
 
 " =============================================================================
@@ -1781,6 +1802,20 @@ if has_key(g:plugs, 'vim-prettier')
     let g:prettier#config#trailing_comma = 'all'
     let g:prettier#config#arrow_parens = 'always'
     let g:prettier#config#bracket_spacing = 'true'
+
+    autocmd FileType javascript nnoremap <buffer> <C-f> :Prettier<CR>
+    autocmd FileType javascript.tsx nnoremap <buffer> <C-f> :Prettier<CR>
+    autocmd FileType typescript nnoremap <buffer> <C-f> :Prettier<CR>
+    autocmd FileType typescript.tsx nnoremap <buffer> <C-f> :Prettier<CR>
+    autocmd FileType css nnoremap <buffer> <C-f> :Prettier<CR>
+    autocmd FileType less nnoremap <buffer> <C-f> :Prettier<CR>
+    autocmd FileType scss nnoremap <buffer> <C-f> :Prettier<CR>
+    autocmd FileType json nnoremap <buffer> <C-f> :Prettier<CR>
+    autocmd FileType graphql nnoremap <buffer> <C-f> :Prettier<CR>
+    autocmd FileType markdown nnoremap <buffer> <C-f> :Prettier<CR>
+    autocmd FileType vue nnoremap <buffer> <C-f> :Prettier<CR>
+    autocmd FileType yaml nnoremap <buffer> <C-f> :Prettier<CR>
+    autocmd FileType html nnoremap <buffer> <C-f> :Prettier<CR>
 endif
 
 " =============================================================================
@@ -1830,6 +1865,8 @@ EOF
 
     autocmd FileType c noremap <buffer> <c-f> :call UncrustifyWrapper('c')<CR>
     autocmd FileType c vnoremap <buffer> <c-f> :call RangeUncrustifyWrapper('c')<CR>
+    autocmd FileType cs noremap <buffer> <c-f> :call UncrustifyWrapper('cs')<CR>
+    autocmd FileType cs vnoremap <buffer> <c-f> :call RangeUncrustifyWrapper('cs')<CR>
     autocmd FileType cpp noremap <buffer> <c-f> :call UncrustifyWrapper('cpp')<CR>
     autocmd FileType cpp vnoremap <buffer> <c-f> :call RangeUncrustifyWrapper('cpp')<CR>
     autocmd FileType objc noremap <buffer> <c-f> :call UncrustifyWrapper('objc')<CR>
