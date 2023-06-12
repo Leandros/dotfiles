@@ -177,6 +177,7 @@ Plug 'towolf/vim-helm'
 Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }
 Plug 'alx741/vim-hindent'
 Plug 'LnL7/vim-nix', { 'for': ['nix'], 'do': shellescape('nix profile install nixpkgs#nixpkgs-fmt') }
+Plug 'elixir-editors/vim-elixir'
 
 if js_dev_enabled
     Plug 'leafgarland/typescript-vim'
@@ -964,6 +965,8 @@ require('mason-lspconfig').setup {
     "jedi_language_server", -- python
     "pylsp", -- depends on the above
     "rnix",
+    "elixirls",
+    "erlangls",
   },
 }
 
@@ -1117,6 +1120,8 @@ local lsp_servers = {
   "jedi_language_server",
   "pylsp",
   "rnix",
+  "elixirls",
+  "erlangls"
 }
 for _, server in ipairs(lsp_servers) do
   lspconfig[server].setup {
