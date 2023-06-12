@@ -1676,7 +1676,7 @@ require('whitespace-nvim').setup({
 
   -- `ignored_filetypes` configures which filetypes to ignore when
   -- displaying trailing whitespace
-  ignored_filetypes = { 'TelescopePrompt', 'Trouble', 'help', 'mason', 'floaterm', 'Terminal', 'gitcommit', 'vim-plug' },
+  ignored_filetypes = { 'TelescopePrompt', 'Trouble', 'help', 'mason', 'floaterm', 'Terminal', 'gitcommit', 'vim-plug', 'lspinfo' },
 })
 EOF
 
