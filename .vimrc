@@ -176,6 +176,7 @@ Plug 'jvirtanen/vim-hcl'
 Plug 'towolf/vim-helm'
 Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }
 Plug 'alx741/vim-hindent'
+Plug 'LnL7/vim-nix', { 'for': ['nix'], 'do': shellescape('nix profile install nixpkgs#nixpkgs-fmt') }
 
 if js_dev_enabled
     Plug 'leafgarland/typescript-vim'
@@ -950,6 +951,7 @@ require("mason").setup {
 }
 
 require('mason-lspconfig').setup {
+  automatic_installation = true,
   ensure_installed = {
     "rust_analyzer",
     "tsserver",
@@ -961,6 +963,7 @@ require('mason-lspconfig').setup {
     "yamlls",
     "jedi_language_server", -- python
     "pylsp", -- depends on the above
+    "rnix",
   },
 }
 
@@ -1104,7 +1107,18 @@ lspconfig["yamlls"].setup {
 }
 
 -- Remaining servers
-for _, server in ipairs { "tsserver", "eslint", "gopls", "bashls", "lua_ls", "vimls", "jedi_language_server", "pylsp" } do
+local lsp_servers = {
+  "tsserver",
+  "eslint",
+  "gopls",
+  "bashls",
+  "lua_ls",
+  "vimls",
+  "jedi_language_server",
+  "pylsp",
+  "rnix",
+}
+for _, server in ipairs(lsp_servers) do
   lspconfig[server].setup {
     on_attach = on_attach,
     --capabilities = capabilities,
