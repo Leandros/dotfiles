@@ -344,7 +344,7 @@ if &diff
 endif
 
 " C-I acting as Tab fix
-if $TERM ==# 'screen-256color'
+if $TERM ==# 'screen-256color' || $TERM ==# 'tmux-256color'
   autocmd UIEnter * if v:event.chan ==# 0 | call chansend(v:stderr, "\x1b[>1u") | endif
   autocmd UILeave * if v:event.chan ==# 0 | call chansend(v:stderr, "\x1b[<1u") | endif
 endif
