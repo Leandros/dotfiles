@@ -167,13 +167,13 @@ export FZF_CTRL_R_OPTS="
 
 # Init fzf
 [ -f "$HOME/.fzf.zsh" ] && . "$HOME/.fzf.zsh"
+# Init for debian
+[ -f "/usr/share/doc/fzf/examples/key-bindings.zsh" ] && . "/usr/share/doc/fzf/examples/key-bindings.zsh"
+[ -f "/usr/share/doc/fzf/examples/completion.zsh" ] && . "/usr/share/doc/fzf/examples/completion.zsh"
 
 function f {
     fzf $*
 }
-
-# zoxide (must appear after `compinit`)
-eval "$(zoxide init zsh)"
 
 
 # =============================================================================
@@ -363,7 +363,7 @@ export LESSOPEN="|~/.lessfilter %s"
 alias cd=' cd'
 
 if [[ "Linux" == "`uname`" ]]; then
-    alias ls=' n'
+    alias ls=' ls --color=auto'
 else
     alias ls=' ls --color=auto'
 fi
@@ -580,6 +580,10 @@ lg()
             rm -f $LAZYGIT_NEW_DIR_FILE > /dev/null
     fi
 }
+
+
+# zoxide (must appear after `compinit`)
+eval "$(zoxide init zsh)"
 
 # =============================================================================
 # MANPATH
