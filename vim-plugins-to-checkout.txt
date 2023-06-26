@@ -1,0 +1,3 @@
+https://github.com/akinsho/bufferline.nvim
+https://github.com/SmiteshP/nvim-navic
+https://github.com/utilyre/barbecue.nvim

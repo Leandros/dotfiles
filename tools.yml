@@ -1,0 +1,42 @@
+tools:
+  - name: zsh
+    shell: true
+  - name: oh-my-zsh
+    requires: [zsh]
+  - name: fzf
+  - name: zoxide
+    provides: [z]
+  - name: neovim
+    provides: [nvim]
+  - name: git
+  - name: tig
+  - name: lazygit
+  - name: fnm
+  - name: nix
+  - name: direnv
+  - name: terraform
+  - name: pnpm
+    dependsOn: [node]
+  - name: tmux
+  - name: bat
+  - name: just
+  - name: xh
+  - name: fd
+  - name: ripgrep
+    provides: [rg]
+  - name: awscli
+    provides: [aws]
+  - name: jq
+  - name: devenv
+  - name: docker
+  - name: difftastic
+    provides: [difft]
+
+languages:
+  - node
+  - erlang
+  - elixir
+  - go
+  - python3
+  - rust
+  - lua
