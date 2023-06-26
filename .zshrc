@@ -626,12 +626,12 @@ eval "$(direnv hook zsh)"
 # =============================================================================
 # Broot
 # =============================================================================
-source /Users/arvidgerstmann/.config/broot/launcher/bash/br
+[[ -s "$HOME/.config/broot/launcher/bash/br" ]] && . "$HOME/.config/broot/launcher/bash/br"
 
 # =============================================================================
 # ghcup
 # =============================================================================
-[ -f "/Users/arvidgerstmann/.ghcup/env" ] && source "$HOME/.ghcup/env" # ghcup-env
+[ -f "$HOME/.ghcup/env" ] && source "$HOME/.ghcup/env" # ghcup-env
 
 # Terraform completion
 if command -v terraform >/dev/null 2>&1; then
