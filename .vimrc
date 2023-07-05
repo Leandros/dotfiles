@@ -344,7 +344,7 @@ if &diff
 endif
 
 " C-I acting as Tab fix
-if $TERM ==# 'screen-256color' || $TERM ==# 'tmux-256color'
+if $TERM ==# 'screen-256color'
   autocmd UIEnter * if v:event.chan ==# 0 | call chansend(v:stderr, "\x1b[>1u") | endif
   autocmd UILeave * if v:event.chan ==# 0 | call chansend(v:stderr, "\x1b[<1u") | endif
 endif
@@ -1186,6 +1186,95 @@ nmap <leader>bw :VimspectorWatch
 nmap <leader>bo :VimspectorShowOutput
 nmap <leader>bi <Plug>VimspectorBalloonEval
 xmap <leader>bi <Plug>VimspectorBalloonEval
+
+" Custom Telescope Picker with all commands.
+lua <<EOF
+local pickers = require "telescope.pickers"
+local finders = require "telescope.finders"
+local conf = require("telescope.config").values
+local actions = require "telescope.actions"
+local action_state = require "telescope.actions.state"
+
+function _G.dap_actions_picker(opts)
+  opts = opts or {}
+  pickers.new(opts, {
+    prompt_title = "debugger",
+    finder = finders.new_table {
+      results = {
+        "LAUNCH",
+        "Toggle Breakpoint",
+        "■ Stop",
+        "▶ Continue",
+        "▷ Pause",
+        "↷ Step Over",
+        "→ Step In",
+        "← Step Out",
+        "⟲ Restart",
+        "✕ Reset",
+        "List Breakpoints",
+        "Quit Debugger",
+      },
+    },
+    sorter = conf.generic_sorter(opts),
+    attach_mappings = function(prompt_bufnr, map)
+      actions.select_default:replace(function()
+        actions.close(prompt_bufnr)
+        local selection = action_state.get_selected_entry()
+        local index = selection.index
+        local binds = {
+          [1] = function()
+            vim.cmd("call vimspector#Launch()")
+          end,
+          [2] = function()
+            vim.cmd("call vimspector#ToggleBreakpoint()")
+          end,
+          [3] = function()
+            vim.cmd("call vimspector#Stop( { 'interactive': v:false } )")
+          end,
+          [4] = function()
+            vim.cmd("call vimspector#Continue()")
+          end,
+          [5] = function()
+            vim.cmd("call vimspector#Pause()")
+          end,
+          [6] = function()
+            vim.cmd("call vimspector#StepOver()")
+          end,
+          [7] = function()
+            vim.cmd("call vimspector#StepInto()")
+          end,
+          [8] = function()
+            vim.cmd("call vimspector#StepOut()")
+          end,
+          [9] = function()
+            vim.cmd("call vimspector#Restart()")
+          end,
+          [10] = function()
+            vim.cmd("call vimspector#Reset( { 'interactive': v:false } )")
+          end,
+          [11] = function()
+            vim.cmd("call vimspector#ListBreakpoints()")
+          end,
+          [12] = function()
+            vim.cmd("call vimspector#Reset()")
+          end,
+        };
+        local bind = binds[index]
+        bind()
+        --print(vim.inspect(selection))
+        --print('index:' .. vim.inspect(index))
+        --print('bind:' .. vim.inspect(bind))
+        --print(vim.inspect(binds))
+        --vim.api.nvim_put({ selection[1] }, "", false, true)
+      end)
+      return true
+    end,
+  }):find()
+end
+
+EOF
+
+nmap <leader>ab :call v:lua.dap_actions_picker()<CR>
 
 " =============================================================================
 " TROUBLE
