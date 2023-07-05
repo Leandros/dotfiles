@@ -970,6 +970,8 @@ require('mason-lspconfig').setup {
     "rnix",
     "elixirls",
     "erlangls",
+    "clangd",
+    "cmake",
   },
 }
 
@@ -1124,7 +1126,9 @@ local lsp_servers = {
   "pylsp",
   "rnix",
   "elixirls",
-  "erlangls"
+  "erlangls",
+  "clangd",
+  "cmake",
 }
 for _, server in ipairs(lsp_servers) do
   lspconfig[server].setup {
