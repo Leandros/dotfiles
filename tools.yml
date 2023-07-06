@@ -31,6 +31,7 @@ tools:
   - name: docker
   - name: difftastic
     provides: [difft]
+  - name: CodeLLDB
 
 languages:
   - node
