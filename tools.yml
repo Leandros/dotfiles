@@ -40,3 +40,34 @@ languages:
   - python3
   - rust
   - lua
+
+apps:
+  - iTerm2
+  - WezTerm
+  - 1Password
+  - Alfred
+  - AltTab
+  - Rectangle
+  - BetterTouchTool
+  - Grammarly Desktop
+  - LuLu
+  - BlockBlock
+  - OverSight
+  - Bartender 4
+  - Dash
+  - Docker Desktop
+  - EOS Webcam Utility
+  - Elgato Control Center
+  - Focusrite Control
+  - Signal
+  - SoundSource
+  - TablePlus
+  - The Unarchiver
+  - TotalSpaces3
+  - Xcode
+  - Loopback
+  - Spotify
+
+fonts:
+  - PragmataPro Mono Liga
+  - PragmataProMonoLiga Nerd Font

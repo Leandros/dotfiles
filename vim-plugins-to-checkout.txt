@@ -1,3 +1,5 @@
 https://github.com/akinsho/bufferline.nvim
 https://github.com/SmiteshP/nvim-navic
 https://github.com/utilyre/barbecue.nvim
+https://github.com/folke/flash.nvim
+https://github.com/tpope/vim-dadbod
