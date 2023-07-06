@@ -3,6 +3,8 @@ HISTFILE=~/.histfile
 HISTSIZE=1000000
 SAVEHIST=100000
 setopt HIST_IGNORE_SPACE
+setopt HIST_IGNORE_DUPS
+setopt SHARE_HISTORY
 setopt AUTO_PUSHD
 
 # This needs to be run earlier than compinit
