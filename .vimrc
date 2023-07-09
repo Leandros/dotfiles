@@ -1695,7 +1695,9 @@ else
 endif
 
 " Code navigation shortcuts
-nnoremap <silent> <leader>d <cmd>lua vim.lsp.buf.definition()<CR>
+nnoremap <silent> <leader>dd <cmd>lua vim.lsp.buf.definition()<CR>
+nnoremap <silent> <leader>di <cmd>hsplit \| lua vim.lsp.buf.definition()<CR>
+nnoremap <silent> <leader>dt <cmd>vsplit \| lua vim.lsp.buf.definition()<CR>
 nnoremap <silent> <leader>i <cmd>lua vim.lsp.buf.implementation()<CR>
 nnoremap <silent> <leader>y <cmd>lua vim.lsp.buf.type_definition()<CR>
 nnoremap <silent> <leader>rr <cmd>lua vim.lsp.buf.references()<CR>
