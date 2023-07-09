@@ -14,9 +14,10 @@ end
 
 config.disable_default_key_bindings = true
 config.use_dead_keys = false
--- config.enable_csi_u_key_encoding = true -- not sure if required ..
+config.enable_csi_u_key_encoding = true -- not sure if required ..
 config.send_composed_key_when_left_alt_is_pressed = true -- Required to enable Bone2 layout
 
+-- TODO: Fix input in neovim when <Option> <Space> are pressed.
 
 local act = wezterm.action
 config.keys = {
@@ -35,6 +36,7 @@ config.keys = {
     { key = 'n', mods = 'SUPER', action = act.SpawnWindow },
     { key = 'q', mods = 'SUPER', action = act.QuitApplication },
 }
+
 
 -- Font
 config.font = wezterm.font_with_fallback {
