@@ -60,6 +60,9 @@ local general_keys = {
     { key = 'q', mods = 'SUPER', action = act.QuitApplication },
     { key = 'p', mods = 'CTRL|SHIFT', action = act.ActivateCommandPalette },
 
+    { key = 'c', mods = 'SUPER|SHIFT', action = act.CopyTo 'ClipboardAndPrimarySelection', },
+    { key = 'v', mods = 'SUPER|SHIFT', action = act.PasteFrom 'Clipboard' },
+
     -- We need to rebind OPT + Space otherwise odd things are happenings:
     { key = ' ', mods = 'OPT', action = act.SendKey { key = ' ' } },
 }
@@ -112,8 +115,16 @@ config.font = wezterm.font_with_fallback {
     'Apple Color Emoji',
 }
 
--- For example, changing the color scheme:
-config.color_scheme = 'Solarized Dark (Gogh)'
+-- Fixing the theme.
+local scheme = wezterm.color.get_builtin_schemes()['Solarized Dark (Gogh)']
+scheme.cursor_fg = 'black'
+
+config.color_schemes = {
+    ['Solarized Dark'] = scheme,
+}
+config.color_scheme = 'Solarized Dark'
+
+-- config.color_scheme = 'Solarized Dark (Gogh)'
 -- config.color_scheme = 'Solarized (dark) (terminal.sexy)'
 -- config.color_scheme = 'Solarized (light) (terminal.sexy)'
 
