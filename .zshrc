@@ -529,23 +529,26 @@ PATH="$HOMEBREW_PREFIX/opt/gnu-getopt/bin:$PATH"
 PATH="$HOMEBREW_PREFIX/opt/openjdk@11/bin:$PATH"
 PATH="$HOMEBREW_PREFIX/opt/mysql@5.7/bin:$PATH"
 
-PATH=$PATH:/usr/bin/core_perl
-PATH=$PATH:$HOME/bin
-PATH=$PATH:$HOME/.zsh/bin
-PATH=$PATH:$HOME/bin/awscli/eb/macosx/python2.7
-PATH=$PATH:$HOME/bin/drmemory/bin
+PATH="$PATH:/usr/bin/core_perl"
+PATH="$PATH:$HOME/bin"
+PATH="$PATH:$HOME/.zsh/bin"
+PATH="$PATH:$HOME/bin/awscli/eb/macosx/python2.7"
+PATH="$PATH:$HOME/bin/drmemory/bin"
 
-PATH=$PATH:$ANDROID_ROOT
-PATH=$PATH:$ANDROID_ROOT/tools
-PATH=$PATH:$ANDROID_ROOT/platform-tools
-PATH=$PATH:$NDK_ROOT
-PATH=$PATH:$NDK_CCACHE
-PATH=$PATH:$HOME/p4/depot/extern/bin/shared
-PATH=$PATH:$HOME/bin/depot_tools
-PATH=$PATH:$HOME/.cargo/bin
-PATH=$PATH:$HOME/.local/bin
-PATH=$PATH:$HOME/gopath/bin
-PATH=$PATH:$HOME/flutter/bin
+PATH="$PATH:$ANDROID_ROOT"
+PATH="$PATH:$ANDROID_ROOT/tools"
+PATH="$PATH:$ANDROID_ROOT/platform-tools"
+PATH="$PATH:$NDK_ROOT"
+PATH="$PATH:$NDK_CCACHE"
+PATH="$PATH:$HOME/p4/depot/extern/bin/shared"
+PATH="$PATH:$HOME/bin/depot_tools"
+PATH="$PATH:$HOME/.cargo/bin"
+PATH="$PATH:$HOME/.local/bin"
+PATH="$PATH:$HOME/gopath/bin"
+PATH="$PATH:$HOME/flutter/bin"
+if [ -x "$(command -v python3)" ]; then
+    PATH="$PATH:$(python3 -m site --user-base)/bin"
+fi
 
 # macOS specific
 PATH=$PATH:/Applications/p4merge.app/Contents/MacOS
