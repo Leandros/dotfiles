@@ -1687,7 +1687,7 @@ EOF
 " =============================================================================
 lua <<EOF
 require'nvim-treesitter.configs'.setup {
-    ensure_installed = {'rust', 'json', 'javascript', 'typescript', 'tsx', 'vim', 'lua', 'go', 'haskell', 'bash', 'markdown', 'markdown_inline'},
+    ensure_installed = {'rust', 'json', 'javascript', 'typescript', 'tsx', 'vim', 'lua', 'go', 'haskell', 'bash', 'markdown', 'markdown_inline', 'python'},
     highlight = {
         enable = true,
         disable = { "rust", "typescript" },
