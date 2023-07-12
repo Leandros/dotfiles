@@ -97,6 +97,9 @@ if has('nvim')
     Plug 'nvim-lualine/lualine.nvim'           " Statusline (bottom)
     Plug 'kdheepak/tabline.nvim'               " Tabline (top)
 
+    " Tabline
+    Plug 'akinsho/bufferline.nvim', { 'tag': '*' }
+
     " Treesitter
     Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
 
@@ -1373,22 +1376,63 @@ EOF
 " TABLINE
 " =============================================================================
 " Should be below lualine.
-
 lua <<EOF
-require'tabline'.setup {
-    -- Defaults configuration options
-    enable = true,
-    options = {
-        max_bufferline_percent = 66, -- set to nil by default, and it uses vim.o.columns * 2/3
-        show_tabs_always = false, -- this shows tabs only when there are more than one tab or if the first tab is named
-        show_devicons = true, -- this shows devicons in buffer section
-        show_bufnr = false, -- this appends [bufnr] to buffer section,
-        show_filename_only = true, -- shows base filename only instead of relative path in filename
-        modified_icon = "+ ", -- change the default modified icon
-        modified_italic = false, -- set to true by default; this determines whether the filename turns italic if modified
-    }
+local bufferline = require("bufferline")
+bufferline.setup {
+  options = {
+    mode = 'tabs',
+    show_tab_indicators = false, -- don't need them with mode=tabs
+    --style_preset = bufferline.style_preset.minimal,
+    -- disable mouse
+    right_mouse_command = nil,
+    left_mouse_command = nil,
+    middle_mouse_command = nil,
+    diagnostics = "nvim_lsp",
+    separator_style = {'|', '|'},
+    hover = {
+      enabled = false,
+    },
+    --indicator = {
+    --    style = 'underline',
+    --},
+    show_close_icon = false,
+    show_buffer_close_icons = false,
+    buffer_close_icon = '󰅖',
+    close_icon = '',
+    offsets = {
+        {
+            filetype = "NvimTree",
+            text = "File Explorer",
+            text_align = "center",
+            separator = true,
+        },
+    },
+    diagnostics_indicator = function(count, level)
+        local icon = level:match("error") and " " or ""
+        return " " .. icon .. count
+    end
+  }
 }
 EOF
+
+" lua <<EOF
+" require'tabline'.setup {
+"     -- Defaults configuration options
+"     enable = true,
+"     options = {
+"         section_separators = {'', ''},
+"         component_separators = {'', ''},
+"         max_bufferline_percent = 66, -- set to nil by default, and it uses vim.o.columns * 2/3
+"         show_tabs_always = false, -- this shows tabs only when there are more than one tab or if the first tab is named
+"         show_devicons = true, -- this shows devicons in buffer section
+"         show_bufnr = false, -- this appends [bufnr] to buffer section,
+"         show_filename_only = true, -- shows base filename only instead of relative path in filename
+"         modified_icon = "+ ", -- change the default modified icon
+"         modified_italic = false, -- set to true by default; this determines whether the filename turns italic if modified
+"         show_tabs_only = true,
+"     }
+" }
+" EOF
 
 
 " =============================================================================
