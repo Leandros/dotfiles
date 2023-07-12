@@ -1758,10 +1758,23 @@ require('leap').setup {
 -- Greying out the search
 vim.api.nvim_set_hl(0, 'LeapBackdrop', { link = 'Comment' })
 
+-- Search in both directions. Caveats apply.
 vim.keymap.set({"n", "x", "o"}, "t", "<cmd>lua require('leap').leap { target_windows = { vim.fn.win_getid() } }<CR>", {silent = true})
+
+-- Search in all windows. Same caveats apply as above.
+vim.keymap.set('n', 'gt', function()
+  local focusable_windows_on_tabpage = vim.tbl_filter(
+    function (win) return vim.api.nvim_win_get_config(win).focusable end,
+    vim.api.nvim_tabpage_list_wins(0)
+  )
+  require('leap').leap { target_windows = focusable_windows_on_tabpage }
+end)
+
+
+-- Default actions:
 --vim.keymap.set({"n", "x", "o"}, "t", "<Plug>(leap-forward-to)", {silent = true})
 --vim.keymap.set({"n", "x", "o"}, "T", "<Plug>(leap-backward-to)", {silent = true})
-vim.keymap.set({"n", "x", "o"}, "gt", "<Plug>(leap-cross-window)", {silent = true})
+--vim.keymap.set({"n", "x", "o"}, "gt", "<Plug>(leap-cross-window)", {silent = true})
 
 EOF
 
