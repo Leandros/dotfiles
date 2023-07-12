@@ -331,7 +331,6 @@ export KEYTIMEOUT=1
 # =============================================================================
 # Aliases
 # =============================================================================
-# alias l=' ls -lah'
 alias g=git
 alias ti='tig status'
 alias tigs='tig status'
@@ -364,10 +363,15 @@ export LESSOPEN="|~/.lessfilter %s"
 # Ignore these commands in history
 alias cd=' cd'
 
-if [[ "Linux" == "`uname`" ]]; then
-    alias ls=' ls --color=auto'
+if [ -x "$(command -v exa)" ]; then
+    alias ls=' exa'
+    alias l=' exa -lah'
+elif [[ "Linux" == "`uname`" ]]; then
+    alias ls=' ls'
+    alias l=' ls -lah'
 else
     alias ls=' ls --color=auto'
+    alias l=' ls -lah'
 fi
 
 # Highlight current day
