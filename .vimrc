@@ -352,6 +352,46 @@ if $TERM ==# 'screen-256color'
   autocmd UILeave * if v:event.chan ==# 0 | call chansend(v:stderr, "\x1b[<1u") | endif
 endif
 
+" =============================================================================
+" Colors
+" =============================================================================
+" Theme Overrides
+"
+" Colorschemes usually reset all highlighting, including your own, when they
+" are sourced, hence the autocmd group.
+augroup MyColors
+  autocmd!
+
+  " --- Bufferline ---
+  autocmd ColorScheme * highlight BufferLineFill guibg=#073642
+
+  " Color was previously: #073642
+  " hi! IndentBlanklineChar ctermfg=92 guifg=#586e75 gui=nocombine
+  " hi! IndentBlanklineSpaceChar ctermfg=92 guifg=#586e75 gui=nocombine
+  autocmd ColorScheme * hi! IndentBlanklineChar ctermfg=15 guifg=#234854 gui=nocombine
+  autocmd ColorScheme * hi! IndentBlanklineSpaceChar ctermfg=15 guifg=#234854 gui=nocombine
+  autocmd ColorScheme * hi! Comment cterm=NONE ctermfg=92 gui=NONE guifg=#586e75 guibg=NONE guisp=NONE
+  autocmd ColorScheme * hi! Visual ctermbg=92 ctermfg=7 guibg=#586e75 guifg=#002b36 gui=nocombine guisp=none
+
+  " --- RUST ---
+  " Pmenu:
+  " PmenuSel: selection
+  " GHListHl: Guihua List Highlight
+  " GHListDark: Guihui List
+  autocmd ColorScheme * hi! Pmenu ctermfg=12 ctermbg=0 guifg=#839496 guibg=#073642 guisp=NONE
+  autocmd ColorScheme * hi! FloatBorder ctermfg=1 guifg=#ffffff guibg=NONE guisp=NONE
+  autocmd ColorScheme * hi! GHTextViewDark ctermfg=12 ctermbg=0 guifg=#93a1a1 guibg=#002b36 guisp=NONE
+  autocmd ColorScheme * hi! NormalFloat ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=NONE
+  " hi! PmenuSel ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
+  " hi! PmenuThumb ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
+  " hi! GHListHl ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
+  " hi! GHListDark ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
+  " hi! GHBgDark ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
+
+  " --- TypeScript ---
+  autocmd ColorScheme * hi! TSDefinitionUsage guifg=none guibg=#073642 gui=underline guisp=none
+augroup END
+
 " Theme
 if has('nvim')
     set termguicolors
@@ -1822,7 +1862,6 @@ EOF
 " =============================================================================
 " local highlight
 " =============================================================================
-hi! TSDefinitionUsage guifg=none guibg=#073642 gui=underline guisp=none
 lua <<EOF
 require('local-highlight').setup({
   file_types = {'rust', 'typescript', 'typescript.tsx', 'javascript', 'javascript.jsx', 'vim', 'bash'},
@@ -2414,18 +2453,6 @@ let g:floaterm_keymap_next   = ',s'
 let g:floaterm_width = 0.8
 let g:floaterm_height = 0.8
 
-" =============================================================================
-" Colors
-" =============================================================================
-" hi! IndentBlanklineChar ctermfg=92 guifg=#586e75 gui=nocombine
-" hi! IndentBlanklineSpaceChar ctermfg=92 guifg=#586e75 gui=nocombine
-
-" Color was previously: #073642
-hi! IndentBlanklineChar ctermfg=15 guifg=#234854 gui=nocombine
-hi! IndentBlanklineSpaceChar ctermfg=15 guifg=#234854 gui=nocombine
-hi! Comment cterm=NONE ctermfg=92 gui=NONE guifg=#586e75 guibg=NONE guisp=NONE
-hi! Visual ctermbg=92 ctermfg=7 guibg=#586e75 guifg=#002b36 gui=nocombine guisp=none
-
 
 " =============================================================================
 "             | |    __ _ _ __   __ _ _   _  __ _  __ _  ___  ___
@@ -2444,21 +2471,6 @@ autocmd FileType yaml nnoremap <buffer> <C-f> :Prettier<CR>
 " Rust
 " =============================================================================
 autocmd FileType rust nnoremap <buffer> <C-f> :RustFmt<CR>
-
-" Must be after setting the color scheme.
-" Pmenu:
-" PmenuSel: selection
-" GHListHl: Guihua List Highlight
-" GHListDark: Guihui List
-hi! Pmenu ctermfg=12 ctermbg=0 guifg=#839496 guibg=#073642 guisp=NONE
-hi! FloatBorder ctermfg=1 guifg=#ffffff guibg=NONE guisp=NONE
-hi! GHTextViewDark ctermfg=12 ctermbg=0 guifg=#93a1a1 guibg=#002b36 guisp=NONE
-hi! NormalFloat ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=NONE
-" hi! PmenuSel ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
-" hi! PmenuThumb ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
-" hi! GHListHl ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
-" hi! GHListDark ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
-" hi! GHBgDark ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
 
 function! SynStack()
   if !exists("*synstack")
