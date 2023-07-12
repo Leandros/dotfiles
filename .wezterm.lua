@@ -108,25 +108,96 @@ config.keys = TableConcat(general_keys, tmux_keys)
 
 -- Font
 config.font = wezterm.font_with_fallback {
-    'PragmataPro Mono Liga',
+    {
+        family = 'PragmataPro Mono Liga',
+        weight = 'Regular',
+        harfbuzz_features = { 'calt=0', 'clig=0', 'liga=0' },
+    },
     -- We swap the patched and non-patched font around, otherwise some things are
     -- not correctly displayed, such as: ']]' (two ] ] (without space)).
-    'PragmataProMonoLiga Nerd Font',
+    {
+        family = 'PragmataProMonoLiga Nerd Font',
+        weight = 'Regular',
+        harfbuzz_features = { 'calt=0', 'clig=0', 'liga=0' },
+    },
     'Apple Color Emoji',
 }
+config.bold_brightens_ansi_colors = 'BrightAndBold'
+config.font_size = 12.0
+config.allow_square_glyphs_to_overflow_width = 'Never'
+config.anti_alias_custom_block_glyphs = false
+config.freetype_load_target = 'Light'
+config.freetype_render_target = 'HorizontalLcd'
+
+local base03  = '#002b36'
+local base02  = '#073642'
+local base01  = '#586e75'
+local base00  = '#657b83'
+local base0   = '#839496'
+local base1   = '#93a1a1'
+local base2   = '#eee8d5'
+local base3   = '#fdf6e3'
+local yellow  = '#b58900'
+local orange  = '#cb4b16'
+local red     = '#dc322f'
+local magenta = '#d33682'
+local violet  = '#6c71c4'
+local blue    = '#268bd2'
+local cyan    = '#2aa198'
+local green   = '#859900'
 
 -- Fixing the theme.
-local scheme = wezterm.color.get_builtin_schemes()['Solarized Dark (Gogh)']
-scheme.cursor_fg = 'black'
+local dark_scheme = wezterm.color.get_builtin_schemes()['Solarized Dark (Gogh)']
+dark_scheme.foreground = base0
+dark_scheme.background = base03
+dark_scheme.cursor_bg = base1
+dark_scheme.cursor_border = base1
+dark_scheme.cursor_fg = base03
+dark_scheme.selection_bg = base3
+dark_scheme.selection_fg = base01
+
+dark_scheme.ansi = {
+    base02,  -- black
+    red,     -- red
+    green,   -- green
+    yellow,  -- yellow
+    blue,    -- blue
+    magenta, -- magenta
+    cyan,    -- cyan
+    base3,   -- white
+}
+-- original:
+-- dark_scheme.brights = ["#002b36","#cb4b16","#586e75","#657b83","#839496","#6c71c4","#93a1a1","#fdf6e3"]
+-- from solarized site:
+-- dark_scheme.brights = {base03, orange, base01, base00, base0, violet, base1, base3}
+
+local light_scheme = wezterm.color.get_builtin_schemes()['Solarized Light (Gogh)']
+light_scheme.foreground = base00
+light_scheme.background = base3
+light_scheme.cursor_bg = base01
+light_scheme.cursor_border = base01
+light_scheme.cursor_fg = base3
+light_scheme.selection_bg = base03
+light_scheme.selection_fg = base1
+
+light_scheme.ansi = {
+    base2,  -- black
+    red,     -- red
+    green,   -- green
+    yellow,  -- yellow
+    blue,    -- blue
+    magenta, -- magenta
+    cyan,    -- cyan
+    base3,   -- white
+}
+-- omitted:
+-- brights = ["#002b36","#cb4b16","#586e75","#657b83","#839496","#6c71c4","#93a1a1","#fdf6e3"]
 
 config.color_schemes = {
-    ['Solarized Dark'] = scheme,
+    ['Solarized Dark'] = dark_scheme,
+    ['Solarized Light'] = light_scheme,
 }
 config.color_scheme = 'Solarized Dark'
-
--- config.color_scheme = 'Solarized Dark (Gogh)'
--- config.color_scheme = 'Solarized (dark) (terminal.sexy)'
--- config.color_scheme = 'Solarized (light) (terminal.sexy)'
 
 -- and finally, return the configuration to wezterm
 return config
