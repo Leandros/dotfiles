@@ -122,6 +122,11 @@ if has('nvim')
     " Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
     " Plug 'leandros/telescope-fzf-native.nvim', { 'do': 'make', 'branch': 'feature/windows_build_support' }
 
+    " Docs
+    " Must come after telescope.
+    Plug 'mrjones2014/dash.nvim', { 'do': 'make install' }
+    Plug 'amrbashir/nvim-docs-view', { 'on': 'DocsViewToggle'}
+
     " Code navigation
     Plug 'ggandor/leap.nvim'
 
@@ -2238,6 +2243,9 @@ nnoremap <leader>fs <cmd>lua require('telescope.builtin').current_buffer_fuzzy_f
 " nnoremap <leader>z <cmd>lua require('telescope.builtin').buffers()<cr>
 nnoremap <leader>v <cmd>lua require('telescope.builtin').treesitter()<cr>
 
+" Dash.nvim
+nnoremap <leader>fd :Telescope dash search<CR>
+
 " =============================================================================
 " LeaderF
 " =============================================================================
@@ -2474,6 +2482,20 @@ let g:floaterm_keymap_prev   = ',b'
 let g:floaterm_keymap_next   = ',s'
 let g:floaterm_width = 0.8
 let g:floaterm_height = 0.8
+
+" =============================================================================
+" Docs
+" =============================================================================
+lua << EOF
+  require("docs-view").setup {
+    position = "bottom",
+    height = 10,
+    --width = 60,
+    update_mode = 'auto',
+  }
+EOF
+
+nnoremap f :DocsViewToggle<CR>
 
 
 " =============================================================================
