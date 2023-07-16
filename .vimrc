@@ -725,6 +725,15 @@ endfun
 command! StripWhitespace call StripTrailingWhitespaces()
 
 " =============================================================================
+" Strip ANSI Escapes
+" =============================================================================
+fun! StripAnsiEscapes()
+  :%s/\%x1b\[[0-9;]*m//g
+endfun
+
+command! StripAnsi call StripAnsiEscapes()
+
+" =============================================================================
 " Minifier functions
 " =============================================================================
 fun! MinifyJson()
