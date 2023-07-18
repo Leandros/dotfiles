@@ -128,7 +128,8 @@ if has('nvim')
     Plug 'amrbashir/nvim-docs-view', { 'on': 'DocsViewToggle'}
 
     " Code navigation
-    Plug 'ggandor/leap.nvim'
+    " Plug 'ggandor/leap.nvim'
+    Plug 'folke/flash.nvim'
 
     " LSP Requirements
     Plug 'neovim/nvim-lspconfig'               " Collection of common configurations for the Nvim LSP client
@@ -1760,37 +1761,64 @@ EOF
 " =============================================================================
 " leap
 " =============================================================================
+"lua <<EOF
+"require('leap').setup {
+"  case_sensitive = false,
+"  safe_labels = {
+"    "t", "e", "u", "c", "/",
+"    "T", "E", "L", "H", "M", "U", "G", "?", "Z"
+"  },
+"}
+
+"-- Greying out the search
+"vim.api.nvim_set_hl(0, 'LeapBackdrop', { link = 'Comment' })
+
+"-- Search in both directions. Caveats apply.
+"vim.keymap.set({"n", "x", "o"}, "t", "<cmd>lua require('leap').leap { target_windows = { vim.fn.win_getid() } }<CR>", {silent = true})
+
+"-- Search in all windows. Same caveats apply as above.
+"vim.keymap.set('n', 'gt', function()
+"  local focusable_windows_on_tabpage = vim.tbl_filter(
+"    function (win) return vim.api.nvim_win_get_config(win).focusable end,
+"    vim.api.nvim_tabpage_list_wins(0)
+"  )
+"  require('leap').leap { target_windows = focusable_windows_on_tabpage }
+"end)
+
+
+"-- Default actions:
+"--vim.keymap.set({"n", "x", "o"}, "t", "<Plug>(leap-forward-to)", {silent = true})
+"--vim.keymap.set({"n", "x", "o"}, "T", "<Plug>(leap-backward-to)", {silent = true})
+"--vim.keymap.set({"n", "x", "o"}, "gt", "<Plug>(leap-cross-window)", {silent = true})
+
+"EOF
+
+" =============================================================================
+" flash.nvim
+" =============================================================================
 lua <<EOF
-require('leap').setup {
-  case_sensitive = false,
-  safe_labels = {
-    "t", "e", "u", "c", "/",
-    "T", "E", "L", "H", "M", "U", "G", "?", "Z"
+require('flash').setup {
+  labels = "ctieobnrsjduaxphlmwfvyz",
+  char = {
+    enabled = false,
   },
 }
 
--- Greying out the search
-vim.api.nvim_set_hl(0, 'LeapBackdrop', { link = 'Comment' })
+-- Highlights
+vim.api.nvim_set_hl(0, 'FlashBackdrop', { link = 'Comment' })
+vim.api.nvim_set_hl(0, 'FlashMatch', { link = 'Search' })
+vim.api.nvim_set_hl(0, 'FlashCurrent', { link = 'IncSearch' })
+vim.api.nvim_set_hl(0, 'FlashLabel', { link = 'WildMenu' })
 
--- Search in both directions. Caveats apply.
-vim.keymap.set({"n", "x", "o"}, "t", "<cmd>lua require('leap').leap { target_windows = { vim.fn.win_getid() } }<CR>", {silent = true})
+-- This mimics leap.nvim:
+--vim.api.nvim_set_hl(0, 'FlashLabel', { cterm = { underline = true, nocombine = true }, ctermfg=9, underline = true, nocombine = true, fg='#ccff88' })
 
--- Search in all windows. Same caveats apply as above.
-vim.keymap.set('n', 'gt', function()
-  local focusable_windows_on_tabpage = vim.tbl_filter(
-    function (win) return vim.api.nvim_win_get_config(win).focusable end,
-    vim.api.nvim_tabpage_list_wins(0)
-  )
-  require('leap').leap { target_windows = focusable_windows_on_tabpage }
-end)
-
-
--- Default actions:
---vim.keymap.set({"n", "x", "o"}, "t", "<Plug>(leap-forward-to)", {silent = true})
---vim.keymap.set({"n", "x", "o"}, "T", "<Plug>(leap-backward-to)", {silent = true})
---vim.keymap.set({"n", "x", "o"}, "gt", "<Plug>(leap-cross-window)", {silent = true})
-
+-- Keymaps
+vim.keymap.set({"n", "x", "o"}, "t", "<cmd>lua require('flash').jump()<CR>", {silent = true})
+vim.keymap.set({"n", "x", "o"}, "T", "<cmd>lua require('flash').treesitter_search()<CR>", {silent = true})
 EOF
+
+
 
 " =============================================================================
 " Signcolumn
