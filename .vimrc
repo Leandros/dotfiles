@@ -915,6 +915,15 @@ if has('nvim')
 lua <<EOF
 local cmp_autopairs = require('nvim-autopairs.completion.cmp')
 local cmp = require 'cmp'
+function vsnip_complete()
+  cmp.complete({
+    config = {
+      sources = {
+        { name = 'vsnip' }
+      }
+    }
+  })
+end
 cmp.setup({
   window = {
     completion = cmp.config.window.bordered(),
@@ -936,18 +945,46 @@ cmp.setup({
 
   mapping = {
     ['<C-r>'] = cmp.mapping.select_prev_item(),
-    ['<C-n>'] = cmp.mapping.select_next_item(),
+    ['<C-n>'] = cmp.mapping({
+      i = function(fallback)
+        if cmp.visible() then
+          cmp.select_next_item()
+        else
+          cmp.complete()
+        end
+      end,
+      c = cmp.mapping.select_next_item(),
+      s = cmp.mapping.select_next_item(),
+    }),
+    --['<C-s>'] = cmp.mapping(vsnip_complete, { 'i' }),
     -- Add tab support
-    ['<S-Tab>'] = cmp.mapping.select_prev_item(),
-    ['<Tab>'] = cmp.mapping.select_next_item(),
+    ['<S-Tab>'] = function(fallback)
+      if cmp.visible() then
+        cmp.select_prev_item()
+      else
+        fallback()
+      end
+    end,
+    ['<Tab>'] = function(fallback)
+      if cmp.visible() then
+        cmp.select_next_item()
+      else
+        fallback()
+      end
+    end,
     ['<C-,>'] = cmp.mapping.scroll_docs(-4),
     ['<C-.>'] = cmp.mapping.scroll_docs(4),
-    ['<C-Space>'] = cmp.mapping.complete(),
     ['<C-j>'] = cmp.mapping.close(),
-    ['<CR>'] = cmp.mapping.confirm({
-      behavior = cmp.ConfirmBehavior.Insert,
-      select = false,
-    })
+    ['<CR>'] = function(fallback)
+      if cmp.visible() then
+        cmp.confirm({
+              behavior = cmp.ConfirmBehavior.Insert,
+              select = false,
+            })
+      else
+        fallback()
+      end
+    end,
   },
 
   -- Installed sources
