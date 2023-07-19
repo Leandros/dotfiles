@@ -2345,7 +2345,8 @@ nnoremap <leader>fd :Telescope dash search<CR>
 " =============================================================================
 " LeaderF
 " =============================================================================
-silent! unmap <leader>b
+" Unmap <leader>b to have it trigger which-key
+autocmd BufReadPost * silent! unmap <leader>b
 let g:Lf_ShortcutF = '<Leader>o'
 nnoremap <Leader>o :LeaderfFile<CR>
 nnoremap <Leader>bb :LeaderfBuffer<CR>
