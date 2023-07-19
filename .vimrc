@@ -130,6 +130,7 @@ if has('nvim')
     " Code navigation
     " Plug 'ggandor/leap.nvim'
     Plug 'folke/flash.nvim'
+    Plug 'folke/which-key.nvim'
 
     " LSP Requirements
     Plug 'neovim/nvim-lspconfig'               " Collection of common configurations for the Nvim LSP client
@@ -268,7 +269,7 @@ set textwidth=0
 
 " Set mapping and key timeouts
 set timeout
-set timeoutlen=1000 " timeout for leader key
+set timeoutlen=500  " timeout for leader key
 set ttimeoutlen=10  " timeout for esc key
 set updatetime=300  " 300ms of no cursor movement to trigger CursorHold
 
@@ -1818,6 +1819,14 @@ vim.keymap.set({"n", "x", "o"}, "t", "<cmd>lua require('flash').jump()<CR>", {si
 vim.keymap.set({"n", "x", "o"}, "T", "<cmd>lua require('flash').treesitter_search()<CR>", {silent = true})
 EOF
 
+" =============================================================================
+" which-key
+" =============================================================================
+lua <<EOF
+local wk = require("which-key")
+wk.setup {
+}
+EOF
 
 
 " =============================================================================
