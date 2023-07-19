@@ -549,6 +549,9 @@ PATH="$PATH:$HOME/flutter/bin"
 if [ -x "$(command -v python3)" ]; then
     PATH="$PATH:$(python3 -m site --user-base)/bin"
 fi
+if [ -d "/Applications/Postgres.app/Contents/Versions/latest/bin" ]; then
+    PATH="$PATH:/Applications/Postgres.app/Contents/Versions/latest/bin"
+fi
 
 # macOS specific
 PATH=$PATH:/Applications/p4merge.app/Contents/MacOS
