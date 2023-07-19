@@ -136,6 +136,7 @@ if has('nvim')
     Plug 'neovim/nvim-lspconfig'               " Collection of common configurations for the Nvim LSP client
     Plug 'williamboman/mason.nvim'
     Plug 'williamboman/mason-lspconfig.nvim'
+    Plug 'jose-elias-alvarez/null-ls.nvim'
 
     " LSP Tools
     Plug 'hrsh7th/cmp-nvim-lsp'                " LSP completion source for nvim-cmp
@@ -1264,6 +1265,22 @@ function Refresh()
     edit
 endfunction
 command RefreshLSP call Refresh()
+
+" =============================================================================
+" Linting
+" =============================================================================
+lua <<EOF
+local null_ls = require("null-ls")
+
+null_ls.setup({
+    sources = {
+        null_ls.builtins.diagnostics.mypy,
+        null_ls.builtins.diagnostics.eslint,
+        null_ls.builtins.completion.spell,
+        --null_ls.builtins.diagnostics.typos,
+    },
+})
+EOF
 
 " =============================================================================
 " Debugging
