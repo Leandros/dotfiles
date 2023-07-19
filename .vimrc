@@ -1840,6 +1840,11 @@ require('flash').setup {
   char = {
     enabled = false,
   },
+  modes = {
+    search = {
+      enabled = false,
+    },
+  },
 }
 
 -- Highlights
@@ -1911,7 +1916,7 @@ lua << EOF
 require("indent_blankline").setup {
     show_end_of_line = false,
     show_first_indent_level = false,
-    filetype = {'yaml', 'rust', 'helm'},
+    filetype = {'yaml', 'rust', 'helm', 'python'},
     filetype_exclude = {'help'},
     buftype_exclude = {'terminal'},
     --show_current_context = true,
@@ -2323,6 +2328,7 @@ nnoremap <leader>fd :Telescope dash search<CR>
 " =============================================================================
 " LeaderF
 " =============================================================================
+silent! unmap <leader>b
 let g:Lf_ShortcutF = '<Leader>o'
 nnoremap <Leader>o :LeaderfFile<CR>
 nnoremap <Leader>bb :LeaderfBuffer<CR>
@@ -2590,6 +2596,8 @@ autocmd FileType yaml nnoremap <buffer> <C-f> :Prettier<CR>
 " =============================================================================
 autocmd FileType rust nnoremap <buffer> <C-f> :RustFmt<CR>
 
+" To view all groups: :so $VIMRUNTIME/syntax/hitest.vim
+" nmap <leader>sp :call SynStack()<CR>
 function! SynStack()
   if !exists("*synstack")
     return
