@@ -1,10 +1,17 @@
-https://github.com/SmiteshP/nvim-navic
+✓ https://github.com/SmiteshP/nvim-navic
 https://github.com/utilyre/barbecue.nvim
 https://github.com/tpope/vim-dadbod
-https://github.com/folke/trouble.nvim
-https://github.com/amrbashir/nvim-docs-view
+✓ https://github.com/folke/trouble.nvim
+✓ https://github.com/amrbashir/nvim-docs-view
+https://github.com/SidOfc/carbon.nvim
+https://github.com/cohama/lexima.vim
+https://github.com/cbochs/portal.nvim
+https://github.com/liuchengxu/vista.vim
+https://github.com/crusj/bookmarks.nvim
 
 ## INTEGRATE THOSE
-https://github.com/folke/flash.nvim
+✓ https://github.com/folke/flash.nvim
 https://github.com/SmiteshP/nvim-navbuddy
 https://github.com/dinhhuy258/git.nvim
+https://github.com/Zeioth/compiler.nvim
+✓ https://github.com/mrjones2014/dash.nvim#readme

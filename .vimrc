@@ -160,6 +160,7 @@ if has('nvim')
     endif
     if has_lspsaga
         Plug 'tami5/lspsaga.nvim' " chose either lspsaga or navigator
+      " Plug 'nvimdev/lspsaga.nvim' " chose either lspsaga or navigator
     endif
 
     " Debugging
@@ -1771,10 +1772,14 @@ local saga = require 'lspsaga'
 saga.setup {
     use_saga_diagnostic_sign = true,
     -- diagnostic signs
-    error_sign = 'E',
-    warn_sign = 'W',
-    hint_sign = 'H',
-    infor_sign = 'I',
+    error_sign = "",
+    warn_sign = "",
+    hint_sign = "",
+    infor_sign = "",
+    --error_sign = 'E',
+    --warn_sign = 'W',
+    --hint_sign = 'H',
+    --infor_sign = 'I',
     diagnostic_header_icon = ' ⚠ ',
     -- code action title icon
     code_action_icon = '⚐ ',
@@ -1831,6 +1836,10 @@ elseif has_lspsaga
     nnoremap <silent> <S-l> <cmd>lua require('lspsaga.action').smart_scroll_with_saga(-1)<CR>
     nnoremap <silent> [e :Lspsaga diagnostic_jump_next<CR>
     nnoremap <silent> ]e :Lspsaga diagnostic_jump_prev<CR>
+else
+    nnoremap <silent><Leader>k <cmd>lua vim.diagnostic.open_float(0, { scope = "line" })<CR>
+    nnoremap <silent> [e <cmd>lua vim.diagnostic.goto_next()<CR>
+    nnoremap <silent> ]e <cmd>lua vim.diagnostic.goto_prev()<CR>
 endif
 
 lua <<EOF
