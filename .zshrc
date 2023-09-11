@@ -331,6 +331,15 @@ fi
 
 export KEYTIMEOUT=1
 
+# This will put (n)vim in the background and revive it back.
+# It's triggered with ^Z.
+foreground-vim() {
+    fg %nvim 2>/dev/null >/dev/null || fg %vim 2>/dev/null >/dev/null
+}
+zle -N foreground-vim
+bindkey '^Z' foreground-vim
+
+
 # =============================================================================
 # Aliases
 # =============================================================================
