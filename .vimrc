@@ -1064,7 +1064,7 @@ require('mason-lspconfig').setup {
     "yamlls",
     -- automatically setup
     "tsserver",
-    "eslint",
+    --"eslint",
     "gopls",
     "bashls",
     "lua_ls",
@@ -1223,7 +1223,7 @@ lspconfig["yamlls"].setup {
 -- Remaining servers
 local lsp_servers = {
   "tsserver",
-  "eslint",
+  --"eslint",
   "gopls",
   "bashls",
   "lua_ls",
@@ -1284,8 +1284,8 @@ local null_ls = require("null-ls")
 null_ls.setup({
     sources = {
         null_ls.builtins.diagnostics.mypy,
-        null_ls.builtins.diagnostics.eslint,
-        null_ls.builtins.completion.spell,
+        --null_ls.builtins.diagnostics.eslint,
+        --null_ls.builtins.completion.spell,
         --null_ls.builtins.diagnostics.typos,
     },
 })
