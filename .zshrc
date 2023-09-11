@@ -177,6 +177,9 @@ function f {
     fzf $*
 }
 
+# zoxide (must appear after `compinit`)
+eval "$(zoxide init zsh)"
+
 
 # =============================================================================
 # OH-MY-ZSH
@@ -592,10 +595,6 @@ lg()
             rm -f $LAZYGIT_NEW_DIR_FILE > /dev/null
     fi
 }
-
-
-# zoxide (must appear after `compinit`)
-eval "$(zoxide init zsh)"
 
 # =============================================================================
 # MANPATH
