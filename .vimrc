@@ -1872,7 +1872,29 @@ EOF
 " GitSigns
 " =============================================================================
 lua << EOF
+local function gitsigns_keymap_attach(bufnr)
+    local function opts(desc)
+      return { desc = 'gitsigns: ' .. desc, buffer = bufnr, noremap = true, silent = true, nowait = true }
+    end
+
+    --vim.keymap.set('n', 'a', api.fs.create, opts('Create'))
+    --vim.api.nvim_buf_set_keymap(bufnr, 'n', 'hs', '<cmd>lua require"gitsigns".stage_hunk()<CR>', {})
+
+    vim.keymap.set('n', '<leader>ss', '<cmd>Gitsigns stage_hunk<CR>', opts('StageHunk'))
+    vim.keymap.set('n', '<leader>su', '<cmd>Gitsigns undo_stage_hunk<CR>', opts('UndoStageHunk'))
+    vim.keymap.set('n', '<leader>sr', '<cmd>Gitsigns reset_hunk<CR>', opts('ResetHunk'))
+    vim.keymap.set('n', '<leader>sR', '<cmd>Gitsigns reset_buffer<CR>', opts('ResetBuffer'))
+    vim.keymap.set('n', '<leader>sp', '<cmd>Gitsigns preview_hunk<CR>', opts('PreviewHunk'))
+    vim.keymap.set('n', '<leader>sb', '<cmd>lua require"gitsigns".blame_line{full=true}<CR>', opts('BlameLine'))
+    vim.keymap.set('n', '<leader>sS', '<cmd>Gitsigns stage_buffer<CR>', opts('StageBuffer'))
+    vim.keymap.set('n', '<leader>sU', '<cmd>Gitsigns reset_buffer_index<CR>', opts('ResetBufferIndex'))
+
+    vim.keymap.set('v', '<leader>sr', ':Gitsigns reset_hunk<CR>', opts('ResetHunk (Visual)'))
+    vim.keymap.set('v', '<leader>ss', ':Gitsigns stage_hunk<CR>', opts('StageHunk (Visual)'))
+end
+
 require('gitsigns').setup({
+  on_attach = gitsigns_keymap_attach,
   signs = {
     add          = { text = '│' },
     change       = { text = '│' },
@@ -1882,20 +1904,6 @@ require('gitsigns').setup({
     untracked    = { text = '┆' },
   },
   _signs_staged_enable = true,
-  keymaps = {
-    noremap = true,
-
-    ['n <leader>ss'] = '<cmd>Gitsigns stage_hunk<CR>',
-    ['v <leader>ss'] = ':Gitsigns stage_hunk<CR>',
-    ['n <leader>su'] = '<cmd>Gitsigns undo_stage_hunk<CR>',
-    ['n <leader>sr'] = '<cmd>Gitsigns reset_hunk<CR>',
-    ['v <leader>sr'] = ':Gitsigns reset_hunk<CR>',
-    ['n <leader>sR'] = '<cmd>Gitsigns reset_buffer<CR>',
-    ['n <leader>sp'] = '<cmd>Gitsigns preview_hunk<CR>',
-    ['n <leader>sb'] = '<cmd>lua require"gitsigns".blame_line{full=true}<CR>',
-    ['n <leader>sS'] = '<cmd>Gitsigns stage_buffer<CR>',
-    ['n <leader>sU'] = '<cmd>Gitsigns reset_buffer_index<CR>',
-  },
 })
 EOF
 
@@ -2137,27 +2145,36 @@ require'window-picker'.setup({
     other_win_hl_color = '#44cc41',
 })
 
+local function nvim_tree_attach(bufnr)
+    local api = require('nvim-tree.api')
+
+    local function opts(desc)
+      return { desc = 'nvim-tree: ' .. desc, buffer = bufnr, noremap = true, silent = true, nowait = true }
+    end
+
+    -- use all default mappings
+    api.config.mappings.default_on_attach(bufnr)
+
+    -- remove mappings
+    vim.keymap.del('n', 'r', { buffer = bufnr })
+    vim.keymap.del('n', 'e', { buffer = bufnr })
+    vim.keymap.del('n', '-', { buffer = bufnr })
+
+    -- add mappings
+    vim.keymap.set('n', 'C', api.tree.change_root_to_node, opts('CD'))
+    vim.keymap.set('n', '<C-a>', api.tree.reload, opts('Refresh'))
+    vim.keymap.set('n', 'R', api.fs.rename, opts('Rename'))
+    vim.keymap.set('n', 'u', api.tree.change_root_to_parent, opts('Up'))
+    vim.keymap.set('n', 'a', api.fs.create, opts('Create'))
+end
+
 require("nvim-tree").setup({
   sort_by = "case_sensitive",
   sync_root_with_cwd = true, -- Changes the tree root directory on `DirChanged` and refreshes the tree.
   reload_on_bufenter = true, -- Automatically reloads the tree on `BufEnter` nvim-tree.
-  --remove_keymaps = true, -- remove all default mapping
+  on_attach = nvim_tree_attach,
   view = {
     adaptive_size = true,
-    mappings = {
-      list = {
-        { key = { "C" }, action = "cd" },
-        { key = { "<C-a>" }, action = "refresh" },
-        { key = { "R" }, action = "rename" },
-        { key = { "u" }, action = "dir_up" },
-        { key = { "a" }, action = "create" },
-        { key = { "r" }, action = "" },
-        { key = { "e" }, action = "" },
-        { key = { "-" }, action = "" },
-        --{ key = { "<CR>", "o" }, action = "edit", mode = "n" },
-        --{ key = { "n" }, action = "next_sibling", mode = "n" },
-      },
-    },
   },
   renderer = {
     group_empty = true,
@@ -2489,6 +2506,19 @@ let g:Lf_CommandMap = {
     \ '<C-L>': ['<C-D>'],
     \ '<F5>': ['<C-Z>']
     \ }
+let g:Lf_PreviewResult = {
+        \ 'File': 0,
+        \ 'Buffer': 0,
+        \ 'Mru': 0,
+        \ 'Tag': 0,
+        \ 'BufTag': 0,
+        \ 'Function': 0,
+        \ 'Line': 0,
+        \ 'Colorscheme': 0,
+        \ 'Rg': 0,
+        \ 'Gtags': 0
+        \}
+
 " let g:Lf_RootMarkers = ['.git', '.hg', '.svn', '.depotroot', '.projroot', '.p4', '.perforce', '.plastic']
 
 " =============================================================================

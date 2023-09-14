@@ -65,8 +65,16 @@ if [[ "Darwin" == "`uname`" ]]; then
 # =============================================================================
 elif [[ "Linux" == "`uname`" ]]; then
     alias startx='startx -- -dpi 144'
-    alias pbpaste='xclip -o'
-    alias pbcopy='xclip -i'
+    if [ -z ${DISPLAY+x} ]; then
+        # X is not running
+        # TODO: Do we want to detect that tmux is running?
+        alias pbpaste='tmux saveb -'
+        alias pbcopy='tmux loadb -'
+    else
+        alias pbpaste='xclip -o'
+        alias pbcopy='xclip -i'
+    fi
+
     n ()
     {
         # Block nesting of nnn in subshells
@@ -177,9 +185,6 @@ function f {
     fzf $*
 }
 
-# zoxide (must appear after `compinit`)
-eval "$(zoxide init zsh)"
-
 
 # =============================================================================
 # OH-MY-ZSH
@@ -190,14 +195,29 @@ COMPLETION_WAITING_DOTS=false
 export ZSH_THEME=""
 export UPDATE_ZSH_DAYS=7
 
-plugins=(git git-machete)
+plugins=(git git-prompt)
 source $ZSH/oh-my-zsh.sh
 
 function __git_prompt {
-    local ref=$(command git symbolic-ref HEAD 2>/dev/null || command git rev-parse --short HEAD 2>/dev/null)
-    if [ "$ref" != "" ]; then
-        echo "%{$fg[green]%}[${ref#refs/heads/}]%{$reset_color%}"
-    fi
+    # local ref=$(command git symbolic-ref HEAD 2>/dev/null || command git rev-parse --short HEAD 2>/dev/null)
+    # if [ "$ref" != "" ]; then
+    #     echo "%{$fg[green]%}[${ref#refs/heads/}]%{$reset_color%}"
+    # fi
+
+    ZSH_THEME_GIT_PROMPT_PREFIX="["
+    ZSH_THEME_GIT_PROMPT_SUFFIX="]"
+    # • ⦁   
+    ZSH_THEME_GIT_PROMPT_STAGED="%{$fg[red]%}%{%G%}"
+    ZSH_THEME_GIT_PROMPT_CONFLICTS="%{$fg[red]%}%{⚠%G%}"
+    ZSH_THEME_GIT_PROMPT_CHANGED="%{$fg[blue]%}%{+%G%}"
+    ZSH_THEME_GIT_PROMPT_DELETED="%{$fg[blue]%}%{-%G%}"
+    ZSH_THEME_GIT_PROMPT_BEHIND="%{↓%G%}"
+    ZSH_THEME_GIT_PROMPT_AHEAD="%{↑%G%}"
+    ZSH_THEME_GIT_PROMPT_UNTRACKED="%{$fg[cyan]%}%{⚐%G%}"
+    ZSH_THEME_GIT_PROMPT_STASHED="%{$fg_bold[blue]%}%{⚑%G%}"
+    ZSH_THEME_GIT_PROMPT_CLEAN="%{$fg_bold[green]%}%{✔%G%}"
+    ZSH_THEME_GIT_PROMPT_UPSTREAM_SEPARATOR="→"
+    git_super_status
 }
 if [ "$EUID" = "0" ]; then
     promptchar="%{$fg[red]%}#%{$reset_color%}"
@@ -556,7 +576,9 @@ PATH="$PATH:$HOME/p4/depot/extern/bin/shared"
 PATH="$PATH:$HOME/bin/depot_tools"
 PATH="$PATH:$HOME/.cargo/bin"
 PATH="$PATH:$HOME/.local/bin"
+PATH="$PATH:$HOME/.rvm/bin"
 PATH="$PATH:$HOME/gopath/bin"
+PATH="$PATH:/usr/local/go/bin"
 PATH="$PATH:$HOME/flutter/bin"
 if [ -x "$(command -v python3)" ]; then
     PATH="$PATH:$(python3 -m site --user-base)/bin"
@@ -575,7 +597,22 @@ PATH=$PATH:/usr/local/sh-elf/bin
 PATH=$PATH:/usr/local/sh-coff/bin
 PATH=$PATH:/usr/local/m68k-elf/bin
 
-PATH=$PATH:$HOME/.rvm/bin
+# Amazon
+PATH="$PATH:$HOME/.toolbox/bin"
+if [ -d "$HOME/.brazil_completion" ]; then
+    source "$HOME/.brazil_completion/zsh_completion"
+    alias bb='brazil-build'
+    alias b='brazil'
+    alias bws='brazil ws'
+    alias bre='brazil-runtime-exec'
+    alias brc='brazil-recursive-cmd'
+    alias bbr='brc brazil-build'
+    alias bball='brc --allPackages'
+    alias bbb='brc --allPackages brazil-build'
+fi
+if [ -d "$HOME/.toolbox" ]; then
+    alias tb='toolbox'
+fi
 
 export PATH
 
@@ -605,6 +642,13 @@ lg()
     fi
 }
 
+
+# =============================================================================
+# Zoxide
+# =============================================================================
+# zoxide (must appear after `compinit`)
+eval "$(zoxide init zsh)"
+
 # =============================================================================
 # MANPATH
 # =============================================================================
@@ -614,7 +658,11 @@ function mman { MANPATH=$HOME/p4/depot/liba/docs man $* | less }
 # =============================================================================
 # fnm
 # =============================================================================
-export PATH=$HOME/.fnm:$PATH
+if [ -d "$HOME/.local/share/fnm" ]; then
+    export PATH="$HOME/.local/share/fnm:$PATH"
+else
+    export PATH="$HOME/.fnm:$PATH"
+fi
 eval "`fnm env`"
 
 # =============================================================================
@@ -641,7 +689,7 @@ fi
 # =============================================================================
 # Direnv
 # =============================================================================
-eval "$(direnv hook zsh)"
+command -v direnv >/dev/null && eval "$(direnv hook zsh)"
 
 # =============================================================================
 # Broot
