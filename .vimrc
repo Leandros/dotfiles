@@ -1057,7 +1057,7 @@ require("mason").setup {
 }
 
 require('mason-lspconfig').setup {
-  automatic_installation = true,
+  automatic_installation = false,
   ensure_installed = {
     -- require separate setup
     "rust_analyzer",
@@ -2175,6 +2175,9 @@ require("nvim-tree").setup({
   on_attach = nvim_tree_attach,
   view = {
     adaptive_size = true,
+    width = {
+      max = 40,
+    },
   },
   renderer = {
     group_empty = true,
@@ -2492,7 +2495,7 @@ let g:Lf_StlSeparator = {
 "     \ "--hidden"
 " \ ]
 let g:Lf_WildIgnore = {
-    \ 'dir': ['.svn','.git','.p4','.perforce','.plastic','node_modules','temp','Temp','out','_out','_build','extern'],
+    \ 'dir': ['.svn','.git','.p4','.perforce','.plastic','node_modules','temp','Temp','out','_out','_build','extern','build','env'],
     \ 'file': ['*.sw?','~$*','*.bak','*.exe','*.o','*.so','*.pyco','*.dll','*.meta','AssemblyU2DCSharp*','*.a','*.lib']
     \ }
 let g:Lf_CommandMap = {
