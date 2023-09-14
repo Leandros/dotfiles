@@ -564,9 +564,27 @@ PATH="$HOMEBREW_PREFIX/opt/mysql@5.7/bin:$PATH"
 PATH="$PATH:/usr/bin/core_perl"
 PATH="$PATH:$HOME/bin"
 PATH="$PATH:$HOME/.zsh/bin"
+
+# Amazon
+PATH="$PATH:$HOME/.toolbox/bin"
+if [ -d "$HOME/.brazil_completion" ]; then
+    source "$HOME/.brazil_completion/zsh_completion"
+    alias bb='brazil-build'
+    alias b='brazil'
+    alias bws='brazil ws'
+    alias bre='brazil-runtime-exec'
+    alias brc='brazil-recursive-cmd'
+    alias bbr='brc brazil-build'
+    alias bball='brc --allPackages'
+    alias bbb='brc --allPackages brazil-build'
+fi
+if [ -d "$HOME/.toolbox" ]; then
+    alias tb='toolbox'
+fi
+
+# Misc
 PATH="$PATH:$HOME/bin/awscli/eb/macosx/python2.7"
 PATH="$PATH:$HOME/bin/drmemory/bin"
-
 PATH="$PATH:$ANDROID_ROOT"
 PATH="$PATH:$ANDROID_ROOT/tools"
 PATH="$PATH:$ANDROID_ROOT/platform-tools"
@@ -596,23 +614,6 @@ PATH=$PATH:$HOME/.fastlane/bin
 PATH=$PATH:/usr/local/sh-elf/bin
 PATH=$PATH:/usr/local/sh-coff/bin
 PATH=$PATH:/usr/local/m68k-elf/bin
-
-# Amazon
-PATH="$PATH:$HOME/.toolbox/bin"
-if [ -d "$HOME/.brazil_completion" ]; then
-    source "$HOME/.brazil_completion/zsh_completion"
-    alias bb='brazil-build'
-    alias b='brazil'
-    alias bws='brazil ws'
-    alias bre='brazil-runtime-exec'
-    alias brc='brazil-recursive-cmd'
-    alias bbr='brc brazil-build'
-    alias bball='brc --allPackages'
-    alias bbb='brc --allPackages brazil-build'
-fi
-if [ -d "$HOME/.toolbox" ]; then
-    alias tb='toolbox'
-fi
 
 export PATH
 
