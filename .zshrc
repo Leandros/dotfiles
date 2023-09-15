@@ -23,6 +23,8 @@ export LC_ALL=en_US.UTF-8
 export HOMEBREW_NO_AUTO_UPDATE=1
 export AWS_DEFAULT_REGION="us-east-1"
 export AWS_PAGER=""
+# if you wish to use IMDS set AWS_EC2_METADATA_DISABLED=false
+export AWS_EC2_METADATA_DISABLED=true
 
 # Profiling
 PROFILE_STARTUP=false
@@ -568,7 +570,6 @@ PATH="$PATH:$HOME/.zsh/bin"
 # Amazon
 PATH="$PATH:$HOME/.toolbox/bin"
 if [ -d "$HOME/.brazil_completion" ]; then
-    source "$HOME/.brazil_completion/zsh_completion"
     alias bb='brazil-build'
     alias b='brazil'
     alias bws='brazil ws'
@@ -577,6 +578,11 @@ if [ -d "$HOME/.brazil_completion" ]; then
     alias bbr='brc brazil-build'
     alias bball='brc --allPackages'
     alias bbb='brc --allPackages brazil-build'
+    brazil() {
+        unfunction "$0"
+        source "$HOME/.brazil_completion/zsh_completion"
+        $0 "$@"
+    }
 fi
 if [ -d "$HOME/.toolbox" ]; then
     alias tb='toolbox'
