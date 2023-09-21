@@ -984,7 +984,7 @@ cmp.setup({
     ['<C-.>'] = cmp.mapping.scroll_docs(4),
     ['<C-j>'] = cmp.mapping.close(),
     ['<CR>'] = function(fallback)
-      if cmp.visible() then
+      if cmp.visible() and cmp.get_active_entry() ~= nil then
         cmp.confirm({
           behavior = cmp.ConfirmBehavior.Insert,
           select = false,
@@ -1096,6 +1096,8 @@ lsp_status.register_progress()
 
 -- Global `on_attach`
 local function on_attach(client, bufnr)
+  -- disable highlighting from lsp
+  client.server_capabilities.semanticTokensProvider = nil
   -- setup buffer keymaps etc.
   lsp_status.on_attach(client)
   navbuddy.attach(client, bufnr)
@@ -1914,9 +1916,10 @@ EOF
 lua <<EOF
 require'nvim-treesitter.configs'.setup {
     ensure_installed = {'rust', 'json', 'javascript', 'typescript', 'tsx', 'vim', 'lua', 'go', 'haskell', 'bash', 'markdown', 'markdown_inline', 'python'},
+    auto_install = false,
     highlight = {
         enable = true,
-        disable = { "rust", "typescript" },
+        disable = { 'typescript' },
         additional_vim_regex_highlighting = false,
         custom_captures = {
             ["punctuation.bracket"] = "Variable",
@@ -2490,6 +2493,7 @@ let g:Lf_StlSeparator = {
     \ 'left': '',
     \ 'right': ''
     \ }
+let g:Lf_JumpToExistingWindow = 0
 " let g:Lf_RgConfig = [
 "     \ "--glob=!git/*",
 "     \ "--hidden"
@@ -2757,12 +2761,21 @@ autocmd FileType rust nnoremap <buffer> <C-f> :RustFmt<CR>
 
 " To view all groups: :so $VIMRUNTIME/syntax/hitest.vim
 " nmap <leader>sp :call SynStack()<CR>
-function! SynStack()
-  if !exists("*synstack")
-    return
-  endif
-  echo map(synstack(line('.'), col('.')), 'synIDattr(v:val, "name")')
-endfunc
+" function! SynStack()
+"   if !exists("*synstack")
+"     return
+"   endif
+"   echo map(synstack(line('.'), col('.')), 'synIDattr(v:val, "name")')
+" endfunc
+function! SynStack ()
+    for i1 in synstack(line("."), col("."))
+        let i2 = synIDtrans(i1)
+        let n1 = synIDattr(i1, "name")
+        let n2 = synIDattr(i2, "name")
+        echo n1 "->" n2
+    endfor
+endfunction
+map gm :call SynStack()<CR>
 
 " =============================================================================
 " Golang
