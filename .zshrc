@@ -209,6 +209,7 @@ function __git_prompt {
     ZSH_THEME_GIT_PROMPT_PREFIX="["
     ZSH_THEME_GIT_PROMPT_SUFFIX="]"
     # • ⦁   
+    ZSH_THEME_GIT_PROMPT_BRANCH="%{$fg[green]%}"
     ZSH_THEME_GIT_PROMPT_STAGED="%{$fg[red]%}%{%G%}"
     ZSH_THEME_GIT_PROMPT_CONFLICTS="%{$fg[red]%}%{⚠%G%}"
     ZSH_THEME_GIT_PROMPT_CHANGED="%{$fg[blue]%}%{+%G%}"
