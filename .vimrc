@@ -984,7 +984,7 @@ cmp.setup({
     ['<C-.>'] = cmp.mapping.scroll_docs(4),
     ['<C-j>'] = cmp.mapping.close(),
     ['<CR>'] = function(fallback)
-      if cmp.visible() and cmp.get_active_entry() ~= nil then
+      if cmp.visible() and cmp.get_selected_entry() ~= nil then
         cmp.confirm({
           behavior = cmp.ConfirmBehavior.Insert,
           select = false,
