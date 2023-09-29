@@ -383,8 +383,8 @@ augroup MyColors
   " Color was previously: #073642
   " hi! IndentBlanklineChar ctermfg=92 guifg=#586e75 gui=nocombine
   " hi! IndentBlanklineSpaceChar ctermfg=92 guifg=#586e75 gui=nocombine
-  autocmd ColorScheme * hi! IndentBlanklineChar ctermfg=15 guifg=#234854 gui=nocombine
-  autocmd ColorScheme * hi! IndentBlanklineSpaceChar ctermfg=15 guifg=#234854 gui=nocombine
+  autocmd ColorScheme * hi! IblIndent ctermfg=15 guifg=#234854 gui=nocombine
+  autocmd ColorScheme * hi! IblWhitespace ctermfg=15 guifg=#234854 gui=nocombine
   autocmd ColorScheme * hi! Comment cterm=NONE ctermfg=92 gui=NONE guifg=#586e75 guibg=NONE guisp=NONE
   autocmd ColorScheme * hi! Visual ctermbg=92 ctermfg=7 guibg=#586e75 guifg=#002b36 gui=nocombine guisp=none
 
@@ -2049,12 +2049,33 @@ EOF
 " Indent Blankline
 " =============================================================================
 lua << EOF
-require("indent_blankline").setup {
-    show_end_of_line = false,
-    show_first_indent_level = false,
-    filetype = {'yaml', 'rust', 'helm', 'python'},
-    filetype_exclude = {'help'},
-    buftype_exclude = {'terminal'},
+local hooks = require "ibl.hooks"
+hooks.register(
+  hooks.type.WHITESPACE,
+  hooks.builtin.hide_first_space_indent_level
+)
+
+require("ibl").setup {
+    indent = {
+      char = '│',
+    },
+    exclude = {
+      filetypes = {
+       'lspinfo',
+       'packer',
+       'checkhealth',
+       'help',
+       'man',
+       'gitcommit',
+       'TelescopePrompt',
+       'TelescopeResults',
+       '',
+      },
+    },
+    whitespace = {
+      remove_blankline_trail = true,
+    },
+
     --show_current_context = true,
     --show_current_context_start = true,
 }
