@@ -113,6 +113,7 @@ if has('nvim')
     Plug 'nvim-tree/nvim-tree.lua'
     Plug 'johnfrankmorgan/whitespace.nvim'
     Plug 'tzachar/local-highlight.nvim'
+    Plug 'nvim-focus/focus.nvim'
 
     " Telescope
     Plug 'nvim-telescope/telescope.nvim', { 'branch': '0.1.x' } " Improved LSP actions
@@ -2761,6 +2762,17 @@ EOF
 
 nnoremap f :DocsViewToggle<CR>
 
+" =============================================================================
+" focus.nvim
+" =============================================================================
+lua <<EOF
+require("focus").setup({
+    enable = true, -- Enable module
+    autoresize = {
+      minwidth = 80,
+    },
+})
+EOF
 
 " =============================================================================
 "             | |    __ _ _ __   __ _ _   _  __ _  __ _  ___  ___
