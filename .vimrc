@@ -1,6 +1,8 @@
 set nocompatible " be iMproved, required
 filetype off     " required
 
+set background=dark
+
 " Vundle Stuff
 if has("win32") || has("win16")
     call plug#begin('$HOME/vimfiles/bundle/')
@@ -378,34 +380,46 @@ endif
 augroup MyColors
   autocmd!
 
-  " --- Bufferline ---
-  autocmd ColorScheme * highlight BufferLineFill guibg=#073642
+  " Dark colors:
+  if &background ==# 'dark'
+    " --- Bufferline ---
+    autocmd ColorScheme * highlight BufferLineFill guibg=#073642
 
-  " Color was previously: #073642
-  " hi! IndentBlanklineChar ctermfg=92 guifg=#586e75 gui=nocombine
-  " hi! IndentBlanklineSpaceChar ctermfg=92 guifg=#586e75 gui=nocombine
-  autocmd ColorScheme * hi! IblIndent ctermfg=15 guifg=#234854 gui=nocombine
-  autocmd ColorScheme * hi! IblWhitespace ctermfg=15 guifg=#234854 gui=nocombine
-  autocmd ColorScheme * hi! Comment cterm=NONE ctermfg=92 gui=NONE guifg=#586e75 guibg=NONE guisp=NONE
-  autocmd ColorScheme * hi! Visual ctermbg=92 ctermfg=7 guibg=#586e75 guifg=#002b36 gui=nocombine guisp=none
+    " Color was previously: #073642
+    " hi! IndentBlanklineChar ctermfg=92 guifg=#586e75 gui=nocombine
+    " hi! IndentBlanklineSpaceChar ctermfg=92 guifg=#586e75 gui=nocombine
+    autocmd ColorScheme * hi! IblIndent ctermfg=15 guifg=#234854 gui=nocombine
+    autocmd ColorScheme * hi! IblWhitespace ctermfg=15 guifg=#234854 gui=nocombine
+    autocmd ColorScheme * hi! Comment cterm=NONE ctermfg=92 gui=NONE guifg=#586e75 guibg=NONE guisp=NONE
+    autocmd ColorScheme * hi! Visual ctermbg=92 ctermfg=7 guibg=#586e75 guifg=#002b36 gui=nocombine guisp=none
 
-  " --- RUST ---
-  " Pmenu:
-  " PmenuSel: selection
-  " GHListHl: Guihua List Highlight
-  " GHListDark: Guihui List
-  autocmd ColorScheme * hi! Pmenu ctermfg=12 ctermbg=0 guifg=#839496 guibg=#073642 guisp=NONE
-  autocmd ColorScheme * hi! FloatBorder ctermfg=1 guifg=#ffffff guibg=NONE guisp=NONE
-  autocmd ColorScheme * hi! GHTextViewDark ctermfg=12 ctermbg=0 guifg=#93a1a1 guibg=#002b36 guisp=NONE
-  autocmd ColorScheme * hi! NormalFloat ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=NONE
-  " hi! PmenuSel ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
-  " hi! PmenuThumb ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
-  " hi! GHListHl ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
-  " hi! GHListDark ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
-  " hi! GHBgDark ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
+    " --- RUST ---
+    " Pmenu:
+    " PmenuSel: selection
+    " GHListHl: Guihua List Highlight
+    " GHListDark: Guihui List
+    autocmd ColorScheme * hi! Pmenu ctermfg=12 ctermbg=0 guifg=#839496 guibg=#073642 guisp=NONE
+    autocmd ColorScheme * hi! FloatBorder ctermfg=1 guifg=#ffffff guibg=NONE guisp=NONE
+    autocmd ColorScheme * hi! GHTextViewDark ctermfg=12 ctermbg=0 guifg=#93a1a1 guibg=#002b36 guisp=NONE
+    autocmd ColorScheme * hi! NormalFloat ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=NONE
+    " hi! PmenuSel ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
+    " hi! PmenuThumb ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
+    " hi! GHListHl ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
+    " hi! GHListDark ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
+    " hi! GHBgDark ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
 
-  " --- TypeScript ---
-  autocmd ColorScheme * hi! TSDefinitionUsage guifg=none guibg=#073642 gui=underline guisp=none
+    " --- TypeScript ---
+    autocmd ColorScheme * hi! TSDefinitionUsage guifg=none guibg=#073642 gui=underline guisp=none
+  else
+    " --- Bufferline ---
+    autocmd ColorScheme * highlight BufferLineFill guibg=#eee8d5
+
+    " Color was previously: #073642
+    autocmd ColorScheme * hi! IblIndent ctermfg=15 guifg=#eee8d5 gui=nocombine
+    autocmd ColorScheme * hi! IblWhitespace ctermfg=15 guifg=#eee8d5 gui=nocombine
+    autocmd ColorScheme * hi! Comment cterm=NONE ctermfg=92 gui=NONE guifg=#93a1a1 guibg=NONE guisp=NONE
+    autocmd ColorScheme * hi! Visual ctermbg=92 ctermfg=7 guibg=#93a1a1 guifg=#fdf6e3 gui=nocombine guisp=none
+  endif
 augroup END
 
 " Theme
@@ -414,7 +428,7 @@ if has('nvim')
     let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
     let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
 endif
-set background=dark
+" set background=dark
 let g:solarized_italics = 0
 colorscheme solarized
 
@@ -675,7 +689,11 @@ augroup END
 " =============================================================================
 if exists('+colorcolumn')
   set colorcolumn=80
-  highlight ColorColumn guibg=#004653
+  if &background ==# 'dark'
+    highlight ColorColumn guibg=#004653
+  else
+    highlight ColorColumn guibg=#eee8d5
+  endif
 
   " except for mail
   autocmd FileType mail set colorcolumn=72
@@ -1570,7 +1588,7 @@ local custom_solarized_dark = {
 require'lualine'.setup {
   options = {
     icons_enabled = false,
-    theme = custom_solarized_dark,
+    theme = (vim.opt.background:get() == 'dark' and custom_solarized_dark or 'solarized_light'),
     component_separators = '│',
     section_separators = '',
     disabled_filetypes = {},
@@ -2767,11 +2785,44 @@ nnoremap f :DocsViewToggle<CR>
 " =============================================================================
 lua <<EOF
 require("focus").setup({
-    enable = true, -- Enable module
+    enable = false, -- Enable module
     autoresize = {
       minwidth = 80,
     },
 })
+
+--[[
+local ignore_filetypes = { 'NvimTree' }
+local ignore_buftypes = { 'nofile', 'prompt', 'popup' }
+
+local augroup =
+    vim.api.nvim_create_augroup('FocusDisable', { clear = true })
+
+vim.api.nvim_create_autocmd('WinEnter', {
+    group = augroup,
+    callback = function(_)
+        if vim.tbl_contains(ignore_buftypes, vim.bo.buftype)
+        then
+            vim.w.focus_disable = true
+        else
+            vim.w.focus_disable = false
+        end
+    end,
+    desc = 'Disable focus autoresize for BufType',
+})
+
+vim.api.nvim_create_autocmd('FileType', {
+    group = augroup,
+    callback = function(_)
+        if vim.tbl_contains(ignore_filetypes, vim.bo.filetype) then
+            vim.w.focus_disable = true
+        else
+            vim.w.focus_disable = false
+        end
+    end,
+    desc = 'Disable focus autoresize for FileType',
+})
+]]--
 EOF
 
 " =============================================================================

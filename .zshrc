@@ -14,7 +14,8 @@ bindkey -v
 # Config
 # =============================================================================
 export HOME=##NEWHOME##
-export EDITOR=##NEWEDITOR##
+export EDITOR=nvim
+export VISUAL=nvim
 export CC=gcc
 export CXX=g++
 export DEFAULT_USER=##NEWUSER##
