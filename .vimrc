@@ -1,8 +1,6 @@
 set nocompatible " be iMproved, required
 filetype off     " required
 
-set background=dark
-
 " Vundle Stuff
 if has("win32") || has("win16")
     call plug#begin('$HOME/vimfiles/bundle/')
@@ -116,6 +114,7 @@ if has('nvim')
     Plug 'johnfrankmorgan/whitespace.nvim'
     Plug 'tzachar/local-highlight.nvim'
     Plug 'nvim-focus/focus.nvim'
+    Plug 'f-person/auto-dark-mode.nvim'
 
     " Telescope
     Plug 'nvim-telescope/telescope.nvim', { 'branch': '0.1.x' } " Improved LSP actions
@@ -375,7 +374,60 @@ endif
 " Colors
 " =============================================================================
 " Theme Overrides
-"
+
+function! HighlightsDark() abort
+  " --- Bufferline ---
+  hi! BufferLineFill guibg=#073642
+
+  " Color was previously: #073642
+  " hi! IblScope guifg=#073642 guibg=none gui=nocombine
+  hi! @ibl.scope.char.1 guibg=#073642
+  hi! IblScope gui=nocombine guifg=#657b83 guibg=#073642
+  hi! IblIndent guifg=#234854 guibg=none gui=nocombine
+  hi! IblWhitespace guifg=#234854 guibg=none gui=nocombine
+  hi! Comment cterm=NONE ctermfg=92 gui=NONE guifg=#586e75 guibg=NONE guisp=NONE
+  hi! Visual ctermbg=92 ctermfg=7 guibg=#586e75 guifg=#002b36 gui=nocombine guisp=none
+
+  " --- RUST ---
+  " Pmenu:
+  " PmenuSel: selection
+  " GHListHl: Guihua List Highlight
+  " GHListDark: Guihui List
+  hi! Pmenu ctermfg=12 ctermbg=0 guifg=#839496 guibg=#073642 guisp=NONE
+  hi! FloatBorder ctermfg=1 guifg=#ffffff guibg=NONE guisp=NONE
+  hi! GHTextViewDark ctermfg=12 ctermbg=0 guifg=#93a1a1 guibg=#002b36 guisp=NONE
+  hi! NormalFloat ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=NONE
+  hi! FloatShadow blend=80 guibg=#073642
+  hi! FloatShadowThrough blend=100 guibg=#073642
+  "hi! LocalHighlight cterm= gui= guifg=#dcd7ba guibg=#2d4f67
+
+  " --- TreeSitter ---
+  hi! TSDefinitionUsage guifg=none guibg=#073642 gui=underline guisp=none
+endfunction
+
+function! HighlightsLight() abort
+  " --- Bufferline ---
+  hi! BufferLineFill guibg=#eee8d5
+
+  hi! @ibl.scope.char.1 guibg=#eee8d5
+  hi! IblScope gui=nocombine guifg=#839496 guibg=#eee8d5
+  hi! IblIndent guifg=#eee8d5 guibg=none gui=nocombine
+  hi! IblWhitespace guifg=#eee8d5 guibg=none gui=nocombine
+  hi! Comment cterm=NONE ctermfg=92 gui=NONE guifg=#93a1a1 guibg=NONE guisp=NONE
+  hi! Visual ctermbg=92 ctermfg=7 guibg=#93a1a1 guifg=#fdf6e3 gui=nocombine guisp=none
+
+  hi! Pmenu ctermfg=11 ctermbg=0 guifg=#657b83 guibg=#eee8d5 guisp=NONE
+  hi! FloatBorder ctermfg=0 guifg=#000000 guibg=NONE guisp=NONE
+  hi! GHTextViewDark ctermfg=10 ctermbg=15 guifg=#586e75 guibg=#fdf6e3 guisp=NONE
+  hi! NormalFloat ctermfg=10 ctermbg=15 guifg=#586e75 guibg=#fdf6e3 guisp=NONE
+  hi! FloatShadow blend=80 guibg=#eee8d5
+  hi! FloatShadowThrough blend=100 guibg=#eee8d5
+  "hi! LocalHighlight cterm= gui= guifg=#dcd7ba guibg=#2d4f67
+
+  " --- TreeSitter ---
+  hi! TSDefinitionUsage guifg=none guibg=#eee8d5 gui=underline guisp=none
+endfunction
+
 " Colorschemes usually reset all highlighting, including your own, when they
 " are sourced, hence the autocmd group.
 augroup MyColors
@@ -383,43 +435,9 @@ augroup MyColors
 
   " Dark colors:
   if &background ==# 'dark'
-    " --- Bufferline ---
-    autocmd ColorScheme * highlight BufferLineFill guibg=#073642
-
-    " Color was previously: #073642
-    " hi! IndentBlanklineChar ctermfg=92 guifg=#586e75 gui=nocombine
-    " hi! IndentBlanklineSpaceChar ctermfg=92 guifg=#586e75 gui=nocombine
-    autocmd ColorScheme * hi! IblIndent ctermfg=15 guifg=#234854 gui=nocombine
-    autocmd ColorScheme * hi! IblWhitespace ctermfg=15 guifg=#234854 gui=nocombine
-    autocmd ColorScheme * hi! Comment cterm=NONE ctermfg=92 gui=NONE guifg=#586e75 guibg=NONE guisp=NONE
-    autocmd ColorScheme * hi! Visual ctermbg=92 ctermfg=7 guibg=#586e75 guifg=#002b36 gui=nocombine guisp=none
-
-    " --- RUST ---
-    " Pmenu:
-    " PmenuSel: selection
-    " GHListHl: Guihua List Highlight
-    " GHListDark: Guihui List
-    autocmd ColorScheme * hi! Pmenu ctermfg=12 ctermbg=0 guifg=#839496 guibg=#073642 guisp=NONE
-    autocmd ColorScheme * hi! FloatBorder ctermfg=1 guifg=#ffffff guibg=NONE guisp=NONE
-    autocmd ColorScheme * hi! GHTextViewDark ctermfg=12 ctermbg=0 guifg=#93a1a1 guibg=#002b36 guisp=NONE
-    autocmd ColorScheme * hi! NormalFloat ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=NONE
-    " hi! PmenuSel ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
-    " hi! PmenuThumb ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
-    " hi! GHListHl ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
-    " hi! GHListDark ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
-    " hi! GHBgDark ctermfg=12 ctermbg=7 guifg=#93a1a1 guibg=#002b36 guisp=none
-
-    " --- TypeScript ---
-    autocmd ColorScheme * hi! TSDefinitionUsage guifg=none guibg=#073642 gui=underline guisp=none
+    autocmd ColorScheme * call HighlightsDark()
   else
-    " --- Bufferline ---
-    autocmd ColorScheme * highlight BufferLineFill guibg=#eee8d5
-
-    " Color was previously: #073642
-    autocmd ColorScheme * hi! IblIndent ctermfg=15 guifg=#eee8d5 gui=nocombine
-    autocmd ColorScheme * hi! IblWhitespace ctermfg=15 guifg=#eee8d5 gui=nocombine
-    autocmd ColorScheme * hi! Comment cterm=NONE ctermfg=92 gui=NONE guifg=#93a1a1 guibg=NONE guisp=NONE
-    autocmd ColorScheme * hi! Visual ctermbg=92 ctermfg=7 guibg=#93a1a1 guifg=#fdf6e3 gui=nocombine guisp=none
+    autocmd ColorScheme * call HighlightsLight()
   endif
 augroup END
 
@@ -429,9 +447,48 @@ if has('nvim')
     let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
     let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
 endif
-" set background=dark
+set background=dark
 let g:solarized_italics = 0
 colorscheme solarized
+
+" SOLARIZED HEX     16/8 TERMCOL  XTERM/HEX   L*A*B      RGB         HSB
+" --------- ------- ---- -------  ----------- ---------- ----------- -----------
+" base03    #002b36  8/4 brblack  234 #1c1c1c 15 -12 -12   0  43  54 193 100  21
+" base02    #073642  0/4 black    235 #262626 20 -12 -12   7  54  66 192  90  26
+" base01    #586e75 10/7 brgreen  240 #585858 45 -07 -07  88 110 117 194  25  46
+" base00    #657b83 11/7 bryellow 241 #626262 50 -07 -07 101 123 131 195  23  51
+" base0     #839496 12/6 brblue   244 #808080 60 -06 -03 131 148 150 186  13  59
+" base1     #93a1a1 14/4 brcyan   245 #8a8a8a 65 -05 -02 147 161 161 180   9  63
+" base2     #eee8d5  7/7 white    254 #e4e4e4 92 -00  10 238 232 213  44  11  93
+" base3     #fdf6e3 15/7 brwhite  230 #ffffd7 97  00  10 253 246 227  44  10  99
+" yellow    #b58900  3/3 yellow   136 #af8700 60  10  65 181 137   0  45 100  71
+" orange    #cb4b16  9/3 brred    166 #d75f00 50  50  55 203  75  22  18  89  80
+" red       #dc322f  1/1 red      160 #d70000 50  65  45 220  50  47   1  79  86
+" magenta   #d33682  5/5 magenta  125 #af005f 50  65 -05 211  54 130 331  74  83
+" violet    #6c71c4 13/5 brmagenta 61 #5f5faf 50  15 -45 108 113 196 237  45  77
+" blue      #268bd2  4/4 blue      33 #0087ff 55 -10 -45  38 139 210 205  82  82
+" cyan      #2aa198  6/6 cyan      37 #00afaf 60 -35 -05  42 161 152 175  74  63
+" green     #859900  2/2 green     64 #5f8700 60 -20  65 133 153   0  68 100  60
+
+" == DARK ==
+" - base3
+" - base2
+" - base1   -> optional emphasized content
+" - base0   -> body text/default code/primary content
+" - base00  -> 
+" - base01  -> comments/secondary content
+" - base02  -> background highlights
+" - base03  -> background
+"
+" == LIGHT ==
+" - base03
+" - base02
+" - base01  -> optional emphasized content
+" - base00  -> body text/default code/primary content
+" - base0   -> 
+" - base1   -> comments/secondary content
+" - base2   -> background highlights
+" - base3   -> background
 
 " =============================================================================
 " Custom Filetypes
@@ -690,6 +747,7 @@ augroup END
 " =============================================================================
 if exists('+colorcolumn')
   set colorcolumn=80
+  " Duplicated in `auto-dark-mode`
   if &background ==# 'dark'
     highlight ColorColumn guibg=#004653
   else
@@ -1586,22 +1644,30 @@ local custom_solarized_dark = {
     c = { fg = colors.base01, bg = colors.base02 },
   },
 }
-require'lualine'.setup {
-  options = {
-    icons_enabled = false,
-    theme = (vim.opt.background:get() == 'dark' and custom_solarized_dark or 'solarized_light'),
-    component_separators = '│',
-    section_separators = '',
-    disabled_filetypes = {},
-    always_divide_middle = true,
-  },
-  sections = {
-    lualine_b = {'branch', {'diagnostics', sources={'nvim_diagnostic', 'coc'}}},
-    lualine_c = {{'filename', file_status = true, path = 1}},
-    lualine_x = {"vim.fn['zoom#statusline']()", "require'lsp-status'.status()"},
-    lualine_y = {},
-  },
-}
+
+-- Due to the ability to change between dark & light themes, we need to put this
+-- in a function that we can call from the callback.
+function lualine_setup()
+  require'lualine'.setup {
+    options = {
+      icons_enabled = false,
+      theme = (vim.opt.background:get() == 'dark' and custom_solarized_dark or 'solarized_light'),
+      component_separators = '│',
+      section_separators = '',
+      disabled_filetypes = {},
+      always_divide_middle = true,
+    },
+    sections = {
+      lualine_b = {'branch', {'diagnostics', sources={'nvim_diagnostic', 'coc'}}},
+      lualine_c = {{'filename', file_status = true, path = 1}},
+      lualine_x = {"vim.fn['zoom#statusline']()", "require'lsp-status'.status()"},
+      lualine_y = {},
+    },
+  }
+end
+
+lualine_setup()
+
 EOF
 
 " =============================================================================
@@ -1610,41 +1676,47 @@ EOF
 " Should be below lualine.
 lua <<EOF
 local bufferline = require("bufferline")
-bufferline.setup {
-  options = {
-    mode = 'tabs',
-    show_tab_indicators = false, -- don't need them with mode=tabs
-    --style_preset = bufferline.style_preset.minimal,
-    -- disable mouse
-    right_mouse_command = nil,
-    left_mouse_command = nil,
-    middle_mouse_command = nil,
-    diagnostics = "nvim_lsp",
-    separator_style = {'|', '|'},
-    hover = {
-      enabled = false,
-    },
-    --indicator = {
-    --    style = 'underline',
-    --},
-    show_close_icon = false,
-    show_buffer_close_icons = false,
-    buffer_close_icon = '󰅖',
-    close_icon = '',
-    offsets = {
-        {
-            filetype = "NvimTree",
-            text = "File Explorer",
-            text_align = "center",
-            separator = true,
-        },
-    },
-    diagnostics_indicator = function(count, level)
-        local icon = level:match("error") and " " or ""
-        return " " .. icon .. count
-    end
+
+function bufferline_setup()
+  bufferline.setup {
+    options = {
+      mode = 'tabs',
+      show_tab_indicators = false, -- don't need them with mode=tabs
+      --style_preset = bufferline.style_preset.minimal,
+      -- disable mouse
+      right_mouse_command = nil,
+      left_mouse_command = nil,
+      middle_mouse_command = nil,
+      diagnostics = "nvim_lsp",
+      separator_style = {'|', '|'},
+      hover = {
+        enabled = false,
+      },
+      --indicator = {
+      --    style = 'underline',
+      --},
+      show_close_icon = false,
+      show_buffer_close_icons = false,
+      buffer_close_icon = '󰅖',
+      close_icon = '',
+      offsets = {
+          {
+              filetype = "NvimTree",
+              text = "File Explorer",
+              text_align = "center",
+              separator = true,
+          },
+      },
+      diagnostics_indicator = function(count, level)
+          local icon = level:match("error") and " " or ""
+          return " " .. icon .. count
+      end
+    }
   }
-}
+end
+
+bufferline_setup()
+
 EOF
 
 " lua <<EOF
@@ -2093,30 +2165,32 @@ hooks.register(
   hooks.builtin.hide_first_space_indent_level
 )
 
-require("ibl").setup {
-    indent = {
-      char = '│',
-    },
-    exclude = {
-      filetypes = {
-       'lspinfo',
-       'packer',
-       'checkhealth',
-       'help',
-       'man',
-       'gitcommit',
-       'TelescopePrompt',
-       'TelescopeResults',
-       '',
+function ibl_setup()
+  require("ibl").setup {
+      indent = {
+        char = '│',
       },
-    },
-    whitespace = {
-      remove_blankline_trail = true,
-    },
+      exclude = {
+        filetypes = {
+         'lspinfo',
+         'packer',
+         'checkhealth',
+         'help',
+         'man',
+         'gitcommit',
+         'TelescopePrompt',
+         'TelescopeResults',
+         '',
+        },
+      },
+      whitespace = {
+        remove_blankline_trail = true,
+      },
+  }
+end
 
-    --show_current_context = true,
-    --show_current_context_start = true,
-}
+ibl_setup()
+
 EOF
 
 " =============================================================================
@@ -2844,6 +2918,54 @@ vim.api.nvim_create_autocmd('FileType', {
 })
 ]]--
 EOF
+
+" -----------------------------------
+" ALWAYS KEEP AT THE ABSOLUTE BOTTOM!
+" -----------------------------------
+" =============================================================================
+" auto-dark-mode
+" =============================================================================
+lua <<EOF
+local auto_dark_mode = require('auto-dark-mode')
+vim.g["custom#isdarkmode"] = 1
+auto_dark_mode.setup({
+	update_interval = 5000,
+	set_dark_mode = function()
+    vim.g["custom#isdarkmode"] = 1
+
+		vim.api.nvim_set_option('background', 'dark')
+		vim.cmd('call HighlightsDark()')
+		vim.cmd('colorscheme solarized')
+    vim.cmd('highlight ColorColumn guibg=#004653')
+
+    -- Plugins:
+    lualine_setup()
+    ibl_setup()
+    bufferline_setup()
+
+    -- We'll need to setup custom highlights again.
+    vim.cmd('call HighlightsDark()')
+	end,
+
+	set_light_mode = function()
+    vim.g["custom#isdarkmode"] = 0
+
+		vim.api.nvim_set_option('background', 'light')
+		vim.cmd('call HighlightsLight()')
+		vim.cmd('colorscheme solarized')
+		vim.cmd('highlight ColorColumn guibg=#eee8d5')
+
+    -- Plugins:
+    lualine_setup()
+    ibl_setup()
+    bufferline_setup()
+
+    -- We'll need to setup custom highlights again.
+    vim.cmd('call HighlightsLight()')
+	end,
+})
+EOF
+
 
 " =============================================================================
 "             | |    __ _ _ __   __ _ _   _  __ _  __ _  ___  ___
