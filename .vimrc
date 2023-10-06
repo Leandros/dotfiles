@@ -2785,9 +2785,10 @@ nnoremap f :DocsViewToggle<CR>
 " =============================================================================
 lua <<EOF
 require("focus").setup({
-    enable = false, -- Enable module
+    enable = true, -- Enable module
     autoresize = {
-      minwidth = 80,
+      -- currently broken
+      --minwidth = 80,
     },
 })
 
