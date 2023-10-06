@@ -146,6 +146,7 @@ if has('nvim')
     Plug 'folke/lsp-colors.nvim'               " Highlight groups for trouble.nvim
     Plug 'folke/trouble.nvim'                  " Pretty diagnostics
     Plug 'nvim-lua/lsp-status.nvim'            " Plugin to show lsp status in statusline
+    Plug 'rmagatti/goto-preview'               " Preview LSP definitions
 
     " navbuddy
     Plug 'SmiteshP/nvim-navic'
@@ -2039,13 +2040,31 @@ else
     set signcolumn=yes
 endif
 
+" =============================================================================
+" goto-preview
+" =============================================================================
+lua <<EOF
+require('goto-preview').setup {
+  width = 120,
+  height = 15,
+  default_mappings = false,
+}
+EOF
+
+nnoremap <silent> <leader>dd <cmd>lua require('goto-preview').goto_preview_definition()<CR>
+nnoremap <silent> <leader>dy <cmd>lua require('goto-preview').goto_preview_type_definition()<CR>
+nnoremap <silent> <leader>di <cmd>lua require('goto-preview').goto_preview_implementation()<CR>
+nnoremap <silent> <leader>dg <cmd>lua require('goto-preview').goto_preview_declaration()<CR>
+nnoremap <silent> <leader>dq <cmd>lua require('goto-preview').close_all_win()<CR>
+nnoremap <silent> <leader>dr <cmd>lua require('goto-preview').goto_preview_references()<CR>
+
 " Code navigation shortcuts
-nnoremap <silent> <leader>dd <cmd>lua vim.lsp.buf.definition()<CR>
-nnoremap <silent> <leader>di <cmd>split \| lua vim.lsp.buf.definition()<CR>
-nnoremap <silent> <leader>dt <cmd>vsplit \| lua vim.lsp.buf.definition()<CR>
-nnoremap <silent> <leader>i <cmd>lua vim.lsp.buf.implementation()<CR>
-nnoremap <silent> <leader>y <cmd>lua vim.lsp.buf.type_definition()<CR>
-nnoremap <silent> <leader>rr <cmd>lua vim.lsp.buf.references()<CR>
+" nnoremap <silent> <leader>dd <cmd>lua vim.lsp.buf.definition()<CR>
+" nnoremap <silent> <leader>di <cmd>split \| lua vim.lsp.buf.definition()<CR>
+" nnoremap <silent> <leader>dt <cmd>vsplit \| lua vim.lsp.buf.definition()<CR>
+" nnoremap <silent> <leader>i <cmd>lua vim.lsp.buf.implementation()<CR>
+" nnoremap <silent> <leader>y <cmd>lua vim.lsp.buf.type_definition()<CR>
+" nnoremap <silent> <leader>rr <cmd>lua vim.lsp.buf.references()<CR>
 
 " Show diagnostic popup on cursor hold
 " autocmd CursorHold * lua require'lspsaga.diagnostic'.show_line_diagnostics()
