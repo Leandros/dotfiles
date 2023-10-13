@@ -30,7 +30,7 @@ config.window_frame = {
         'PragmataProMonoLiga Nerd Font',
         'Apple Color Emoji',
     },
-    font_size = 12.0,
+    font_size = 14.0,
 }
 
 -- Keybindings:
@@ -126,11 +126,13 @@ config.font = wezterm.font_with_fallback {
     'Apple Color Emoji',
 }
 config.bold_brightens_ansi_colors = 'BrightAndBold'
-config.font_size = 12.0
+config.font_size = 14.0
 config.allow_square_glyphs_to_overflow_width = 'Never'
-config.anti_alias_custom_block_glyphs = false
-config.freetype_load_target = 'Light'
-config.freetype_render_target = 'HorizontalLcd'
+
+-- Disable on newest nightlies (from 20230712-072601-f4abf8fd)
+-- config.anti_alias_custom_block_glyphs = false
+-- config.freetype_load_target = 'Light'
+-- config.freetype_render_target = 'HorizontalLcd'
 
 local base03  = '#002b36'
 local base02  = '#073642'
@@ -169,10 +171,22 @@ dark_scheme.ansi = {
     cyan,    -- cyan
     base3,   -- white
 }
+
+-- brights are just bold ...
+dark_scheme.brights = {
+    base02,  -- black
+    red,     -- red
+    green,   -- green
+    yellow,  -- yellow
+    blue,    -- blue
+    magenta, -- magenta
+    cyan,    -- cyan
+    base3,   -- white
+}
 -- original:
--- dark_scheme.brights = ["#002b36","#cb4b16","#586e75","#657b83","#839496","#6c71c4","#93a1a1","#fdf6e3"]
+--dark_scheme.brights = {"#002b36","#cb4b16","#586e75","#657b83","#839496","#6c71c4","#93a1a1","#fdf6e3"}
 -- from solarized site:
--- dark_scheme.brights = {base03, orange, base01, base00, base0, violet, base1, base3}
+--dark_scheme.brights = {base03, orange, base01, base00, base0, violet, base1, base3}
 
 local light_scheme = wezterm.color.get_builtin_schemes()['Solarized Light (Gogh)']
 light_scheme.foreground = base00
@@ -184,7 +198,7 @@ light_scheme.selection_bg = base03
 light_scheme.selection_fg = base1
 
 light_scheme.ansi = {
-    base2,  -- black
+    base2,   -- black
     red,     -- red
     green,   -- green
     yellow,  -- yellow
