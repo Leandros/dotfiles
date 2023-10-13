@@ -1278,18 +1278,38 @@ local rust_opts = {
             importGranularity = "module",
             importPrefix = "by_self",
           },
+          -- new format
+          imports = {
+            granularity = {
+              group = "module",
+            },
+            prefix = "self",
+          },
           cargo = {
             loadOutDirsFromCheck = true,
             buildScripts = {
-                enable = true,
+              enable = true,
             },
           },
           procMacro = {
-            enable = true
+            enable = true,
+            --attributes = {
+            --  enable = true,
+            --},
           },
+          -- must've been changed in some version.
+          --check = {
+          --  command = "clippy",
+          --},
           checkOnSave = {
             command = "clippy"
           },
+          -- panicking too often
+          --diagnostics = {
+          --  experimental = {
+          --    enable = true,
+          --  },
+          --},
         },
       },
     },
@@ -2106,8 +2126,16 @@ EOF
 " =============================================================================
 lua <<EOF
 local wk = require("which-key")
-wk.setup {
-}
+wk.setup {}
+wk.register({
+  ['<C-W>'] = {
+    name = 'window',
+    H	= 'move current window to the far left',
+    J	= 'move current window to the very bottom',
+    K	= 'move current window to the very top',
+    L	= 'move current window to the far right',
+  },
+})
 EOF
 
 
