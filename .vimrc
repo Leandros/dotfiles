@@ -219,6 +219,13 @@ command UpdatePlugins
 command Snapshot
   \ PlugSnapshot! ~/github/dotfiles/plug.snapshot
 
+" Detect whether we're on a remote linux box.
+fu! StartsWith(longer, shorter) abort
+  return a:longer[0:len(a:shorter)-1] ==# a:shorter
+endfunction
+let g:isRemoteSession = ($STY == "")
+let g:isDevDsk = StartsWith(hostname(), "dev-dsk")
+
 " =============================================================================
 " Language / Shell
 " =============================================================================
@@ -1261,6 +1268,12 @@ local rust_opts = {
       },
       settings = {
         ["rust-analyzer"] = {
+          -- Exception for AL2
+          vim.g["isDevDsk"] and {
+            server = {
+              path = '$HOME/.toolbox/bin/rust-analyzer',
+            },
+          } or {},
           assist = {
             importGranularity = "module",
             importPrefix = "by_self",
@@ -2874,7 +2887,7 @@ nnoremap f :DocsViewToggle<CR>
 " =============================================================================
 lua <<EOF
 require("focus").setup({
-    enable = true, -- Enable module
+    enable = false, -- Enable module
     autoresize = {
       -- currently broken
       --minwidth = 80,
@@ -2924,42 +2937,45 @@ EOF
 lua <<EOF
 local auto_dark_mode = require('auto-dark-mode')
 vim.g["custom#isdarkmode"] = 1
-auto_dark_mode.setup({
-	update_interval = 5000,
-	set_dark_mode = function()
-    vim.g["custom#isdarkmode"] = 1
 
-		vim.api.nvim_set_option('background', 'dark')
-		vim.cmd('call HighlightsDark()')
-		vim.cmd('colorscheme solarized')
-    vim.cmd('highlight ColorColumn guibg=#004653')
+if not vim.g["isRemoteSession"] then
+  auto_dark_mode.setup({
+    update_interval = 5000,
+    set_dark_mode = function()
+      vim.g["custom#isdarkmode"] = 1
 
-    -- Plugins:
-    lualine_setup()
-    ibl_setup()
-    bufferline_setup()
+      vim.api.nvim_set_option('background', 'dark')
+      vim.cmd('call HighlightsDark()')
+      vim.cmd('colorscheme solarized')
+      vim.cmd('highlight ColorColumn guibg=#004653')
 
-    -- We'll need to setup custom highlights again.
-    vim.cmd('call HighlightsDark()')
-	end,
+      -- Plugins:
+      lualine_setup()
+      ibl_setup()
+      bufferline_setup()
 
-	set_light_mode = function()
-    vim.g["custom#isdarkmode"] = 0
+      -- We'll need to setup custom highlights again.
+      vim.cmd('call HighlightsDark()')
+    end,
 
-		vim.api.nvim_set_option('background', 'light')
-		vim.cmd('call HighlightsLight()')
-		vim.cmd('colorscheme solarized')
-		vim.cmd('highlight ColorColumn guibg=#eee8d5')
+    set_light_mode = function()
+      vim.g["custom#isdarkmode"] = 0
 
-    -- Plugins:
-    lualine_setup()
-    ibl_setup()
-    bufferline_setup()
+      vim.api.nvim_set_option('background', 'light')
+      vim.cmd('call HighlightsLight()')
+      vim.cmd('colorscheme solarized')
+      vim.cmd('highlight ColorColumn guibg=#eee8d5')
 
-    -- We'll need to setup custom highlights again.
-    vim.cmd('call HighlightsLight()')
-	end,
-})
+      -- Plugins:
+      lualine_setup()
+      ibl_setup()
+      bufferline_setup()
+
+      -- We'll need to setup custom highlights again.
+      vim.cmd('call HighlightsLight()')
+    end,
+  })
+end
 EOF
 
 
