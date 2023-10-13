@@ -474,7 +474,7 @@ colorscheme solarized
 " - base2
 " - base1   -> optional emphasized content
 " - base0   -> body text/default code/primary content
-" - base00  -> 
+" - base00  ->
 " - base01  -> comments/secondary content
 " - base02  -> background highlights
 " - base03  -> background
@@ -484,7 +484,7 @@ colorscheme solarized
 " - base02
 " - base01  -> optional emphasized content
 " - base00  -> body text/default code/primary content
-" - base0   -> 
+" - base0   ->
 " - base1   -> comments/secondary content
 " - base2   -> background highlights
 " - base3   -> background
