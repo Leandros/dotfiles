@@ -126,7 +126,6 @@ if has('nvim')
 
     " Docs
     " Must come after telescope.
-    Plug 'mrjones2014/dash.nvim', { 'do': 'make install' }
     Plug 'amrbashir/nvim-docs-view', { 'on': 'DocsViewToggle'}
 
     " Code navigation
@@ -2602,9 +2601,6 @@ nnoremap <leader>fs <cmd>lua require('telescope.builtin').current_buffer_fuzzy_f
 " nnoremap <leader>b <cmd>lua require('telescope.builtin').buffers()<cr>
 " nnoremap <leader>z <cmd>lua require('telescope.builtin').buffers()<cr>
 nnoremap <leader>v <cmd>lua require('telescope.builtin').treesitter()<cr>
-
-" Dash.nvim
-nnoremap <leader>fd :Telescope dash search<CR>
 
 " =============================================================================
 " LeaderF
