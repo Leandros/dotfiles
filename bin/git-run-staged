@@ -1,0 +1,86 @@
+#!/bin/sh -e
+
+verbose=0
+
+usage() {
+    echo "Usage: $0 [OPTIONS] -- [COMMAND]"
+    echo
+    echo "Options:"
+    echo "-h            Print help"
+    echo "-V            Print version info and exit"
+    echo "-v            Print verbose output"
+}
+
+version() {
+    echo "git-run-staged (v0.1.0)"
+}
+
+# catch no arguments.
+[ $# -eq 0 ] && usage && exit 1
+while getopts ":vhV" flag; do
+    case $flag in
+    v)
+        verbose=1
+        ;;
+    V)
+        version
+        exit 0
+        ;;
+    h)
+        usage
+        exit 0
+        ;;
+    *)
+        echo "unsupported option"
+        usage
+        exit 1
+        ;;
+    esac
+    # make sure we shift off the arguments so that we can pass them later
+    # to bash to execute our tests.
+    shift
+done
+
+# If our next argument is `--` shift it away
+if [ "$1" = "--" ]; then
+    shift
+fi
+
+# stash all unstaged changes
+# (-k: unstaged files; -u: new added files; -q: quite)
+echo '--------------------------------------------------------------'
+echo '---- Stash all unstaged/untracked files (git stash -k -u) ----'
+echo '--------------------------------------------------------------'
+[ $verbose = 1 ] && set -x
+BEFORE_STASH_HASH=$(git rev-parse refs/stash || echo "")
+git stash -k -u
+AFTER_STASH_HASH=$(git rev-parse refs/stash)
+set +x
+if [ "$BEFORE_STASH_HASH" == "$AFTER_STASH_HASH" ]; then
+  echo -e '\n\n---- Stash failed! Please check and retry. ----\n\n';
+  exit 1;
+fi;
+
+# run test only with staged files
+echo '-------------------'
+echo '---- Run tests ----'
+echo '-------------------'
+set +e # don't exit on command failure
+[ $verbose = 1 ] && set -x
+/bin/bash -c "$@"
+exitcode=$?
+if ! [ $exitcode = "0" ]; then
+    echo -e '\n\n---- Tests failed! Please fix it before commit. ----\n\n'
+fi
+
+# restore all stashed changes
+# http://stackoverflow.com/questions/41304610/
+set +x
+echo '-----------------------------------------------------------'
+echo '---- Restore all stashed files (git stash pop --index) ----'
+echo '-----------------------------------------------------------'
+[ $verbose = 1 ] && set -x
+git reset --hard -q \
+    && git clean -df -q \
+    && git stash pop --index -q \
+    || (echo -e '\n\n---- Restore failed! Please check and fix it. ----\n\n')
