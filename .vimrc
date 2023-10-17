@@ -28,7 +28,7 @@ if has('nvim')
     if has("win32") || has("win16")
         let g:python3_host_prog = 'C:\Python310\python.exe'
     else
-        let g:python3_host_prog = '/usr/bin/python3'
+        let g:python3_host_prog = 'python3'
     endif
 endif
 
@@ -2398,12 +2398,17 @@ if has_key(g:plugs, 'vim-autoformat')
     let g:formatdef_tffmt = '"terraform fmt -"'
     let g:formatdef_nixfmt = '"nixpkgs-fmt"'
     let g:formatdef_mixfmt = '"mix format -"'
+    let g:formatdef_flake8 = '"python3 -m flake8 -"'
+    let g:formatdef_black = '"python3 -m black -"'
+    let g:formatdef_isort = '"python3 -m isort -"'
 
     let g:formatters_objc = ['astyle_objc']
     let g:formatters_gn = ['gnformat']
     let g:formatters_hcl = ['tffmt']
     let g:formatters_nix = ['nixfmt']
     let g:formatters_elixir = ['mixfmt']
+    let g:formatters_python = ['flake8', 'black', 'isort']
+    let g:run_all_formatters_python = 1
 
     " let g:formatdef_prettier_ts = '"yarn --silent prettier --parser=typescript --stdin"'
     " let g:formatdef_prettier_js = '"yarn --silent prettier --stdin"'
