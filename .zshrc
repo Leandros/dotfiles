@@ -26,6 +26,7 @@ export AWS_DEFAULT_REGION="us-east-1"
 export AWS_PAGER=""
 # if you wish to use IMDS set AWS_EC2_METADATA_DISABLED=false
 export AWS_EC2_METADATA_DISABLED=true
+export VIRTUAL_ENV_DISABLE_PROMPT=1
 
 # Profiling
 PROFILE_STARTUP=false
@@ -223,6 +224,14 @@ function __git_prompt {
     ZSH_THEME_GIT_PROMPT_UPSTREAM_SEPARATOR="→"
     git_super_status
 }
+
+function __pyvenv_prompt {
+    if [ -x "$VIRTUAL_ENV" ]; then
+        venv_name=$(basename "$VIRTUAL_ENV")
+        echo " 🐍(${venv_name})"
+    fi
+}
+
 if [ "$EUID" = "0" ]; then
     promptchar="%{$fg[red]%}#%{$reset_color%}"
 elif [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ] || [ -n "$SSH_CONNECTION" ]; then
@@ -232,7 +241,7 @@ else
 fi
 
 export PS1=$'
-%{$fg[blue]%}%~%{$reset_color%} $(__git_prompt)
+%{$fg[blue]%}%~%{$reset_color%} $(__git_prompt)$(__pyvenv_prompt)
 $promptchar '
 export PS2="%{$fg_blod[black]%}%_> %{$reset_color%}"
 export _RPS1="%(?.%{$fg[green]%}✓%{$reset_color%}.%{$fg[red]%}✗ %?%{$reset_color%})"
@@ -657,6 +666,15 @@ lg()
 # =============================================================================
 # zoxide (must appear after `compinit`)
 eval "$(zoxide init zsh)"
+
+# =============================================================================
+# Pyenv
+# =============================================================================
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PATH:$PYENV_ROOT/bin"
+if [ -x "$(command -v pyenv)" ]; then
+    eval "$(pyenv init -)"
+fi
 
 # =============================================================================
 # MANPATH
