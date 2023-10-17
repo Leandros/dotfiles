@@ -2920,10 +2920,10 @@ nnoremap f :DocsViewToggle<CR>
 " =============================================================================
 lua <<EOF
 require("focus").setup({
-    enable = false, -- Enable module
+    enable = true, -- Enable module
     autoresize = {
-      -- currently broken
-      --minwidth = 80,
+      -- fixed in https://github.com/nvim-focus/focus.nvim/issues/138
+      minwidth = 80,
     },
 })
 
