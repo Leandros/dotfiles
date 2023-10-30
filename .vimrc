@@ -1380,7 +1380,7 @@ function _G.toggle_diagnostics()
   end
 end
 
-vim.api.nvim_set_keymap('n', '<leader>dt', ':call v:lua.toggle_diagnostics()<CR>',  {noremap = true, silent = true, desc = "Toggle LSP Diagnostics"})
+vim.keymap.set('n', '<leader>dt', ':call v:lua.toggle_diagnostics()<CR>',  {noremap = true, silent = true, desc = "Toggle LSP Diagnostics"})
 EOF
 
 function Refresh()
@@ -1417,6 +1417,7 @@ navbuddy.setup {
   window = {
     border = "single",  -- "rounded", "double", "solid", "none"
   },
+  use_default_mappings = false,
   mappings = {
       ["<esc>"] = actions.close(),        -- Close and cursor to original location
       ["q"] = actions.close(),
@@ -1426,7 +1427,7 @@ navbuddy.setup {
 
       ["b"] = actions.parent(),           -- Move to left panel
       ["s"] = actions.children(),         -- Move to right panel
-      ["O"] = actions.root(),             -- Move to first panel
+      ["0"] = actions.root(),             -- Move to first panel
 
       ["v"] = actions.visual_name(),      -- Visual selection of name
       ["V"] = actions.visual_scope(),     -- Visual selection of scope
@@ -1455,6 +1456,9 @@ navbuddy.setup {
       ["N"] = actions.move_down(),        -- Move focused node down
       ["R"] = actions.move_up(),          -- Move focused node up
 
+      ["<C-i>"] = actions.vsplit(),       -- Open selected node in a vertical split
+      ["<C-t>"] = actions.hsplit(),       -- Open selected node in a horizontal split
+
       ["t"] = actions.telescope({         -- Fuzzy finder at current level.
           layout_config = {               -- All options that can be
               height = 0.60,              -- passed to telescope.nvim's
@@ -1472,7 +1476,7 @@ navbuddy.setup {
     },
 }
 
-vim.api.nvim_set_keymap('n', '<leader>t', ':Navbuddy<CR>', { noremap = true, silent = true, desc = "Navbuddy" })
+vim.keymap.set('n', '<leader>t', ':Navbuddy<CR>', { noremap = true, silent = true, desc = "Navbuddy" })
 
 EOF
 
@@ -1502,7 +1506,7 @@ local vimspector_bindings = {
 }
 
 for _, kb in ipairs(vimspector_bindings) do
-  vim.api.nvim_set_keymap(kb[1], kb[2], kb[3], { noremap = false, silent = true, desc = kb[4] })
+  vim.keymap.set(kb[1], kb[2], kb[3], { noremap = false, silent = true, desc = kb[4] })
 end
 
 EOF
@@ -2052,23 +2056,7 @@ EOF
 " =============================================================================
 lua <<EOF
 require'nvim-treesitter.configs'.setup {
-    ensure_installed = {
-      'rust',
-      'json',
-      'javascript',
-      'typescript',
-      'tsx',
-      'vim',
-      'lua',
-      'go',
-      'haskell',
-      'bash',
-      'markdown',
-      'markdown_inline',
-      'python',
-      'elixir',
-      'heex',
-    },
+    ensure_installed = {'rust', 'json', 'javascript', 'typescript', 'tsx', 'vim', 'lua', 'go', 'haskell', 'bash', 'markdown', 'markdown_inline', 'python'},
     auto_install = false,
     highlight = {
         enable = true,
@@ -2128,6 +2116,7 @@ require('flash').setup {
   labels = "ctieobnrsjduaxphlmwfvyz",
   char = {
     enabled = false,
+    keys = {},
   },
   modes = {
     search = {
@@ -2144,6 +2133,9 @@ vim.api.nvim_set_hl(0, 'FlashLabel', { link = 'WildMenu' })
 
 -- This mimics leap.nvim:
 --vim.api.nvim_set_hl(0, 'FlashLabel', { cterm = { underline = true, nocombine = true }, ctermfg=9, underline = true, nocombine = true, fg='#ccff88' })
+
+-- Remove default flash.nvim mapping for comma (,)
+vim.keymap.del({ 'n', 'o', 'x' }, ',')
 
 -- Keymaps
 vim.keymap.set({"n", "x", "o"}, "t", "<cmd>lua require('flash').jump()<CR>", { silent = true, desc = 'Jump' })
@@ -2228,15 +2220,22 @@ require('goto-preview').setup {
   width = 120,
   height = 15,
   default_mappings = false,
+  stack_floating_preview_windows = false, -- Whether to nest floating windows
 }
-EOF
 
-nnoremap <silent> <leader>dd <cmd>lua require('goto-preview').goto_preview_definition()<CR>
-nnoremap <silent> <leader>dy <cmd>lua require('goto-preview').goto_preview_type_definition()<CR>
-nnoremap <silent> <leader>di <cmd>lua require('goto-preview').goto_preview_implementation()<CR>
-nnoremap <silent> <leader>dg <cmd>lua require('goto-preview').goto_preview_declaration()<CR>
-nnoremap <silent> <leader>dq <cmd>lua require('goto-preview').close_all_win()<CR>
-nnoremap <silent> <leader>dr <cmd>lua require('goto-preview').goto_preview_references()<CR>
+local gotopreview_bindings = {
+  { 'n', '<leader>dd', "<cmd>lua require('goto-preview').goto_preview_definition()<CR>", 'Goto Definition' },
+  { 'n', '<leader>dy', "<cmd>lua require('goto-preview').goto_preview_type_definition()<CR>", 'Goto Type Definition' },
+  { 'n', '<leader>di', "<cmd>lua require('goto-preview').goto_preview_implementation()<CR>", 'Goto Implementation' },
+  { 'n', '<leader>dg', "<cmd>lua require('goto-preview').goto_preview_declaration()<CR>", 'Goto Declaration' },
+  { 'n', '<leader>dq', "<cmd>lua require('goto-preview').close_all_win()<CR>", 'Close all Floating Windows' },
+  { 'n', '<leader>dr', "<cmd>lua require('goto-preview').goto_preview_references()<CR>", 'Goto References' },
+}
+
+for _, kb in ipairs(gotopreview_bindings) do
+  vim.keymap.set(kb[1], kb[2], kb[3], { noremap = false, silent = true, desc = kb[4] })
+end
+EOF
 
 " Code navigation shortcuts
 " nnoremap <silent> <leader>dd <cmd>lua vim.lsp.buf.definition()<CR>
@@ -2706,7 +2705,7 @@ local telescope_bindings = {
 }
 
 for _, kb in ipairs(telescope_bindings) do
-  vim.api.nvim_set_keymap(kb[1], kb[2], kb[3], { noremap = false, silent = true, desc = kb[4] })
+  vim.keymap.set(kb[1], kb[2], kb[3], { noremap = false, silent = true, desc = kb[4] })
 end
 
 EOF
@@ -2771,7 +2770,7 @@ local lf_bindings = {
 }
 
 for _, kb in ipairs(lf_bindings) do
-  vim.api.nvim_set_keymap(kb[1], kb[2], kb[3], { noremap = false, silent = true, desc = kb[4] })
+  vim.keymap.set(kb[1], kb[2], kb[3], { noremap = false, silent = true, desc = kb[4] })
 end
 
 EOF
@@ -2973,6 +2972,19 @@ let g:floaterm_keymap_prev   = ',b'
 let g:floaterm_keymap_next   = ',s'
 let g:floaterm_width = 0.8
 let g:floaterm_height = 0.8
+
+lua <<EOF
+local wk = require("which-key")
+wk.register({
+  [','] = {
+    name = '+floaterm',
+    n = 'New Terminal',
+    t = 'Toggle Terminal',
+    b = 'Previous Terminal',
+    s = 'Next Terminal',
+  },
+}, {})
+EOF
 
 " =============================================================================
 " Docs
