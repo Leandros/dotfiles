@@ -512,6 +512,10 @@ au BufRead,BufNewFile *.nomad set ft=hcl                        " HCL
 au BufRead,BufNewFile *.tf set ft=hcl                           " HCL
 au BufRead,BufNewFile *.hcl set ft=hcl                          " HCL
 au BufRead,BufNewFile *.tfvars set ft=hcl                       " HCL
+au BufRead,BufNewFile *.ex,*.exs set ft=elixir                   " elixir
+au BufRead,BufNewFile *.eex,*.leex,*.sface,*.lexs set ft=eelixir "elixir
+au BufRead,BufNewFile mix.lock set ft=elixir                     "elixir
+au BufRead,BufNewFile *.heex set ft=heex
 
 " =============================================================================
 " Set syntax options
@@ -2039,7 +2043,23 @@ EOF
 " =============================================================================
 lua <<EOF
 require'nvim-treesitter.configs'.setup {
-    ensure_installed = {'rust', 'json', 'javascript', 'typescript', 'tsx', 'vim', 'lua', 'go', 'haskell', 'bash', 'markdown', 'markdown_inline', 'python'},
+    ensure_installed = {
+      'rust',
+      'json',
+      'javascript',
+      'typescript',
+      'tsx',
+      'vim',
+      'lua',
+      'go',
+      'haskell',
+      'bash',
+      'markdown',
+      'markdown_inline',
+      'python',
+      'elixir',
+      'heex',
+    },
     auto_install = false,
     highlight = {
         enable = true,
