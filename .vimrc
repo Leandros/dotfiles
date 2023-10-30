@@ -1380,7 +1380,7 @@ function _G.toggle_diagnostics()
   end
 end
 
-vim.api.nvim_set_keymap('n', '<leader>td', ':call v:lua.toggle_diagnostics()<CR>',  {noremap = true, silent = true})
+vim.api.nvim_set_keymap('n', '<leader>dt', ':call v:lua.toggle_diagnostics()<CR>',  {noremap = true, silent = true, desc = "Toggle LSP Diagnostics"})
 EOF
 
 function Refresh()
@@ -1471,9 +1471,10 @@ navbuddy.setup {
       preference = {'pylsp'},      -- list of lsp server names in order of preference
     },
 }
-EOF
 
-nmap <leader>fv :Navbuddy<CR>
+vim.api.nvim_set_keymap('n', '<leader>t', ':Navbuddy<CR>', { noremap = true, silent = true, desc = "Navbuddy" })
+
+EOF
 
 " =============================================================================
 " Debugging
@@ -1481,21 +1482,30 @@ nmap <leader>fv :Navbuddy<CR>
 let g:vimspector_enable_mappings = 'HUMAN'
 let g:vimspector_install_gadgets = [ 'CodeLLDB' ]
 
-nmap <leader>bl :call vimspector#Launch()<CR>
-nmap <leader>bq :VimspectorReset<CR>
-nmap <leader>bz <Plug>VimpectorRestart
-nmap <leader>bc <Plug>VimspectorContinue
-nmap <leader>bd <Plug>VimspectorStop
-nmap <leader>bt <Plug>VimspectorRunToCursor
-nmap <leader>bn <Plug>VimspectorStepOver
-nmap <leader>bsi <Plug>VimspectorStepInto
-nmap <leader>bso <Plug>VimspectorStepOut
-nmap <leader>br <Plug>VimspectorToggleBreakpoint
-nmap <leader>be :VimspectorEval
-nmap <leader>bw :VimspectorWatch
-nmap <leader>bo :VimspectorShowOutput
-nmap <leader>bi <Plug>VimspectorBalloonEval
-xmap <leader>bi <Plug>VimspectorBalloonEval
+lua <<EOF
+local vimspector_bindings = {
+  {'n', '<leader>bl', ':call vimspector#Launch()<CR>', 'Launch Debugger' },
+  {'n', '<leader>bq', ':VimspectorReset<CR>', 'Reset Debugger' },
+  {'n', '<leader>bz', '<Plug>VimspectorRestart', 'Restart Debugger' },
+  {'n', '<leader>bc', '<Plug>VimspectorContinue', 'Continue' },
+  {'n', '<leader>bd', '<Plug>VimspectorStop', 'Stop Debugging' },
+  {'n', '<leader>bt', '<Plug>VimspectorRunToCursor', 'Run To Cursor' },
+  {'n', '<leader>bn', '<Plug>VimspectorStepOver', 'Step Over' },
+  {'n', '<leader>bsi', '<Plug>VimspectorStepInto', 'Step Into' },
+  {'n', '<leader>bso', '<Plug>VimspectorStepOut', 'Step Out' },
+  {'n', '<leader>br', '<Plug>VimspectorToggleBreakpoint', 'Toggle Breakpoint' },
+  {'n', '<leader>be', ':VimspectorEval', 'Eval' },
+  {'n', '<leader>bw', ':VimspectorWatch', 'Watch Value' },
+  {'n', '<leader>bo', ':VimspectorShowOutput', 'Show Output' },
+  {'n', '<leader>bi', '<Plug>VimspectorBalloonEval', 'Balloon Eval' },
+  {'x', '<leader>bi', '<Plug>VimspectorBalloonEval', 'Balloon Eval' },
+}
+
+for _, kb in ipairs(vimspector_bindings) do
+  vim.api.nvim_set_keymap(kb[1], kb[2], kb[3], { noremap = false, silent = true, desc = kb[4] })
+end
+
+EOF
 
 " Custom Telescope Picker with all commands.
 lua <<EOF
@@ -2003,20 +2013,20 @@ EOF
 lua << EOF
 local function gitsigns_keymap_attach(bufnr)
     local function opts(desc)
-      return { desc = 'gitsigns: ' .. desc, buffer = bufnr, noremap = true, silent = true, nowait = true }
+      return { desc = 'git: ' .. desc, buffer = bufnr, noremap = true, silent = true, nowait = true }
     end
 
     --vim.keymap.set('n', 'a', api.fs.create, opts('Create'))
     --vim.api.nvim_buf_set_keymap(bufnr, 'n', 'hs', '<cmd>lua require"gitsigns".stage_hunk()<CR>', {})
 
-    vim.keymap.set('n', '<leader>ss', '<cmd>Gitsigns stage_hunk<CR>', opts('StageHunk'))
-    vim.keymap.set('n', '<leader>su', '<cmd>Gitsigns undo_stage_hunk<CR>', opts('UndoStageHunk'))
-    vim.keymap.set('n', '<leader>sr', '<cmd>Gitsigns reset_hunk<CR>', opts('ResetHunk'))
-    vim.keymap.set('n', '<leader>sR', '<cmd>Gitsigns reset_buffer<CR>', opts('ResetBuffer'))
-    vim.keymap.set('n', '<leader>sp', '<cmd>Gitsigns preview_hunk<CR>', opts('PreviewHunk'))
-    vim.keymap.set('n', '<leader>sb', '<cmd>lua require"gitsigns".blame_line{full=true}<CR>', opts('BlameLine'))
-    vim.keymap.set('n', '<leader>sS', '<cmd>Gitsigns stage_buffer<CR>', opts('StageBuffer'))
-    vim.keymap.set('n', '<leader>sU', '<cmd>Gitsigns reset_buffer_index<CR>', opts('ResetBufferIndex'))
+    vim.keymap.set('n', '<leader>ss', '<cmd>Gitsigns stage_hunk<CR>', opts('Stage Hunk'))
+    vim.keymap.set('n', '<leader>su', '<cmd>Gitsigns undo_stage_hunk<CR>', opts('Undo Staging Hunk'))
+    vim.keymap.set('n', '<leader>sr', '<cmd>Gitsigns reset_hunk<CR>', opts('Reset Hunk'))
+    vim.keymap.set('n', '<leader>sR', '<cmd>Gitsigns reset_buffer<CR>', opts('Reset Buffer'))
+    vim.keymap.set('n', '<leader>sp', '<cmd>Gitsigns preview_hunk<CR>', opts('Preview Hunk'))
+    vim.keymap.set('n', '<leader>sb', '<cmd>lua require"gitsigns".blame_line{full=true}<CR>', opts('Blame Line'))
+    vim.keymap.set('n', '<leader>sS', '<cmd>Gitsigns stage_buffer<CR>', opts('Stage Buffer'))
+    vim.keymap.set('n', '<leader>sU', '<cmd>Gitsigns reset_buffer_index<CR>', opts('Reset Buffer Index'))
 
     vim.keymap.set('v', '<leader>sr', ':Gitsigns reset_hunk<CR>', opts('ResetHunk (Visual)'))
     vim.keymap.set('v', '<leader>ss', ':Gitsigns stage_hunk<CR>', opts('StageHunk (Visual)'))
@@ -2136,8 +2146,8 @@ vim.api.nvim_set_hl(0, 'FlashLabel', { link = 'WildMenu' })
 --vim.api.nvim_set_hl(0, 'FlashLabel', { cterm = { underline = true, nocombine = true }, ctermfg=9, underline = true, nocombine = true, fg='#ccff88' })
 
 -- Keymaps
-vim.keymap.set({"n", "x", "o"}, "t", "<cmd>lua require('flash').jump()<CR>", {silent = true})
-vim.keymap.set({"n", "x", "o"}, "T", "<cmd>lua require('flash').treesitter_search()<CR>", {silent = true})
+vim.keymap.set({"n", "x", "o"}, "t", "<cmd>lua require('flash').jump()<CR>", { silent = true, desc = 'Jump' })
+vim.keymap.set({"n", "x", "o"}, "T", "<cmd>lua require('flash').treesitter_search()<CR>", { silent = true, desc = 'Treesitter Jump' })
 EOF
 
 " =============================================================================
@@ -2155,6 +2165,45 @@ wk.register({
     L	= 'move current window to the far right',
   },
 })
+
+wk.register({
+  b = {
+    name = '+debugger',
+  },
+  [','] = {
+    name = '+zoom',
+  },
+  a = {
+    name = '+picker',
+  },
+  c = {
+    name = '+codeaction',
+  },
+  d = {
+    name = '+lsp',
+  },
+  f = {
+    name = '+findfiles',
+  },
+  g = {
+    name = '+diagnostics',
+  },
+  n = {
+    name = '+neogen',
+  },
+  q = {
+    name = '+quickfix',
+  },
+  r = {
+    name = '+rename',
+  },
+  s = {
+    name = '+git',
+  },
+  x = {
+    name = '+trouble',
+  },
+}, { prefix = '<leader>' })
 EOF
 
 
@@ -2636,46 +2685,38 @@ require('telescope').setup {
 require('telescope').load_extension('fzy_native')
 require('telescope').load_extension('ui-select')
 require('telescope').load_extension('live_grep_args')
+
+local telescope_bindings = {
+  {'n', '<leader>fn', "<cmd>lua require('telescope.builtin').resume()<cr>", 'Telescope: Resume' },
+  {'n', '<leader>gr', "<cmd>lua require('telescope.builtin').lsp_references()<cr>", 'LSP: Find References' },
+  {'n', '<leader>gd', "<cmd>lua require('telescope.builtin').diagnostics()<cr>", 'LSP: Show Diagnostics' },
+  {'n', '<leader>ca', "<cmd>lua vim.lsp.buf.code_action()<cr>", 'LSP: Code Actions' },
+  {'v', '<leader>ca', "<cmd>lua vim.lsp.buf.range_code_action()<cr>", 'LSP: Code Actions' },
+  {'n', '<leader>gi', "<cmd>lua require('telescope.builtin').lsp_implementations()<cr>", 'LSP: Show Implementations' },
+  {'n', '<leader>gg', "<cmd>lua require('telescope.builtin').lsp_document_symbols()<cr>", 'LSP: Show Document Symbols' },
+  {'n', '<leader>ge', "<cmd>lua require('telescope.builtin').lsp_workspace_symbols()<cr>", 'LSP: Show Workspace Symbols' },
+  {'n', '<leader>gt', "<cmd>lua require('telescope.builtin').lsp_type_definitions()<cr>", 'LSP: Show Type Definitions' },
+  {'n', '<leader>ff', "<cmd>lua require('telescope.builtin').find_files()<cr>", 'Find Files' },
+  {'n', '<leader>fg', "<cmd>lua require('telescope').extensions.live_grep_args.live_grep_args()<cr>", 'Live GREP' },
+  {'n', '<leader>fb', "<cmd>lua require('telescope.builtin').buffers()<cr>", 'Show Open Buffers' },
+  {'n', '<leader>fh', "<cmd>lua require('telescope.builtin').help_tags()<cr>", 'Show Help Tags' },
+  {'n', '<leader>fm', "<cmd>lua require('telescope.builtin').marks()<cr>", 'Show Marks' },
+  {'n', '<leader>fs', "<cmd>lua require('telescope.builtin').current_buffer_fuzzy_find()<cr>", 'Fuzzy Find (Current Buf)' },
+  {'n', '<leader>v', "<cmd>lua require('telescope.builtin').treesitter()<cr>", 'Show Treesitter Symbols' },
+}
+
+for _, kb in ipairs(telescope_bindings) do
+  vim.api.nvim_set_keymap(kb[1], kb[2], kb[3], { noremap = false, silent = true, desc = kb[4] })
+end
+
 EOF
-
-" Builtins
-nnoremap <leader>fn <cmd>lua require('telescope.builtin').resume()<cr>
-
-" Doubled with navigator:
-nnoremap <leader>gr <cmd>lua require('telescope.builtin').lsp_references()<cr>
-nnoremap <leader>gd <cmd>lua require('telescope.builtin').diagnostics()<cr>
-nnoremap <leader>ca <cmd>lua vim.lsp.buf.code_action()<cr>
-nnoremap <leader>cA <cmd>lua vim.lsp.buf.range_code_action()<cr>
-nnoremap <leader>gi <cmd>lua require('telescope.builtin').lsp_implementations()<cr>
-nnoremap <leader>gg <cmd>lua require('telescope.builtin').lsp_document_symbols()<cr>
-nnoremap <leader>ge <cmd>lua require('telescope.builtin').lsp_workspace_symbols()<cr>
-nnoremap <leader>gt <cmd>lua require('telescope.builtin').lsp_type_definitions()<cr>
-
-" Telescope.nvim:
-nnoremap <leader>ff <cmd>lua require('telescope.builtin').find_files()<cr>
-" nnoremap <leader>fg <cmd>lua require('telescope.builtin').live_grep()<cr>
-nnoremap <leader>fg <cmd>lua require('telescope').extensions.live_grep_args.live_grep_args()<cr>
-nnoremap <leader>fb <cmd>lua require('telescope.builtin').buffers()<cr>
-nnoremap <leader>fh <cmd>lua require('telescope.builtin').help_tags()<cr>
-nnoremap <leader>fm <cmd>lua require('telescope.builtin').marks()<cr>
-nnoremap <leader>fs <cmd>lua require('telescope.builtin').current_buffer_fuzzy_find()<cr>
-
-" LeaderF replacement:
-" Previously: ff, fb, fz
-" nnoremap <leader>o <cmd>lua require('telescope.builtin').find_files()<cr>
-" nnoremap <leader>b <cmd>lua require('telescope.builtin').buffers()<cr>
-" nnoremap <leader>z <cmd>lua require('telescope.builtin').buffers()<cr>
-nnoremap <leader>v <cmd>lua require('telescope.builtin').treesitter()<cr>
 
 " =============================================================================
 " LeaderF
 " =============================================================================
 " Unmap <leader>b to have it trigger which-key
-autocmd BufReadPost * silent! unmap <leader>b
+autocmd BufReadPost,BufWinEnter * silent! unmap <leader>b
 let g:Lf_ShortcutF = '<Leader>o'
-nnoremap <Leader>o :LeaderfFile<CR>
-nnoremap <Leader>bb :LeaderfBuffer<CR>
-nnoremap <Leader>z :LeaderfMruCwd<CR>
 let g:Lf_UseVersionControlTool = 0
 let g:Lf_ShowRelativePath = 1
 let g:Lf_PreviewCode = 0
@@ -2721,6 +2762,19 @@ let g:Lf_PreviewResult = {
         \}
 
 " let g:Lf_RootMarkers = ['.git', '.hg', '.svn', '.depotroot', '.projroot', '.p4', '.perforce', '.plastic']
+
+lua <<EOF
+local lf_bindings = {
+  { 'n', '<Leader>o', ':LeaderfFile<CR>', 'Open File' },
+  { 'n', '<Leader>bb', ':LeaderfBuffer<CR>', 'Find Buffer' },
+  { 'n', '<Leader>z', ':LeaderfMruCwd<CR>', 'Open Recently Used' },
+}
+
+for _, kb in ipairs(lf_bindings) do
+  vim.api.nvim_set_keymap(kb[1], kb[2], kb[3], { noremap = false, silent = true, desc = kb[4] })
+end
+
+EOF
 
 " =============================================================================
 " Vim Grep
