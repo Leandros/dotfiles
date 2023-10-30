@@ -113,7 +113,6 @@ if has('nvim')
     Plug 'nvim-tree/nvim-tree.lua'
     Plug 'johnfrankmorgan/whitespace.nvim'
     Plug 'tzachar/local-highlight.nvim'
-    Plug 'nvim-focus/focus.nvim'
     Plug 'f-person/auto-dark-mode.nvim'
 
     " Telescope
@@ -2934,52 +2933,6 @@ lua << EOF
 EOF
 
 nnoremap f :DocsViewToggle<CR>
-
-" =============================================================================
-" focus.nvim
-" =============================================================================
-lua <<EOF
-require("focus").setup({
-    enable = true, -- Enable module
-    autoresize = {
-      -- fixed in https://github.com/nvim-focus/focus.nvim/issues/138
-      minwidth = 80,
-    },
-})
-
---[[
-local ignore_filetypes = { 'NvimTree' }
-local ignore_buftypes = { 'nofile', 'prompt', 'popup' }
-
-local augroup =
-    vim.api.nvim_create_augroup('FocusDisable', { clear = true })
-
-vim.api.nvim_create_autocmd('WinEnter', {
-    group = augroup,
-    callback = function(_)
-        if vim.tbl_contains(ignore_buftypes, vim.bo.buftype)
-        then
-            vim.w.focus_disable = true
-        else
-            vim.w.focus_disable = false
-        end
-    end,
-    desc = 'Disable focus autoresize for BufType',
-})
-
-vim.api.nvim_create_autocmd('FileType', {
-    group = augroup,
-    callback = function(_)
-        if vim.tbl_contains(ignore_filetypes, vim.bo.filetype) then
-            vim.w.focus_disable = true
-        else
-            vim.w.focus_disable = false
-        end
-    end,
-    desc = 'Disable focus autoresize for FileType',
-})
-]]--
-EOF
 
 " -----------------------------------
 " ALWAYS KEEP AT THE ABSOLUTE BOTTOM!
