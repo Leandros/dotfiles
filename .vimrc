@@ -1197,17 +1197,29 @@ lsp_defaults.capabilities = vim.tbl_deep_extend(
   require('cmp_nvim_lsp').default_capabilities(),
   lsp_status.capabilities
 )
+lsp_defaults.capabilities['semanticTokensProvider'] = nil
 
 lsp_status.register_progress()
 
 
 -- Global `on_attach`
 local function on_attach(client, bufnr)
-  -- disable highlighting from lsp
-  client.server_capabilities.semanticTokensProvider = nil
+  -- This produces errors due to lspconfig bug: https://github.com/neovim/nvim-lspconfig/issues/2542
+  --if client.server_capabilities then
+  --  client.server_capabilities.semanticTokensProvider = nil
+  --end
+
   -- setup buffer keymaps etc.
   lsp_status.on_attach(client)
   navbuddy.attach(client, bufnr)
+end
+
+local function on_init(client, init_result)
+  -- disable highlighting from lsp
+  if client.server_capabilities then
+    client.server_capabilities.documentFormattingProvider = false
+    client.server_capabilities.semanticTokensProvider = false  -- turn off semantic tokens
+  end
 end
 
 -- Rust
@@ -1266,6 +1278,7 @@ local rust_opts = {
     },
     server = {
       on_attach = on_attach,
+      on_init = on_init,
       --capabilities = capabilities,
       flags = { allow_incremental_sync = false },
       commands = {
@@ -1374,6 +1387,7 @@ local lsp_servers = {
 for _, server in ipairs(lsp_servers) do
   lspconfig[server].setup {
     on_attach = on_attach,
+    on_init = on_init,
     --capabilities = capabilities,
   }
 end
