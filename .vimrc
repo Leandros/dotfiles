@@ -114,6 +114,7 @@ if has('nvim')
     Plug 'johnfrankmorgan/whitespace.nvim'
     Plug 'tzachar/local-highlight.nvim'
     Plug 'f-person/auto-dark-mode.nvim'
+    Plug 'sindrets/diffview.nvim'
 
     " Telescope
     Plug 'nvim-telescope/telescope.nvim', { 'branch': '0.1.x' } " Improved LSP actions
@@ -3033,6 +3034,31 @@ lua << EOF
 EOF
 
 nnoremap f :DocsViewToggle<CR>
+
+" =============================================================================
+" diffview.nvim
+" =============================================================================
+lua <<EOF
+  require("diffview").setup({
+    view = {
+      merge_tool = {
+        disable_diagnostics = true,
+      },
+    },
+    hooks = {
+      view_opened = function(view)
+        vim.g.diagnostics_active = false
+        vim.diagnostic.reset()
+        vim.cmd "LspStop"
+      end,
+      view_enter = function(view)
+        vim.g.diagnostics_active = false
+        vim.diagnostic.reset()
+        vim.cmd "LspStop"
+      end,
+    },
+  })
+EOF
 
 " -----------------------------------
 " ALWAYS KEEP AT THE ABSOLUTE BOTTOM!
