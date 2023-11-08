@@ -980,6 +980,25 @@ endfunction
 vnoremap <C-a> :call Incr()<CR>
 
 " =============================================================================
+" Close all floating windows
+" =============================================================================
+lua <<EOF
+_G.CloseAllFloatingWindows = function()
+  local closed_windows = {}
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    local config = vim.api.nvim_win_get_config(win)
+    if config.relative ~= "" then  -- is_floating_window?
+      vim.api.nvim_win_close(win, false)  -- do not force
+      table.insert(closed_windows, win)
+    end
+  end
+  print(string.format('Closed %d windows: %s', #closed_windows, vim.inspect(closed_windows)))
+end
+EOF
+command! -nargs=* CloseAllFloatingWindows call v:lua.CloseAllFloatingWindows()
+
+
+" =============================================================================
 "                       ____  _             _
 "                      |  _ \| |_   _  __ _(_)_ __  ___
 "                      | |_) | | | | |/ _` | | '_ \/ __|
@@ -987,6 +1006,7 @@ vnoremap <C-a> :call Incr()<CR>
 "                      |_|   |_|\__,_|\__, |_|_| |_|___/
 "                                     |___/
 " =============================================================================
+" PLUGINS (for search)
 
 " =============================================================================
 " NEOVIM
