@@ -2850,10 +2850,20 @@ nnoremap <Leader>qf :copen<CR>
 " =============================================================================
 " EnhancedJumps
 " =============================================================================
-nmap <Leader>h  <Plug>EnhancedJumpsOlder
-nmap <Leader>l  <Plug>EnhancedJumpsNewer
-nmap <Leader>gh <Plug>EnhancedJumpsLocalOlder
-nmap <Leader>gl <Plug>EnhancedJumpsLocalNewer
+lua <<EOF
+
+local ej_bindings = {
+  { 'n', '<Leader>h',  '<Plug>EnhancedJumpsOlder', 'EJ: Jump Older' },
+  { 'n', '<Leader>l',  '<Plug>EnhancedJumpsNewer', 'EJ: Jump Newer' },
+  { 'n', '<Leader>gh', '<Plug>EnhancedJumpsLocalOlder', 'EJ: Jump Older (Local)' },
+  { 'n', '<Leader>gl', '<Plug>EnhancedJumpsLocalNewer', 'EJ: Jump Newer (Local)' },
+}
+
+for _, kb in ipairs(ej_bindings) do
+  vim.keymap.set(kb[1], kb[2], kb[3], { noremap = false, silent = true, desc = kb[4] })
+end
+
+EOF
 
 " =============================================================================
 " Vim Visual Multi (VM)
