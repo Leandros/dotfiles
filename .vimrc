@@ -2928,38 +2928,46 @@ nmap ga <Plug>(EasyAlign)
 " in NERDTree
 let g:bookmark_no_default_key_mappings = 1
 
-fun! SetVimBookmarkMappings()
-    " Don't set mappings in nerdtree
-    if &ft =~ 'nerdtree'
-        return
-    endif
-    nnoremap <buffer> mm :BookmarkToggle<CR>
-    nnoremap <buffer> mi :BookmarkAnnotate<CR>
-    nnoremap <buffer> mn :BookmarkNext<CR>
-    nnoremap <buffer> mr :BookmarkPrev<CR>
-    nnoremap <buffer> ma :BookmarkShowAll<CR>
-    nnoremap <buffer> md :BookmarkClear<CR>
-    nnoremap <buffer> mx :BookmarkClearAll<CR>
-    nnoremap <buffer> mh :BookmarkMoveUp<CR>
-    nnoremap <buffer> ml :BookmarkMoveDown<CR>
-    nnoremap <buffer> mg :BookmarkMoveToLine<CR>
-endfun
+lua <<EOF
+local augroup = vim.api.nvim_create_augroup   -- Create/get autocommand group
+local autocmd = vim.api.nvim_create_autocmd   -- Create autocommand
+local mark_bindings = {
+  {'n', 'mm', ':BookmarkToggle<CR>', 'Toggle' },
+  {'n', 'mi', ':BookmarkAnnotate<CR>', 'Annotate' },
+  {'n', 'mn', ':BookmarkNext<CR>', 'Next' },
+  {'n', 'mr', ':BookmarkPrev<CR>', 'Prev' },
+  {'n', 'ma', ':BookmarkShowAll<CR>', 'Show All' },
+  {'n', 'md', ':BookmarkClear<CR>', 'Clear' },
+  {'n', 'mx', ':BookmarkClearAll<CR>', 'Clear All' },
+  {'n', 'mh', ':BookmarkMoveUp<CR>', 'Move Up' },
+  {'n', 'ml', ':BookmarkMoveDown<CR>', 'Move Down' },
+  {'n', 'mg', ':BookmarkMoveToLine<CR>', 'Move To Line' },
+  {'n', 'mA', "<cmd>lua require('telescope.builtin').marks()<cr>", 'Show All (Telescope)' },
+};
 
-fun! UnsetVimBookmarkMappings()
-    silent! nunmap <buffer> mm
-    silent! nunmap <buffer> mi
-    silent! nunmap <buffer> mn
-    silent! nunmap <buffer> mr
-    silent! nunmap <buffer> ma
-    silent! nunmap <buffer> md
-    silent! nunmap <buffer> mx
-    silent! nunmap <buffer> mh
-    silent! nunmap <buffer> ml
-    silent! nunmap <buffer> mg
-endfun
+autocmd('BufEnter', {
+  pattern = '*',
+  callback = function()
+    -- Don't set mappings in nerdtree
+    if vim.bo.filetype == 'nerdtree' then
+      return
+    end
 
-au BufEnter * call SetVimBookmarkMappings()
-autocmd FileType nerdtree call UnsetVimBookmarkMappings()
+    for _, kb in ipairs(mark_bindings) do
+      vim.keymap.set(kb[1], kb[2], kb[3], { noremap = false, silent = true, desc = kb[4], buffer = true })
+    end
+  end,
+})
+
+autocmd('FileType', {
+  pattern = 'nerdtree',
+  callback = function()
+    for _, kb in ipairs(mark_bindings) do
+      vim.keymap.del(kb[1], kb[2], { buffer = true })
+    end
+  end,
+})
+EOF
 
 " =============================================================================
 " Rainbow
