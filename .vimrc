@@ -1210,6 +1210,11 @@ local function on_attach(client, bufnr)
   --  client.server_capabilities.semanticTokensProvider = nil
   --end
 
+  if vim.g['has_navigator'] ~= 0 then
+    require('navigator.lspclient.mapping').setup({ client=client, bufnr=bufnr }) -- setup navigator keymaps here,
+    require('navigator.dochighlight').documentHighlight(bufnr)
+    require('navigator.codeAction').code_action_prompt(bufnr)
+  end
   -- setup buffer keymaps etc.
   lsp_status.on_attach(client)
   navbuddy.attach(client, bufnr)
@@ -1827,18 +1832,62 @@ EOF
 " Navigator
 " =============================================================================
 lua <<EOF
-if not vim.g['has_navigator'] then
-    return
-end
+if vim.g['has_navigator'] ~= 0 then
+  -- default mapping
+  --maps = {
+  --  close_view = '<C-e>',
+  --  send_qf = '<C-q>',
+  --  save = '<C-s>',
+  --  jump_to_list = '<C-w>k',
+  --  jump_to_preview = '<C-w>j',
+  --  prev = '<C-p>',
+  --  next = '<C-n>',
+  --  pageup = '<C-b>',
+  --  pagedown = '<C-f>',
+  --  confirm = '<C-o>',
+  --  split = '<C-s>',
+  --  vsplit = '<C-v>',
+  --  tabnew = '<C-t>',
+  --}
 
---[[
-require'navigator'.setup({
-    border = {"╭", "─", "╮", "│", "╯", "─", "╰", "│"},
+  require('guihua.maps').setup({
+    maps = {
+      close_view = '<C-x>',
+      prev = '<C-r>',
+      next = '<C-n>',
+    }
+  })
+
+  require'navigator'.setup({
+    -- lsp servers are installed via `mason`.
+    mason = true,
+    -- disable all lsp server integration, requires manual setup via `on_attach`.
+    lsp = {
+      disable_lsp = 'all',
+      format_on_save = false,
+      diagnostic = {
+        underline = true,
+        virtual_text = true, -- show virtual for diagnostic message
+        update_in_insert = false, -- don't update diagnostic message in insert mode
+        float = {
+          focusable = true,
+          sytle = 'minimal',
+          border = 'rounded',
+          source = 'always',
+          header = '',
+          prefix = '',
+        },
+      },
+    },
+
+    border = 'single',
+    --border = {"╭", "─", "╮", "│", "╯", "─", "╰", "│"},
     transparency = nil,
-    default_mapping = false,
     on_attach = function(client, bufnr)
-        print("navigator on_attach")
+        --print("navigator on_attach")
     end,
+
+    default_mapping = false,
     keymaps = {
         -- Keymaps defined below:
         -- {mode = "i", key = "<c-k>", func = "signature_help({border = single})"},
@@ -1926,15 +1975,9 @@ require'navigator'.setup({
         },
         treesitter_defult = '',
     },
+  })
+end
 
-    lsp_installer = false,
-    lsp = {
-        code_action = {enable = true, sign = true, sign_priority = 40, virtual_text = false},
-        code_lens_action = {enable = true, sign = true, sign_priority = 40, virtual_text = false},
-        format_on_save = false,
-    },
-})
-]]--
 EOF
 
 
@@ -1942,83 +1985,90 @@ EOF
 " LSPSAGA
 " =============================================================================
 lua <<EOF
-if not vim.g['has_lspsaga'] then
-    return
+if vim.g['has_lspsaga'] ~= 0 then
+  local saga = require 'lspsaga'
+  saga.setup {
+      use_saga_diagnostic_sign = true,
+      -- diagnostic signs
+      error_sign = "",
+      warn_sign = "",
+      hint_sign = "",
+      infor_sign = "",
+      --error_sign = 'E',
+      --warn_sign = 'W',
+      --hint_sign = 'H',
+      --infor_sign = 'I',
+      diagnostic_header_icon = ' ⚠ ',
+      -- code action title icon
+      code_action_icon = '⚐ ',
+      code_action_prompt = {
+        enable = true,
+        sign = false,
+        sign_priority = 40,
+        virtual_text = true,
+      },
+      finder_definition_icon = '⚡',
+      finder_reference_icon = '⚡',
+      max_preview_lines = 10,
+      finder_action_keys = {
+        open = 'o', vsplit = 'i',split = 't',quit = 'q',
+        --scroll_down = '<C-f>',scroll_up = '<C-b>'
+      },
+      code_action_keys = {
+        quit = 'q',exec = '<CR>'
+      },
+      rename_action_keys = {
+        quit = '<C-c>',exec = '<CR>'
+      },
+      definition_preview_icon = '➤',
+      border_style = "single",
+      rename_prompt_prefix = '➤',
+      server_filetype_map = {}
+  }
 end
-
-local saga = require 'lspsaga'
-saga.setup {
-    use_saga_diagnostic_sign = true,
-    -- diagnostic signs
-    error_sign = "",
-    warn_sign = "",
-    hint_sign = "",
-    infor_sign = "",
-    --error_sign = 'E',
-    --warn_sign = 'W',
-    --hint_sign = 'H',
-    --infor_sign = 'I',
-    diagnostic_header_icon = ' ⚠ ',
-    -- code action title icon
-    code_action_icon = '⚐ ',
-    code_action_prompt = {
-      enable = true,
-      sign = false,
-      sign_priority = 40,
-      virtual_text = true,
-    },
-    finder_definition_icon = '⚡',
-    finder_reference_icon = '⚡',
-    max_preview_lines = 10,
-    finder_action_keys = {
-      open = 'o', vsplit = 'i',split = 't',quit = 'q',
-      --scroll_down = '<C-f>',scroll_up = '<C-b>'
-    },
-    code_action_keys = {
-      quit = 'q',exec = '<CR>'
-    },
-    rename_action_keys = {
-      quit = '<C-c>',exec = '<CR>'
-    },
-    definition_preview_icon = '➤',
-    border_style = "single",
-    rename_prompt_prefix = '➤',
-    server_filetype_map = {}
-}
 EOF
 
-inoremap <silent><c-k> <cmd>lua vim.lsp.buf.signature_help()<CR>
-nnoremap <silent><c-k> <cmd>lua vim.lsp.buf.signature_help()<CR>
-nnoremap <silent>K <cmd>lua vim.lsp.buf.hover({ popup_opts = { border = single, max_width = 80 }})<CR>
-nnoremap <silent><Leader>re <cmd>lua vim.lsp.buf.rename()<CR>
+lua <<EOF
+local lsp_bindings = {
+  { 'i', '<c-k>', '<cmd>lua vim.lsp.buf.signature_help()<CR>', 'LSP: Signature Help' },
 
-if has_navigator
-    inoremap <silent><c-k> <cmd>lua vim.lsp.buf.signature_help()<CR>
-    nnoremap <silent><c-k> <cmd>lua vim.lsp.buf.signature_help()<CR>
-    nnoremap <silent><c-]> <cmd>lua require('navigator.definition').definition()<CR>
-    nnoremap <silent>gd <cmd>lua require('navigator.definition').definition_preview()<CR>
-    nnoremap <silent>K <cmd>lua vim.lsp.buf.hover({ popup_opts = { border = single, max_width = 80 }})<CR>
-    nnoremap <silent><Leader>re <cmd>lua vim.lsp.buf.rename()<CR>
-    nnoremap <silent><Leader>rn <cmd>lua require('navigator.rename').rename()<CR>
-    nnoremap <silent><Leader>k <cmd>lua require('navigator.diagnostics').show_diagnostics()<CR>
-elseif has_lspsaga
-    " Not avaliable in new lspsaga.
-    " inoremap <silent><c-k> <cmd>:Lspsaga signature_help<CR>
-    " nnoremap <silent><c-k> <cmd>:Lspsaga signature_help<CR>
-    " nnoremap <silent>K <cmd>:Lspsaga hover_doc<CR>
+  { 'n', '<c-k>', '<cmd>lua vim.lsp.buf.signature_help()<CR>', 'LSP: Signature Help' },
+  { 'n', 'K', '<cmd>lua vim.lsp.buf.hover({ popup_opts = { border = single, max_width = 80 }})<CR>', 'LSP: Hover Docs' },
+  { 'n', '<leader>re', '<cmd>lua vim.lsp.buf.rename()<CR>', 'LSP: Rename' },
 
-    nnoremap <silent>gd <cmd>:Lspsaga preview_definition<CR>
-    nnoremap <silent><Leader>rn <cmd>:Lspsaga rename<CR>
-    nnoremap <silent><Leader>k <cmd>lua require'lspsaga.diagnostic'.show_cursor_diagnostics()<CR>
-    nnoremap <silent> <S-h> <cmd>lua require('lspsaga.action').smart_scroll_with_saga(1)<CR>
-    nnoremap <silent> <S-l> <cmd>lua require('lspsaga.action').smart_scroll_with_saga(-1)<CR>
-    nnoremap <silent> [e :Lspsaga diagnostic_jump_next<CR>
-    nnoremap <silent> ]e :Lspsaga diagnostic_jump_prev<CR>
-else
-    nnoremap <silent><Leader>k <cmd>lua vim.diagnostic.open_float(0, { scope = "line" })<CR>
-    nnoremap <silent> [e <cmd>lua vim.diagnostic.goto_next()<CR>
-    nnoremap <silent> ]e <cmd>lua vim.diagnostic.goto_prev()<CR>
-endif
+  { 'n', '[e', "<cmd>lua vim.diagnostic.goto_next({ border = 'rounded', max_width = 80 })<CR>", 'LSP: Next Diagnostic' },
+  { 'n', ']e', "<cmd>lua vim.diagnostic.goto_prev({ border = 'rounded', max_width = 80 })<CR>", 'LSP: Prev Diagnostic' },
+}
+
+if vim.g['has_lspsaga'] ~= 0 then
+  local lspsaga_bindings = {
+    { 'n', 'gd', "<cmd>:Lspsaga preview_definition<CR>", 'LSP: Preview Definition' },
+    { 'n', '<Leader>rn', "<cmd>:Lspsaga rename<CR>", 'LSP: Rename' },
+    { 'n', '<Leader>k', "<cmd>lua require'lspsaga.diagnostic'.show_cursor_diagnostics()<CR>", 'LSP: Show Diagnostic Under Cursor' },
+    { 'n', '<S-h>', "<cmd>lua require('lspsaga.action').smart_scroll_with_saga(1)<CR>", '' },
+    { 'n', '<S-l>', "<cmd>lua require('lspsaga.action').smart_scroll_with_saga(-1)<CR>", '' },
+  }
+  for _, kb in ipairs(lspsaga_bindings) do table.insert(lsp_bindings, kb) end
+end
+
+if vim.g['has_navigator'] ~= 0 then
+  local navigator_bindings = {
+    { 'n', '<c-]>', "<cmd>lua require('navigator.definition').definition()<CR>", '' },
+    { 'n', 'gd', "<cmd>lua require('navigator.definition').definition_preview()<CR>", 'LSP: Preview Definition' },
+    { 'n', '<leader>rn', "<cmd>lua require('navigator.rename').rename()<CR>", 'LSP: Rename Symbol' },
+    { 'n', '<leader>k', "<cmd>lua require('navigator.diagnostics').show_diagnostics()<CR>", 'LSP: Show Diagnostic Under Cursor' },
+  }
+  for _, kb in ipairs(navigator_bindings) do table.insert(lsp_bindings, kb) end
+end
+
+
+for _, kb in ipairs(lsp_bindings) do
+  vim.keymap.set(kb[1], kb[2], kb[3], { noremap = false, silent = true, desc = kb[4] })
+end
+
+EOF
+
+" nnoremap <silent><Leader>k <cmd>lua vim.diagnostic.open_float(0, { scope = "line" })<CR>
 
 lua <<EOF
 local _border = "single"
