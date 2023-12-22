@@ -1214,7 +1214,18 @@ local function on_attach(client, bufnr)
     require('navigator.lspclient.mapping').setup({ client=client, bufnr=bufnr }) -- setup navigator keymaps here,
     require('navigator.dochighlight').documentHighlight(bufnr)
     require('navigator.codeAction').code_action_prompt(bufnr)
+
+    local navigator_bindings = {
+      { 'n', '<c-]>', "<cmd>lua require('navigator.definition').definition()<CR>", '' },
+      { 'n', 'gd', "<cmd>lua require('navigator.definition').definition_preview()<CR>", 'LSP: Preview Definition' },
+      { 'n', '<leader>rn', "<cmd>lua require('navigator.rename').rename()<CR>", 'LSP: Rename Symbol' },
+      { 'n', '<leader>k', "<cmd>lua require('navigator.diagnostics').show_diagnostics()<CR>", 'LSP: Show Diagnostic Under Cursor' },
+    }
+    for _, kb in ipairs(navigator_bindings) do
+      vim.keymap.set(kb[1], kb[2], kb[3], { noremap = false, silent = true, desc = kb[4], buffer = bufnr })
+    end
   end
+
   -- setup buffer keymaps etc.
   lsp_status.on_attach(client)
   navbuddy.attach(client, bufnr)
@@ -2015,10 +2026,12 @@ if vim.g['has_lspsaga'] ~= 0 then
         --scroll_down = '<C-f>',scroll_up = '<C-b>'
       },
       code_action_keys = {
-        quit = 'q',exec = '<CR>'
+        quit = 'q',
+        exec = '<CR>'
       },
       rename_action_keys = {
-        quit = '<C-c>',exec = '<CR>'
+        quit = '<C-c>',
+        exec = '<CR>'
       },
       definition_preview_icon = '➤',
       border_style = "single",
