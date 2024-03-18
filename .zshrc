@@ -733,6 +733,8 @@ command -v direnv >/dev/null && eval "$(direnv hook zsh)"
 # =============================================================================
 if [ -f "/usr/local/share/chruby/chruby.sh" ]; then
     . /usr/local/share/chruby/chruby.sh
+    . /usr/local/share/chruby/auto.sh
+    chruby ruby-3.3.0
 fi
 
 
