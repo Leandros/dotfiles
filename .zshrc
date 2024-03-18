@@ -728,6 +728,14 @@ command -v direnv >/dev/null && eval "$(direnv hook zsh)"
 # =============================================================================
 [ -f "$HOME/.ghcup/env" ] && source "$HOME/.ghcup/env" # ghcup-env
 
+# =============================================================================
+# chruby
+# =============================================================================
+if [ -f "/usr/local/share/chruby/chruby.sh" ]; then
+    . /usr/local/share/chruby/chruby.sh
+fi
+
+
 # Terraform completion
 if command -v terraform >/dev/null 2>&1; then
     autoload -U +X bashcompinit && bashcompinit
