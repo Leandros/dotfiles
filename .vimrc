@@ -2245,54 +2245,28 @@ EOF
 lua <<EOF
 local wk = require("which-key")
 wk.setup {}
-wk.register({
-  ['<C-W>'] = {
-    name = 'window',
-    H	= 'move current window to the far left',
-    J	= 'move current window to the very bottom',
-    K	= 'move current window to the very top',
-    L	= 'move current window to the far right',
-  },
+wk.add({
+  { "<C-W>", group = "window" },
+  { "<C-W>H", desc = "move current window to the far left" },
+  { "<C-W>J", desc = "move current window to the very bottom" },
+  { "<C-W>K", desc = "move current window to the very top" },
+  { "<C-W>L", desc = "move current window to the far right" },
 })
 
-wk.register({
-  b = {
-    name = '+debugger',
-  },
-  [','] = {
-    name = '+zoom',
-  },
-  a = {
-    name = '+picker',
-  },
-  c = {
-    name = '+codeaction',
-  },
-  d = {
-    name = '+lsp',
-  },
-  f = {
-    name = '+findfiles',
-  },
-  g = {
-    name = '+diagnostics/+jump',
-  },
-  n = {
-    name = '+neogen',
-  },
-  q = {
-    name = '+quickfix',
-  },
-  r = {
-    name = '+rename',
-  },
-  s = {
-    name = '+git',
-  },
-  x = {
-    name = '+trouble',
-  },
-}, { prefix = '<leader>' })
+wk.add({
+  { "<leader>,", group = "zoom" },
+  { "<leader>a", group = "picker" },
+  { "<leader>b", group = "debugger" },
+  { "<leader>c", group = "codeaction" },
+  { "<leader>d", group = "lsp" },
+  { "<leader>f", group = "findfiles" },
+  { "<leader>g", group = "diagnostics/+jump" },
+  { "<leader>n", group = "neogen" },
+  { "<leader>q", group = "quickfix" },
+  { "<leader>r", group = "rename" },
+  { "<leader>s", group = "git" },
+  { "<leader>x", group = "trouble" },
+})
 EOF
 
 
@@ -3090,15 +3064,13 @@ let g:floaterm_height = 0.8
 
 lua <<EOF
 local wk = require("which-key")
-wk.register({
-  [','] = {
-    name = '+floaterm',
-    n = 'New Terminal',
-    t = 'Toggle Terminal',
-    b = 'Previous Terminal',
-    s = 'Next Terminal',
-  },
-}, {})
+wk.add({
+  { ",", group = "floaterm" },
+  { ",b", desc = "Previous Terminal" },
+  { ",n", desc = "New Terminal" },
+  { ",s", desc = "Next Terminal" },
+  { ",t", desc = "Toggle Terminal" },
+})
 EOF
 
 " =============================================================================
