@@ -33,6 +33,17 @@ tools:
     provides: [difft]
   - name: CodeLLDB
   - name: postgresql
+  - name: mise
+  - name: cmake
+  - name: mold
+  - name: rustup
+    provides: [cargo]
+  - name: bacon
+    dependsOn: [cargo]
+  - name: cargo-limit
+  - name: cargo-watch
+  - name: cargo-audit
+  - name: cargo-nextest
 
 languages:
   - node
