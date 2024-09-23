@@ -41,9 +41,16 @@ tools:
   - name: bacon
     dependsOn: [cargo]
   - name: cargo-limit
+    dependsOn: [cargo]
   - name: cargo-watch
+    dependsOn: [cargo]
   - name: cargo-audit
+    dependsOn: [cargo]
   - name: cargo-nextest
+    dependsOn: [cargo]
+  - name: cross
+    dependsOn: [cargo]
+  - name: shellcheck
 
 languages:
   - node
