@@ -744,6 +744,13 @@ if [ -f "/usr/local/share/chruby/chruby.sh" ]; then
     chruby ruby-3.3.0
 fi
 
+# MISE
+if [ -f "$HOME/.local/bin/mise" ]; then
+    eval "$($HOME/.local/bin/mise activate zsh)"
+    if [ -f "$HOME/.local/share/mise/completions.zsh" ]; then
+        . $HOME/.local/share/mise/completions.zsh
+    fi
+fi
 
 # Terraform completion
 if command -v terraform >/dev/null 2>&1; then
