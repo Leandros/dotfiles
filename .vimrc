@@ -15,8 +15,8 @@ let maplocalleader=" "
 
 " Optional plugins
 let js_dev_enabled = 1
-let has_navigator = 0
-let has_lspsaga = 1
+let has_navigator = 1
+let has_lspsaga = 0
 
 " Vim Internal Plugins
 if !has('nvim')
