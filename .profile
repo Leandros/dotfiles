@@ -34,7 +34,7 @@ fi
 
 # Execute xprofile
 if [ -d "$HOME/.xprofile" ] ; then
-    . $HOME/.xprofile
+    . "$HOME/.xprofile"
 fi
 
 # Execute cargo env
