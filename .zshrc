@@ -696,7 +696,8 @@ if [ -d "$HOME/.local/share/fnm" ]; then
 else
     export PATH="$HOME/.fnm:$PATH"
 fi
-eval "`fnm env`"
+
+command -v fnm >/dev/null && eval "`fnm env`"
 
 # =============================================================================
 # External
