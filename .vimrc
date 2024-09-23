@@ -1164,6 +1164,11 @@ require("mason").setup {
   }
 }
 
+-- Exception for AL2 - prefer the manually installed rust-analyzer
+if vim.g['isDevDsk'] then
+  vim.env.PATH = os.getenv('HOME') .. '/.cargo/bin:' .. vim.env.PATH
+end
+
 require('mason-lspconfig').setup {
   automatic_installation = false,
   ensure_installed = {
@@ -1321,12 +1326,6 @@ local rust_opts = {
       },
       settings = {
         ["rust-analyzer"] = {
-          -- Exception for AL2
-          vim.g["isDevDsk"] and {
-            server = {
-              path = '$HOME/.toolbox/bin/rust-analyzer',
-            },
-          } or {},
           assist = {
             importGranularity = "module",
             importPrefix = "by_self",
