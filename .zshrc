@@ -413,9 +413,9 @@ export LESSOPEN="|~/.lessfilter %s"
 # Ignore these commands in history
 alias cd=' cd'
 
-if [ -x "$(command -v exa)" ]; then
-    alias ls=' exa'
-    alias l=' exa -lah'
+if [ -x "$(command -v eza)" ]; then
+    alias ls=' eza'
+    alias l=' eza -lah'
 elif [[ "Linux" == "`uname`" ]]; then
     alias ls=' ls'
     alias l=' ls -lah'
