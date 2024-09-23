@@ -180,10 +180,15 @@ export FZF_CTRL_R_OPTS="
   --header 'Press CTRL-Y to copy command into clipboard'"
 
 # Init fzf
-[ -f "$HOME/.fzf.zsh" ] && . "$HOME/.fzf.zsh"
-# Init for debian
-[ -f "/usr/share/doc/fzf/examples/key-bindings.zsh" ] && . "/usr/share/doc/fzf/examples/key-bindings.zsh"
-[ -f "/usr/share/doc/fzf/examples/completion.zsh" ] && . "/usr/share/doc/fzf/examples/completion.zsh"
+if [ -x "$(command -v fzf)" ]; then
+    source <(fzf --zsh)
+else
+    # Old way of init.
+    [ -f "$HOME/.fzf.zsh" ] && source "$HOME/.fzf.zsh"
+    # Init for debian
+    [ -f "/usr/share/doc/fzf/examples/key-bindings.zsh" ] && . "/usr/share/doc/fzf/examples/key-bindings.zsh"
+    [ -f "/usr/share/doc/fzf/examples/completion.zsh" ] && . "/usr/share/doc/fzf/examples/completion.zsh"
+fi
 
 function f {
     fzf $*
@@ -577,6 +582,7 @@ PATH="$HOMEBREW_PREFIX/opt/mysql@5.7/bin:$PATH"
 PATH="$PATH:/usr/bin/core_perl"
 PATH="$PATH:$HOME/bin"
 PATH="$PATH:$HOME/.zsh/bin"
+PATH="$PATH:$HOME/.fzf/bin"
 
 # Amazon
 PATH="$PATH:$HOME/.toolbox/bin"
