@@ -1153,6 +1153,7 @@ EOF
 " LSP INSTALLER
 " =============================================================================
 lua << EOF
+local registry = require("mason-registry")
 require("mason").setup {
   ui = {
     border = 'rounded',
@@ -1169,26 +1170,27 @@ if vim.g['isDevDsk'] then
   vim.env.PATH = os.getenv('HOME') .. '/.cargo/bin:' .. vim.env.PATH
 end
 
+-- Mostly Supported Servers:
+--  "tsserver",
+--  "eslint",
+--  "gopls",
+--  "bashls",
+--  "lua_ls",
+--  "vimls",
+--  "jedi_language_server", -- python
+--  "pylsp", -- depends on the above
+--  "rnix",
+--  "elixirls",
+--  "erlangls",
+--  "clangd",
+--  "cmake",
 require('mason-lspconfig').setup {
   automatic_installation = false,
   ensure_installed = {
-    -- require separate setup
-    "rust_analyzer",
     "yamlls",
-    -- automatically setup
-    "tsserver",
-    --"eslint",
-    --"gopls",
     "bashls",
     "lua_ls",
     "vimls",
-    "jedi_language_server", -- python
-    "pylsp", -- depends on the above
-    "rnix",
-    --"elixirls",
-    --"erlangls",
-    "clangd",
-    "cmake",
   },
 }
 
@@ -1353,9 +1355,12 @@ local rust_opts = {
           --check = {
           --  command = "clippy",
           --},
+
           checkOnSave = {
             command = "clippy"
           },
+          --checkOnSave = false,
+
           -- panicking too often
           --diagnostics = {
           --  experimental = {
@@ -1366,7 +1371,37 @@ local rust_opts = {
       },
     },
 }
-rust_tools.setup(rust_opts)
+
+require("mason-lspconfig").setup_handlers {
+    -- The first entry (without a key) will be the default handler
+    -- and will be called for each installed server that doesn't have
+    -- a dedicated handler.
+    function (server_name) -- default handler (optional)
+        lspconfig[server_name].setup {
+          on_attach = on_attach,
+          on_init = on_init,
+          --capabilities = capabilities,
+        }
+    end,
+    -- Next, you can provide a dedicated handler for specific servers.
+    ["rust_analyzer"] = function ()
+      rust_tools.setup(rust_opts)
+    end,
+    ["yamlls"] = function ()
+      lspconfig["yamlls"].setup {
+        settings = {
+          yaml = {
+            keyOrdering = false
+          }
+        }
+      }
+    end
+}
+
+-- Rust Analyzer is special. We might install it in a multitude of ways.
+if not registry.is_installed('rust-analyzer') then
+  rust_tools.setup(rust_opts)
+end
 
 -- Flutter/Dart
 require("flutter-tools").setup{
@@ -1374,39 +1409,6 @@ require("flutter-tools").setup{
     on_attach = on_attach,
   },
 }
-
--- Yaml
-lspconfig["yamlls"].setup {
-  settings = {
-    yaml = {
-      keyOrdering = false
-    }
-  }
-}
-
--- Remaining servers
-local lsp_servers = {
-  "tsserver",
-  --"eslint",
-  --"gopls",
-  "bashls",
-  "lua_ls",
-  "vimls",
-  "jedi_language_server",
-  "pylsp",
-  "rnix",
-  --"elixirls",
-  --"erlangls",
-  "clangd",
-  "cmake",
-}
-for _, server in ipairs(lsp_servers) do
-  lspconfig[server].setup {
-    on_attach = on_attach,
-    on_init = on_init,
-    --capabilities = capabilities,
-  }
-end
 
 EOF
 
