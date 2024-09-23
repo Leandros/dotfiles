@@ -154,6 +154,7 @@ zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
 
 fpath=(/usr/local/share/zsh-completions $fpath)
 fpath=(/opt/homebrew/share/zsh/site-functions $fpath)
+fpath=($HOME/.zsh/compl $fpath)
 
 # zmv is awesome
 alias mmv='noglob zmv -W'
@@ -194,6 +195,12 @@ fi
 function f {
     fzf $*
 }
+
+# -- GIT CR
+# This has to happen before compinit.
+if [ -x "$(command -v git-cr)" ]; then
+    source <(git-cr generate-shell-compl zsh)
+fi
 
 
 # =============================================================================
