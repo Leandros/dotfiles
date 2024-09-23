@@ -93,6 +93,7 @@ elif [[ "Linux" == "`uname`" ]]; then
         # use a custom path, i.e. set NNN_TMPFILE *exactly* as follows:
         #     NNN_TMPFILE="${XDG_CONFIG_HOME:-$HOME/.config}/nnn/.lastd"
         export NNN_TMPFILE="${XDG_CONFIG_HOME:-$HOME/.config}/nnn/.lastd"
+        export NNN_OPTS="dH"
 
         # Unmask ^Q (, ^V etc.) (if required, see `stty -a`) to Quit nnn
         # stty start undef
