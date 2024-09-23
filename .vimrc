@@ -1178,15 +1178,15 @@ require('mason-lspconfig').setup {
     -- automatically setup
     "tsserver",
     --"eslint",
-    "gopls",
+    --"gopls",
     "bashls",
     "lua_ls",
     "vimls",
     "jedi_language_server", -- python
     "pylsp", -- depends on the above
     "rnix",
-    "elixirls",
-    "erlangls",
+    --"elixirls",
+    --"erlangls",
     "clangd",
     "cmake",
   },
@@ -1388,15 +1388,15 @@ lspconfig["yamlls"].setup {
 local lsp_servers = {
   "tsserver",
   --"eslint",
-  "gopls",
+  --"gopls",
   "bashls",
   "lua_ls",
   "vimls",
   "jedi_language_server",
   "pylsp",
   "rnix",
-  "elixirls",
-  "erlangls",
+  --"elixirls",
+  --"erlangls",
   "clangd",
   "cmake",
 }
