@@ -72,8 +72,8 @@ elif [[ "Linux" == "`uname`" ]]; then
     if [ -z ${DISPLAY+x} ]; then
         # X is not running
         # TODO: Do we want to detect that tmux is running?
-        alias pbpaste='tmux saveb -'
-        alias pbcopy='tmux loadb -'
+        alias pbpaste='tmux save-buffer -'
+        alias pbcopy='tmux load-buffer -w -'
     else
         alias pbpaste='xclip -o'
         alias pbcopy='xclip -i'
