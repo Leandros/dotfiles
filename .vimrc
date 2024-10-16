@@ -1351,6 +1351,9 @@ local rust_opts = {
             prefix = "self",
           },
           cargo = {
+            -- Set this to "all" to pass --all-features to cargo.
+            --features = "all",
+            features = {},
             loadOutDirsFromCheck = true,
             buildScripts = {
               enable = true,
