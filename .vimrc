@@ -3096,26 +3096,43 @@ nnoremap f :DocsViewToggle<CR>
 " =============================================================================
 " diffview.nvim
 " =============================================================================
+" Keybinds:
+" [c -> jump to next
+" ]c -> jump to prev
 lua <<EOF
-  require("diffview").setup({
-    view = {
-      merge_tool = {
-        disable_diagnostics = true,
-      },
+local actions = require("diffview.actions")
+require("diffview").setup({
+  view = {
+    merge_tool = {
+      layout = "diff4_mixed",
+      disable_diagnostics = true,
     },
-    hooks = {
-      view_opened = function(view)
-        vim.g.diagnostics_active = false
-        vim.diagnostic.reset()
-        vim.cmd "LspStop"
-      end,
-      view_enter = function(view)
-        vim.g.diagnostics_active = false
-        vim.diagnostic.reset()
-        vim.cmd "LspStop"
-      end,
+  },
+  keymaps = {
+    disable_defaults = false,
+    diff4 = {
+      -- Mappings in 4-way diff layouts
+      { { "n", "x" }, "1do", actions.diffget("base"), { desc = "Obtain the diff hunk from the BASE version of the file" } },
+      { { "n", "x" }, "2do", actions.diffget("ours"), { desc = "Obtain the diff hunk from the OURS version of the file" } },
+      { { "n", "x" }, "3do", actions.diffget("theirs"), { desc = "Obtain the diff hunk from the THEIRS version of the file" } },
+      { "n",          "g?", actions.help({ "view", "diff4" }), { desc = "Open the help panel" } },
     },
-  })
+  },
+  hooks = {
+    view_opened = function(view)
+      vim.g.diagnostics_active = false
+      vim.diagnostic.reset()
+      vim.cmd "LspStop"
+    end,
+    view_enter = function(view)
+      vim.g.diagnostics_active = false
+      vim.diagnostic.reset()
+      vim.cmd "LspStop"
+    end,
+  },
+})
+EOF
+
 "   ┣━━━━━━━━━━━━━━━━━━━━━━━━━┫ comment-box.nvim ┣━━━━━━━━━━━━━━━━━━━━━━━━━┫
 lua <<EOF
 require('comment-box').setup({
