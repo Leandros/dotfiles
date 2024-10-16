@@ -2910,7 +2910,11 @@ EOF
 " =============================================================================
 " Vim Visual Multi (VM)
 " =============================================================================
+" TODO?: Add 'custom motions':
+" <https://github.com/mg979/vim-visual-multi/blob/a6975e7c1ee157615bbc80fc25e4392f71c344d4/doc/vm-settings.txt#L124>
 
+" Find default mappings here:
+" <https://github.com/mg979/vim-visual-multi/blob/a6975e7c1ee157615bbc80fc25e4392f71c344d4/autoload/vm/maps/all.vim#L80>
 let g:VM_default_mappings = 0
 let g:VM_mouse_mappings = 0
 let g:VM_maps = {}
@@ -2930,7 +2934,9 @@ let g:VM_maps["Find Next"] = 'h'
 let g:VM_maps["Find Prev"] = 'l'
 let g:VM_maps["Skip Region"] = 'q'
 let g:VM_maps["Remove Region"] = 'Q'
-let g:VM_maps["Replace"]   = ''
+let g:VM_maps["Replace"]   = '' " previously 'R'
+let g:VM_maps["Replace Characters"]   = '' " previously 'r'
+let g:VM_maps["Replace Pattern"] = ''
 let g:VM_maps["Motion h"]  = 'b'
 let g:VM_maps["Motion j"]  = 'n'
 let g:VM_maps["Motion k"]  = 'r'
