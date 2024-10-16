@@ -20,6 +20,7 @@
     df = difftool
     dc = diff --cached
     cp = cherry-pick
+    mt = mergetool
 
     # Reset aliases
     r = reset
@@ -67,7 +68,8 @@
     mirror = clone --mirror
     arch = "!f() { git bundle create \"${GIT_PREFIX}$1\" --all; }; f"
 
-    standup = log --pretty=format:'%Cred%h%Creset -%Creset %s %Cgreen(%cD) %C(bold blue)<%an>%Creset' --since yesterday --author 'Leandros Linux'
+    standup = log --pretty=format:'%Cred%h%Creset -%Creset %s %Cgreen(%cD) %C(bold blue)<%an>%Creset' --since yesterday --author 'Arvid Gerstmann'
+    yesterday = log --pretty=format:'%Cred%h%Creset -%Creset %s %Cgreen(%cD) %C(bold blue)<%an>%Creset' --since '2 days ago' --author 'Arvid Gerstmann'
     ignored = ls-files --others -i --exclude-standard
     change = log --pretty=\"- \"%s --first-parent --color
     ours = "!f() { git co --ours $@ && git add $@; }; f"
@@ -111,11 +113,15 @@
     trustExitCode = true
 [difftool "diffmerge"]
     cmd = \"C:/Program Files/SourceGear/Common/DiffMerge/sgdm.exe\" \"$LOCAL\" \"$REMOTE\"
+[mergetool "diffviewnvim"]
+    cmd = nvim -n -c "DiffviewOpen" "$MERGE"
+[mergetool "nvimdiff"]
+    layout = "LOCAL,BASE,REMOTE / MERGED"
 [mergetool]
     prompt = false
     keepTemporaries = false
 [merge]
-    tool = p4merge
+    tool = diffviewnvim
     conflictstyle = diff3
 [difftool]
     prompt = false
@@ -129,6 +135,7 @@
     rebase = true
 [rebase]
     autoStash = true
+    updateRefs = true
 [push]
     default = simple
 	autoSetupRemote = true
