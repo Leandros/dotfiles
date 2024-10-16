@@ -500,23 +500,25 @@ colorscheme solarized
 " =============================================================================
 " Custom Filetypes
 " =============================================================================
-au BufRead,BufNewFile *.ds set filetype=rgbds                   " GameBoy Assembly
-au BufRead,BufNewFile *.fl,*.flex,*.l,*.lm setlocal ft=lex      " Flex
-au BufRead,BufNewFile *.y,*.ypp,*.ym setlocal ft=yacc           " Bison
-au BufRead,BufNewFile *.man setlocal ft=groff                   " Groff/Troff
-au BufRead,BufNewFile *.mm setlocal ft=objcpp                   " Objective-C++
-au BufRead,BufNewFile *.m setlocal ft=objc                      " Objective-C
-au BufRead,BufNewFile *.jsx set ft=javascript.jsx               " Javascript
-au BufRead,BufNewFile *.tsx set ft=typescript.tsx               " TypescriptX
-au BufRead,BufNewFile *.ts set ft=typescript                    " Typescript
-au BufRead,BufNewFile *.nomad set ft=hcl                        " HCL
-au BufRead,BufNewFile *.tf set ft=hcl                           " HCL
-au BufRead,BufNewFile *.hcl set ft=hcl                          " HCL
-au BufRead,BufNewFile *.tfvars set ft=hcl                       " HCL
-au BufRead,BufNewFile *.ex,*.exs set ft=elixir                   " elixir
-au BufRead,BufNewFile *.eex,*.leex,*.sface,*.lexs set ft=eelixir "elixir
-au BufRead,BufNewFile mix.lock set ft=elixir                     "elixir
-au BufRead,BufNewFile *.heex set ft=heex
+au BufRead,BufNewFile *.ds set filetype=rgbds                     " GameBoy Assembly
+au BufRead,BufNewFile *.fl,*.flex,*.l,*.lm setlocal ft=lex        " Flex
+au BufRead,BufNewFile *.y,*.ypp,*.ym setlocal ft=yacc             " Bison
+au BufRead,BufNewFile *.man setlocal ft=groff                     " Groff/Troff
+au BufRead,BufNewFile *.mm setlocal ft=objcpp                     " Objective-C++
+au BufRead,BufNewFile *.m setlocal ft=objc                        " Objective-C
+au BufRead,BufNewFile *.jsx set ft=javascript.jsx                 " Javascript
+au BufRead,BufNewFile *.tsx set ft=typescript.tsx                 " TypescriptX
+au BufRead,BufNewFile *.ts set ft=typescript                      " Typescript
+au BufRead,BufNewFile *.nomad set ft=hcl                          " HCL
+au BufRead,BufNewFile *.tf set ft=hcl                             " HCL
+au BufRead,BufNewFile *.hcl set ft=hcl                            " HCL
+au BufRead,BufNewFile *.tfvars set ft=hcl                         " HCL
+au BufRead,BufNewFile *.ex,*.exs set ft=elixir                    " elixir
+au BufRead,BufNewFile *.eex,*.leex,*.sface,*.lexs set ft=eelixir  " elixir
+au BufRead,BufNewFile mix.lock set ft=elixir                      " elixir
+au BufRead,BufNewFile *.heex set ft=heex                          " elixir
+au BufRead,BufNewFile Config set ft=conf                          " Brazil config
+au BufRead,BufNewFile *.proto set ft=proto                        " Protobuf
 
 " =============================================================================
 " Set syntax options
@@ -708,6 +710,7 @@ autocmd FileType javascript.jsx setlocal ts=2 sts=2 sw=2 expandtab
 autocmd FileType typescript setlocal ts=2 sts=2 sw=2 expandtab
 autocmd FileType typescript.tsx setlocal ts=2 sts=2 sw=2 expandtab
 autocmd FileType haskell setlocal ts=2 sts=2 sw=2 expandtab
+autocmd FileType proto setlocal ts=2 sts=2 sw=2 expandtab
 
 " Disable automatic line breaking
 autocmd FileType helm setlocal tw=0
