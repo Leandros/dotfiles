@@ -1079,8 +1079,15 @@ cmp.setup({
     --['<C-s>'] = cmp.mapping(vsnip_complete, { 'i' }),
     -- Add tab support
     ['<S-Tab>'] = function(fallback)
+      local is_jumpable = vim.api.nvim_cmd({
+        cmd = "echo",
+        args = { "vsnip#jumpable(-1)" },
+      }, { output = true })
+
       if cmp.visible() then
         cmp.select_prev_item()
+      elseif is_jumpable == "0" then
+        return
       else
         fallback()
       end
@@ -2654,6 +2661,8 @@ endif
 " =============================================================================
 " Vsnip
 " =============================================================================
+" Snippet syntax described here:
+" <https://github.com/Microsoft/language-server-protocol/blob/master/snippetSyntax.md>
 
 " Expand
 imap <expr> <C-n>   vsnip#expandable()  ? '<Plug>(vsnip-expand)'         : '<C-n>'
@@ -2664,10 +2673,11 @@ imap <expr> <C-s>   vsnip#available(1)  ? '<Plug>(vsnip-expand-or-jump)' : '<C-s
 smap <expr> <C-s>   vsnip#available(1)  ? '<Plug>(vsnip-expand-or-jump)' : '<C-s>'
 
 " Jump forward or backward
-" imap <expr> <Tab>   vsnip#jumpable(1)   ? '<Plug>(vsnip-jump-next)'      : '<Tab>'
-" smap <expr> <Tab>   vsnip#jumpable(1)   ? '<Plug>(vsnip-jump-next)'      : '<Tab>'
-" imap <expr> <S-Tab> vsnip#jumpable(-1)  ? '<Plug>(vsnip-jump-prev)'      : '<S-Tab>'
-" smap <expr> <S-Tab> vsnip#jumpable(-1)  ? '<Plug>(vsnip-jump-prev)'      : '<S-Tab>'
+imap <expr> <Tab>   vsnip#jumpable(1)   ? '<Plug>(vsnip-jump-next)'      : '<Tab>'
+smap <expr> <Tab>   vsnip#jumpable(1)   ? '<Plug>(vsnip-jump-next)'      : '<Tab>'
+" Issues: <https://github.com/hrsh7th/nvim-cmp/issues/770>
+imap <expr> <S-Tab> vsnip#jumpable(-1)  ? '<Plug>(vsnip-jump-prev)'      : '<S-Tab>'
+smap <expr> <S-Tab> vsnip#jumpable(-1)  ? '<Plug>(vsnip-jump-prev)'      : '<S-Tab>'
 
 " If you want to use snippet for multiple filetypes, you can `g:vsnip_filetypes` for it.
 let g:vsnip_filetypes = {}
@@ -2941,7 +2951,6 @@ let g:VM_maps["Motion h"]  = 'b'
 let g:VM_maps["Motion j"]  = 'n'
 let g:VM_maps["Motion k"]  = 'r'
 let g:VM_maps["Motion l"]  = 's'
-
 
 function! VM_Start()
   let g:yankring_record_enabled = 0
