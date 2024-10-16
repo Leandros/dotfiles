@@ -115,6 +115,7 @@ if has('nvim')
     Plug 'tzachar/local-highlight.nvim'
     Plug 'f-person/auto-dark-mode.nvim'
     Plug 'sindrets/diffview.nvim'
+    Plug 'LudoPinelli/comment-box.nvim'
 
     " Telescope
     Plug 'nvim-telescope/telescope.nvim', { 'branch': '0.1.x' } " Improved LSP actions
@@ -3112,11 +3113,30 @@ lua <<EOF
       end,
     },
   })
+"   ┣━━━━━━━━━━━━━━━━━━━━━━━━━┫ comment-box.nvim ┣━━━━━━━━━━━━━━━━━━━━━━━━━┫
+lua <<EOF
+require('comment-box').setup({
+  comment_style = "line",
+  doc_width = 80, -- width of the document
+  box_width = 60, -- width of the boxes
+})
+
+local wk = require("which-key")
+wk.add({
+  { "<Leader>c", group = "Boxes", icon = "" },
+  { "<Leader>cb", "<Cmd>CBccbox3<CR>", desc = "Box Title Heavy" },
+  { "<Leader>cbl", "<Cmd>CBccbox2<CR>", desc = "Box Title Light" },
+  { "<Leader>ct", "<Cmd>CBccline11<CR>", desc = "Line Title (Center)" },
+  { "<Leader>ctl", "<Cmd>CBllline9<CR>", desc = "Line Title (Left)" },
+  { "<Leader>cl", "<Cmd>CBline0<CR>", desc = "Line" },
+  { "<Leader>cm", "<Cmd>CBllbox18<CR>", desc = "Box Enclosed" },
+  { "<Leader>cd", "<Cmd>CBd<CR>", desc = "Remove a box" },
+})
 EOF
 
-" -----------------------------------
-" ALWAYS KEEP AT THE ABSOLUTE BOTTOM!
-" -----------------------------------
+"          ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+"          ┃           ALWAYS KEEP AT THE ABSOLUTE BOTTOM!            ┃
+"          ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 " =============================================================================
 " auto-dark-mode
 " =============================================================================
