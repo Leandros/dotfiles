@@ -1,0 +1,26 @@
+{
+  "modtest": {
+    "prefix": "modtest",
+    "body": [
+      "#[cfg(test)]",
+      "#[path = \"./${TM_FILENAME_BASE}_test.rs\"]",
+      "mod tests;"
+    ],
+    "description": "#[cfg(test)]"
+  },
+  "test": {
+    "prefix": "test",
+    "body": ["#[test]", "fn ${1:name}() {", "    ${2:todo!();}", "}"],
+    "description": "#[test]"
+  },
+  "derive": {
+    "prefix": "derive",
+    "body": ["#[derive(${1:macros})]"],
+    "description": "add #[derive(..)]"
+  },
+  "struct": {
+    "prefix": "struct",
+    "body": ["#[derive(Debug${1:other-traits})]", "struct ${2:Name} {}"],
+    "description": "struct … { … }"
+  }
+}
