@@ -127,6 +127,7 @@
     prompt = false
 [diff]
     tool = p4merge
+    colorMoved = zebra
 [github]
     user = leandros
 [ghi]
