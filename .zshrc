@@ -642,14 +642,15 @@ if [ -d "/Applications/Postgres.app/Contents/Versions/latest/bin" ]; then
 fi
 
 # macOS specific
-PATH=$PATH:/Applications/p4merge.app/Contents/MacOS
-PATH=$PATH:/usr/local/share/dotnet
-PATH=$PATH:$HOME/.fastlane/bin
+PATH="$PATH:/Applications/p4merge.app/Contents/MacOS"
+PATH="$PATH:/usr/local/share/dotnet"
+PATH="$PATH:$HOME/.fastlane/bin"
 
 # Cross Compiling Toolchains
-PATH=$PATH:/usr/local/sh-elf/bin
-PATH=$PATH:/usr/local/sh-coff/bin
-PATH=$PATH:/usr/local/m68k-elf/bin
+PATH="$PATH:/usr/local/sh-elf/bin"
+PATH="$PATH:/usr/local/sh-coff/bin"
+PATH="$PATH:/usr/local/m68k-elf/bin"
+PATH="$PATH:/Applications/microchip/xc8/v2.46/bin"
 
 export PATH
 
