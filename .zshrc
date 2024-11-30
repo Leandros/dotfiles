@@ -745,6 +745,13 @@ command -v direnv >/dev/null && eval "$(direnv hook zsh)"
 [[ -s "$HOME/.config/broot/launcher/bash/br" ]] && . "$HOME/.config/broot/launcher/bash/br"
 
 # =============================================================================
+# esp32
+# =============================================================================
+if [ -f "$HOME/export-esp.sh" ]; then
+    . "$HOME/export-esp.sh"
+fi
+
+# =============================================================================
 # ghcup
 # =============================================================================
 [ -f "$HOME/.ghcup/env" ] && source "$HOME/.ghcup/env" # ghcup-env
@@ -758,7 +765,9 @@ if [ -f "/usr/local/share/chruby/chruby.sh" ]; then
     chruby ruby-3.3.0
 fi
 
+# =============================================================================
 # MISE
+# =============================================================================
 if [ -f "$HOME/.local/bin/mise" ]; then
     eval "$($HOME/.local/bin/mise activate zsh)"
     if [ -f "$HOME/.local/share/mise/completions.zsh" ]; then
