@@ -578,6 +578,7 @@ export ANDROID_NDK=$NDK_ROOT
 export NDK_TOOLCHAIN_VERSION=4.9
 export NDK_CCACHE=/usr/local/bin/ccache
 export USE_CCACHE=1
+export PICO_SDK_PATH=$HOME/pico-sdk
 
 # =============================================================================
 # PATH
