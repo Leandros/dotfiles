@@ -157,6 +157,10 @@ fpath=(/opt/homebrew/share/zsh/site-functions $fpath)
 fpath=($HOME/.zsh/compl $fpath)
 
 # zmv is awesome
+alias zmv='noglob zmv'
+alias zcp='noglob zmv -C'
+alias zln='noglob zmv -L'
+alias zsy='noglob zmv -Ls'
 alias mmv='noglob zmv -W'
 
 # =============================================================================
