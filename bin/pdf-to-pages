@@ -1,0 +1,47 @@
+#!/bin/bash
+
+filepath="$1"
+if [ "$filepath" = "" ]; then
+    echo "usage: $0 INPUT.pdf"
+    exit 1
+fi
+if ! [[ $filepath == *.pdf ]]; then
+    echo "input filename must end with .pdf"
+    exit 1
+fi
+
+filename=$(basename "$filepath")
+filename_no_ext=$(basename "$filepath" .pdf)
+
+# Documentation:
+# # When converting multiple-page PDFs you should add "%d" to the filename-string
+# # which will be replaced with the sequence-number of the file
+# -sOutputFile="${filename_no_ext}-%d.png" \
+# # Create a PNG-File with alpha-transparency
+# -sDEVICE=pngalpha \
+# # resolution in DPI
+# -r300 \
+# # Use high grade text antialiasing. Can be 0, 1, 2 or 4
+# -dTextAlphaBits=4 \
+# # Use high grade graphics anti-aliasing. Can be 0, 1, 2 or 4
+# -dGraphicsAlphaBits=4 \
+# # If you are converting a CMYK-PDF to RGB-color you should use CIE-Color
+# -dUseCIEColor \
+# # use the PDFs Trim-Box to define the final image
+# -dUseTrimBox \
+# # start converting on the first side of the PDF
+# -dFirstPage=1 \
+# # # convert only until the first page of the PDF
+# # -dLastPage=1 \
+# # Path to the file you want to convert
+
+gs -dSAFER -dQUIET -dNOPLATFONTS -dNOPAUSE -dBATCH \
+  -sOutputFile="${filename_no_ext}-%d.png" \
+  -sDEVICE=pngalpha \
+  -r300 \
+  -dTextAlphaBits=4 \
+  -dGraphicsAlphaBits=4 \
+  -dUseCIEColor \
+  -dUseTrimBox \
+  -dFirstPage=1 \
+  "$filepath"
