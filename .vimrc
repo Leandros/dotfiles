@@ -615,6 +615,12 @@ nnoremap <C-r> <C-W>k
 nnoremap <C-b> <C-W>h
 nnoremap <C-s> <C-W>l
 
+" Split moving
+nnoremap <C-W>B <C-W>H
+nnoremap <C-W>N <C-W>J
+nnoremap <C-W>R <C-W>K
+nnoremap <C-W>S <C-W>L
+
 " Split resizing
 nnoremap ! :vertical resize -5<CR>
 nnoremap = :vertical resize +5<CR>
@@ -2779,6 +2785,7 @@ local telescope_bindings = {
   {'n', '<leader>fn', "<cmd>lua require('telescope.builtin').resume()<cr>", 'Telescope: Resume' },
   {'n', '<leader>gr', "<cmd>lua require('telescope.builtin').lsp_references()<cr>", 'LSP: Find References' },
   {'n', '<leader>gd', "<cmd>lua require('telescope.builtin').diagnostics()<cr>", 'LSP: Show Diagnostics' },
+  {'n', '<leader>gn', "<cmd>lua require('telescope.builtin').diagnostics({ bufnr = 0 })<cr>", 'LSP: Show Current File Diagnostics' },
   {'n', '<leader>ca', "<cmd>lua vim.lsp.buf.code_action()<cr>", 'LSP: Code Actions' },
   {'v', '<leader>ca', "<cmd>lua vim.lsp.buf.code_action({ range = { start = vim.api.nvim_buf_get_mark(vim.api.nvim_get_current_buf(), '<'), ['end'] = vim.api.nvim_buf_get_mark(vim.api.nvim_get_current_buf(), '>') }})<cr>", 'LSP: Code Actions' },
   {'n', '<leader>gi', "<cmd>lua require('telescope.builtin').lsp_implementations()<cr>", 'LSP: Show Implementations' },
