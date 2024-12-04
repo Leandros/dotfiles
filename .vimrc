@@ -154,7 +154,7 @@ if has('nvim')
     Plug 'SmiteshP/nvim-navbuddy'
 
     " LSP Language Plugins
-    Plug 'simrat39/rust-tools.nvim'            " Improved LSP support for Rust
+    Plug 'mrcjkb/rustaceanvim', { 'tag': 'v5.*' }
     Plug 'akinsho/flutter-tools.nvim'
 
     if has_navigator
@@ -408,6 +408,9 @@ function! HighlightsDark() abort
   hi! FloatShadowThrough blend=100 guibg=#073642
   "hi! LocalHighlight cterm= gui= guifg=#dcd7ba guibg=#2d4f67
 
+  " --- LSP ---
+  hi! LspInlayHint cterm=NONE ctermfg=92 gui=NONE guifg=#586e75 guibg=NONE guisp=NONE " same as Comment
+
   " --- TreeSitter ---
   hi! TSDefinitionUsage guifg=none guibg=#073642 gui=underline guisp=none
 endfunction
@@ -430,6 +433,9 @@ function! HighlightsLight() abort
   hi! FloatShadow blend=80 guibg=#eee8d5
   hi! FloatShadowThrough blend=100 guibg=#eee8d5
   "hi! LocalHighlight cterm= gui= guifg=#dcd7ba guibg=#2d4f67
+
+  " --- LSP ---
+  hi! LspInlayHint cterm=NONE ctermfg=92 gui=NONE guifg=#93a1a1 guibg=NONE guisp=NONE " same as Comment
 
   " --- TreeSitter ---
   hi! TSDefinitionUsage guifg=none guibg=#eee8d5 gui=underline guisp=none
@@ -1253,6 +1259,9 @@ local function on_attach(client, bufnr)
   -- setup buffer keymaps etc.
   lsp_status.on_attach(client)
   navbuddy.attach(client, bufnr)
+
+  -- Turn on inlay hints
+  vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
 end
 
 local function on_init(client, init_result)
@@ -1263,63 +1272,91 @@ local function on_init(client, init_result)
   end
 end
 
+-- Borders
+local _border = {
+  -- Second argument is the highlight group name.
+  { '┌', 'FloatBorder' },
+  { '─', 'FloatBorder' },
+  { '┐', 'FloatBorder' },
+  { '│', 'FloatBorder' },
+  { '┘', 'FloatBorder' },
+  { '─', 'FloatBorder' },
+  { '└', 'FloatBorder' },
+  { '│', 'FloatBorder' },
+}
+
+-- Add the border on hover and on signature help popup window
+local handlers = {
+  ['textDocument/hover'] = vim.lsp.with(vim.lsp.handlers.hover, { border = _border }),
+  ['textDocument/signatureHelp'] = vim.lsp.with(vim.lsp.handlers.signature_help, { border = _border }),
+  -- Disable virtual text for diagnostics.
+  ['textDocument/publishDiagnostics'] = vim.lsp.with(
+    vim.lsp.diagnostic.on_publish_diagnostics, { virtual_text = false, }
+  ),
+}
+
+
+-- Add border to the diagnostic popup window
+vim.diagnostic.config({
+    -- Enabled
+    --virtual_text = {
+    --    prefix = '■ ', -- Could be '●', '▎', 'x', '■', , 
+    --},
+    -- Disabled
+    virtual_text = false,
+    signs = true,
+    float = { border = _border },
+})
+
+require('lspconfig.ui.windows').default_options = {
+  border = _border
+}
+
+
 -- Rust
-local rust_tools = require("rust-tools")
-local extension_path = ''
-local codelldb_path = ''
-local liblldb_path = ''
+vim.g.rustaceanvim = function()
+  local extension_path = ''
+  local codelldb_path = ''
+  local liblldb_path = ''
 
--- Installing debugging capabilities:
--- 1. Download the CodeLLDB vscode extension.
--- 2. Find out where its installed. On linux, it's usually in $HOME/.vscode/extensions/...
--- 3. Update your configuration:
--- 4. Create a .vimspector.json
+  -- Installing debugging capabilities:
+  -- 1. Download the CodeLLDB vscode extension.
+  -- 2. Find out where its installed. On linux, it's usually in $HOME/.vscode/extensions/...
+  -- 3. Update your configuration:
+  -- 4. Create a .vimspector.json
 
-if vim.fn.has('win32') then
-  extension_path = vim.env.HOME .. '/bin/codelldb-x86_64-windows/extension/'
-  codelldb_path = extension_path .. 'adapter/codelldb.exe'
-  liblldb_path = extension_path .. 'lldb/lib/liblldb.lib'
-elseif vim.loop.os_uname().sysname == "Darwin" then
-  extension_path = vim.env.HOME .. '/.vscode/extensions/vadimcn.vscode-lldb-1.9.0/'
-  codelldb_path = extension_path .. 'adapter/codelldb'
-  liblldb_path = extension_path .. 'lldb/lib/liblldb.dylib'
-end
+  if vim.fn.has('win32') then
+    extension_path = vim.env.HOME .. '/bin/codelldb-x86_64-windows/extension/'
+    codelldb_path = extension_path .. 'adapter/codelldb.exe'
+    liblldb_path = extension_path .. 'lldb/lib/liblldb.lib'
+  elseif vim.loop.os_uname().sysname == "Darwin" then
+    extension_path = vim.env.HOME .. '/.vscode/extensions/vadimcn.vscode-lldb-1.9.0/'
+    codelldb_path = extension_path .. 'adapter/codelldb'
+    liblldb_path = extension_path .. 'lldb/lib/liblldb.dylib'
+  end
 
-local rust_opts = {
-    tools = { -- rust-tools options
-        autoSetHints = true,
-        hover_with_actions = false,
-        inlay_hints = {
-            -- Only show inlay hints for the current line
-            only_current_line = false,
-            -- wheter to show parameter hints with the inlay hints or not
-            show_parameter_hints = true,
-            -- prefix for parameter hints
-            parameter_hints_prefix = "<- ",
-            -- prefix for all the other hints (type, chaining)
-            other_hints_prefix = "=> ",
-            -- whether to align to the length of the longest line in the file
-            max_len_align = false,
-            -- padding from the left if max_len_align is true
-            max_len_align_padding = 1,
-            -- whether to align to the extreme right or not
-            right_align = false,
-            -- The color of the hints
-            highlight = "Comment",
-        },
-        runnables = {
-            use_telescope = true,
-        },
-        debuggables = {
-            use_telescope = true,
-        },
+  local cfg = require('rustaceanvim.config')
+  return {
+    -- Plugin configuration
+    ---@type rustaceanvim.tools.Opts
+    tools = {
+      float_win_config = {
+        border = 'rounded',
+      },
     },
+
+    -- DAP configuration
+    ---@type rustaceanvim.dap.Opts
     dap = {
-      adapter = require('rust-tools.dap').get_codelldb_adapter(codelldb_path, liblldb_path)
+      adapter = cfg.get_codelldb_adapter(codelldb_path, liblldb_path)
     },
+
+    -- LSP configuration
+    ---@type rustaceanvim.lsp.ClientOpts
     server = {
       on_attach = on_attach,
       on_init = on_init,
+      handlers = handlers,
       --capabilities = capabilities,
       flags = { allow_incremental_sync = false },
       commands = {
@@ -1390,7 +1427,8 @@ local rust_opts = {
         },
       },
     },
-}
+  }
+end -- rust config
 
 require("mason-lspconfig").setup_handlers {
     -- The first entry (without a key) will be the default handler
@@ -1400,12 +1438,13 @@ require("mason-lspconfig").setup_handlers {
         lspconfig[server_name].setup {
           on_attach = on_attach,
           on_init = on_init,
+          handlers = handlers,
           --capabilities = capabilities,
         }
     end,
     -- Next, you can provide a dedicated handler for specific servers.
     ["rust_analyzer"] = function ()
-      rust_tools.setup(rust_opts)
+      --custom setup here ...
     end,
     ["yamlls"] = function ()
       lspconfig["yamlls"].setup {
@@ -1420,7 +1459,7 @@ require("mason-lspconfig").setup_handlers {
 
 -- Rust Analyzer is special. We might install it in a multitude of ways.
 if not registry.is_installed('rust-analyzer') then
-  rust_tools.setup(rust_opts)
+  --custom setup here ...
 end
 
 -- Flutter/Dart
@@ -2067,7 +2106,7 @@ local lsp_bindings = {
   { 'i', '<c-k>', '<cmd>lua vim.lsp.buf.signature_help()<CR>', 'LSP: Signature Help' },
 
   { 'n', '<c-k>', '<cmd>lua vim.lsp.buf.signature_help()<CR>', 'LSP: Signature Help' },
-  { 'n', 'K', '<cmd>lua vim.lsp.buf.hover({ popup_opts = { border = single, max_width = 80 }})<CR>', 'LSP: Hover Docs' },
+  { 'n', 'K', '<cmd>lua vim.lsp.buf.hover({ popup_opts = { border = single, max_width = 120 }})<CR>', 'LSP: Hover Docs' },
   { 'n', '<leader>re', '<cmd>lua vim.lsp.buf.rename()<CR>', 'LSP: Rename' },
 
   { 'n', '[e', "<cmd>lua vim.diagnostic.goto_next({ border = 'rounded', max_width = 80 })<CR>", 'LSP: Next Diagnostic' },
@@ -2103,31 +2142,6 @@ end
 EOF
 
 " nnoremap <silent><Leader>k <cmd>lua vim.diagnostic.open_float(0, { scope = "line" })<CR>
-
-lua <<EOF
-local _border = "single"
-
-vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(
-  vim.lsp.handlers.hover, {
-    border = _border
-  }
-)
-
-vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(
-  vim.lsp.handlers.signature_help, {
-    border = _border
-  }
-)
-
-vim.diagnostic.config{
-  float={border=_border}
-}
-
-require('lspconfig.ui.windows').default_options = {
-  border = _border
-}
-
-EOF
 
 
 " =============================================================================
@@ -2342,18 +2356,6 @@ EOF
 " autocmd CursorHold * lua require'lspsaga.diagnostic'.show_line_diagnostics()
 " autocmd CursorHold * lua require('navigator.diagnostics').show_diagnostics()
 " au CursorHold * lua vim.diagnostic.open_float(0,{scope = "cursor"})
-
-" Disable virtual text for diagnostics.
-lua <<EOF
-vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
-    vim.lsp.diagnostic.on_publish_diagnostics, { virtual_text = false, }
-)
-vim.diagnostic.config({
-    virtual_text = false,
-    signs = true,
-    float = { border = "single" },
-})
-EOF
 
 " =============================================================================
 " Indent Blankline
