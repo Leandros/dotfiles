@@ -3086,21 +3086,29 @@ EOF
 " =============================================================================
 " Floaterm
 " =============================================================================
-let g:floaterm_keymap_new    = ',n'
-let g:floaterm_keymap_toggle = ',t'
+let g:floaterm_keymap_new    = ',a'
+let g:floaterm_keymap_toggle = ',n'
 let g:floaterm_keymap_prev   = ',b'
 let g:floaterm_keymap_next   = ',s'
+let g:floaterm_keymap_kill   = ',Q'
+let g:floaterm_keymap_hide   = ',q'
 let g:floaterm_width = 0.8
 let g:floaterm_height = 0.8
+
+" This will insert a `,` into the terminal.
+tnoremap   <silent>   ,,   <C-\><C-n>i,
 
 lua <<EOF
 local wk = require("which-key")
 wk.add({
-  { ",", group = "floaterm" },
-  { ",b", desc = "Previous Terminal" },
-  { ",n", desc = "New Terminal" },
-  { ",s", desc = "Next Terminal" },
-  { ",t", desc = "Toggle Terminal" },
+  { ",", group = "floaterm", mode = { "n", "t" } },
+  { ",b", desc = "Previous Terminal", mode = { "n", "t" } },
+  { ",a", desc = "New Terminal", mode = { "n", "t" } },
+  { ",s", desc = "Next Terminal", mode = { "n", "t" } },
+  { ",n", desc = "Toggle Terminal", mode = { "n", "t" } },
+  { ",Q", desc = "Kill Terminal", mode = { "n", "t" } },
+  { ",q", desc = "Hide Terminal", mode = { "n", "t" } },
+  { ",,", desc = "Insert `,`", mode = { "n", "t" } },
 })
 EOF
 
@@ -3178,6 +3186,8 @@ wk.add({
   { "<Leader>cd", "<Cmd>CBd<CR>", desc = "Remove a box" },
 })
 EOF
+
+
 
 "          ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 "          ┃           ALWAYS KEEP AT THE ABSOLUTE BOTTOM!            ┃
