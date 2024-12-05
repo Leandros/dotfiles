@@ -81,6 +81,8 @@ if has('nvim')
     " Libraries
     Plug 'kyazdani42/nvim-web-devicons'
     Plug 'nvim-lua/plenary.nvim'               " Lua library
+    Plug 'nvim-neotest/nvim-nio'               " Required for neotest
+    Plug 'antoinemadec/FixCursorHold.nvim'
     Plug 'rcarriga/nvim-notify'                " Notification framework
     Plug 's1n7ax/nvim-window-picker', {'tag': 'v1.*'}
 
@@ -146,6 +148,8 @@ if has('nvim')
     Plug 'folke/trouble.nvim'                  " Pretty diagnostics
     Plug 'nvim-lua/lsp-status.nvim'            " Plugin to show lsp status in statusline
     Plug 'rmagatti/goto-preview'               " Preview LSP definitions
+    Plug 'nvim-neotest/neotest'
+    Plug 'chrisgrieser/nvim-lsp-endhints'      " Old school end hints
 
     " navbuddy
     Plug 'SmiteshP/nvim-navic'
@@ -1741,7 +1745,7 @@ require("trouble").setup {
 }
 EOF
 
-nnoremap <leader>xx <cmd>TroubleToggle workspace_diagnostics<CR>
+nnoremap <leader>xd <cmd>TroubleToggle workspace_diagnostics<CR>
 
 
 " =============================================================================
@@ -3189,6 +3193,44 @@ wk.add({
 })
 EOF
 
+"   ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫ neotest ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+lua <<EOF
+require('neotest').setup {
+  adapters = {
+   require('rustaceanvim.neotest'),
+  },
+}
+
+local wk = require("which-key")
+wk.add({
+  { "<Leader>x", group = "Test", icon = "" },
+  { "<leader>xx", function() require('neotest').run.run() end, desc = "Test Nearest" },
+  { "<leader>xa", function() require('neotest').run.run(vim.fn.expand("%")) end, desc = "Test File" },
+  { "<leader>xo", function() require('neotest').output.open({ enter = true }) end, desc = "Open Output" },
+  { "<leader>xp", function() require('neotest').output_panel.toggle() end, desc = "Open Output Panel" },
+  { "<leader>xq", function() require('neotest').output_panel.clear() end, desc = "Clear Output Panel" },
+  { "<leader>xw", function() require('neotest').run.attach() end, desc = "Test Watch" },
+})
+EOF
+
+"   ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━┫ lsp endhints ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+lua <<EOF
+require("lsp-endhints").setup {
+	icons = {
+		type = "󰜁 ",
+		parameter = "󰏪 ",
+		offspec = " ", -- hint kind not defined in official LSP spec
+		unknown = " ", -- hint kind is nil
+	},
+	label = {
+		truncateAtChars = 20,
+		padding = 1,
+		marginLeft = 0,
+		sameKindSeparator = ", ",
+	},
+	autoEnableHints = true,
+}
+EOF
 
 
 "          ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
