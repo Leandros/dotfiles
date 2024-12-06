@@ -1158,7 +1158,7 @@ cmp.setup({
     ['<CR>'] = function(fallback)
       if cmp.visible() and cmp.get_selected_entry() ~= nil then
         cmp.confirm({
-          behavior = cmp.ConfirmBehavior.Replace,
+          behavior = cmp.ConfirmBehavior.Insert,
           select = false,
         })
       else
