@@ -1044,12 +1044,49 @@ if has('nvim')
     set shortmess+=c
 
 " =============================================================================
+" Auto Pairs (must come before completion)
+" =============================================================================
+lua <<EOF
+local Rule = require('nvim-autopairs.rule')
+local npairs = require('nvim-autopairs')
+local cond = require('nvim-autopairs.conds')
+
+npairs.setup({
+  disable_filetype = {
+    'TelescopePrompt',
+    'TelescopeResults',
+    'Trouble',
+    'help',
+    'mason',
+    'floaterm',
+    'Terminal',
+    'gitcommit',
+    'vim-plug',
+    'lspinfo',
+    'vim',
+    'packer',
+    'checkhealth',
+    'man',
+  },
+})
+
+local Rule = require("nvim-autopairs.rule")
+npairs.add_rules({
+  Rule("<", ">", { "-html", "-javascriptreact", "-typescriptreact" })
+    :with_pair(cond.not_after_regex("[%w%.]"))
+    :with_pair(cond.before_regex("%a+:?:?$", 3))
+    :with_move(function(opts)
+      return opts.char == ">"
+    end),
+})
+EOF
+
+" =============================================================================
 " Completion
 " =============================================================================
 " Must come before LSP.
 " See https://github.com/hrsh7th/nvim-cmp#basic-configuration
 lua <<EOF
-local cmp_autopairs = require('nvim-autopairs.completion.cmp')
 local cmp = require 'cmp'
 function vsnip_complete()
   cmp.complete({
@@ -1121,7 +1158,7 @@ cmp.setup({
     ['<CR>'] = function(fallback)
       if cmp.visible() and cmp.get_selected_entry() ~= nil then
         cmp.confirm({
-          behavior = cmp.ConfirmBehavior.Insert,
+          behavior = cmp.ConfirmBehavior.Replace,
           select = false,
         })
       else
@@ -1168,10 +1205,10 @@ cmp.setup.cmdline(':', {
 })
 
 -- Doesn't work, for some reason
---cmp.event:on(
---  'confirm_done',
---  cmp_autopairs.on_confirm_done()
---)
+local cmp_autopairs = require('nvim-autopairs.completion.cmp')
+cmp.event:on('confirm_done', function()
+  cmp_autopairs.on_confirm_done()
+end)
 
 
 EOF
@@ -1361,7 +1398,7 @@ vim.g.rustaceanvim = function()
       on_attach = on_attach,
       on_init = on_init,
       handlers = handlers,
-      --capabilities = capabilities,
+      capabilities = lsp_defaults.capabilities,
       flags = { allow_incremental_sync = false },
       commands = {
         RustOpenDocs = {
@@ -1443,7 +1480,7 @@ require("mason-lspconfig").setup_handlers {
           on_attach = on_attach,
           on_init = on_init,
           handlers = handlers,
-          --capabilities = capabilities,
+          capabilities = lsp_defaults.capabilities,
         }
     end,
     -- Next, you can provide a dedicated handler for specific servers.
@@ -2412,15 +2449,6 @@ nnoremap <Leader>ng <cmd>lua require('neogen').generate()<cr>
 nnoremap <Leader>nf <cmd>lua require('neogen').generate({ type = "file" })<cr>
 nnoremap <Leader>nc <cmd>lua require('neogen').generate({ type = "class" })<cr>
 
-" =============================================================================
-" Auto Pairs
-" =============================================================================
-lua <<EOF
-require('nvim-autopairs').setup({
-  disable_filetype = { "TelescopePrompt" , "vim" },
-})
-EOF
-
 endif " if has(nvim)
 
 " =============================================================================
@@ -3223,7 +3251,7 @@ require("lsp-endhints").setup {
 		unknown = " ", -- hint kind is nil
 	},
 	label = {
-		truncateAtChars = 20,
+		truncateAtChars = 32,
 		padding = 1,
 		marginLeft = 0,
 		sameKindSeparator = ", ",
