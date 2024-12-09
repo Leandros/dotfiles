@@ -19,6 +19,11 @@ end
 
 -- This is where you actually apply your config choices
 
+-- Hyperlinks:
+--
+-- Use the defaults as a base
+config.hyperlink_rules = wezterm.default_hyperlink_rules()
+
 -- Tabbar:
 config.enable_tab_bar = true
 config.use_fancy_tab_bar = true
@@ -114,15 +119,19 @@ config.font = wezterm.font_with_fallback {
     {
         family = 'PragmataPro Mono Liga',
         weight = 'Regular',
-        harfbuzz_features = { 'calt=0', 'clig=0', 'liga=0' },
+        -- available features in PragmataPro: `calt` ligatures.
+        -- `ss13` is git tree
+        harfbuzz_features = { 'calt=0', 'clig=0', 'liga=0', 'ss13=1' },
     },
     -- We swap the patched and non-patched font around, otherwise some things are
     -- not correctly displayed, such as: ']]' (two ] ] (without space)).
-    {
-        family = 'PragmataProMonoLiga Nerd Font',
-        weight = 'Regular',
-        harfbuzz_features = { 'calt=0', 'clig=0', 'liga=0' },
-    },
+    -- Further, the sizes of the glyphs is off when the patched font is used.
+    -- {
+    --     family = 'PragmataProMonoLiga Nerd Font',
+    --     weight = 'Regular',
+    --     -- available features in PragmataPro: `calt` ligatures.
+    --     harfbuzz_features = { 'calt=0', 'clig=0', 'liga=0' },
+    -- },
     'Apple Color Emoji',
 }
 config.bold_brightens_ansi_colors = 'BrightAndBold'
