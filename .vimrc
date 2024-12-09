@@ -3245,14 +3245,14 @@ EOF
 lua <<EOF
 require("lsp-endhints").setup {
 	icons = {
-		type = "󰜁 ",
-		parameter = "󰏪 ",
-		offspec = " ", -- hint kind not defined in official LSP spec
-		unknown = " ", -- hint kind is nil
+		type = "⮜ ",
+		parameter = "↳ ",
+		offspec = "⮜ ", -- hint kind not defined in official LSP spec
+		unknown = "⮾ ", -- hint kind is nil
 	},
 	label = {
-		truncateAtChars = 32,
-		padding = 1,
+		truncateAtChars = 80,
+		padding = 0,
 		marginLeft = 0,
 		sameKindSeparator = ", ",
 	},
