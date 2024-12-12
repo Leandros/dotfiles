@@ -1,0 +1,94 @@
+[general]
+live_config_reload = true
+
+[bell]
+duration = 0
+
+[colors]
+draw_bold_text_with_bright_colors = true
+
+[colors.bright]
+black = "#073642"
+blue = "#268bd2"
+cyan = "#2aa198"
+green = "#859900"
+magenta = "#d33682"
+red = "#dc322f"
+white = "#fdf6e3"
+yellow = "#b58900"
+#black = "#002b36"
+#blue = "#839496"
+#cyan = "#93a1a1"
+#green = "#586e75"
+#magenta = "#6c71c4"
+#red = "#cb4b16"
+#white = "#fdf6e3"
+#yellow = "#657b83"
+
+[colors.cursor]
+cursor = "CellForeground"
+text = "CellBackground"
+
+[colors.normal]
+black = "#073642"
+blue = "#268bd2"
+cyan = "#2aa198"
+green = "#859900"
+magenta = "#d33682"
+red = "#dc322f"
+white = "#fdf6e3"
+yellow = "#b58900"
+
+[colors.primary]
+background = "#002b36"
+foreground = "#839496"
+
+[colors.vi_mode_cursor]
+cursor = "CellForeground"
+text = "CellBackground"
+
+[cursor.style]
+blinking = "Off"
+shape = "Block"
+
+[env]
+TERM = "xterm-256color"
+
+# Set `defaults write org.alacritty AppleFontSmoothing -int 0` to disable FontSmoothing
+# and therefore reduce the "thickness" of the font rendered.
+[font]
+size = 14.0
+builtin_box_drawing = true
+
+[font.bold]
+family = "PragmataPro Mono"
+style = "Bold"
+
+[font.bold_italic]
+family = "PragmataPro Mono Liga"
+style = "Bold Italic"
+
+[font.italic]
+family = "PragmataPro Mono Liga"
+style = "Italic"
+
+[font.normal]
+family = "PragmataPro Mono Liga"
+style = "Regular"
+
+[scrolling]
+history = 10000
+
+[selection]
+save_to_clipboard = true
+semantic_escape_chars = ''',│`|:"' ()[]{}<>	'''
+
+[window]
+dynamic_title = true
+padding = { x = 10, y = 10 }
+dimensions = { columns = 120, lines = 30 }
+
+[keyboard]
+bindings = [
+    { key = "C", mods = "Control", chars = "\u0003" },
+]
