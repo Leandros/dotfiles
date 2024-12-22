@@ -1284,7 +1284,7 @@ local function on_attach(client, bufnr)
   if vim.g['has_navigator'] ~= 0 then
     require('navigator.lspclient.mapping').setup({ client=client, bufnr=bufnr }) -- setup navigator keymaps here,
     require('navigator.dochighlight').documentHighlight(bufnr)
-    require('navigator.codeAction').code_action_prompt(bufnr)
+    require('navigator.codeAction').code_action_prompt(bufnr, {})
 
     local navigator_bindings = {
       { 'n', '<c-]>', "<cmd>lua require('navigator.definition').definition()<CR>", '' },
