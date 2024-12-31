@@ -1,0 +1,35 @@
+# Font config
+font-family = "PragmataPro Mono Liga"
+font-style = "Regular"
+font-synthetic-style = false
+font-feature = "-calt"
+font-feature = "-clig"
+font-feature = "-liga"
+font-feature = "ss13"
+font-size = 14
+font-thicken = false
+grapheme-width-method = "unicode"
+
+# Color
+bold-is-bright = true
+theme = "dark:solarized-dark,light:solarized-light"
+
+# General config
+scrollback-limit = 2097152
+clipboard-read = allow
+clipboard-write = allow
+shell-integration = "zsh"
+macos-option-as-alt = "right"
+macos-auto-secure-input = true
+macos-secure-input-indication = true
+# click-repeat-interval = 
+
+# Window config
+window-padding-x = 5
+window-padding-y = 5
+window-padding-balance = true
+window-padding-color = "extend"
+window-vsync = true
+window-decoration = true
+window-theme = "system"
+window-colorspace = "display-p3"
