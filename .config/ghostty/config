@@ -11,7 +11,7 @@ font-thicken = false
 grapheme-width-method = "unicode"
 
 # Color
-bold-is-bright = true
+bold-is-bright = false
 theme = "dark:solarized-dark,light:solarized-light"
 
 # General config
