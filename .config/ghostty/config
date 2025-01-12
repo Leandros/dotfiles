@@ -33,3 +33,14 @@ window-vsync = true
 window-decoration = true
 window-theme = "system"
 window-colorspace = "display-p3"
+
+# Keybindings.
+keybind = opt+e=text:€
+keybind = opt+5=text:[
+keybind = opt+6=text:]
+keybind = opt+shift+/=text:\\
+keybind = opt+7=text:|
+keybind = opt+8=text:{
+keybind = opt+9=text:}
+keybind = opt+n=text:~
+keybind = opt+l=text:@
