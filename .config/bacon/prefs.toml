@@ -1,0 +1,120 @@
+# This is a preferences file for the bacon tool
+# More info at https://github.com/Canop/bacon
+
+
+# Uncomment and change the value (true/false) to
+# specify whether bacon should start in summary mode
+#
+# summary = true
+
+
+# Uncomment and change the value (true/false) to
+# specify whether bacon should start with lines wrapped
+#
+# wrap = false
+
+
+# In "reverse" mode, the focus is at the bottom, item
+# order is reversed, and the status bar is on top
+#
+reverse = false
+
+
+# The grace period is a delay after a file event before the real
+# task is launched and during which other events will be ignored.
+# This is useful if several events are often sent quasi-simultaneously
+# (eg your editor backups before saving, then renames).
+# You can set it to "none" if it's useless for you.
+#
+grace_period = "5ms"
+
+
+# Uncomment and change the value (true/false) to
+# specify whether bacon should show a help line.
+#
+help_line = true
+
+
+# Uncomment and change the value (true/false) to
+# set whether to display the count of changes since last job start
+#
+show_changes_count = true
+
+
+# Uncomment one of those lines if you don't want the default
+# behavior triggered by a file change. This property can also
+# be set directly in a specific job.
+#
+# on_change_strategy = "kill_then_restart"
+# on_change_strategy = "wait_then_restart"
+
+
+# Exporting "locations" (by setting its 'auto' to true) lets you use
+# them in an external tool, for example as a list of jump locations
+# in an IDE or in a language server.
+# (See https://dystroy.org/bacon/config/#export-locations),
+#
+# Possible line_format parts:
+#  - kind: warning|error|test
+#  - path: complete absolute path to the file
+#  - line: 1-based line number
+#  - column: 1-based column
+#  - message: description of the item
+#  - context: unstyled lines of output, separated with escaped newlines (`\\n`)
+
+# This can be used for manually inspecting the `.bacon-locations`
+# [exports.locations]
+# auto = true
+# exporter = "locations"
+# path = ".bacon-locations"
+# line_format = "{kind} {path}:{line}:{column} {message}"
+
+[jobs.bacon-ls]
+command = [ "cargo", "clippy", "--all-targets", "--message-format", "json-diagnostic-rendered-ansi" ]
+analyzer = "cargo_json"
+need_stdout = true
+
+# This is required for `bacon-ls` to work.
+[exports.cargo-json-spans]
+auto = true
+exporter = "analyzer"
+line_format = "{diagnostic.level}|:|{span.file_name}|:|{span.line_start}|:|{span.line_end}|:|{span.column_start}|:|{span.column_end}|:|{diagnostic.message}|:|{span.suggested_replacement}"
+path = ".bacon-locations"
+
+# Uncomment and change the key-bindings you want to define
+# (some of those ones are the defaults and are just here for illustration)
+[keybindings]
+r = "scroll-lines(-1)" # up
+n = "scroll-lines(1)" # down
+esc = "back"
+g = "scroll-to-top"
+shift-g = "scroll-to-bottom"
+Space = "scroll-pages(1)"
+ctrl-c = "quit"
+ctrl-q = "quit"
+q = "quit"
+s = "toggle-summary"
+p = "toggle-pause"
+w = "toggle-wrap"
+b = "toggle-backtrace"
+# jobs:
+d = "job:doc-open"
+c = "job:clippy"
+i = "job:initial"
+t = "job:test"
+l = "job:bacon-ls"
+# r = "job:run"
+
+# k = "scroll-lines(-1)"
+# j = "scroll-lines(1)"
+# F5 = "rerun"
+# Home = "scroll-to-top"
+# End = "scroll-to-bottom"
+# Up = "scroll-lines(-1)"
+# Down = "scroll-lines(1)"
+# PageUp = "scroll-pages(-1)"
+# PageDown = "scroll-pages(1)"
+# a = "job:check-all"
+# c = "job:clippy-all"
+# ctrl-e = "export:analysis"
+# ctrl-c = "copy-unstyled-output"
