@@ -1456,10 +1456,17 @@ vim.g.rustaceanvim = function()
           --  command = "clippy",
           --},
 
-          checkOnSave = {
-            command = "clippy"
-          },
-          --checkOnSave = false,
+          --checkOnSave = {
+          --  --command = "clippy"
+          --  --command = "check"
+          --},
+          checkOnSave = { enable = false },
+          check = false,
+          diagnostics = { enable = false },
+          --cargo = {
+          --  extraEnv = { CARGO_TARGET_DIR = '.ra_target' },
+          --  features = 'all',
+          --},
 
           -- panicking too often
           --diagnostics = {
@@ -1503,6 +1510,21 @@ require("mason-lspconfig").setup_handlers {
 -- Rust Analyzer is special. We might install it in a multitude of ways.
 if not registry.is_installed('rust-analyzer') then
   --custom setup here ...
+end
+
+if registry.is_installed('bacon-ls') then
+  require("lspconfig").bacon_ls.setup({
+    on_attach = on_attach,
+    on_init = on_init,
+    handlers = handlers,
+    capabilities = lsp_defaults.capabilities,
+    settings = {
+      updateOnSave = true,
+      updateOnSaveWaitMillis = 1000,
+      updateOnChange = false,
+      runBaconInBackground = false,
+    },
+  })
 end
 
 -- Flutter/Dart
