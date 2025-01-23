@@ -1299,7 +1299,9 @@ local function on_attach(client, bufnr)
 
   -- setup buffer keymaps etc.
   lsp_status.on_attach(client)
-  navbuddy.attach(client, bufnr)
+  if client.server_capabilities.documentSymbolProvider then
+    navbuddy.attach(client, bufnr)
+  end
 
   -- Turn on inlay hints
   vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
