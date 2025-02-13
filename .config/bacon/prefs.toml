@@ -70,7 +70,7 @@ show_changes_count = true
 # line_format = "{kind} {path}:{line}:{column} {message}"
 
 [jobs.bacon-ls]
-command = [ "cargo", "clippy", "--all-targets", "--message-format", "json-diagnostic-rendered-ansi" ]
+command = [ "cargo", "clippy", "--all-targets", "--all-features", "--message-format", "json-diagnostic-rendered-ansi" ]
 analyzer = "cargo_json"
 need_stdout = true
 
@@ -78,7 +78,7 @@ need_stdout = true
 [exports.cargo-json-spans]
 auto = true
 exporter = "analyzer"
-line_format = "{diagnostic.level}|:|{span.file_name}|:|{span.line_start}|:|{span.line_end}|:|{span.column_start}|:|{span.column_end}|:|{diagnostic.message}|:|{span.suggested_replacement}"
+line_format = "{diagnostic.level}|:|{span.file_name}|:|{span.line_start}|:|{span.line_end}|:|{span.column_start}|:|{span.column_end}|:|{diagnostic.message}|:|{diagnostic.rendered}|:|{span.suggested_replacement}"
 path = ".bacon-locations"
 
 # Uncomment and change the key-bindings you want to define
