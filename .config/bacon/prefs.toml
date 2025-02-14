@@ -1,53 +1,38 @@
 # This is a preferences file for the bacon tool
 # More info at https://github.com/Canop/bacon
 
-
 # Uncomment and change the value (true/false) to
 # specify whether bacon should start in summary mode
-#
 # summary = true
-
 
 # Uncomment and change the value (true/false) to
 # specify whether bacon should start with lines wrapped
-#
 # wrap = false
-
 
 # In "reverse" mode, the focus is at the bottom, item
 # order is reversed, and the status bar is on top
-#
 reverse = false
-
 
 # The grace period is a delay after a file event before the real
 # task is launched and during which other events will be ignored.
 # This is useful if several events are often sent quasi-simultaneously
 # (eg your editor backups before saving, then renames).
 # You can set it to "none" if it's useless for you.
-#
 grace_period = "5ms"
-
 
 # Uncomment and change the value (true/false) to
 # specify whether bacon should show a help line.
-#
 help_line = true
-
 
 # Uncomment and change the value (true/false) to
 # set whether to display the count of changes since last job start
-#
 show_changes_count = true
-
 
 # Uncomment one of those lines if you don't want the default
 # behavior triggered by a file change. This property can also
 # be set directly in a specific job.
-#
 # on_change_strategy = "kill_then_restart"
 # on_change_strategy = "wait_then_restart"
-
 
 # Exporting "locations" (by setting its 'auto' to true) lets you use
 # them in an external tool, for example as a list of jump locations
@@ -70,11 +55,10 @@ show_changes_count = true
 # line_format = "{kind} {path}:{line}:{column} {message}"
 
 [jobs.bacon-ls]
-command = [ "cargo", "clippy", "--all-targets", "--all-features", "--message-format", "json-diagnostic-rendered-ansi" ]
+command = [ "cargo", "clippy", "--workspace", "--all-targets", "--all-features", "--message-format", "json-diagnostic-rendered-ansi" ]
 analyzer = "cargo_json"
 need_stdout = true
 
-# This is required for `bacon-ls` to work.
 [exports.cargo-json-spans]
 auto = true
 exporter = "analyzer"
