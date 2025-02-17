@@ -160,6 +160,7 @@ if has('nvim')
     " LSP Language Plugins
     Plug 'mrcjkb/rustaceanvim', { 'tag': 'v5.*' }
     Plug 'akinsho/flutter-tools.nvim'
+    Plug 'saecki/crates.nvim', { 'tag': 'stable' }
 
     if has_navigator
         Plug 'ray-x/guihua.lua', {'do': 'cd lua/fzy && make' }
@@ -1355,6 +1356,40 @@ require('lspconfig.ui.windows').default_options = {
   border = _border
 }
 
+-- Crates.nvim
+require("crates").setup {
+  lsp = {
+    enabled = true,
+    on_attach = function(client, bufnr)
+      -- the same on_attach function as for your other lsp's
+      local crates = require("crates")
+      local opts = { silent = true, buffer = bufnr, noremap = false }
+      vim.keymap.set('n', '<leader>cv', crates.show_versions_popup, vim.tbl_extend('force', opts, { desc = 'view crate versions' }))
+      vim.keymap.set('n', '<leader>cf', crates.show_features_popup, vim.tbl_extend('force', opts, { desc = 'view crate features' }))
+      vim.keymap.set('n', '<leader>cd', crates.show_dependencies_popup, vim.tbl_extend('force', opts, { desc = 'view crate dependencies' }))
+
+      local wk = require("which-key")
+      wk.add({{ "<Leader>c", group = "crates.io", icon = "" }})
+    end,
+    actions = true,
+    completion = true,
+    hover = true,
+  },
+  popup = {
+    border = _border,
+    keys = {
+      hide = { "q", "<esc>" },
+      open_url = { "<cr>" },
+      select = { "<cr>" },
+      select_alt = { "s" },
+      toggle_feature = { "<cr>" },
+      copy_value = { "yy" },
+      goto_item = { "gd", "K", "<C-LeftMouse>" },
+      jump_forward = { "<c-n>" },
+      jump_back = { "<c-r>", "<C-RightMouse>" },
+    },
+  },
+}
 
 -- Rust
 vim.g.rustaceanvim = function()
@@ -2488,7 +2523,18 @@ require('whitespace-nvim').setup({
 
   -- `ignored_filetypes` configures which filetypes to ignore when
   -- displaying trailing whitespace
-  ignored_filetypes = { 'TelescopePrompt', 'Trouble', 'help', 'mason', 'floaterm', 'Terminal', 'gitcommit', 'vim-plug', 'lspinfo' },
+  ignored_filetypes = {
+    'TelescopePrompt',
+    'Trouble',
+    'help',
+    'mason',
+    'floaterm',
+    'Terminal',
+    'gitcommit',
+    'vim-plug',
+    'lspinfo',
+    'crates.nvim',
+  },
 })
 EOF
 
@@ -3241,7 +3287,7 @@ wk.add({
   { "<Leader>ctl", "<Cmd>CBllline9<CR>", desc = "Line Title (Left)" },
   { "<Leader>cl", "<Cmd>CBline0<CR>", desc = "Line" },
   { "<Leader>cm", "<Cmd>CBllbox18<CR>", desc = "Box Enclosed" },
-  { "<Leader>cd", "<Cmd>CBd<CR>", desc = "Remove a box" },
+  { "<Leader>cx", "<Cmd>CBd<CR>", desc = "Remove a box" },
 })
 EOF
 
