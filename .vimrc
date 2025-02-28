@@ -1271,6 +1271,8 @@ lsp_defaults.capabilities = vim.tbl_deep_extend(
   lsp_status.capabilities
 )
 lsp_defaults.capabilities['semanticTokensProvider'] = nil
+-- https://github.com/neovim/neovim/issues/23291
+lsp_defaults.capabilities.workspace.didChangeWatchedFiles.dynamicRegistration = false
 
 lsp_status.register_progress()
 
