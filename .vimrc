@@ -1366,9 +1366,21 @@ require("crates").setup {
       -- the same on_attach function as for your other lsp's
       local crates = require("crates")
       local opts = { silent = true, buffer = bufnr, noremap = false }
-      vim.keymap.set('n', '<leader>cv', crates.show_versions_popup, vim.tbl_extend('force', opts, { desc = 'view crate versions' }))
-      vim.keymap.set('n', '<leader>cf', crates.show_features_popup, vim.tbl_extend('force', opts, { desc = 'view crate features' }))
-      vim.keymap.set('n', '<leader>cd', crates.show_dependencies_popup, vim.tbl_extend('force', opts, { desc = 'view crate dependencies' }))
+      local show_versions_popup = function()
+        crates.show_versions_popup()
+        crates.focus_popup()
+      end
+      local show_features_popup = function()
+        crates.show_features_popup()
+        crates.focus_popup()
+      end
+      local show_dependencies_popup = function()
+        crates.show_dependencies_popup()
+        crates.focus_popup()
+      end
+      vim.keymap.set('n', '<leader>cv', show_versions_popup, vim.tbl_extend('force', opts, { desc = 'view crate versions' }))
+      vim.keymap.set('n', '<leader>cf', show_features_popup, vim.tbl_extend('force', opts, { desc = 'view crate features' }))
+      vim.keymap.set('n', '<leader>cd', show_dependencies_popup, vim.tbl_extend('force', opts, { desc = 'view crate dependencies' }))
 
       local wk = require("which-key")
       wk.add({{ "<Leader>c", group = "crates.io", icon = "" }})
