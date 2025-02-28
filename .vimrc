@@ -1561,8 +1561,9 @@ if not registry.is_installed('rust-analyzer') then
   --custom setup here ...
 end
 
-if registry.is_installed('bacon-ls') then
+if vim.fn.executable('bacon-ls') then
   require("lspconfig").bacon_ls.setup({
+    cmd = { 'bacon-ls' },
     on_attach = on_attach,
     on_init = on_init,
     handlers = handlers,
