@@ -1495,7 +1495,7 @@ vim.g.rustaceanvim = function()
             },
           },
           procMacro = {
-            enable = true,
+            enable = false,
             --attributes = {
             --  enable = true,
             --},
