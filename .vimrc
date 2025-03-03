@@ -118,6 +118,7 @@ if has('nvim')
     Plug 'f-person/auto-dark-mode.nvim'
     Plug 'sindrets/diffview.nvim'
     Plug 'LudoPinelli/comment-box.nvim'
+    Plug 'mhartington/formatter.nvim'
 
     " Telescope
     Plug 'nvim-telescope/telescope.nvim', { 'branch': '0.1.x' } " Improved LSP actions
@@ -162,6 +163,9 @@ if has('nvim')
     Plug 'akinsho/flutter-tools.nvim'
     Plug 'saecki/crates.nvim', { 'tag': 'stable' }
 
+    " Rust
+    " Plug 'Canop/nvim-bacon'
+
     if has_navigator
         Plug 'ray-x/guihua.lua', {'do': 'cd lua/fzy && make' }
         Plug 'ray-x/navigator.lua'
@@ -180,10 +184,6 @@ endif
 
 " Prettier
 " Make sure to also update the `autocmd` if a new `for` language is added.
-Plug 'Chiel92/vim-autoformat', { 'for': ['gn', 'jbuild', 'opam', 'python', 'nix', 'hcl', 'elixir'] }
-Plug 'prettier/vim-prettier', {
-  \ 'do': 'yarn install --frozen-lockfile --production',
-  \ 'for': ['javascript', 'javascript.jsx', 'typescript', 'typescript.tsx', 'css', 'less', 'scss', 'json', 'graphql', 'markdown', 'vue', 'yaml', 'html'] }
 Plug 'cofyc/vim-uncrustify', { 'for': ['cpp', 'c', 'cs', 'objc', 'objcpp'] }
 
 " Syntax Plugins
@@ -1562,15 +1562,22 @@ if not registry.is_installed('rust-analyzer') then
 end
 
 if vim.fn.executable('bacon-ls') then
+  --vim.lsp.set_log_level('debug')
+  --if vim.fn.has 'nvim-0.5.1' == 1 then
+  --  require('vim.lsp.log').set_format_func(vim.inspect)
+  --end
+
   require("lspconfig").bacon_ls.setup({
     cmd = { 'bacon-ls' },
+    --cmd = { '/local/home/gerstarv/github/bacon-ls/target/debug/bacon-ls' },
+    single_file_support = false,
     on_attach = on_attach,
     on_init = on_init,
     handlers = handlers,
     capabilities = lsp_defaults.capabilities,
-    settings = {
+    init_options = {
       updateOnSave = true,
-      updateOnSaveWaitMillis = 1000,
+      updateOnSaveWaitMillis = 500,
       updateOnChange = false,
       runBaconInBackground = false,
     },
@@ -2583,21 +2590,22 @@ endif
 " =============================================================================
 lua <<EOF
 require'window-picker'.setup({
-    autoselect_one = true,
-    include_current_win = false,
-    selection_chars = 'ENCTIRSGOB',
-    use_winbar = 'never', -- "always" | "never" | "smart"
+  --hint = 'floating-big-letter',
+  autoselect_one = true,
+  include_current_win = false,
+  selection_chars = 'ENCTIRSGOB',
+  use_winbar = 'never', -- "always" | "never" | "smart"
 
-    -- the foreground (text) color of the picker
-    fg_color = '#ededed',
+  -- the foreground (text) color of the picker
+  fg_color = '#ededed',
 
-    -- if you have include_current_win == true, then current_win_hl_color will
-    -- be highlighted using this background color
-    current_win_hl_color = '#e35e4f',
+  -- if you have include_current_win == true, then current_win_hl_color will
+  -- be highlighted using this background color
+  current_win_hl_color = '#e35e4f',
 
-    -- all the windows except the current window will be highlighted using this
-    -- color
-    other_win_hl_color = '#44cc41',
+  -- all the windows except the current window will be highlighted using this
+  -- color
+  other_win_hl_color = '#44cc41',
 })
 
 local function nvim_tree_attach(bufnr)
@@ -2668,66 +2676,92 @@ nnoremap <C-f> :echo " == NO FORMATTER == "<CR>
 
 
 " =============================================================================
-" vim-autoformat Settings.
+" formatter.nvim
 " =============================================================================
-if has_key(g:plugs, 'vim-autoformat')
-    let g:formatdef_astyle_objc = '"astyle --mode=c"'
-    let g:formatdef_gnformat = '"gn format --stdin"'
-    let g:formatdef_ocpindent = '"ocp-indent"'
-    let g:formatdef_tffmt = '"terraform fmt -"'
-    let g:formatdef_nixfmt = '"nixpkgs-fmt"'
-    let g:formatdef_mixfmt = '"mix format -"'
-    let g:formatdef_flake8 = '"python3 -m flake8 -"'
-    let g:formatdef_black = '"python3 -m black -"'
-    let g:formatdef_isort = '"python3 -m isort -"'
+lua <<EOF
+-- Utilities for creating configurations
+local util = require "formatter.util"
+local autocmd = vim.api.nvim_create_autocmd
 
-    let g:formatters_objc = ['astyle_objc']
-    let g:formatters_gn = ['gnformat']
-    let g:formatters_hcl = ['tffmt']
-    let g:formatters_nix = ['nixfmt']
-    let g:formatters_elixir = ['mixfmt']
-    let g:formatters_python = ['flake8', 'black', 'isort']
-    let g:run_all_formatters_python = 1
+local filetypes = {
+  sh = {
+    require("formatter.filetypes.sh").shfmt,
+  },
+  python = {
+    require("formatter.filetypes.python").black,
+    --require("formatter.filetypes.python").isort,
+  },
+  rust = {
+    require("formatter.filetypes.rust").rustfmt,
+  },
+  lua = {
+    require("formatter.filetypes.lua").stylua,
+  },
+  javascript = {
+    require("formatter.filetypes.javascript").prettier,
+  },
+  ["javascript.tsx"] = {
+    require("formatter.filetypes.javascriptreact").prettier,
+  },
+  typescript = {
+    require("formatter.filetypes.typescript").prettier,
+  },
+  ["typescript.tsx"] = {
+    require("formatter.filetypes.typescriptreact").prettier,
+  },
+  css = {
+    require("formatter.filetypes.css").prettier,
+  },
+  json = {
+    require("formatter.filetypes.json").prettier,
+  },
+  yaml = {
+    require("formatter.filetypes.yaml").prettier,
+  },
+  html = {
+    require("formatter.filetypes.html").prettier,
+  },
+  vue = {
+    require("formatter.filetypes.vue").prettier,
+  },
+}
 
-    " let g:formatdef_prettier_ts = '"yarn --silent prettier --parser=typescript --stdin"'
-    " let g:formatdef_prettier_js = '"yarn --silent prettier --stdin"'
-    " let g:formatters_javascript = ['prettier_js']
-    " let g:formatters_typescript = ['prettier_ts']
-    " let g:formatters_rust = ['rustfmt']
+-- Provides the Format, FormatWrite, FormatLock, and FormatWriteLock commands
+require("formatter").setup {
+  -- Enable or disable logging
+  logging = true,
+  -- Set the log level
+  log_level = vim.log.levels.WARN,
+  -- All formatter configurations are opt-in
+  filetype = vim.tbl_deep_extend("force", filetypes, {
+    -- Use the special "*" filetype for defining formatter configurations on
+    -- any filetype
+    ["*"] = {
+      -- "formatter.filetypes.any" defines default configurations for any filetype
+      --require("formatter.filetypes.any").remove_trailing_whitespace,
+      -- Remove trailing whitespace without 'sed'
+      require("formatter.filetypes.any").substitute_trailing_whitespace,
+    }
+  })
+}
 
-    autocmd FileType gn nnoremap <buffer> <C-f> :Autoformat<CR>
-    autocmd FileType jbuild nnoremap <buffer> <C-f> :Autoformat<CR>
-    autocmd FileType opam nnoremap <buffer> <C-f> :Autoformat<CR>
-    autocmd FileType python nnoremap <buffer> <C-f> :Autoformat<CR>
-    autocmd FileType nix nnoremap <buffer> <C-f> :Autoformat<CR>
-    autocmd FileType hcl nnoremap <buffer> <C-f> :Autoformat<CR>
-    autocmd FileType elixir nnoremap <buffer> <C-f> :Autoformat<CR>
-    autocmd FileType gn nnoremap <buffer> <C-f> :Autoformat<CR>
-endif
+for k,_ in pairs(filetypes) do
+  -- equivalent: autocmd FileType gn nnoremap <buffer> <C-f> :Autoformat<CR>
+  if k == "javascriptreact" then
+    k = "javascript.tsx"
+  elseif k == "typescriptreact" then
+    k = "typescript.tsx"
+  end
+  autocmd('FileType', {
+    pattern = k,
+    callback = function(opts)
+      print('config formatter for ' .. k)
+      vim.keymap.set('n', '<C-f>', ':FormatWriteLock<CR>', { noremap = false, silent = true, buffer = opts.buf })
+    end,
+  })
+end
 
-" =============================================================================
-" vim-prettier Settings.
-" =============================================================================
-autocmd! User vim-prettier nnoremap <buffer> <C-f> :Prettier<CR>
-if has_key(g:plugs, 'vim-prettier')
-    let g:prettier#config#trailing_comma = 'all'
-    let g:prettier#config#arrow_parens = 'always'
-    let g:prettier#config#bracket_spacing = 'true'
-
-    autocmd FileType javascript nnoremap <buffer> <C-f> :Prettier<CR>
-    autocmd FileType javascript.tsx nnoremap <buffer> <C-f> :Prettier<CR>
-    autocmd FileType typescript nnoremap <buffer> <C-f> :Prettier<CR>
-    autocmd FileType typescript.tsx nnoremap <buffer> <C-f> :Prettier<CR>
-    autocmd FileType css nnoremap <buffer> <C-f> :Prettier<CR>
-    autocmd FileType less nnoremap <buffer> <C-f> :Prettier<CR>
-    autocmd FileType scss nnoremap <buffer> <C-f> :Prettier<CR>
-    autocmd FileType json nnoremap <buffer> <C-f> :Prettier<CR>
-    autocmd FileType graphql nnoremap <buffer> <C-f> :Prettier<CR>
-    autocmd FileType markdown nnoremap <buffer> <C-f> :Prettier<CR>
-    autocmd FileType vue nnoremap <buffer> <C-f> :Prettier<CR>
-    autocmd FileType yaml nnoremap <buffer> <C-f> :Prettier<CR>
-    autocmd FileType html nnoremap <buffer> <C-f> :Prettier<CR>
-endif
+EOF
 
 " =============================================================================
 " Uncrustify
@@ -2774,16 +2808,16 @@ EOF
         return call('Uncrustify2', extend([a:language], [a:firstline, a:lastline]))
     endfunction
 
-    autocmd FileType c noremap <buffer> <c-f> :call UncrustifyWrapper('c')<CR>
-    autocmd FileType c vnoremap <buffer> <c-f> :call RangeUncrustifyWrapper('c')<CR>
-    autocmd FileType cs noremap <buffer> <c-f> :call UncrustifyWrapper('cs')<CR>
-    autocmd FileType cs vnoremap <buffer> <c-f> :call RangeUncrustifyWrapper('cs')<CR>
-    autocmd FileType cpp noremap <buffer> <c-f> :call UncrustifyWrapper('cpp')<CR>
-    autocmd FileType cpp vnoremap <buffer> <c-f> :call RangeUncrustifyWrapper('cpp')<CR>
-    autocmd FileType objc noremap <buffer> <c-f> :call UncrustifyWrapper('objc')<CR>
-    autocmd FileType objc vnoremap <buffer> <c-f> :call RangeUncrustifyWrapper('objc')<CR>
-    autocmd FileType objcpp noremap <buffer> <c-f> :call UncrustifyWrapper('objcpp')<CR>
-    autocmd FileType objcpp vnoremap <buffer> <c-f> :call RangeUncrustifyWrapper('objcpp')<CR>
+    autocmd FileType c noremap <buffer> <C-f> :call UncrustifyWrapper('c')<CR>
+    autocmd FileType c vnoremap <buffer> <C-f> :call RangeUncrustifyWrapper('c')<CR>
+    autocmd FileType cs noremap <buffer> <C-f> :call UncrustifyWrapper('cs')<CR>
+    autocmd FileType cs vnoremap <buffer> <C-f> :call RangeUncrustifyWrapper('cs')<CR>
+    autocmd FileType cpp noremap <buffer> <C-f> :call UncrustifyWrapper('cpp')<CR>
+    autocmd FileType cpp vnoremap <buffer> <C-f> :call RangeUncrustifyWrapper('cpp')<CR>
+    autocmd FileType objc noremap <buffer> <C-f> :call UncrustifyWrapper('objc')<CR>
+    autocmd FileType objc vnoremap <buffer> <C-f> :call RangeUncrustifyWrapper('objc')<CR>
+    autocmd FileType objcpp noremap <buffer> <C-f> :call UncrustifyWrapper('objcpp')<CR>
+    autocmd FileType objcpp vnoremap <buffer> <C-f> :call RangeUncrustifyWrapper('objcpp')<CR>
 endif
 
 " =============================================================================
@@ -3406,14 +3440,9 @@ EOF
 " =============================================================================
 
 " =============================================================================
-" YAML
-" =============================================================================
-autocmd FileType yaml nnoremap <buffer> <C-f> :Prettier<CR>
-
-" =============================================================================
 " Rust
 " =============================================================================
-autocmd FileType rust nnoremap <buffer> <C-f> :RustFmt<CR>
+" Formatting replaced with `formatter.nvim`
 
 " To view all groups: :so $VIMRUNTIME/syntax/hitest.vim
 " Or to test terminal colors: :so $VIMRUNTIME/syntax/colortest.vim
