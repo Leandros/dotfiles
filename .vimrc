@@ -1403,6 +1403,13 @@ require("crates").setup {
       jump_back = { "<c-r>", "<C-RightMouse>" },
     },
   },
+  completion = {
+    crates = {
+      enabled = true, -- disabled by default
+      max_results = 8, -- The maximum number of search results to display
+      min_chars = 3, -- The minimum number of charaters to type before completions begin appearing
+    },
+  },
 }
 
 -- Rust
@@ -2755,7 +2762,6 @@ for k,_ in pairs(filetypes) do
   autocmd('FileType', {
     pattern = k,
     callback = function(opts)
-      print('config formatter for ' .. k)
       vim.keymap.set('n', '<C-f>', ':FormatWriteLock<CR>', { noremap = false, silent = true, buffer = opts.buf })
     end,
   })
