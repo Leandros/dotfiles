@@ -414,7 +414,7 @@ alias gb3='goobook -c ~/.mutt/goobook/goobookrc_arvidio'
 alias ccp='rsync -ah --progress'
 alias ytdl="youtube-dl -f 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'"
 alias vim='nvim'
-alias tf='terraform'
+alias tf='tofu'
 alias p='pnpm'
 alias pnx="pnpm nx"
 
