@@ -389,9 +389,6 @@ endif
 
 function! HighlightsDark() abort
   " --- Bufferline ---
-  " hi! BufferLineFill guibg=#073642
-  " hi! BufferLineTab guifg=#586e75 guibg=#002028
-
   hi! clear BufferLineFill
   hi! clear BufferLineTab
   hi! clear BufferLineHint
@@ -454,6 +451,10 @@ function! HighlightsDark() abort
   hi! clear BufferLineWarning
   hi! clear BufferLinePick
   hi! clear BufferLineDevIconDefaultSelected
+
+  " Set correct colors. The autodetected colors are not ideal.
+  hi! BufferLineFill guibg=#073642
+  hi! BufferLineTab guifg=#586e75 guibg=#002028
 
   " Color was previously: #073642
   " hi! IblScope guifg=#073642 guibg=none gui=nocombine
@@ -486,11 +487,6 @@ endfunction
 
 function! HighlightsLight() abort
   " --- Bufferline ---
-  " hi! BufferLineFill guibg=#eee8d5
-  " hi! BufferLineTab guifg=#93a1a1 guibg=#fdf6e3
-  " hi! BufferLineTabSelected guifg=#93a1a1 guibg=#fdf6e3
-  " hi! BufferLineBufferSelected guifg=#93a1a1 guibg=#fdf6e3
-
   hi! clear BufferLineFill
   hi! clear BufferLineTab
   hi! clear BufferLineHint
@@ -553,6 +549,12 @@ function! HighlightsLight() abort
   hi! clear BufferLineWarning
   hi! clear BufferLinePick
   hi! clear BufferLineDevIconDefaultSelected
+
+  " Set correct colors. The autodetected colors are not ideal.
+  hi! BufferLineFill guibg=#eee8d5
+  hi! BufferLineTab guifg=#93a1a1 guibg=#fdf6e3
+  hi! BufferLineTabSelected guifg=#93a1a1 guibg=#fdf6e3
+  hi! BufferLineBufferSelected guifg=#93a1a1 guibg=#fdf6e3
 
   hi! IblScope gui=nocombine guifg=#839496 guibg=#eee8d5
   hi! IblIndent guifg=#eee8d5 guibg=none gui=nocombine
