@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -e
+
+status_style_dark="fg=#93a1a1,bg=default"
+window_status_dark="#[fg=#002b36, bg=colour27]#[fg=colour255, bg=colour27] #I: #W #[fg=colour27, bg=#002b36]"
+
+status_style_light="fg=#586e75,bg=default"
+window_status_light="#[fg=#fdf6e3, bg=colour27]#[fg=colour7, bg=colour27] #I: #W #[fg=colour27, bg=#fdf6e3]"
+
+status_style_current=$(tmux show -Av status-style)
+
+case $status_style_current in
+    "$status_style_light")
+        # Change to the dark style.
+        echo "enable dark mode"
+        tmux set -g status-style "$status_style_dark"
+        tmux set -g window-status-current-format "$window_status_dark"
+        ;;
+
+    "$status_style_dark")
+        # Change to the light style.
+        echo "enable light mode"
+        tmux set -g status-style "$status_style_light"
+        tmux set -g window-status-current-format "$window_status_light"
+        ;;
+
+    *)
+        # Unknown style. Error. Enable the dark mode, so the script
+        # can run successfully next time.
+        echo "error: unknown style: $status_style_current"
+        tmux set -g status-style "$status_style_dark"
+        exit 1
+        ;;
+esac
