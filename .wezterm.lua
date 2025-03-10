@@ -45,8 +45,6 @@ config.enable_csi_u_key_encoding = true -- not sure if required ..
 config.send_composed_key_when_left_alt_is_pressed = true -- Required to enable Bone2 layout
 config.send_composed_key_when_right_alt_is_pressed = true -- Required to enable Bone2 layout
 
--- TODO: Fix input in neovim when <Option> <Space> are pressed.
-
 local act = wezterm.action
 local general_keys = {
     { key = '1', mods = 'SUPER', action = act.ActivateTab(0) },
@@ -224,6 +222,29 @@ config.color_schemes = {
     ['Solarized Light'] = light_scheme,
 }
 config.color_scheme = 'Solarized Dark'
+
+-- Custom events
+wezterm.on("toggle-dark-mode", function(window)
+  local overrides = window:get_config_overrides() or {}
+  if (overrides.color_scheme == 'Solarized Light')
+  then
+    overrides.color_scheme = 'Solarized Dark'
+  else
+    overrides.color_scheme = 'Solarized Light'
+  end
+  window:set_config_overrides(overrides)
+end)
+
+-- Custom commands
+wezterm.on('augment-command-palette', function(window, pane)
+  return {
+    {
+      brief = 'Toggle Dark Mode / Light Mode',
+      icon = 'cod_color_mode',
+      action = act.EmitEvent 'toggle-dark-mode',
+    },
+  }
+end)
 
 -- and finally, return the configuration to wezterm
 return config
