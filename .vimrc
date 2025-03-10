@@ -95,11 +95,11 @@ if has('nvim')
     Plug 'hrsh7th/vim-vsnip'                   " Snippet engine
     " Plug 'hrsh7th/vim-vsnip-integ'             " Snippet integration with compe
 
-    " Status/Tab Line
-    Plug 'nvim-lualine/lualine.nvim'           " Statusline (bottom)
-    Plug 'kdheepak/tabline.nvim'               " Tabline (top)
+    " Statusline (bottom)
+    Plug 'nvim-lualine/lualine.nvim'
 
-    " Tabline
+    " Tabline (Top)
+    " Plug 'kdheepak/tabline.nvim'
     Plug 'akinsho/bufferline.nvim', { 'tag': '*' }
 
     " Treesitter
@@ -389,7 +389,71 @@ endif
 
 function! HighlightsDark() abort
   " --- Bufferline ---
-  hi! BufferLineFill guibg=#073642
+  " hi! BufferLineFill guibg=#073642
+  " hi! BufferLineTab guifg=#586e75 guibg=#002028
+
+  hi! clear BufferLineFill
+  hi! clear BufferLineTab
+  hi! clear BufferLineHint
+  hi! clear BufferLineWarningVisible
+  hi! clear BufferLineModifiedSelected
+  hi! clear BufferLineErrorDiagnosticSelected
+  hi! clear BufferLineBackground
+  hi! clear BufferLineModified
+  hi! clear BufferLineInfo
+  hi! clear BufferLineDuplicateVisible
+  hi! clear BufferLineBuffer
+  hi! clear BufferLineTruncMarker
+  hi! clear BufferLineGroupSeparator
+  hi! clear BufferLineGroupLabel
+  hi! clear BufferLineTabSelected
+  hi! clear BufferLineTabClose
+  hi! clear BufferLineCloseButton
+  hi! clear BufferLineCloseButtonVisible
+  hi! clear BufferLineCloseButtonSelected
+  hi! clear BufferLineBufferVisible
+  hi! clear BufferLineBufferSelected
+  hi! clear BufferLineNumbers
+  hi! clear BufferLineNumbersSelected
+  hi! clear BufferLineNumbersVisible
+  hi! clear BufferLineDiagnosticVisible
+  hi! clear BufferLineDiagnosticSelected
+  hi! clear BufferLineHintVisible
+  hi! clear BufferLineHintSelected
+  hi! clear BufferLineHintDiagnostic
+  hi! clear BufferLineHintDiagnosticVisible
+  hi! clear BufferLineHintDiagnosticSelected
+  hi! clear BufferLineInfoVisible
+  hi! clear BufferLineInfoSelected
+  hi! clear BufferLineInfoDiagnostic
+  hi! clear BufferLineInfoDiagnosticVisible
+  hi! clear BufferLineInfoDiagnosticSelected
+  hi! clear BufferLineDiagnostic
+  hi! clear BufferLineWarningSelected
+  hi! clear BufferLineWarningDiagnostic
+  hi! clear BufferLineWarningDiagnosticVisible
+  hi! clear BufferLineWarningDiagnosticSelected
+  hi! clear BufferLineErrorVisible
+  hi! clear BufferLineErrorSelected
+  hi! clear BufferLineErrorDiagnostic
+  hi! clear BufferLineErrorDiagnosticVisible
+  hi! clear BufferLineError
+  hi! clear BufferLineModifiedVisible
+  hi! clear BufferLineSeparator
+  hi! clear BufferLineIndicatorVisible
+  hi! clear BufferLinePickSelected
+  hi! clear BufferLinePickVisible
+  hi! clear BufferLineOffsetSeparator
+  hi! clear BufferLineSeparatorVisible
+  hi! clear BufferLineTabSeparator
+  hi! clear BufferLineTabSeparatorSelected
+  hi! clear BufferLineIndicatorSelected
+  hi! clear BufferLineSeparatorSelected
+  hi! clear BufferLineDuplicate
+  hi! clear BufferLineDuplicateSelected
+  hi! clear BufferLineWarning
+  hi! clear BufferLinePick
+  hi! clear BufferLineDevIconDefaultSelected
 
   " Color was previously: #073642
   " hi! IblScope guifg=#073642 guibg=none gui=nocombine
@@ -422,9 +486,74 @@ endfunction
 
 function! HighlightsLight() abort
   " --- Bufferline ---
-  hi! BufferLineFill guibg=#eee8d5
+  " hi! BufferLineFill guibg=#eee8d5
+  " hi! BufferLineTab guifg=#93a1a1 guibg=#fdf6e3
+  " hi! BufferLineTabSelected guifg=#93a1a1 guibg=#fdf6e3
+  " hi! BufferLineBufferSelected guifg=#93a1a1 guibg=#fdf6e3
 
-  hi! @ibl.scope.char.1 guibg=#eee8d5
+  hi! clear BufferLineFill
+  hi! clear BufferLineTab
+  hi! clear BufferLineHint
+  hi! clear BufferLineWarningVisible
+  hi! clear BufferLineModifiedSelected
+  hi! clear BufferLineErrorDiagnosticSelected
+  hi! clear BufferLineBackground
+  hi! clear BufferLineModified
+  hi! clear BufferLineInfo
+  hi! clear BufferLineDuplicateVisible
+  hi! clear BufferLineBuffer
+  hi! clear BufferLineTruncMarker
+  hi! clear BufferLineGroupSeparator
+  hi! clear BufferLineGroupLabel
+  hi! clear BufferLineTabSelected
+  hi! clear BufferLineTabClose
+  hi! clear BufferLineCloseButton
+  hi! clear BufferLineCloseButtonVisible
+  hi! clear BufferLineCloseButtonSelected
+  hi! clear BufferLineBufferVisible
+  hi! clear BufferLineBufferSelected
+  hi! clear BufferLineNumbers
+  hi! clear BufferLineNumbersSelected
+  hi! clear BufferLineNumbersVisible
+  hi! clear BufferLineDiagnosticVisible
+  hi! clear BufferLineDiagnosticSelected
+  hi! clear BufferLineHintVisible
+  hi! clear BufferLineHintSelected
+  hi! clear BufferLineHintDiagnostic
+  hi! clear BufferLineHintDiagnosticVisible
+  hi! clear BufferLineHintDiagnosticSelected
+  hi! clear BufferLineInfoVisible
+  hi! clear BufferLineInfoSelected
+  hi! clear BufferLineInfoDiagnostic
+  hi! clear BufferLineInfoDiagnosticVisible
+  hi! clear BufferLineInfoDiagnosticSelected
+  hi! clear BufferLineDiagnostic
+  hi! clear BufferLineWarningSelected
+  hi! clear BufferLineWarningDiagnostic
+  hi! clear BufferLineWarningDiagnosticVisible
+  hi! clear BufferLineWarningDiagnosticSelected
+  hi! clear BufferLineErrorVisible
+  hi! clear BufferLineErrorSelected
+  hi! clear BufferLineErrorDiagnostic
+  hi! clear BufferLineErrorDiagnosticVisible
+  hi! clear BufferLineError
+  hi! clear BufferLineModifiedVisible
+  hi! clear BufferLineSeparator
+  hi! clear BufferLineIndicatorVisible
+  hi! clear BufferLinePickSelected
+  hi! clear BufferLinePickVisible
+  hi! clear BufferLineOffsetSeparator
+  hi! clear BufferLineSeparatorVisible
+  hi! clear BufferLineTabSeparator
+  hi! clear BufferLineTabSeparatorSelected
+  hi! clear BufferLineIndicatorSelected
+  hi! clear BufferLineSeparatorSelected
+  hi! clear BufferLineDuplicate
+  hi! clear BufferLineDuplicateSelected
+  hi! clear BufferLineWarning
+  hi! clear BufferLinePick
+  hi! clear BufferLineDevIconDefaultSelected
+
   hi! IblScope gui=nocombine guifg=#839496 guibg=#eee8d5
   hi! IblIndent guifg=#eee8d5 guibg=none gui=nocombine
   hi! IblWhitespace guifg=#eee8d5 guibg=none gui=nocombine
@@ -3396,41 +3525,52 @@ lua <<EOF
 local auto_dark_mode = require('auto-dark-mode')
 vim.g["custom#isdarkmode"] = 1
 
+function enable_dark_mode()
+  vim.g["custom#isdarkmode"] = 1
+
+  vim.api.nvim_set_option('background', 'dark')
+  vim.cmd('call HighlightsDark()')
+  vim.cmd('colorscheme solarized')
+  vim.cmd('highlight ColorColumn guibg=#004653')
+
+  -- Plugins:
+  lualine_setup()
+  ibl_setup()
+  bufferline_setup()
+
+  -- We'll need to setup custom highlights again.
+  vim.cmd('call HighlightsDark()')
+end
+
+function enable_light_mode()
+  vim.g["custom#isdarkmode"] = 0
+
+  vim.api.nvim_set_option('background', 'light')
+  vim.cmd('call HighlightsLight()')
+  vim.cmd('colorscheme solarized')
+  vim.cmd('highlight ColorColumn guibg=#eee8d5')
+
+  -- Plugins:
+  lualine_setup()
+  ibl_setup()
+  bufferline_setup()
+
+  -- We'll need to setup custom highlights again.
+  vim.cmd('call HighlightsLight()')
+end
+
+vim.api.nvim_create_user_command('EnableLightMode', enable_light_mode, {})
+vim.api.nvim_create_user_command('EnableDarkMode', enable_dark_mode, {})
+
 if not vim.g["isRemoteSession"] then
   auto_dark_mode.setup({
     update_interval = 5000,
     set_dark_mode = function()
-      vim.g["custom#isdarkmode"] = 1
-
-      vim.api.nvim_set_option('background', 'dark')
-      vim.cmd('call HighlightsDark()')
-      vim.cmd('colorscheme solarized')
-      vim.cmd('highlight ColorColumn guibg=#004653')
-
-      -- Plugins:
-      lualine_setup()
-      ibl_setup()
-      bufferline_setup()
-
-      -- We'll need to setup custom highlights again.
-      vim.cmd('call HighlightsDark()')
+      enable_dark_mode()
     end,
 
     set_light_mode = function()
-      vim.g["custom#isdarkmode"] = 0
-
-      vim.api.nvim_set_option('background', 'light')
-      vim.cmd('call HighlightsLight()')
-      vim.cmd('colorscheme solarized')
-      vim.cmd('highlight ColorColumn guibg=#eee8d5')
-
-      -- Plugins:
-      lualine_setup()
-      ibl_setup()
-      bufferline_setup()
-
-      -- We'll need to setup custom highlights again.
-      vim.cmd('call HighlightsLight()')
+      enable_light_mode()
     end,
   })
 end
