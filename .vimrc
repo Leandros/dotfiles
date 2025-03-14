@@ -3467,8 +3467,9 @@ require('comment-box').setup({
 local wk = require("which-key")
 wk.add({
   { "<Leader>c", group = "Boxes", icon = "" },
-  { "<Leader>cb", "<Cmd>CBccbox3<CR>", desc = "Box Title Heavy" },
-  { "<Leader>cbl", "<Cmd>CBccbox2<CR>", desc = "Box Title Light" },
+  { "<Leader>cb", "<Cmd>CBlcbox3<CR>", desc = "Box Title Heavy" },
+  { "<Leader>cbl", "<Cmd>CBllbox3<CR>", desc = "Box Title Left" },
+  { "<Leader>cbs", "<Cmd>CBlcbox2<CR>", desc = "Box Title Light" },
   { "<Leader>ct", "<Cmd>CBccline11<CR>", desc = "Line Title (Center)" },
   { "<Leader>ctl", "<Cmd>CBllline9<CR>", desc = "Line Title (Left)" },
   { "<Leader>cl", "<Cmd>CBline0<CR>", desc = "Line" },
