@@ -1715,7 +1715,7 @@ if vim.fn.executable('bacon-ls') then
     capabilities = lsp_defaults.capabilities,
     init_options = {
       updateOnSave = true,
-      updateOnSaveWaitMillis = 500,
+      updateOnSaveWaitMillis = 200,
       updateOnChange = false,
       runBaconInBackground = false,
     },
