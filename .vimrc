@@ -1717,7 +1717,7 @@ if vim.fn.executable('bacon-ls') then
       synchronizeAllOpenFilesWaitMillis = 1000,
       -- BETA:
       useCargoBackend = true,
-      cargoCommandArguments = "clippy --tests --all-features --all-targets --message-format json-diagnostic-rendered-ansi",
+      cargoCommandArguments = "clippy --tests --all-targets --message-format json-diagnostic-rendered-ansi",
       -- This copies the entire source tree to a temporary directory, and will
       -- therefore not work for most cases.
       updateOnChange = false,
@@ -2592,6 +2592,7 @@ require('goto-preview').setup {
   height = 15,
   default_mappings = false,
   stack_floating_preview_windows = false, -- Whether to nest floating windows
+  --debug = true,
 }
 
 local gotopreview_bindings = {
