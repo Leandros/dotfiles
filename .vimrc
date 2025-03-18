@@ -84,7 +84,7 @@ if has('nvim')
     Plug 'nvim-neotest/nvim-nio'               " Required for neotest
     Plug 'antoinemadec/FixCursorHold.nvim'
     Plug 'rcarriga/nvim-notify'                " Notification framework
-    Plug 's1n7ax/nvim-window-picker', {'tag': 'v1.*'}
+    Plug 's1n7ax/nvim-window-picker', {'tag': 'v2.*'}
 
     " Completion
     Plug 'hrsh7th/nvim-cmp'                    " Completion framework
@@ -1714,6 +1714,14 @@ if vim.fn.executable('bacon-ls') then
       updateOnSaveWaitMillis = 200,
       updateOnChange = false,
       runBaconInBackground = false,
+      synchronizeAllOpenFilesWaitMillis = 1000,
+      -- BETA:
+      useCargoBackend = true,
+      cargoCommandArguments = "clippy --tests --all-features --all-targets --message-format json-diagnostic-rendered-ansi",
+      -- This copies the entire source tree to a temporary directory, and will
+      -- therefore not work for most cases.
+      updateOnChange = false,
+      updateOnChangeCooldownMillis = 5000,
     },
   })
 end
@@ -2699,6 +2707,7 @@ EOF
 " =============================================================================
 lua <<EOF
 require('local-highlight').setup({
+  animate = false,
   file_types = {'rust', 'typescript', 'typescript.tsx', 'javascript', 'javascript.jsx', 'vim', 'bash'},
   hlgroup = 'TSDefinitionUsage',
 })
@@ -2724,7 +2733,7 @@ endif
 " =============================================================================
 lua <<EOF
 require'window-picker'.setup({
-  --hint = 'floating-big-letter',
+  hint = 'floating-big-letter',
   autoselect_one = true,
   include_current_win = false,
   selection_chars = 'ENCTIRSGOB',
@@ -2772,6 +2781,7 @@ require("nvim-tree").setup({
   on_attach = nvim_tree_attach,
   view = {
     adaptive_size = true,
+    preserve_window_proportions = true,
     width = {
       max = 40,
     },
