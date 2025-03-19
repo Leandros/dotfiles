@@ -1607,56 +1607,99 @@ vim.g.rustaceanvim = function()
         },
       },
       settings = {
+        -- Options documented here: https://rust-analyzer.github.io/book/configuration.html
         ["rust-analyzer"] = {
-          assist = {
-            importGranularity = "module",
-            importPrefix = "by_self",
+          cargo = {
+            -- features = "all",
+            features = {},
+            noDefaultFeatures = false,
+
+            -- Optional enable:
+            -- targets = nil,
+            -- allTargets = true,
+            targetDir = true,
+            -- extraEnv = { CARGO_TARGET_DIR = '.ra_target' },
+
+            autoreload = false,
+            buildScripts = {
+              enable = true,
+            },
           },
-          -- new format
+
+          cachePriming = {
+            enable = true,
+            -- 0 means to pick automatically.
+            numThreads = 0,
+          },
+
+          -- Disable `cargo check` on save. Use `bacon-ls` instead.
+          checkOnSave = false,
+          check = {
+            command = "check",
+            -- Clippy eats more resources and takes longer.
+            -- command = "clippy",
+
+            -- Use command or overrideCommand:
+            -- overrideCommand = "clippy --tests --all-features --all-targets --message-format json-diagnostic-rendered-ansi",
+          },
+
+          diagnostics = {
+            enable = false,
+            experimental = {
+              enable = false,
+            },
+          },
+
+          completion = {
+            fullFunctionSignatures = {
+              enable = true,
+            },
+          },
+
+          highlightRelated = {
+            breakPoints = { enable = false },
+          },
+
           imports = {
+            -- Enable for `no_std` projects.
+            preferNoStd = false,
             granularity = {
               group = "module",
             },
             prefix = "self",
           },
-          cargo = {
-            -- Set this to "all" to pass --all-features to cargo.
-            --features = "all",
-            features = {},
-            loadOutDirsFromCheck = true,
-            buildScripts = {
+
+          inlayHints = {
+            closureCaptureHints = { enable = true },
+          },
+
+          lru = {
+            -- defaults to 128
+            capacity = 64,
+          },
+          -- nil means pick automatically
+          -- numThreads = nil,
+
+          procMacro = {
+            enable = false,
+            attributes = {
               enable = true,
             },
           },
-          procMacro = {
-            enable = false,
-            --attributes = {
-            --  enable = true,
-            --},
+
+          rustfmt = {
+            -- Available on nightly.
+            rangeFormatting = { enable = false },
           },
-          -- must've been changed in some version.
-          --check = {
-          --  command = "clippy",
-          --},
 
-          --checkOnSave = {
-          --  --command = "clippy"
-          --  --command = "check"
-          --},
-          checkOnSave = { enable = false },
-          check = false,
-          diagnostics = { enable = false },
-          --cargo = {
-          --  extraEnv = { CARGO_TARGET_DIR = '.ra_target' },
-          --  features = 'all',
-          --},
-
-          -- panicking too often
-          --diagnostics = {
-          --  experimental = {
-          --    enable = true,
-          --  },
-          --},
+          workspace = {
+            symbol = {
+              search = {
+                -- defaults to 128
+                limit = 64,
+              },
+            },
+          },
         },
       },
     },
@@ -1717,7 +1760,11 @@ if vim.fn.executable('bacon-ls') then
       synchronizeAllOpenFilesWaitMillis = 1000,
       -- BETA:
       useCargoBackend = true,
-      cargoCommandArguments = "clippy --tests --all-targets --message-format json-diagnostic-rendered-ansi",
+      cargoEnv = "CARGO_TARGET_DIR=.checkTarget",
+      cargoCommandArguments = "check --tests --all-targets --message-format json-diagnostic-rendered-ansi",
+      -- Clippy takes longer.
+      -- cargoCommandArguments = "clippy --tests --all-targets --message-format json-diagnostic-rendered-ansi",
+
       -- This copies the entire source tree to a temporary directory, and will
       -- therefore not work for most cases.
       updateOnChange = false,
