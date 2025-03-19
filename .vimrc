@@ -1566,6 +1566,7 @@ vim.g.rustaceanvim = function()
     -- Plugin configuration
     ---@type rustaceanvim.tools.Opts
     tools = {
+      --reload_workspace_from_cargo_toml = true,
       float_win_config = {
         border = 'rounded',
       },
@@ -1604,6 +1605,24 @@ vim.g.rustaceanvim = function()
             )
           end,
           description = 'Open documentation for the symbol under the cursor in default browser',
+        },
+        CargoReload = {
+          function()
+            local util = require 'lspconfig.util'
+            local bufnr = 0
+            bufnr = util.validate_bufnr(bufnr)
+            local clients = util.get_lsp_clients { bufnr = bufnr, name = 'rust_analyzer' }
+            for _, client in ipairs(clients) do
+              vim.notify 'Reloading Cargo Workspace'
+              client.request('rust-analyzer/reloadWorkspace', nil, function(err)
+                if err then
+                  error(tostring(err))
+                end
+                vim.notify 'Cargo workspace reloaded'
+              end, 0)
+            end
+          end,
+          description = 'Reload current cargo workspace',
         },
       },
       settings = {
@@ -3134,7 +3153,7 @@ local telescope_bindings = {
   {'v', '<leader>ca', "<cmd>lua vim.lsp.buf.code_action({ range = { start = vim.api.nvim_buf_get_mark(vim.api.nvim_get_current_buf(), '<'), ['end'] = vim.api.nvim_buf_get_mark(vim.api.nvim_get_current_buf(), '>') }})<cr>", 'LSP: Code Actions' },
   {'n', '<leader>gi', "<cmd>lua require('telescope.builtin').lsp_implementations()<cr>", 'LSP: Show Implementations' },
   {'n', '<leader>gg', "<cmd>lua require('telescope.builtin').lsp_document_symbols()<cr>", 'LSP: Show Document Symbols' },
-  {'n', '<leader>ge', "<cmd>lua require('telescope.builtin').lsp_workspace_symbols()<cr>", 'LSP: Show Workspace Symbols' },
+  {'n', '<leader>ge', "<cmd>lua require('telescope.builtin').lsp_dynamic_workspace_symbols()<cr>", 'LSP: Show Workspace Symbols' },
   {'n', '<leader>gt', "<cmd>lua require('telescope.builtin').lsp_type_definitions()<cr>", 'LSP: Show Type Definitions' },
   {'n', '<leader>ff', "<cmd>lua require('telescope.builtin').find_files()<cr>", 'Find Files' },
   {'n', '<leader>fg', "<cmd>lua require('telescope').extensions.live_grep_args.live_grep_args()<cr>", 'Live GREP' },
