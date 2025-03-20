@@ -204,6 +204,7 @@ Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }
 Plug 'alx741/vim-hindent'
 Plug 'LnL7/vim-nix', { 'for': ['nix'], 'do': shellescape('nix profile install nixpkgs#nixpkgs-fmt') }
 Plug 'elixir-editors/vim-elixir'
+Plug 'Vimjas/vim-python-pep8-indent', { 'for': ['python'] }
 
 if js_dev_enabled
     Plug 'leafgarland/typescript-vim'
