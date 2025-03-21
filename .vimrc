@@ -1610,7 +1610,7 @@ vim.g.rustaceanvim = function()
         CargoReload = {
           function()
             local util = require 'lspconfig.util'
-            local bufnr = 0
+            local bufnr = 0 -- current buffer
             bufnr = util.validate_bufnr(bufnr)
             local clients = util.get_lsp_clients { bufnr = bufnr, name = 'rust_analyzer' }
             for _, client in ipairs(clients) do
@@ -1759,6 +1759,7 @@ if not registry.is_installed('rust-analyzer') then
 end
 
 if vim.fn.executable('bacon-ls') then
+  -- find location with: `:lua =require('vim.lsp.log').get_filename()`
   --vim.lsp.set_log_level('debug')
   --if vim.fn.has 'nvim-0.5.1' == 1 then
   --  require('vim.lsp.log').set_format_func(vim.inspect)
@@ -1792,6 +1793,17 @@ if vim.fn.executable('bacon-ls') then
     },
   })
 end
+
+-- Custom CargoReload
+function cargo_reload()
+  for _, client in ipairs(vim.lsp.get_clients()) do
+    if client.name == 'rust-analyzer' then
+      client.commands['CargoReload'][1]()
+    end
+  end
+end
+
+vim.api.nvim_create_user_command('CargoReload', cargo_reload, {})
 
 -- Flutter/Dart
 require("flutter-tools").setup{
