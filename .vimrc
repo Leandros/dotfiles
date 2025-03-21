@@ -163,6 +163,8 @@ if has('nvim')
     Plug 'akinsho/flutter-tools.nvim'
     Plug 'saecki/crates.nvim', { 'tag': 'stable' }
 
+    Plug 'folke/snacks.nvim'
+
     " Rust
     " Plug 'Canop/nvim-bacon'
 
@@ -1415,7 +1417,9 @@ local function on_attach(client, bufnr)
   if vim.g['has_navigator'] ~= 0 then
     require('navigator.lspclient.mapping').setup({ client=client, bufnr=bufnr }) -- setup navigator keymaps here,
     require('navigator.dochighlight').documentHighlight(bufnr)
-    require('navigator.codeAction').code_action_prompt(bufnr, {})
+    if client:supports_method('textDocument/codeAction', bufnr) then
+      require('navigator.codeAction').code_action_prompt(bufnr, {})
+    end
 
     local navigator_bindings = {
       { 'n', '<c-]>', "<cmd>lua require('navigator.definition').definition()<CR>", '' },
@@ -1430,7 +1434,8 @@ local function on_attach(client, bufnr)
 
   -- setup buffer keymaps etc.
   lsp_status.on_attach(client)
-  if client.server_capabilities.documentSymbolProvider then
+  if client:supports_method('textDocument/documentSymbol', bufnr)
+    and client.server_capabilities.documentSymbolProvider then
     navbuddy.attach(client, bufnr)
   end
 
@@ -1567,7 +1572,7 @@ vim.g.rustaceanvim = function()
     -- Plugin configuration
     ---@type rustaceanvim.tools.Opts
     tools = {
-      --reload_workspace_from_cargo_toml = true,
+      reload_workspace_from_cargo_toml = false,
       float_win_config = {
         border = 'rounded',
       },
@@ -1612,11 +1617,12 @@ vim.g.rustaceanvim = function()
             local util = require 'lspconfig.util'
             local bufnr = 0 -- current buffer
             bufnr = util.validate_bufnr(bufnr)
-            local clients = util.get_lsp_clients { bufnr = bufnr, name = 'rust_analyzer' }
+            local clients = util.get_lsp_clients { bufnr = bufnr, name = 'rust-analyzer' }
             for _, client in ipairs(clients) do
               vim.notify 'Reloading Cargo Workspace'
               client.request('rust-analyzer/reloadWorkspace', nil, function(err)
                 if err then
+                  print('error:' .. tostring(err))
                   error(tostring(err))
                 end
                 vim.notify 'Cargo workspace reloaded'
@@ -1626,7 +1632,7 @@ vim.g.rustaceanvim = function()
           description = 'Reload current cargo workspace',
         },
       },
-      settings = {
+      default_settings = {
         -- Options documented here: https://rust-analyzer.github.io/book/configuration.html
         ["rust-analyzer"] = {
           cargo = {
@@ -3663,6 +3669,11 @@ if not vim.g["isRemoteSession"] then
     end,
   })
 end
+EOF
+
+lua <<EOF
+local snacks = require('snacks')
+snacks.toggle.profiler():map("<leader>pp")
 EOF
 
 
