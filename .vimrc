@@ -1643,7 +1643,7 @@ vim.g.rustaceanvim = function()
             -- Optional enable:
             -- targets = nil,
             -- allTargets = true,
-            targetDir = true,
+            -- targetDir = true,
             -- extraEnv = { CARGO_TARGET_DIR = '.ra_target' },
 
             autoreload = false,
@@ -1652,11 +1652,11 @@ vim.g.rustaceanvim = function()
             },
           },
 
-          cachePriming = {
-            enable = true,
-            -- 0 means to pick automatically.
-            numThreads = 0,
-          },
+          --cachePriming = {
+          --  enable = true,
+          --  -- 0 means to pick automatically.
+          --  numThreads = 0,
+          --},
 
           -- Disable `cargo check` on save. Use `bacon-ls` instead.
           checkOnSave = false,
@@ -1676,15 +1676,15 @@ vim.g.rustaceanvim = function()
             },
           },
 
-          completion = {
-            fullFunctionSignatures = {
-              enable = true,
-            },
-          },
+          --completion = {
+          --  fullFunctionSignatures = {
+          --    enable = true,
+          --  },
+          --},
 
-          highlightRelated = {
-            breakPoints = { enable = false },
-          },
+          --highlightRelated = {
+          --  breakPoints = { enable = false },
+          --},
 
           imports = {
             -- Enable for `no_std` projects.
@@ -1695,9 +1695,9 @@ vim.g.rustaceanvim = function()
             prefix = "self",
           },
 
-          inlayHints = {
-            closureCaptureHints = { enable = true },
-          },
+          --inlayHints = {
+          --  closureCaptureHints = { enable = true },
+          --},
 
           lru = {
             -- defaults to 128
@@ -1713,10 +1713,10 @@ vim.g.rustaceanvim = function()
             },
           },
 
-          rustfmt = {
-            -- Available on nightly.
-            rangeFormatting = { enable = false },
-          },
+          --rustfmt = {
+          --  -- Only available on nightly.
+          --  rangeFormatting = { enable = false },
+          --},
 
           workspace = {
             symbol = {
