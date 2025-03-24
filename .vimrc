@@ -1632,31 +1632,31 @@ vim.g.rustaceanvim = function()
           description = 'Reload current cargo workspace',
         },
       },
+      -- If rust-analyzer isn't working, try the following:
+      -- 1. `cargo clean`
+      -- 2. `rm -rf target`
+      -- 3. `rm Cargo.lock && cargo build`
       default_settings = {
         -- Options documented here: https://rust-analyzer.github.io/book/configuration.html
         ["rust-analyzer"] = {
           cargo = {
-            -- features = "all",
-            features = {},
-            noDefaultFeatures = false,
+            features = "all",
+            --cfgs = {"debug_assertions", "miri", "unix"},
+            --features = {},
+            --noDefaultFeatures = true,
 
             -- Optional enable:
             -- targets = nil,
             -- allTargets = true,
-            -- targetDir = true,
+            targetDir = true,
             -- extraEnv = { CARGO_TARGET_DIR = '.ra_target' },
+            -- target = "x86_64-unknown-linux-gnu",
 
-            autoreload = false,
+            autoreload = true,
             buildScripts = {
               enable = true,
             },
           },
-
-          --cachePriming = {
-          --  enable = true,
-          --  -- 0 means to pick automatically.
-          --  numThreads = 0,
-          --},
 
           -- Disable `cargo check` on save. Use `bacon-ls` instead.
           checkOnSave = false,
@@ -1676,15 +1676,21 @@ vim.g.rustaceanvim = function()
             },
           },
 
-          --completion = {
-          --  fullFunctionSignatures = {
-          --    enable = true,
-          --  },
-          --},
+          hover = {
+            memoryLayout = {
+              niches = true,
+            },
+            show = {
+              enumVariants = 20,
+              fields = 20,
+            },
+          },
 
-          --highlightRelated = {
-          --  breakPoints = { enable = false },
-          --},
+          completion = {
+            fullFunctionSignatures = {
+              enable = true,
+            },
+          },
 
           imports = {
             -- Enable for `no_std` projects.
@@ -1695,13 +1701,20 @@ vim.g.rustaceanvim = function()
             prefix = "self",
           },
 
-          --inlayHints = {
-          --  closureCaptureHints = { enable = true },
-          --},
+          inlayHints = {
+            -- Whether to show inlay hints for closure captures
+            closureCaptureHints = { enable = true },
+            -- Whether to show inlay type hints for return types of closures.
+            closureReturnTypeHints = { enable = true },
+            -- Whether to show implicit drop hints
+            implicitDrops = { enable = true },
+            -- Whether to show generic type parameter name inlay hints
+            genericParameterHints = { type = { enable = true } },
+          },
 
           lru = {
             -- defaults to 128
-            capacity = 64,
+            capacity = 512,
           },
           -- nil means pick automatically
           -- numThreads = nil,
