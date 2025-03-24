@@ -1572,7 +1572,7 @@ vim.g.rustaceanvim = function()
     -- Plugin configuration
     ---@type rustaceanvim.tools.Opts
     tools = {
-      reload_workspace_from_cargo_toml = false,
+      reload_workspace_from_cargo_toml = true,
       float_win_config = {
         border = 'rounded',
       },
@@ -2498,31 +2498,72 @@ EOF
 " =============================================================================
 lua << EOF
 local function gitsigns_keymap_attach(bufnr)
-    local function opts(desc)
-      return { desc = 'git: ' .. desc, buffer = bufnr, noremap = true, silent = true, nowait = true }
+  local autocmd = vim.api.nvim_create_autocmd
+  local function opts(desc)
+    return { desc = 'git: ' .. desc, buffer = bufnr, noremap = true, silent = true, nowait = true }
+  end
+
+  --vim.keymap.set('n', 'a', api.fs.create, opts('Create'))
+  --vim.api.nvim_buf_set_keymap(bufnr, 'n', 'hs', '<cmd>lua require"gitsigns".stage_hunk()<CR>', {})
+
+  local function blame_file()
+    local function cb(opts)
+      print('callback!' .. vim.inspect(opts))
+      vim.keymap.set('n', 'r', '<Up>', { noremap = true, silent = true, buffer = opts.buf })
     end
+    require("gitsigns").blame(cb)
+  end
 
-    --vim.keymap.set('n', 'a', api.fs.create, opts('Create'))
-    --vim.api.nvim_buf_set_keymap(bufnr, 'n', 'hs', '<cmd>lua require"gitsigns".stage_hunk()<CR>', {})
+  vim.keymap.set('n', '<leader>ss', '<cmd>Gitsigns stage_hunk<CR>', opts('Stage Hunk'))
+  vim.keymap.set('n', '<leader>su', '<cmd>Gitsigns undo_stage_hunk<CR>', opts('Undo Staging Hunk'))
+  vim.keymap.set('n', '<leader>sr', '<cmd>Gitsigns reset_hunk<CR>', opts('Reset Hunk'))
+  vim.keymap.set('n', '<leader>sR', '<cmd>Gitsigns reset_buffer<CR>', opts('Reset Buffer'))
+  vim.keymap.set('n', '<leader>sp', '<cmd>Gitsigns preview_hunk<CR>', opts('Preview Hunk'))
+  vim.keymap.set('n', '<leader>sb', '<cmd>lua require"gitsigns".blame_line{full=true, ignore_whitespace=true}<CR>', opts('Blame Line'))
+  vim.keymap.set('n', '<leader>sB', blame_file, opts('Blame File'))
+  vim.keymap.set('n', '<leader>sS', '<cmd>Gitsigns stage_buffer<CR>', opts('Stage Buffer'))
+  vim.keymap.set('n', '<leader>sU', '<cmd>Gitsigns reset_buffer_index<CR>', opts('Reset Buffer Index'))
 
-    vim.keymap.set('n', '<leader>ss', '<cmd>Gitsigns stage_hunk<CR>', opts('Stage Hunk'))
-    vim.keymap.set('n', '<leader>su', '<cmd>Gitsigns undo_stage_hunk<CR>', opts('Undo Staging Hunk'))
-    vim.keymap.set('n', '<leader>sr', '<cmd>Gitsigns reset_hunk<CR>', opts('Reset Hunk'))
-    vim.keymap.set('n', '<leader>sR', '<cmd>Gitsigns reset_buffer<CR>', opts('Reset Buffer'))
-    vim.keymap.set('n', '<leader>sp', '<cmd>Gitsigns preview_hunk<CR>', opts('Preview Hunk'))
-    vim.keymap.set('n', '<leader>sb', '<cmd>lua require"gitsigns".blame_line{full=true}<CR>', opts('Blame Line'))
-    vim.keymap.set('n', '<leader>sS', '<cmd>Gitsigns stage_buffer<CR>', opts('Stage Buffer'))
-    vim.keymap.set('n', '<leader>sU', '<cmd>Gitsigns reset_buffer_index<CR>', opts('Reset Buffer Index'))
+  vim.keymap.set('v', '<leader>sr', ':Gitsigns reset_hunk<CR>', opts('ResetHunk (Visual)'))
+  vim.keymap.set('v', '<leader>ss', ':Gitsigns stage_hunk<CR>', opts('StageHunk (Visual)'))
 
-    vim.keymap.set('v', '<leader>sr', ':Gitsigns reset_hunk<CR>', opts('ResetHunk (Visual)'))
-    vim.keymap.set('v', '<leader>ss', ':Gitsigns stage_hunk<CR>', opts('StageHunk (Visual)'))
+  autocmd('FileType', {
+    pattern = 'gitsigns-blame',
+    callback = function(opts)
+      vim.keymap.set('n', 'r', '<Up>', { noremap = false, silent = true, buffer = opts.buf })
+    end,
+  })
 end
 
 require('gitsigns').setup({
   on_attach = gitsigns_keymap_attach,
+  signcolumn = true,  -- Toggle with `:Gitsigns toggle_signs`
+  numhl      = false, -- Toggle with `:Gitsigns toggle_numhl`
+  linehl     = false, -- Toggle with `:Gitsigns toggle_linehl`
+  word_diff  = false, -- Toggle with `:Gitsigns toggle_word_diff`
+
+  current_line_blame = false, -- Toggle with `:Gitsigns toggle_current_line_blame`
+  current_line_blame_opts = {
+    virt_text = true,
+    virt_text_pos = 'eol', -- 'eol' | 'overlay' | 'right_align'
+    delay = 1000,
+    ignore_whitespace = false,
+    virt_text_priority = 100,
+    use_focus = true,
+  },
+  current_line_blame_formatter = '<author>, <author_time:%R> - <summary>',
+
   signs = {
     add          = { text = '│' },
     change       = { text = '│' },
+    delete       = { text = '_' },
+    topdelete    = { text = '‾' },
+    changedelete = { text = '~' },
+    untracked    = { text = '┆' },
+  },
+  signs_staged = {
+    add          = { text = '┃' },
+    change       = { text = '┃' },
     delete       = { text = '_' },
     topdelete    = { text = '‾' },
     changedelete = { text = '~' },
