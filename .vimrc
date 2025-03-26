@@ -1720,7 +1720,7 @@ vim.g.rustaceanvim = function()
           -- numThreads = nil,
 
           procMacro = {
-            enable = false,
+            enable = true,
             attributes = {
               enable = true,
             },
