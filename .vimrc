@@ -1209,6 +1209,9 @@ npairs.add_rules({
     :with_move(function(opts)
       return opts.char == ">"
     end),
+  Rule("```", "```", { "rust", "markdown", "vimwiki", "rmarkdown", "rmd", "pandoc", "quarto" })
+      :with_pair(cond.not_before_char('`', 3)),
+  Rule("```.*$", "```", { "rust", "markdown", "vimwiki", "rmarkdown", "rmd", "pandoc", "quarto" }):only_cr():use_regex(true),
 })
 EOF
 
@@ -1652,7 +1655,7 @@ vim.g.rustaceanvim = function()
             -- extraEnv = { CARGO_TARGET_DIR = '.ra_target' },
             -- target = "x86_64-unknown-linux-gnu",
 
-            autoreload = true,
+            autoreload = false,
             buildScripts = {
               enable = true,
             },
