@@ -4,6 +4,7 @@ keybinding:
     prevTab: 'B'
     appendNewline: '<tab>'
 gui:
+  mouseEvents: false
   theme:
     selectedLineBgColor:
       - reverse
