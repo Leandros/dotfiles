@@ -652,6 +652,11 @@ PATH="$PATH:/usr/local/sh-coff/bin"
 PATH="$PATH:/usr/local/m68k-elf/bin"
 PATH="$PATH:/Applications/microchip/xc8/v2.46/bin"
 
+# pnpm
+export PNPM_HOME="$HOME/.local/share/pnpm"
+PATH="$PNPM_HOME:$PATH"
+# pnpm end
+
 export PATH
 
 # Golang

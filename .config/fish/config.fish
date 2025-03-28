@@ -1,3 +1,4 @@
+# @fish-lsp-disable 2002 4004
 if status is-interactive
     # Commands to run in interactive sessions can go here
 end
@@ -38,6 +39,10 @@ set -gx LESSOPEN "|~/.lessfilter %s"
 
 # Colors for ls(1)
 set -gx LS_COLORS 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34:st=37;44:ex=01;32'
+
+# pnpm
+set -gx PNPM_HOME "$HOME/.local/share/pnpm"
+# pnpm end
 
 # Go
 set -gx GOPATH "$HOME/gopath"
@@ -143,7 +148,7 @@ function fish_prompt
     string join '' -- (set_color blue) (prompt_pwd -D 1024) (set_color normal) (fish_vcs_prompt) (fish_pyenv_prompt)
 
     # Line 2 (status, and prompt char).
-    string join '' -- $statline $mode_prompt $prompt_symbol ' '
+    string join '' -- $statline $prompt_symbol ' '
 end
 
 
@@ -235,6 +240,7 @@ function fish_user_key_bindings
 
     bind -M default p 'set -g fish_cursor_end_mode exclusive' forward-char 'set -g fish_cursor_end_modefish_cursor_end_modeinclusive' x-paste
     bind -M default P x-paste
+    # @fish-lsp-disable-next-line 2001
     bind -M default Y 'set -l _restore_selection (commandline -C)' begin-selection end-of-line x-copy end-selection 'commandline -C $_restore_selection'
     bind -M default D begin-selection end-of-line x-copy kill-selection end-selection
     bind -M visual -m default y x-copy end-selection repaint-mode
@@ -243,7 +249,9 @@ function fish_user_key_bindings
     # This will put (n)vim in the background and revive it back.
     # It's triggered with ^Z.
     function __foreground-vim
+        # @fish-lsp-disable-next-line 2001
         set -l nvimpid (jobs | grep nvim | awk '{print $1}')
+        # @fish-lsp-disable-next-line 2001
         set -l vimpid (jobs | grep nvim | awk '{print $1}')
         fg %$nvimpid 2>/dev/null >/dev/null || fg %$vimpid 2>/dev/null >/dev/null
     end
@@ -269,6 +277,7 @@ fish_add_path -a "$HOME/.rvm/bin"
 fish_add_path -a "$GOPATH/bin"
 fish_add_path -a "/usr/local/go/bin"
 fish_add_path -a "/usr/local/share/dotnet"
+fish_add_path -a "$PNPM_HOME"
 
 # Amazon
 if [ -d "$HOME/.brazil_completion" ]
@@ -355,7 +364,7 @@ set -gx FZF_CTRL_R_OPTS "
   --header 'Press CTRL-Y to copy command into clipboard'"
 
 # Init fzf
-if command -v fzf >/dev/null
+if command -q fzf >/dev/null
     # Only use original fzf if fzf.fish is not installed.
     if not fisher list | grep fzf.fish >/dev/null
         fzf --fish | source
@@ -366,17 +375,17 @@ end
 # ━━ Accounts ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 # ━━ Zoxide ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-if command -v zoxide >/dev/null
+if command -q zoxide
     zoxide init fish | source
 end
 
 # ━━ Direnv ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-if command -v direnv >/dev/null
+if command -q direnv
     direnv hook fish | source
 end
 
 # ━━ MISE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-if command -v mise >/dev/null
+if command -q mise >/dev/null
     mise activate fish | source
     if not [ -f "$HOME/.config/fish/completions/mise.fish" ]
         # requires a restart
