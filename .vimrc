@@ -207,6 +207,7 @@ Plug 'alx741/vim-hindent'
 Plug 'LnL7/vim-nix', { 'for': ['nix'], 'do': shellescape('nix profile install nixpkgs#nixpkgs-fmt') }
 Plug 'elixir-editors/vim-elixir'
 Plug 'Vimjas/vim-python-pep8-indent', { 'for': ['python'] }
+Plug 'nickeb96/fish.vim', { 'for': ['fish'] }
 
 if js_dev_enabled
     Plug 'leafgarland/typescript-vim'
@@ -484,6 +485,10 @@ function! HighlightsDark() abort
 
   " --- TreeSitter ---
   hi! TSDefinitionUsage guifg=none guibg=#073642 gui=underline guisp=none
+
+  " --- Fish ---
+  hi! fishParameter guibg=none ctermbg=0
+  hi! fishOption guibg=none ctermbg=0
 endfunction
 
 function! HighlightsLight() abort
@@ -574,6 +579,10 @@ function! HighlightsLight() abort
 
   " --- TreeSitter ---
   hi! TSDefinitionUsage guifg=none guibg=#eee8d5 gui=underline guisp=none
+
+  " --- Fish ---
+  hi! fishParameter guibg=none ctermbg=0
+  hi! fishOption guibg=none ctermbg=0
 endfunction
 
 " Colorschemes usually reset all highlighting, including your own, when they
@@ -1788,8 +1797,8 @@ if vim.fn.executable('bacon-ls') then
   --end
 
   require("lspconfig").bacon_ls.setup({
-    cmd = { 'bacon-ls' },
-    --cmd = { '/local/home/gerstarv/github/bacon-ls/target/debug/bacon-ls' },
+    --cmd = { 'bacon-ls' },
+    cmd = { '/local/home/gerstarv/github/bacon-ls/target/release/bacon-ls' },
     single_file_support = false,
     on_attach = on_attach,
     on_init = on_init,
@@ -1813,6 +1822,15 @@ if vim.fn.executable('bacon-ls') then
       updateOnChange = false,
       updateOnChangeCooldownMillis = 5000,
     },
+  })
+end
+
+if vim.fn.executable('fish-lsp') then
+  require('lspconfig').fish_lsp.setup({
+    on_attach = on_attach,
+    on_init = on_init,
+    handlers = handlers,
+    capabilities = lsp_defaults.capabilities,
   })
 end
 
