@@ -1246,6 +1246,7 @@ require('nvim-ts-autotag').setup({
   }
 })
 EOF
+
 " =============================================================================
 " Completion
 " =============================================================================
@@ -1811,7 +1812,7 @@ if not registry.is_installed('rust-analyzer') then
   --custom setup here ...
 end
 
-if vim.fn.executable('bacon-ls') then
+if vim.fn.executable('bacon-ls') ~= 0 then
   -- find location with: `:lua =require('vim.lsp.log').get_filename()`
   --vim.lsp.set_log_level('debug')
   --if vim.fn.has 'nvim-0.5.1' == 1 then
@@ -1847,7 +1848,7 @@ if vim.fn.executable('bacon-ls') then
   })
 end
 
-if vim.fn.executable('fish-lsp') then
+if vim.fn.executable('fish-lsp') ~= 0 then
   require('lspconfig').fish_lsp.setup({
     on_attach = on_attach,
     on_init = on_init,
@@ -2635,7 +2636,7 @@ EOF
 " =============================================================================
 lua <<EOF
 require'nvim-treesitter.configs'.setup {
-    ensure_installed = {'rust', 'json', 'javascript', 'typescript', 'tsx', 'vim', 'lua', 'go', 'haskell', 'bash', 'markdown', 'markdown_inline', 'python'},
+    ensure_installed = {'rust', 'json', 'javascript', 'typescript', 'tsx', 'vim', 'lua', 'go', 'haskell', 'bash', 'markdown', 'markdown_inline', 'python', 'html'},
     auto_install = false,
     highlight = {
         enable = true,
