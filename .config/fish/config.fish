@@ -6,6 +6,7 @@ end
 ## Initialize with:
 # $ curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher
 # $ fisher install PatrickF1/fzf.fish
+# $ fisher install patrickf1/colored_man_pages.fish
 
 # Enable debug with: `set -gx fish_trace on`
 
@@ -377,6 +378,42 @@ function n --wraps nnn --description 'support nnn quit and change directory'
     end
 end
 
+# Emulate bash `export` function
+function export
+    if [ $argv ]
+        set var (echo $argv | cut -f1 -d=)
+        set val (echo $argv | cut -f2 -d=)
+        set -gx "$var" $val
+    else
+        echo 'usage: export var=value'
+    end
+end
+
+# Emulate zsh `take` function
+function take
+    if [ $argv ]
+        mkdir -p $argv
+        cd $argv
+    else
+        echo 'usage: take path/to/directory'
+    end
+end
+
+# Emulate bash `unset`
+function unset
+  set --erase "$argv"
+end
+
+# Emulate our `up`
+function up
+    if [ $argv ]
+        for i in (seq $argv)
+            cd ..
+        end
+    else
+        cd ..
+    end
+end
 
 # ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 # ┃ External                                                 ┃
