@@ -15,8 +15,8 @@ end
 # ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 # ┃ Config                                                   ┃
 # ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-set -gx DEFAULT_USER gerstarv
-set -gx HOME /local/home/gerstarv
+set -gx DEFAULT_USER arvidgerstmann
+set -gx HOME /Users/arvidgerstmann
 set -gx EDITOR nvim
 set -gx VISUAL nvim
 set -gx CC gcc
@@ -40,10 +40,6 @@ set -gx LESSOPEN "|~/.lessfilter %s"
 # Colors for ls(1)
 set -gx LS_COLORS 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34:st=37;44:ex=01;32'
 
-# pnpm
-set -gx PNPM_HOME "$HOME/.local/share/pnpm"
-# pnpm end
-
 # Go
 set -gx GOPATH "$HOME/gopath"
 
@@ -59,6 +55,10 @@ if [ "Darwin" = "$(uname)" ]
     set -gx FLAGS_GETOPT_CMD "$HOMEBREW_PREFIX/opt/gnu-getopt/bin/getopt"
     set -gx GREP_OPTIONS '--color=always'
     set -gx GREP_COLOR '1;35;40'
+
+    # pnpm
+    set -gx PNPM_HOME "$HOME/Library/pnpm"
+    # pnpm end
 
     # Free C-s
     stty -ixon -ixoff
@@ -91,6 +91,10 @@ if [ "Linux" = "$(uname)" ]
             printf '\e]52;c;%s\a' "$encoded"
         end
     end
+
+    # pnpm
+    set -gx PNPM_HOME "$HOME/.local/share/pnpm"
+    # pnpm end
 
     # Free C-s (blocks `fisher`)
     #stty -ixon -ixoff
@@ -269,6 +273,7 @@ end
 # -a => append
 # -p -> prepend (default)
 
+fish_add_path -p "$PNPM_HOME"
 fish_add_path -p "/opt/homebrew/bin"
 fish_add_path -p "/opt/homebrew/sbin"
 fish_add_path -a "$HOME/bin"
@@ -279,7 +284,6 @@ fish_add_path -a "$HOME/.rvm/bin"
 fish_add_path -a "$GOPATH/bin"
 fish_add_path -a "/usr/local/go/bin"
 fish_add_path -a "/usr/local/share/dotnet"
-fish_add_path -a "$PNPM_HOME"
 
 # Amazon
 if [ -d "$HOME/.brazil_completion" ]
