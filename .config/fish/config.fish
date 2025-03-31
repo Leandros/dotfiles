@@ -464,8 +464,8 @@ end
 # ━━ MISE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 if command -q mise >/dev/null
     mise activate fish | source
-    if not [ -f "$HOME/.config/fish/completions/mise.fish" ]
-        # requires a restart
-        mise completion fish > "$HOME/.config/fish/completions/mise.fish"
-    end
+    #if not [ -f "$HOME/.config/fish/completions/mise.fish" ]
+    #    # requires a restart
+    #    mise completion fish > "$HOME/.config/fish/completions/mise.fish"
+    #end
 end
