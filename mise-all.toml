@@ -1,0 +1,45 @@
+[tools]
+"aqua:BurntSushi/ripgrep" = "latest"
+"aqua:sharkdp/fd" = "latest"
+"aqua:ast-grep/ast-grep" = "latest"
+
+# Shell
+"aqua:junegunn/fzf" = "latest"
+"ubi:ajeetdsouza/zoxide" = "latest"
+
+# Devtools.
+"ubi:rui314/mold" = "latest"
+"aqua:opentofu/opentofu" = "latest"
+"aqua:direnv/direnv" = "latest"
+"aqua:astral-sh/uv" = "latest"
+
+# CLI tools
+"cargo:bat" = "latest"
+"cargo:just" = "latest"
+"cargo:watchexec-cli" = "latest"
+"cargo:https://github.com/pamburus/hl.git" = "latest"
+"cargo:xh" = "latest"
+"cargo:eza" = "latest"
+"cargo:sad" = "latest"
+
+# LSP
+"cargo:bacon" = "latest"
+"cargo:bacon-ls" = "latest"
+"cargo:typos-cli" = "latest"
+
+# Cargo plugins
+"cargo:cargo-nextest" = "latest"
+"cargo:cargo-deny" = "latest"
+"cargo:cargo-machete" = "latest"
+"cargo:cargo-bloat" = "latest"
+"cargo:cargo-msrv" = "latest"
+"cargo:cargo-semver-checks" = "latest"
+"cargo:cargo-minimal-versions" = "latest"
+"cargo:cargo-expand" = "latest"
+"cargo:cargo-limit" = "latest"
+"cargo:cargo-audit" = "latest"
+"cargo:cargo-watch" = "latest"
+
+# Profiler
+"cargo:samply" = "latest"
+"cargo:flamegraph" = "latest"
