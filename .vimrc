@@ -868,6 +868,8 @@ autocmd FileType typescript setlocal ts=2 sts=2 sw=2 expandtab
 autocmd FileType typescript.tsx setlocal ts=2 sts=2 sw=2 expandtab
 autocmd FileType haskell setlocal ts=2 sts=2 sw=2 expandtab
 autocmd FileType proto setlocal ts=2 sts=2 sw=2 expandtab
+autocmd FileType html setlocal ts=2 sts=2 sw=2 expandtab
+autocmd FileType htmldjango setlocal ts=2 sts=2 sw=2 expandtab
 
 " Disable automatic line breaking
 autocmd FileType helm setlocal tw=0
@@ -1245,6 +1247,11 @@ require('nvim-ts-autotag').setup({
   per_filetype = {
     ["html"] = {
       --enable_close = false
+    },
+    ["htmldjango"] = {
+      enable_close = true, -- Auto close tags
+      enable_rename = true, -- Auto rename pairs of tags
+      enable_close_on_slash = true, -- Auto close on trailing </
     }
   }
 })
@@ -3050,6 +3057,9 @@ local filetypes = {
     require("formatter.filetypes.yaml").prettier,
   },
   html = {
+    require("formatter.filetypes.html").prettier,
+  },
+  htmldjango = {
     require("formatter.filetypes.html").prettier,
   },
   vue = {
