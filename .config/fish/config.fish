@@ -30,6 +30,7 @@ set -gx AWS_PAGER ""
 # if you wish to use IMDS set AWS_EC2_METADATA_DISABLED=false
 set -gx AWS_EC2_METADATA_DISABLED true
 set -gx VIRTUAL_ENV_DISABLE_PROMPT 1
+set -gx TERRAFORM_BINARY_NAME tofu
 
 # Disable dotnet telemetry.
 set -gx DOTNET_CLI_TELEMETRY_OPTOUT 1
@@ -260,7 +261,7 @@ function fish_user_key_bindings
         set -l nvimpid (jobs | grep nvim | awk '{print $1}')
         # @fish-lsp-disable-next-line 2001
         set -l vimpid (jobs | grep nvim | awk '{print $1}')
-        fg %$nvimpid 2>/dev/null >/dev/null || fg %$vimpid 2>/dev/null >/dev/null
+        fg %$nvimpid 2>/dev/null >/dev/null || fg %$vimpid 2>/dev/null >/dev/null && commandline -f repaint
     end
     bind -M insert ctrl-z __foreground-vim
     bind -M default ctrl-z __foreground-vim
@@ -450,6 +451,9 @@ end
 
 
 # ━━ Accounts ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+if [ -f "$HOME/.env.accounts" ]
+    cat "$HOME/.env.accounts" | source
+end
 
 # ━━ Zoxide ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 if command -q zoxide
