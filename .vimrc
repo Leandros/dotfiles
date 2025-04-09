@@ -104,6 +104,7 @@ if has('nvim')
 
     " Treesitter
     Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+    Plug 'nvim-treesitter/playground'
 
     " Misc
     Plug 'lewis6991/gitsigns.nvim'             " Showins git changes in the gutter
@@ -142,7 +143,7 @@ if has('nvim')
     Plug 'neovim/nvim-lspconfig'               " Collection of common configurations for the Nvim LSP client
     Plug 'williamboman/mason.nvim'
     Plug 'williamboman/mason-lspconfig.nvim'
-    Plug 'jose-elias-alvarez/null-ls.nvim'
+    "Plug 'jose-elias-alvarez/null-ls.nvim'
 
     " LSP Tools
     Plug 'hrsh7th/cmp-nvim-lsp'                " LSP completion source for nvim-cmp
@@ -1509,6 +1510,11 @@ local _border = {
   { '│', 'FloatBorder' },
 }
 
+-- Starting from v0.11 nvim has builtin borders.
+if vim.fn.has('nvim-0.11') == 1 then
+  vim.o.winborder = 'rounded'
+end
+
 -- Add the border on hover and on signature help popup window
 local handlers = {
   ['textDocument/hover'] = vim.lsp.with(vim.lsp.handlers.hover, { border = _border }),
@@ -1530,6 +1536,8 @@ vim.diagnostic.config({
     virtual_text = false,
     signs = true,
     float = { border = _border },
+    -- Available from v0.11:
+    virtual_lines = { current_line = true },
 })
 
 require('lspconfig.ui.windows').default_options = {
@@ -1920,18 +1928,18 @@ command RefreshLSP call Refresh()
 " =============================================================================
 " Linting
 " =============================================================================
-lua <<EOF
-local null_ls = require("null-ls")
+" lua <<EOF
+" local null_ls = require("null-ls")
 
-null_ls.setup({
-    sources = {
-        null_ls.builtins.diagnostics.mypy,
-        --null_ls.builtins.diagnostics.eslint,
-        --null_ls.builtins.completion.spell,
-        --null_ls.builtins.diagnostics.typos,
-    },
-})
-EOF
+" null_ls.setup({
+"     sources = {
+"         --null_ls.builtins.diagnostics.mypy,
+"         --null_ls.builtins.diagnostics.eslint,
+"         --null_ls.builtins.completion.spell,
+"         --null_ls.builtins.diagnostics.typos,
+"     },
+" })
+" EOF
 
 " =============================================================================
 " navbuddy
@@ -3803,7 +3811,7 @@ EOF
 
 " To view all groups: :so $VIMRUNTIME/syntax/hitest.vim
 " Or to test terminal colors: :so $VIMRUNTIME/syntax/colortest.vim
-nmap <leader>sp :call <SID>SynStack()<CR>
+nmap <leader>sP :call <SID>SynStack()<CR>
 function! <SID>SynStack()
   if !exists("*synstack")
     return
