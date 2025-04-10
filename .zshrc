@@ -27,6 +27,9 @@ export AWS_PAGER=""
 # if you wish to use IMDS set AWS_EC2_METADATA_DISABLED=false
 export AWS_EC2_METADATA_DISABLED=true
 export VIRTUAL_ENV_DISABLE_PROMPT=1
+export TERRAFORM_BINARY_NAME=tofu
+export DOTNET_CLI_TELEMETRY_OPTOUT=1
+export GOPATH="$HOME/gopath"
 
 # Profiling
 PROFILE_STARTUP=false
@@ -44,13 +47,8 @@ if [[ "Darwin" == "`uname`" ]]; then
     bindkey "^[[7~" beginning-of-line
     bindkey "^[[8~" end-of-line
 
-    # Browser
-    export BROWSER="/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome"
-
     # LOL! Free C-s
     stty -ixon -ixoff
-
-    # Terminal Colors
 
     # Homebrew
     if [[ $(uname -m) == "arm64" ]]; then
@@ -59,10 +57,12 @@ if [[ "Darwin" == "`uname`" ]]; then
         HOMEBREW_PREFIX="/usr/local"
     fi
 
+    # Mac specificts.
+    export BROWSER="/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome"
     export FLAGS_GETOPT_CMD="$HOMEBREW_PREFIX/opt/gnu-getopt/bin/getopt"
     export GREP_OPTIONS='--color=always'
     export GREP_COLOR='1;35;40'
-
+    export PNPM_HOME="$HOME/Library/pnpm"
 
 # =============================================================================
 # Linux
@@ -78,6 +78,9 @@ elif [[ "Linux" == "`uname`" ]]; then
         alias pbpaste='xclip -o'
         alias pbcopy='xclip -i'
     fi
+
+    # LOL! Free C-s
+    stty -ixon -ixoff
 
     n ()
     {
@@ -109,11 +112,9 @@ elif [[ "Linux" == "`uname`" ]]; then
         fi
     }
 
-    # Browser
+    # Linux specifics.
     export BROWSER="/usr/bin/google-chrome-stable"
-
-    # LOL! Free C-s
-    stty -ixon -ixoff
+    export PNPM_HOME="$HOME/.local/share/pnpm"
 
     if [[ "$TERM" == "rxvt-unicode" ]]; then
         export TERM="xterm-256color"
@@ -206,6 +207,11 @@ if [ -x "$(command -v git-cr)" ]; then
     source <(git-cr generate-shell-compl zsh)
 fi
 
+# =============================================================================
+# Atuin
+# if [ -x "$(command -v atuin)" ]; then
+#     eval "$(atuin init zsh)"
+# fi
 
 # =============================================================================
 # OH-MY-ZSH
@@ -216,7 +222,16 @@ COMPLETION_WAITING_DOTS=false
 export ZSH_THEME=""
 export UPDATE_ZSH_DAYS=7
 
-plugins=(git git-prompt)
+# Autosuggestion config
+export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=243"
+
+# Installation instructions:
+# $ git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+# $ git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+# $ git clone https://github.com/zdharma-continuum/fast-syntax-highlighting.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/fast-syntax-highlighting
+
+# Order is important.
+plugins=(git git-prompt zsh-autosuggestions fast-syntax-highlighting)
 source $ZSH/oh-my-zsh.sh
 
 function __git_prompt {
@@ -261,14 +276,38 @@ export PS1=$'
 %{$fg[blue]%}%~%{$reset_color%} $(__git_prompt)$(__pyvenv_prompt)
 $promptchar '
 export PS2="%{$fg_blod[black]%}%_> %{$reset_color%}"
-export _RPS1="%(?.%{$fg[green]%}✓%{$reset_color%}.%{$fg[red]%}✗ %?%{$reset_color%})"
-function zle-line-init zle-keymap-select {
-    local insert="%{$fg[blue]%}INSERT%{$reset_color%}"
-    RPS1="${${KEYMAP/vicmd/NORMAL}/(main|viins)/$insert} $_RPS1"
-    zle reset-prompt
+
+# This disables the prompt on the right.
+unset RPROMPT
+
+# Uncomment this, and the lines below using it to re-enable the RPROMPT.
+# export _RPS1="%(?.%{$fg[green]%}✓%{$reset_color%}.%{$fg[red]%}✗ %?%{$reset_color%})"
+
+function zle-line-init {
+    # local insert="%{$fg[blue]%}INSERT%{$reset_color%}"
+    # RPS1="${${KEYMAP/vicmd/NORMAL}/(main|viins)/$insert} $_RPS1"
+    # zle reset-prompt
+
+    # Use beam shape cursor.
+    # https://vt100.net/docs/vt510-rm/DECSCUSR
+    echo -ne "\e[6 q"
 }
 zle -N zle-line-init
+
+function zle-keymap-select {
+    # local insert="%{$fg[blue]%}INSERT%{$reset_color%}"
+    # RPS1="${${KEYMAP/vicmd/NORMAL}/(main|viins)/$insert} $_RPS1"
+    # zle reset-prompt
+
+    case $KEYMAP in
+        vicmd) echo -ne '\e[2 q';; # block
+        viins|main) echo -ne '\e[6 q';; # beam
+    esac
+}
 zle -N zle-keymap-select
+
+echo -ne '\e[6 q' # Use beam shape cursor on startup.
+preexec() { echo -ne '\e[6 q' ;} # Use beam shape cursor for each new prompt.
 
 # =============================================================================
 # General Config
@@ -313,6 +352,9 @@ bindkey -M vicmd "?" vi-repeat-search
 bindkey -M vicmd ":" vi-rev-repeat-search # was execute-named-cmd
 #bindkey -M vicmd "y" yank
 #bindkey -M vicmd " " magic-space
+
+# Bindings for zsh-autosuggestions
+bindkey -M viins "" autosuggest-accept
 
 # Search on steroids.
 # Replaced by fzf
@@ -425,6 +467,29 @@ export LESSOPEN="|~/.lessfilter %s"
 # Ignore these commands in history
 alias cd=' cd'
 
+# Amazon
+if [ -d "$HOME/.brazil_completion" ]; then
+    alias bb='brazil-build'
+    alias b='brazil'
+    alias bws='brazil ws'
+    alias bre='brazil-runtime-exec'
+    alias brc='brazil-recursive-cmd'
+    alias bbr='brc brazil-build'
+    alias bball='brc --allPackages'
+    alias bbb='brc --allPackages brazil-build'
+
+    brazil() {
+        unfunction "$0"
+        source "$HOME/.brazil_completion/zsh_completion"
+        $0 "$@"
+    }
+
+    if [ -d "$HOME/.toolbox" ]; then
+        alias tb='toolbox'
+    fi
+fi
+
+# ls replacements.
 if [ -x "$(command -v eza)" ]; then
     alias ls=' eza'
     alias l=' eza -lah'
@@ -489,8 +554,8 @@ up() {
 }
 
 # Short of learning how to actually configure OSX, here's a hacky way to use
-# GNU manpages for programs that are GNU ones, and fallback to OSX manpages otherwise
-# oh, and colorized
+# GNU manpages for programs that are GNU ones, and fallback to OSX manpages
+# otherwise oh, and colorized
 alias gnuman='_() { echo $1; man -M $(brew --prefix)/opt/coreutils/libexec/gnuman $1 1>/dev/null 2>&1;  if [ "$?" -eq 0  ]; then man -M $(brew --prefix)/opt/coreutils/libexec/gnuman $1; else man $1; fi  }; _'
 man() {
     env \
@@ -569,21 +634,13 @@ extract () {
 # =============================================================================
 # SDKs
 # =============================================================================
-export ANDROID_ROOT=$HOME/android-sdk
-export ANDROID_SDK_ROOT=$ANDROID_ROOT
-export ANDROID_HOME=$ANDROID_ROOT
-export ANDROID_SDK=$ANDROID_ROOT
-export NDK_ROOT=$HOME/android-ndk-r10e
-export ANDROID_NDK=$NDK_ROOT
-export NDK_TOOLCHAIN_VERSION=4.9
-export NDK_CCACHE=/usr/local/bin/ccache
-export USE_CCACHE=1
 export PICO_SDK_PATH=$HOME/pico-sdk
 
 # =============================================================================
 # PATH
 # =============================================================================
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+PATH="$PNPM_HOME:$PATH"
 PATH="/opt/homebrew/bin:/opt/homebrew/sbin${PATH+:$PATH}"
 # PATH="$HOMEBREW_PREFIX/opt/binutils/bin:$PATH"
 # PATH="$HOMEBREW_PREFIX/opt/coreutils/libexec/gnubin:$PATH"
@@ -592,47 +649,18 @@ PATH="$HOMEBREW_PREFIX/opt/gnu-getopt/bin:$PATH"
 PATH="$HOMEBREW_PREFIX/opt/openjdk@11/bin:$PATH"
 PATH="$HOMEBREW_PREFIX/opt/mysql@5.7/bin:$PATH"
 
+# Core paths.
 PATH="$PATH:/usr/bin/core_perl"
 PATH="$PATH:$HOME/bin"
 PATH="$PATH:$HOME/.zsh/bin"
 PATH="$PATH:$HOME/.fzf/bin"
-
-# Amazon
-PATH="$PATH:$HOME/.toolbox/bin"
-if [ -d "$HOME/.brazil_completion" ]; then
-    alias bb='brazil-build'
-    alias b='brazil'
-    alias bws='brazil ws'
-    alias bre='brazil-runtime-exec'
-    alias brc='brazil-recursive-cmd'
-    alias bbr='brc brazil-build'
-    alias bball='brc --allPackages'
-    alias bbb='brc --allPackages brazil-build'
-    brazil() {
-        unfunction "$0"
-        source "$HOME/.brazil_completion/zsh_completion"
-        $0 "$@"
-    }
-fi
-if [ -d "$HOME/.toolbox" ]; then
-    alias tb='toolbox'
-fi
-
-# Misc
-PATH="$PATH:$HOME/bin/awscli/eb/macosx/python2.7"
-PATH="$PATH:$HOME/bin/drmemory/bin"
-PATH="$PATH:$ANDROID_ROOT"
-PATH="$PATH:$ANDROID_ROOT/tools"
-PATH="$PATH:$ANDROID_ROOT/platform-tools"
-PATH="$PATH:$NDK_ROOT"
-PATH="$PATH:$NDK_CCACHE"
-PATH="$PATH:$HOME/p4/depot/extern/bin/shared"
-PATH="$PATH:$HOME/bin/depot_tools"
 PATH="$PATH:$HOME/.cargo/bin"
 PATH="$PATH:$HOME/.local/bin"
 PATH="$PATH:$HOME/.rvm/bin"
+PATH="$PATH:$HOME/.fastlane/bin"
 PATH="$PATH:$HOME/gopath/bin"
 PATH="$PATH:/usr/local/go/bin"
+PATH="$PATH:/usr/local/share/dotnet"
 PATH="$PATH:$HOME/flutter/bin"
 if [ -x "$(command -v python3)" ]; then
     PATH="$PATH:$(python3 -m site --user-base)/bin"
@@ -643,8 +671,6 @@ fi
 
 # macOS specific
 PATH="$PATH:/Applications/p4merge.app/Contents/MacOS"
-PATH="$PATH:/usr/local/share/dotnet"
-PATH="$PATH:$HOME/.fastlane/bin"
 
 # Cross Compiling Toolchains
 PATH="$PATH:/usr/local/sh-elf/bin"
@@ -652,27 +678,21 @@ PATH="$PATH:/usr/local/sh-coff/bin"
 PATH="$PATH:/usr/local/m68k-elf/bin"
 PATH="$PATH:/Applications/microchip/xc8/v2.46/bin"
 
-# pnpm
-export PNPM_HOME="$HOME/.local/share/pnpm"
-PATH="$PNPM_HOME:$PATH"
-# pnpm end
+# Amazon
+if [ -d "$HOME/.brazil_completion" ]; then
+    PATH="$PATH:$HOME/.toolbox/bin"
+fi
 
 export PATH
-
-# Golang
-export GOPATH=$HOME/gopath
 
 # Start ssh-agent on startup
 # eval `ssh-agent -s` > /dev/null 2>&1
 
-# DotNET
-export DOTNET_CLI_TELEMETRY_OPTOUT=1
-
-# Homebrew
+# ━━ Homebrew ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 command -v security > /dev/null \
     && export HOMEBREW_GITHUB_API_TOKEN=$(security find-generic-password -a 'homebrew-token' -l 'github.com' -w)
 
-# Lazygit
+# ━━ Lazygit ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 lg()
 {
     export LAZYGIT_NEW_DIR_FILE=~/.lazygit/newdir
@@ -686,30 +706,22 @@ lg()
 }
 
 
-# =============================================================================
-# Zoxide
-# =============================================================================
+# ━━ Zoxide ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # zoxide (must appear after `compinit`)
 command -v zoxide >/dev/null && eval "$(zoxide init zsh)"
 
-# =============================================================================
-# Pyenv
-# =============================================================================
+# ━━ Pyenv ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PATH:$PYENV_ROOT/bin"
 if [ -x "$(command -v pyenv)" ]; then
     eval "$(pyenv init -)"
 fi
 
-# =============================================================================
-# MANPATH
-# =============================================================================
+# ━━ MANPATH ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 export MANPATH=$HOMEBREW_PREFIX/opt/coreutils/libexec/gnuman:$MANPATH
 function mman { MANPATH=$HOME/p4/depot/liba/docs man $* | less }
 
-# =============================================================================
-# fnm
-# =============================================================================
+# ━━ fnm ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 if [ -d "$HOME/.local/share/fnm" ]; then
     export PATH="$HOME/.local/share/fnm:$PATH"
 else
@@ -718,61 +730,46 @@ fi
 
 command -v fnm >/dev/null && eval "`fnm env`"
 
-# =============================================================================
-# External
-# =============================================================================
+# ━━ External ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 if [ -f "$HOME/.p4creds" ]; then
     source "$HOME/.p4creds"
 fi
+if [ -f "$HOME/.env.accounts" ]; then
+    source "$HOME/.env.accounts"
+fi
 
-# =============================================================================
-# RVM
-# =============================================================================
+# ━━ RVM ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # Load RVM into a shell session *as a function*
 [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
 
-# =============================================================================
-# Nix
-# =============================================================================
+# ━━ Nix ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 if [ -e /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
     export NIX_PROFILES="/nix/var/nix/profiles/default $HOME/.nix-profile"
     export PATH="$HOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:$PATH"
 fi
 
-# =============================================================================
-# Direnv
-# =============================================================================
+# ━━ Direnv ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 command -v direnv >/dev/null && eval "$(direnv hook zsh)"
 
-# =============================================================================
-# Broot
-# =============================================================================
+# ━━ Broot ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 [[ -s "$HOME/.config/broot/launcher/bash/br" ]] && . "$HOME/.config/broot/launcher/bash/br"
 
-# =============================================================================
 # esp32
-# =============================================================================
 if [ -f "$HOME/export-esp.sh" ]; then
     . "$HOME/export-esp.sh"
 fi
 
-# =============================================================================
-# ghcup
-# =============================================================================
+# ━━ ghcup ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 [ -f "$HOME/.ghcup/env" ] && source "$HOME/.ghcup/env" # ghcup-env
 
-# =============================================================================
-# chruby
-# =============================================================================
+# ━━ chruby ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 if [ -f "/usr/local/share/chruby/chruby.sh" ]; then
     . /usr/local/share/chruby/chruby.sh
     . /usr/local/share/chruby/auto.sh
     chruby ruby-3.3.0
 fi
 
-# =============================================================================
-# MISE
-# =============================================================================
+# ━━ MISE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 if [ -f "$HOME/.local/bin/mise" ]; then
     eval "$($HOME/.local/bin/mise activate zsh)"
     if [ -f "$HOME/.local/share/mise/completions.zsh" ]; then
@@ -780,14 +777,16 @@ if [ -f "$HOME/.local/bin/mise" ]; then
     fi
 fi
 
-# Terraform completion
+# ━━ Terraform completion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 if command -v terraform >/dev/null 2>&1; then
     autoload -U +X bashcompinit && bashcompinit
     complete -o nospace -C $(command -v terraform) terraform
 fi
 
 
-# KEEP AT BOTTOM!
+# ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+# ┃ KEEP AT BOTTOM!                                          ┃
+# ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 # Entirety of my startup file... then
 if [[ "$PROFILE_STARTUP" == true ]]; then
     unsetopt xtrace
