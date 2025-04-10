@@ -847,6 +847,10 @@ autocmd FileType typescript setlocal commentstring=/*\ %s\ */
 autocmd FileType typescript.tsx setlocal commentstring=/*\ %s\ */
 autocmd FileType lalrpop setlocal commentstring=//\ %s
 autocmd FileType hcl setlocal commentstring=#\ %s
+autocmd FileType hcl setlocal comments=:#
+
+" Use Dashes in identifiers
+autocmd FileType hcl setlocal iskeyword+=-
 
 " Use Tabs in Makefiles
 autocmd FileType make setlocal noexpandtab
@@ -1838,8 +1842,8 @@ if vim.fn.executable('bacon-ls') ~= 0 then
   --end
 
   require("lspconfig").bacon_ls.setup({
-    --cmd = { 'bacon-ls' },
-    cmd = { '/local/home/gerstarv/github/bacon-ls/target/release/bacon-ls' },
+    cmd = { 'bacon-ls' },
+    --cmd = { '/local/home/gerstarv/github/bacon-ls/target/release/bacon-ls' },
     single_file_support = false,
     on_attach = on_attach,
     on_init = on_init,
@@ -3072,6 +3076,17 @@ local filetypes = {
   },
   vue = {
     require("formatter.filetypes.vue").prettier,
+  },
+  hcl = {
+    function()
+      return {
+        exe = 'tofu',
+        args = {
+          'fmt',
+        },
+        stdin = false,
+      }
+    end,
   },
 }
 
