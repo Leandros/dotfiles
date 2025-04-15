@@ -1625,6 +1625,13 @@ vim.g.rustaceanvim = function()
     liblldb_path = extension_path .. 'lldb/lib/liblldb.dylib'
   end
 
+  local rust_analyzer_capabilities = vim.tbl_deep_extend(
+    'force',
+    lsp_defaults.capabilities,
+    -- https://github.com/rust-lang/rust-analyzer/issues/12613
+    { workspace = { didChangeWatchedFiles = { dynamicRegistration = true } } }
+  );
+
   local cfg = require('rustaceanvim.config')
   return {
     -- Plugin configuration
@@ -1648,7 +1655,7 @@ vim.g.rustaceanvim = function()
       on_attach = on_attach,
       on_init = on_init,
       handlers = handlers,
-      capabilities = lsp_defaults.capabilities,
+      capabilities = rust_analyzer_capabilities,
       flags = { allow_incremental_sync = false },
       commands = {
         RustOpenDocs = {
