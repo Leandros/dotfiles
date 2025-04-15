@@ -19,8 +19,9 @@ export VISUAL=nvim
 export CC=gcc
 export CXX=g++
 export DEFAULT_USER=##NEWUSER##
-export LANG=en_us.UTF-8
-export LC_ALL=en_US.UTF-8
+export LANG="en_us.UTF-8"
+export LC_ALL="en_US.UTF-8"
+export LC_CTYPE="en_US.UTF-8"
 export HOMEBREW_NO_AUTO_UPDATE=1
 export AWS_DEFAULT_REGION="us-east-1"
 export AWS_PAGER=""
@@ -231,8 +232,11 @@ export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=243"
 # $ git clone https://github.com/zdharma-continuum/fast-syntax-highlighting.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/fast-syntax-highlighting
 
 # Order is important.
-plugins=(git git-prompt zsh-autosuggestions fast-syntax-highlighting)
+plugins=(git git-prompt colored-man-pages zsh-autosuggestions fast-syntax-highlighting)
 source $ZSH/oh-my-zsh.sh
+
+# Man pages config
+less_termcap[md]="${fg_bold[blue]}"
 
 function __git_prompt {
     # local ref=$(command git symbolic-ref HEAD 2>/dev/null || command git rev-parse --short HEAD 2>/dev/null)
@@ -557,17 +561,6 @@ up() {
 # GNU manpages for programs that are GNU ones, and fallback to OSX manpages
 # otherwise oh, and colorized
 alias gnuman='_() { echo $1; man -M $(brew --prefix)/opt/coreutils/libexec/gnuman $1 1>/dev/null 2>&1;  if [ "$?" -eq 0  ]; then man -M $(brew --prefix)/opt/coreutils/libexec/gnuman $1; else man $1; fi  }; _'
-man() {
-    env \
-        LESS_TERMCAP_mb=$(printf "\e[1;31m") \
-        LESS_TERMCAP_md=$(printf "\e[1;31m") \
-        LESS_TERMCAP_me=$(printf "\e[0m") \
-        LESS_TERMCAP_se=$(printf "\e[0m") \
-        LESS_TERMCAP_so=$(printf "\e[1;44;33m") \
-        LESS_TERMCAP_ue=$(printf "\e[0m") \
-        LESS_TERMCAP_us=$(printf "\e[1;32m") \
-            man "$@" | less
-}
 
 # Convert man page to pdf
 man-pdf () {
