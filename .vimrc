@@ -562,6 +562,7 @@ function! HighlightsLight() abort
   hi! clear BufferLinePick
   hi! clear BufferLineDevIconDefaultSelected
 
+  hi! @ibl.scope.char.1 guibg=#eee8d5
   hi! IblScope gui=nocombine guifg=#839496 guibg=#eee8d5
   hi! IblIndent guifg=#eee8d5 guibg=none gui=nocombine
   hi! IblWhitespace guifg=#eee8d5 guibg=none gui=nocombine
