@@ -210,6 +210,7 @@ Plug 'LnL7/vim-nix', { 'for': ['nix'], 'do': shellescape('nix profile install ni
 Plug 'elixir-editors/vim-elixir'
 Plug 'Vimjas/vim-python-pep8-indent', { 'for': ['python'] }
 Plug 'nickeb96/fish.vim', { 'for': ['fish'] }
+Plug 'pearofducks/ansible-vim'
 
 if js_dev_enabled
     Plug 'leafgarland/typescript-vim'
