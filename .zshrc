@@ -225,6 +225,7 @@ export UPDATE_ZSH_DAYS=7
 
 # Autosuggestion config
 export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=243"
+export ZSH_AUTOSUGGEST_HISTORY_IGNORE="z *"
 
 # Installation instructions:
 # $ git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
@@ -232,7 +233,7 @@ export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=243"
 # $ git clone https://github.com/zdharma-continuum/fast-syntax-highlighting.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/fast-syntax-highlighting
 
 # Order is important.
-plugins=(git git-prompt colored-man-pages zsh-autosuggestions fast-syntax-highlighting)
+plugins=(git git-prompt direnv colored-man-pages zsh-autosuggestions fast-syntax-highlighting)
 source $ZSH/oh-my-zsh.sh
 
 # Man pages config
@@ -740,9 +741,6 @@ if [ -e /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
     export NIX_PROFILES="/nix/var/nix/profiles/default $HOME/.nix-profile"
     export PATH="$HOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:$PATH"
 fi
-
-# ━━ Direnv ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-command -v direnv >/dev/null && eval "$(direnv hook zsh)"
 
 # ━━ Broot ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 [[ -s "$HOME/.config/broot/launcher/bash/br" ]] && . "$HOME/.config/broot/launcher/bash/br"
