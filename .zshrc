@@ -635,6 +635,40 @@ rscp () {
     rsync -avzh --info=progress2 -e "ssh ${sshflags}" "$@"
 }
 
+# Docker shortcodes
+# - `d cls` => `docker container ls -a`
+# - `d ils` => `docker image ls -a`
+# - `d c`   => `docker container`
+# - `d i`   => `docker image`
+function d {
+    case "$1" in
+        "cls")
+            shift
+            docker container ls -a "$@"
+            ;;
+        "ils")
+            shift
+            docker image ls -a "$@"
+            ;;
+        "c")
+            shift
+            docker container "$@"
+            ;;
+        "i")
+            shift
+            if [ "${#@[@]}" = "0" ]; then
+                docker images
+            else
+                docker image "$@"
+            fi
+            ;;
+        *)
+            docker "$@"
+            ;;
+    esac
+}
+
+
 # =============================================================================
 # SDKs
 # =============================================================================
