@@ -2258,7 +2258,7 @@ function lualine_setup()
     sections = {
       lualine_b = {'branch', {'diagnostics', sources={'nvim_diagnostic', 'coc'}}},
       lualine_c = {{'filename', file_status = true, path = 1}},
-      lualine_x = {"vim.fn['zoom#statusline']()", "require'lsp-status'.status()"},
+      lualine_x = {"require'lsp-status'.status()"},
       lualine_y = {},
     },
   }
@@ -3593,7 +3593,7 @@ let g:rainbow_conf = {
 " =============================================================================
 " vim-zoom
 " =============================================================================
-nmap <leader>,f <Plug>(zoom-toggle)
+nmap ,f <Plug>(zoom-toggle)
 
 " =============================================================================
 " no-neck-pain
