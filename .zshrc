@@ -625,6 +625,16 @@ extract () {
     fi
 }
 
+# Better SCP using RSYNC
+rscp () {
+    local sshflags=""
+    for arg in "$@"; do
+        case "$arg" in -*) sshflags="$sshflags $arg"; shift; sshflags="$sshflags $1"; shift;; esac
+    done
+
+    rsync -avzh --info=progress2 -e "ssh ${sshflags}" "$@"
+}
+
 # =============================================================================
 # SDKs
 # =============================================================================
