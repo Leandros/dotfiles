@@ -212,6 +212,7 @@ Plug 'Vimjas/vim-python-pep8-indent', { 'for': ['python'] }
 Plug 'nickeb96/fish.vim', { 'for': ['fish'] }
 Plug 'pearofducks/ansible-vim'
 Plug 'imsnif/kdl.vim'
+Plug 'maxbane/vim-asm_ca65'
 
 if js_dev_enabled
     Plug 'leafgarland/typescript-vim'
