@@ -226,6 +226,7 @@ export UPDATE_ZSH_DAYS=7
 # Autosuggestion config
 export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=243"
 export ZSH_AUTOSUGGEST_HISTORY_IGNORE="z *"
+export ZSH_AUTOSUGGEST_COMPLETION_IGNORE="z *"
 
 # Installation instructions:
 # $ git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
