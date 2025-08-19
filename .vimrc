@@ -42,7 +42,7 @@ if has('nvim') && !empty($NVIM_GUI)
     Plug 'frankier/neovim-colors-solarized-truecolor-only'
     Plug 'equalsraf/neovim-gui-shim'
 elseif has('nvim')
-    Plug 'ishan9299/nvim-solarized-lua'
+    Plug 'maxmx03/solarized.nvim'
 else
     Plug 'altercation/vim-colors-solarized'
 endif
@@ -66,7 +66,7 @@ Plug 'junegunn/vim-peekaboo'
 Plug 'vim-scripts/ingo-library'
 Plug 'vim-scripts/EnhancedJumps'
 Plug 'MattesGroeger/vim-bookmarks'
-Plug 'dhruvasagar/vim-zoom'
+" Plug 'dhruvasagar/vim-zoom'
 Plug 'shortcuts/no-neck-pain.nvim', { 'tag': '*' }
 
 " My own plugins
@@ -141,8 +141,8 @@ if has('nvim')
 
     " LSP Requirements
     Plug 'neovim/nvim-lspconfig'               " Collection of common configurations for the Nvim LSP client
-    Plug 'williamboman/mason.nvim'
-    Plug 'williamboman/mason-lspconfig.nvim'
+    Plug 'mason-org/mason.nvim'
+    Plug 'mason-org/mason-lspconfig.nvim'
     "Plug 'jose-elias-alvarez/null-ls.nvim'
 
     " LSP Tools
@@ -161,7 +161,7 @@ if has('nvim')
     Plug 'SmiteshP/nvim-navbuddy'
 
     " LSP Language Plugins
-    Plug 'mrcjkb/rustaceanvim', { 'tag': 'v5.*' }
+    Plug 'mrcjkb/rustaceanvim', { 'tag': 'v6.*' }
     Plug 'akinsho/flutter-tools.nvim'
     Plug 'saecki/crates.nvim', { 'tag': 'stable' }
 
@@ -261,7 +261,9 @@ endif
 " General
 " =============================================================================
 set fileencoding=utf-8 " Set the encoding written to file
-set termencoding=utf-8 " Set the default encodings just in case $LANG isn't set
+if !has('nvim-0.11')
+  set termencoding=utf-8 " Set the default encodings just in case $LANG isn't set
+endif
 set encoding=utf-8     " Set the default encodings just in case $LANG isn't set
 set cursorline         " Hightlight current selected line.
 set ttyfast            " Set that we have a fast terminal
@@ -319,9 +321,11 @@ set breakindent
 
 " Disable mouse
 set mouse=c
-set guioptions+=lrbmTLce
-set guioptions-=lrbmTLce
-set guioptions+=c
+if !has('nvim-0.11')
+  set guioptions+=lrbmTLce
+  set guioptions-=lrbmTLce
+  set guioptions+=c
+endif
 set sessionoptions+=tabpages,globals " store tabpages and globals in session
 
 " Disable ZZ to close vim
@@ -496,6 +500,61 @@ function! HighlightsDark() abort
   hi! fishOption guibg=none ctermbg=0
 endfunction
 
+function! InitSolarized() abort
+  lua <<EOF
+  require('solarized').setup({
+    variant = 'autumn',
+    on_highlights = function (colors, color)
+      local yellow = colors.yellow
+      local green = colors.green
+      local cyan = colors.cyan
+      local orange = colors.orange
+      local base0 = colors.base0
+      local base03 = colors.base03
+      local blue = colors.blue
+      local violet = colors.violet
+
+      ---@type solarized.highlights
+      local groups = {
+        Constant = { fg = cyan },
+        Special = { fg = orange },
+        IncSearch = { fg = base03, bg = yellow, bold = true },
+        Search = { fg = base03, bg = yellow, bold = false },
+        ['@constant.builtin'] = { fg = yellow },
+        ['@punctuation.delimiter'] = { fg = green },
+        ['@punctuation.special'] = { fg = orange },
+        ['@function.macro'] = { fg = orange },
+        ['@variable.builtin'] = { fg = orange },
+        ['@variable.parameter'] = { fg = base0 },
+        ['@type.builtin'] = { fg = yellow },
+        ['@number'] = { fg = cyan },
+        ['@attribute.builtin'] = { fg = orange },
+        ['@module'] = { fg = blue },
+        ['@markup.link'] = { fg = violet, underline = false },
+        ['@markup.link.url'] = { fg = violet, underline = false },
+        ['@markup.heading.1'] = { fg = colors.red },
+        ['@markup.heading.2'] = { fg = colors.orange },
+        ['@markup.heading.3'] = { fg = colors.violet },
+        ['@markup.heading.4'] = { fg = colors.blue },
+        ['@markup.heading.5'] = { fg = colors.cyan },
+        ['@markup.heading.6'] = { fg = colors.green },
+        NvimTreeNormal = { bg = base03 },
+        NvimTreeFolderName = { fg = blue },
+        NvimTreeExecFile = { fg = cyan, bold = true },
+        MasonNormal = { bg = base03 },
+        NormalFloat = { bg = base03 },
+        WhichKeyNormal = { bg = base03 },
+        TelescopeNormal = { bg = base03 },
+        FlashLabel = { fg = colors.base04, bg = '#ffffff', bold = true },
+        FloatTitle = { fg = base0, bg = 'NONE' },
+      }
+
+     return groups
+    end,
+  })
+EOF
+endfunction
+
 function! HighlightsLight() abort
   " Set correct colors. The autodetected colors are not ideal.
   hi! BufferLineFill guibg=#fdf6e3
@@ -611,7 +670,7 @@ if has('nvim')
     let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
 endif
 set background=dark
-let g:solarized_italics = 0
+call InitSolarized()
 colorscheme solarized
 
 " SOLARIZED HEX     16/8 TERMCOL  XTERM/HEX   L*A*B      RGB         HSB
@@ -701,7 +760,9 @@ nnoremap j <C-r>
 inoremap <c-a> <c-r>
 
 " Convenient pasting.
-set pastetoggle=<F2>
+if !has('nvim-0.11')
+  set pastetoggle=<F2>
+endif
 
 " Removed due to blocking super awesome multiline edit mode.
 " Convenient copy to clipboard.
@@ -1435,6 +1496,7 @@ end
 --  "cmake",
 require('mason-lspconfig').setup {
   automatic_installation = false,
+  automatic_enable = false,
   ensure_installed = {
     "yamlls",
     "bashls",
@@ -1472,7 +1534,7 @@ local function on_attach(client, bufnr)
     require('navigator.lspclient.mapping').setup({ client=client, bufnr=bufnr }) -- setup navigator keymaps here,
     require('navigator.dochighlight').documentHighlight(bufnr)
     if client:supports_method('textDocument/codeAction', bufnr) then
-      require('navigator.codeAction').code_action_prompt(bufnr, {})
+      require('navigator.codeAction').code_action_prompt(client, bufnr, {})
     end
 
     local navigator_bindings = {
@@ -1813,32 +1875,47 @@ vim.g.rustaceanvim = function()
   }
 end -- rust config
 
-require("mason-lspconfig").setup_handlers {
-    -- The first entry (without a key) will be the default handler
-    -- and will be called for each installed server that doesn't have
-    -- a dedicated handler.
-    function (server_name) -- default handler (optional)
-        lspconfig[server_name].setup {
-          on_attach = on_attach,
-          on_init = on_init,
-          handlers = handlers,
-          capabilities = lsp_defaults.capabilities,
-        }
-    end,
-    -- Next, you can provide a dedicated handler for specific servers.
-    ["rust_analyzer"] = function ()
-      --custom setup here ...
-    end,
-    ["yamlls"] = function ()
-      lspconfig["yamlls"].setup {
-        settings = {
-          yaml = {
-            keyOrdering = false
-          }
-        }
-      }
+vim.lsp.config('*', {
+  capabilities = lsp_defaults.capabilities,
+})
+
+vim.api.nvim_create_autocmd('LspAttach', {
+  group = vim.api.nvim_create_augroup('my.lsp', {}),
+  callback = function(args)
+    local client = vim.lsp.get_client_by_id(args.data.client_id)
+    if not client then
+      return
     end
-}
+    on_init(client)
+  end,
+})
+vim.lsp.handlers['client/registerCapability'] = (function(overridden)
+  return function(err, res, ctx)
+    local result = overridden(err, res, ctx)
+    local client = vim.lsp.get_client_by_id(ctx.client_id)
+    if not client then
+      return
+    end
+    for bufnr, _ in pairs(client.attached_buffers) do
+      -- Call your custom on_attach logic...
+      on_attach(client, bufnr)
+    end
+    return result
+  end
+end)(vim.lsp.handlers['client/registerCapability'])
+
+vim.lsp.config('yamlls', {
+  settings = {
+    yaml = {
+      keyOrdering = false
+    }
+  }
+})
+
+local mason_servers = require('mason-lspconfig').get_installed_servers()
+for _, server in ipairs(mason_servers) do
+  vim.lsp.enable(server)
+end
 
 -- Rust Analyzer is special. We might install it in a multitude of ways.
 if not registry.is_installed('rust-analyzer') then
@@ -2669,7 +2746,7 @@ EOF
 " =============================================================================
 lua <<EOF
 require'nvim-treesitter.configs'.setup {
-    ensure_installed = {'rust', 'json', 'javascript', 'typescript', 'tsx', 'vim', 'lua', 'go', 'haskell', 'bash', 'markdown', 'markdown_inline', 'python', 'html'},
+    ensure_installed = {'rust', 'json', 'javascript', 'typescript', 'tsx', 'vim', 'lua', 'go', 'haskell', 'bash', 'markdown', 'markdown_inline', 'python', 'html', 'regex'},
     auto_install = false,
     highlight = {
         enable = true,
@@ -2742,7 +2819,9 @@ require('flash').setup {
 vim.api.nvim_set_hl(0, 'FlashBackdrop', { link = 'Comment' })
 vim.api.nvim_set_hl(0, 'FlashMatch', { link = 'Search' })
 vim.api.nvim_set_hl(0, 'FlashCurrent', { link = 'IncSearch' })
-vim.api.nvim_set_hl(0, 'FlashLabel', { link = 'WildMenu' })
+
+-- Is set in the solarized settings.
+--vim.api.nvim_set_hl(0, 'FlashLabel', { link = 'WildMenu' })
 
 -- This mimics leap.nvim:
 --vim.api.nvim_set_hl(0, 'FlashLabel', { cterm = { underline = true, nocombine = true }, ctermfg=9, underline = true, nocombine = true, fg='#ccff88' })
@@ -3770,6 +3849,7 @@ function enable_dark_mode()
   vim.g["custom#isdarkmode"] = 1
 
   vim.api.nvim_set_option('background', 'dark')
+  vim.cmd('call InitSolarized()')
   vim.cmd('call HighlightsDark()')
   vim.cmd('colorscheme solarized')
   vim.cmd('highlight ColorColumn guibg=#004653')
@@ -3787,6 +3867,7 @@ function enable_light_mode()
   vim.g["custom#isdarkmode"] = 0
 
   vim.api.nvim_set_option('background', 'light')
+  vim.cmd('call InitSolarized()')
   vim.cmd('call HighlightsLight()')
   vim.cmd('colorscheme solarized')
   vim.cmd('highlight ColorColumn guibg=#eee8d5')
@@ -3838,13 +3919,19 @@ EOF
 
 " To view all groups: :so $VIMRUNTIME/syntax/hitest.vim
 " Or to test terminal colors: :so $VIMRUNTIME/syntax/colortest.vim
-nmap <leader>sP :call <SID>SynStack()<CR>
-function! <SID>SynStack()
-  if !exists("*synstack")
-    return
-  endif
-  echo map(synstack(line('.'), col('.')), 'synIDattr(v:val, "name")')
-endfunc
+" nmap <leader>sP :call <SID>SynStack()<CR>
+" function! <SID>SynStack()
+"   if !exists("*synstack")
+"     return
+"   endif
+"   echo map(synstack(line('.'), col('.')), 'synIDattr(v:val, "name")')
+" endfunc
+" function! SynGroup()
+"     let l:s = synID(line('.'), col('.'), 1)
+"     echo synIDattr(l:s, 'name') . ' -> ' . synIDattr(synIDtrans(l:s), 'name')
+" endfun
+" nmap <leader>sP :call SynGroup()<CR>
+nmap <leader>sP :TSHighlightCapturesUnderCursor<CR>
 
 " =============================================================================
 " Golang
