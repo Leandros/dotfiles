@@ -1343,11 +1343,29 @@ function vsnip_complete()
     }
   })
 end
+local has_words_before = function()
+  unpack = unpack or table.unpack
+  local line, col = unpack(vim.api.nvim_win_get_cursor(0))
+  return col ~= 0 and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match("%s") == nil
+end
+
+local feedkey = function(key, mode)
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(key, true, true, true), mode, true)
+end
+
+local selectopts = { behavior = cmp.SelectBehavior.Select }
+
 cmp.setup({
   window = {
     completion = cmp.config.window.bordered(),
     documentation = cmp.config.window.bordered(),
   },
+
+  completion = {
+    completeopt = vim.o.completeopt,
+  },
+
+  preselect = cmp.PreselectMode.None,
 
   -- Enable LSP snippets
   snippet = {
@@ -1363,41 +1381,49 @@ cmp.setup({
   --},
 
   mapping = {
-    ['<C-r>'] = cmp.mapping.select_prev_item(),
+    ['<C-r>'] = cmp.mapping.select_prev_item(selectopts),
     ['<C-n>'] = cmp.mapping({
       i = function(fallback)
         if cmp.visible() then
-          cmp.select_next_item()
+          cmp.select_next_item(selectopts)
         else
           cmp.complete()
         end
       end,
-      c = cmp.mapping.select_next_item(),
-      s = cmp.mapping.select_next_item(),
+      c = cmp.mapping.select_next_item(selectopts),
+      s = cmp.mapping.select_next_item(selectopts),
     }),
     --['<C-s>'] = cmp.mapping(vsnip_complete, { 'i' }),
     -- Add tab support
-    ['<S-Tab>'] = function(fallback)
+    ['<S-Tab>'] = cmp.mapping(function(fallback)
       local is_jumpable = vim.api.nvim_cmd({
         cmd = "echo",
         args = { "vsnip#jumpable(-1)" },
       }, { output = true })
 
       if cmp.visible() then
-        cmp.select_prev_item()
-      elseif is_jumpable == "0" then
-        return
+        cmp.select_prev_item(selectopts)
+      elseif vim.fn["vsnip#jumpable"](-1) == 1 then
+        feedkey("<Plug>(vsnip-jump-prev)", "")
+      --elseif is_jumpable == "0" then
+      --  return
       else
         fallback()
       end
-    end,
-    ['<Tab>'] = function(fallback)
+    end, { "i", "s" }),
+
+    ['<Tab>'] = cmp.mapping(function(fallback)
       if cmp.visible() then
-        cmp.select_next_item()
+        cmp.select_next_item(selectopts)
+      elseif vim.fn["vsnip#available"](1) == 1 then
+        feedkey("<Plug>(vsnip-expand-or-jump)", "")
+      elseif has_words_before() then
+        cmp.complete()
       else
-        fallback()
+        fallback() -- The fallback function sends a already mapped key. In this case, it's probably `<Tab>`.
       end
-    end,
+    end, { "i", "s" }),
+
     ['<C-,>'] = cmp.mapping.scroll_docs(-4),
     ['<C-.>'] = cmp.mapping.scroll_docs(4),
     ['<C-j>'] = cmp.mapping.close(),
@@ -1818,7 +1844,7 @@ vim.g.rustaceanvim = function()
 
           completion = {
             fullFunctionSignatures = {
-              enable = true,
+              enable = false,
             },
           },
 
