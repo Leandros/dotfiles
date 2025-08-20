@@ -1353,7 +1353,8 @@ local feedkey = function(key, mode)
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(key, true, true, true), mode, true)
 end
 
-local selectopts = { behavior = cmp.SelectBehavior.Select }
+--local selectopts = { behavior = cmp.SelectBehavior.Select }
+local selectopts = { behavior = cmp.SelectBehavior.Insert }
 
 cmp.setup({
   window = {
@@ -1720,7 +1721,12 @@ vim.g.rustaceanvim = function()
     'force',
     lsp_defaults.capabilities,
     -- https://github.com/rust-lang/rust-analyzer/issues/12613
-    { workspace = { didChangeWatchedFiles = { dynamicRegistration = true } } }
+    { 
+        workspace = { didChangeWatchedFiles = { dynamicRegistration = true } },
+        -- This disables snippets, which also means no expansion of function parameters/arguments
+        -- when a completion is triggered.
+        textDocument = { completion = { completionItem = { snippetSupport = false } } },
+    }
   );
 
   local cfg = require('rustaceanvim.config')
