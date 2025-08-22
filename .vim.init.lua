@@ -1098,17 +1098,17 @@ local spec = {
       ---@diagnostic disable-next-line: redefined-local
       local autocmd = vim.api.nvim_create_autocmd -- Create autocommand
       local mark_bindings = {
-        { "n", "mm", ":BookmarkToggle<CR>", "Toggle" },
-        { "n", "mi", ":BookmarkAnnotate<CR>", "Annotate" },
-        { "n", "mn", ":BookmarkNext<CR>", "Next" },
-        { "n", "mr", ":BookmarkPrev<CR>", "Prev" },
-        { "n", "ma", ":BookmarkShowAll<CR>", "Show All" },
-        { "n", "md", ":BookmarkClear<CR>", "Clear" },
-        { "n", "mx", ":BookmarkClearAll<CR>", "Clear All" },
-        { "n", "mh", ":BookmarkMoveUp<CR>", "Move Up" },
-        { "n", "ml", ":BookmarkMoveDown<CR>", "Move Down" },
-        { "n", "mg", ":BookmarkMoveToLine<CR>", "Move To Line" },
-        { "n", "mA", "<cmd>lua require('telescope.builtin').marks()<cr>", "Show All (Telescope)" },
+        { "mm", ":BookmarkToggle<CR>", mode = "n", desc = "Toggle" },
+        { "mi", ":BookmarkAnnotate<CR>", mode = "n", desc = "Annotate" },
+        { "mn", ":BookmarkNext<CR>", mode = "n", desc = "Next" },
+        { "mr", ":BookmarkPrev<CR>", mode = "n", desc = "Prev" },
+        { "ma", ":BookmarkShowAll<CR>", mode = "n", desc = "Show All" },
+        { "md", ":BookmarkClear<CR>", mode = "n", desc = "Clear" },
+        { "mx", ":BookmarkClearAll<CR>", mode = "n", desc = "Clear All" },
+        { "mh", ":BookmarkMoveUp<CR>", mode = "n", desc = "Move Up" },
+        { "ml", ":BookmarkMoveDown<CR>", mode = "n", desc = "Move Down" },
+        { "mg", ":BookmarkMoveToLine<CR>", mode = "n", desc = "Move To Line" },
+        { "mA", "<cmd>lua require('telescope.builtin').marks()<cr>", mode = "n", desc = "Show All (Telescope)" },
       }
 
       autocmd("BufEnter", {
@@ -1118,7 +1118,7 @@ local spec = {
           if vim.bo.filetype == "nerdtree" then return end
 
           for _, kb in ipairs(mark_bindings) do
-            vim.keymap.set(kb[1], kb[2], kb[3], { noremap = false, silent = true, desc = kb[4], buffer = true })
+            vim.keymap.set(kb["mode"], kb[1], kb[2], { noremap = false, desc = kb["desc"], buffer = true })
           end
         end,
       })
@@ -2649,7 +2649,13 @@ while True:
     "folke/which-key.nvim",
     config = function()
       local wk = require("which-key")
-      wk.setup({})
+      wk.setup({
+        preset = "modern",
+        triggers = {
+          { "<auto>", mode = "nixsotc" },
+          { "m", mode = { "n", "v" } },
+        },
+      })
       wk.add({
         { "<C-W>", group = "window" },
         { "<C-W>H", desc = "move current window to the far left" },
@@ -2671,6 +2677,7 @@ while True:
         { "<leader>r", group = "rename" },
         { "<leader>s", group = "git" },
         { "<leader>x", group = "trouble" },
+        { "m", group = "bookmarks" },
       })
     end,
   }, -- end whichkey
