@@ -752,6 +752,7 @@ local function setup_highlights_dark()
 
   -- - TreeSitter ---
   hi("TSDefinitionUsage", { fg = "none", bg = "#073642", underline = true, sp = "none" })
+  hi("TreesitterContextSeparator", { fg = "#2aa198" })
 
   -- - Fish ---
   hi("fishParameter", { bg = "none", ctermbg = 0 })
@@ -789,6 +790,7 @@ local function setup_highlights_light()
 
   -- - TreeSitter ---
   hi("TSDefinitionUsage", { fg = "none", bg = "#eee8d5", underline = true, sp = "none" })
+  hi("TreesitterContextSeparator", { fg = "#268bd2" })
 
   -- - Fish ---
   hi("fishParameter", { bg = "none", ctermbg = 0 })
@@ -2603,6 +2605,15 @@ while True:
       })
     end,
   }, -- end treesitter
+
+  {
+    "nvim-treesitter/nvim-treesitter-context",
+    opts = {
+      enable = true,
+      separator = '―',
+      min_window_height = 20,
+    },
+  }, -- end treesitter-context
 
   {
     "folke/flash.nvim",
