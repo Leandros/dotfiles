@@ -165,6 +165,7 @@ if has('nvim')
     Plug 'akinsho/flutter-tools.nvim'
     Plug 'saecki/crates.nvim', { 'tag': 'stable' }
 
+    Plug 'folke/lazydev.nvim'
     Plug 'folke/snacks.nvim'
 
     " Rust
@@ -1442,6 +1443,7 @@ cmp.setup({
 
   -- Installed sources
   sources = cmp.config.sources({
+    { name = 'lazydev' },
     { name = 'nvim_lsp' },
     { name = 'vsnip' },
   }, {
@@ -1640,6 +1642,13 @@ vim.diagnostic.config({
 require('lspconfig.ui.windows').default_options = {
   border = _border
 }
+
+-- Lazydev
+require("lazydev").setup({
+  enabled = function(root_dir)
+    return true
+  end,
+})
 
 -- Crates.nvim
 require("crates").setup {
