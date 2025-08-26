@@ -2923,8 +2923,13 @@ while True:
           require("formatter.filetypes.sh").shfmt,
         },
         python = {
-          require("formatter.filetypes.python").ruff,
-          --require("formatter.filetypes.python").black,
+          function()
+            if vim.fn.executable("ruff") ~= 0 then
+              return require("formatter.filetypes.python").ruff()
+            elseif vim.fn.executable("black") == 1 then
+              return require("formatter.filetypes.python").black()
+            end
+          end,
           --require("formatter.filetypes.python").isort,
         },
         rust = {
