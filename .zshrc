@@ -698,6 +698,7 @@ PATH="$PATH:$HOME/.local/bin"
 PATH="$PATH:$HOME/.rvm/bin"
 PATH="$PATH:$HOME/.fastlane/bin"
 PATH="$PATH:$HOME/gopath/bin"
+PATH="$PATH:$HOME/neovim/bin"
 PATH="$PATH:/usr/local/go/bin"
 PATH="$PATH:/usr/local/share/dotnet"
 PATH="$PATH:$HOME/flutter/bin"
@@ -756,9 +757,16 @@ if [ -x "$(command -v pyenv)" ]; then
     eval "$(pyenv init -)"
 fi
 
+function pydoc { python3 -m pydoc "$*" }
+
 # ━━ MANPATH ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 export MANPATH=$HOMEBREW_PREFIX/opt/coreutils/libexec/gnuman:$MANPATH
 function mman { MANPATH=$HOME/p4/depot/liba/docs man $* | less }
+
+# Better manpager
+if [ -x "$(command -v nvim)" ]; then
+    export MANPAGER='nvim -c "Man!"'
+fi
 
 # ━━ fnm ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 if [ -d "$HOME/.local/share/fnm" ]; then
