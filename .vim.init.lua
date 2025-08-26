@@ -1,6 +1,6 @@
--- vim: set ft=lua ts=2 sts=2 sw=2 expandtab
 -- Start LSP with :LspStart lua_ls
-vim.o.filetype = "off"
+vim.cmd([[ set nocompatible ]])
+vim.cmd([[ filetype on ]])
 
 -- Docs:
 -- * https://github.com/nanotee/nvim-lua-guide
@@ -291,7 +291,7 @@ end
 ---@param filetype string File type used for triggering.
 ---@param callback function Called when triggered.
 local function auft(filetype, callback)
-  vim.api.nvim_create_autocmd({ "FileType" }, {
+  vim.api.nvim_create_autocmd("FileType", {
     pattern = filetype,
     callback = callback,
   })
@@ -302,10 +302,10 @@ end
 ---@param indent integer How many spaces to indent with
 local function setindent(filetype, indent)
   auft(filetype, function()
-    vim.o.ts = indent
-    vim.o.sts = indent
-    vim.o.sw = indent
-    vim.o.expandtab = true
+    vim.opt_local.ts = indent
+    vim.opt_local.sts = indent
+    vim.opt_local.sw = indent
+    vim.opt_local.expandtab = true
   end)
 end
 
