@@ -1,4 +1,4 @@
--- vim: set ft=lua ts=2 sts=2 sw=2 expandtab :
+-- vim: set ft=lua ts=2 sts=2 sw=2 expandtab
 -- Start LSP with :LspStart lua_ls
 vim.o.filetype = "off"
 
@@ -34,7 +34,16 @@ vim.g.maplocalleader = " "
 if vim.fn.has("win32") == 1 or vim.fn.has("win16") == 1 then
   vim.g.python3_host_prog = "C:\\Python310\\python.exe"
 else
-  vim.g.python3_host_prog = "python3"
+  local venv_path = vim.fn.stdpath("data") .. "/python3-venv"
+  if not vim.fn.filereadable(venv_path) then
+    print('Python3 VENV not created, run: python3 -m venv ' .. venv_path)
+    print('source the venv: . ' .. venv_path .. '/bin/activate')
+    print('install pynvim: pip install pynvim')
+    print('falling back to system python')
+    vim.g.python3_host_prog = "python3"
+  else
+    vim.g.python3_host_prog = venv_path .. "/bin/python3"
+  end
 end
 
 -- Ugly workaround until vim fixes
@@ -321,6 +330,7 @@ auft("make", function() vim.opt_local.expandtab = false end)
 
 -- Setup indents
 setindent("json", 2)
+setindent("lua", 2)
 setindent("gn", 2)
 setindent("yaml", 2)
 setindent("hcl", 2)
