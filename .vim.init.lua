@@ -918,6 +918,15 @@ vim.api.nvim_create_user_command("EnableDarkMode", EnableDarkMode, {})
 -- ┃                         Plugins                         ┃
 -- ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
+local _Logger = nil
+---@diagnostic disable-next-line: unused-function,unused-local
+local function get_logger()
+  if _Logger == nil then
+    _Logger = require("logger"):new({ log_level = "debug", prefix = "init.lua", echo_messages = true })
+  end
+  return _Logger
+end
+
 local _border = {
   -- Second argument is the highlight group name.
   { "┌", "FloatBorder" },
@@ -1008,6 +1017,7 @@ local spec = {
   },
 
   -- ━━ Vimscript Plugins ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  { "rmagatti/logger.nvim" },
   { "nvim-lua/plenary.nvim" },
   { "rcarriga/nvim-notify" },
   { "tpope/vim-commentary" },
@@ -1630,63 +1640,64 @@ while True:
         end
       end)(vim.lsp.handlers["client/registerCapability"])
 
-      vim.lsp.config("yamlls", {
+      -- ━━ YAML LS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      local prev_yamlls = vim.lsp.config["yamlls"]
+      vim.lsp.config("yamlls", vim.tbl_deep_extend("keep", prev_yamlls, {
         settings = {
           yaml = {
             keyOrdering = false,
           },
         },
+      }))
+
+      -- ━━ Bacon LSP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      -- find location with: `:lua =require('vim.lsp.log').get_filename()`
+      --vim.lsp.set_log_level('debug')
+      --if vim.fn.has 'nvim-0.5.1' == 1 then
+      --  require('vim.lsp.log').set_format_func(vim.inspect)
+      --end
+      local prev_bacon_config = vim.lsp.config["bacon_ls"]
+      vim.lsp.config("bacon_ls", vim.tbl_deep_extend("keep", prev_bacon_config, {
+        -- cmd = { 'bacon-ls' },
+        -- cmd = { "/local/home/gerstarv/github/bacon-ls/target/release/bacon-ls" },
+        single_file_support = false,
+        on_attach = on_attach,
+        on_init = on_init,
+        capabilities = lsp_defaults.capabilities,
+        init_options = {
+          updateOnSave = true,
+          updateOnSaveWaitMillis = 200,
+          runBaconInBackground = false,
+          synchronizeAllOpenFilesWaitMillis = 1000,
+          -- BETA:
+          useCargoBackend = true,
+          cargoEnv = "CARGO_TARGET_DIR=.checkTarget",
+          --cargoCommandArguments = "check --tests --all-targets --message-format json-diagnostic-rendered-ansi",
+          -- Clippy takes longer.
+          -- add `--all-features` if it works for your project:
+          cargoCommandArguments = "clippy --workspace --all-targets --message-format json-diagnostic-rendered-ansi",
+
+          -- This copies the entire source tree to a temporary directory, and will
+          -- therefore not work for most cases.
+          updateOnChange = false,
+          updateOnChangeCooldownMillis = 5000,
+        },
+      }))
+
+      -- ━━ Fish LSP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      vim.lsp.config("fish_lsp", {
+        on_attach = on_attach,
+        on_init = on_init,
+        capabilities = lsp_defaults.capabilities,
       })
 
       -- ━━ Mason LSP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       local mason_servers = require("mason-lspconfig").get_installed_servers()
       for _, server in ipairs(mason_servers) do
-        vim.lsp.enable(server)
-      end
-
-      -- ━━ Bacon LSP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-      if vim.fn.executable("bacon-ls") ~= 0 then
-        -- find location with: `:lua =require('vim.lsp.log').get_filename()`
-        --vim.lsp.set_log_level('debug')
-        --if vim.fn.has 'nvim-0.5.1' == 1 then
-        --  require('vim.lsp.log').set_format_func(vim.inspect)
-        --end
-
-        require("lspconfig").bacon_ls.setup({
-          --cmd = { 'bacon-ls' },
-          cmd = { "/local/home/gerstarv/github/bacon-ls/target/release/bacon-ls" },
-          single_file_support = false,
-          on_attach = on_attach,
-          on_init = on_init,
-          capabilities = lsp_defaults.capabilities,
-          init_options = {
-            updateOnSave = true,
-            updateOnSaveWaitMillis = 200,
-            runBaconInBackground = false,
-            synchronizeAllOpenFilesWaitMillis = 1000,
-            -- BETA:
-            useCargoBackend = true,
-            cargoEnv = "CARGO_TARGET_DIR=.checkTarget",
-            --cargoCommandArguments = "check --tests --all-targets --message-format json-diagnostic-rendered-ansi",
-            -- Clippy takes longer.
-            -- add `--all-features` if it works for your project:
-            cargoCommandArguments = "clippy --workspace --all-targets --message-format json-diagnostic-rendered-ansi",
-
-            -- This copies the entire source tree to a temporary directory, and will
-            -- therefore not work for most cases.
-            updateOnChange = false,
-            updateOnChangeCooldownMillis = 5000,
-          },
-        })
-      end
-
-      -- ━━ Fish LSP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-      if vim.fn.executable("fish-lsp") ~= 0 then
-        require("lspconfig").fish_lsp.setup({
-          on_attach = on_attach,
-          on_init = on_init,
-          capabilities = lsp_defaults.capabilities,
-        })
+        -- skip rust analyzer to avoid double activation
+        if server ~= "rust_analyzer" then
+          vim.lsp.enable(server)
+        end
       end
 
       -- ━━ Custom CargoReload ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
