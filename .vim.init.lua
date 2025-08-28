@@ -2669,6 +2669,7 @@ while True:
       enable = true,
       separator = '―',
       min_window_height = 20,
+      max_lines = 10,
     },
   }, -- end treesitter-context
 
