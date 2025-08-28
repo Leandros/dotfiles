@@ -1618,8 +1618,9 @@ while True:
         virtual_text = false,
         signs = true,
         float = { border = "rounded" },
-        -- Available from v0.11:
-        virtual_lines = { current_line = true },
+        -- Inline diagnostics/errors/warnings. Available from v0.11:
+        virtual_lines = false, -- disabled
+        -- virtual_lines = { current_line = true }, -- enabled
       })
 
       require("lspconfig.ui.windows").default_options = {
