@@ -26,7 +26,7 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 -- Make sure to setup `mapleader` and `maplocalleader` before plugins load
-vim.api.nvim_set_keymap("n", "<SPACE>", "<Nop>", { noremap = true })
+vim.keymap.set("n", "<SPACE>", "<Nop>", { noremap = true })
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
@@ -145,8 +145,8 @@ vim.o.mouse = "c"
 vim.opt.sessionoptions:append("tabpages,globals") -- store tabpages and globals in session
 
 -- Disable ZZ to close vim
-vim.api.nvim_set_keymap("n", "Z", "<Nop>", { noremap = true })
-vim.api.nvim_set_keymap("n", "ZZ", "<Nop>", { noremap = true })
+vim.keymap.set("n", "Z", "<Nop>", { noremap = true })
+vim.keymap.set("n", "ZZ", "<Nop>", { noremap = true })
 
 -- Disable netrw
 vim.g.loaded_netrw = 1
@@ -369,14 +369,17 @@ vim.g["c_no_if0_fold"] = 1
 ---@param lhs string Keybind
 ---@param rhs string Action
 ---@param opts vim.api.keyset.keymap|nil Options
-local function noremap(lhs, rhs, opts) vim.api.nvim_set_keymap("", lhs, rhs, vim.tbl_deep_extend("keep", { noremap = true }, opts or {})) end
+local function noremap(lhs, rhs, opts)
+  local opts_ = vim.tbl_deep_extend("keep", { noremap = true }, opts or {})
+  vim.keymap.set("", lhs, rhs, opts_)
+end
 --- Create a new mapping for normal mode.
 ---@param lhs string Keybind
 ---@param rhs string Action
 ---@param opts vim.api.keyset.keymap|nil Options
 local function nnoremap(lhs, rhs, opts)
   local opts_ = vim.tbl_deep_extend("keep", { noremap = true }, opts or {})
-  vim.api.nvim_set_keymap("n", lhs, rhs, opts_)
+  vim.keymap.set("n", lhs, rhs, opts_)
 end
 --- Create a new mapping for insert mode.
 ---@param lhs string Keybind
@@ -384,7 +387,7 @@ end
 ---@param opts vim.api.keyset.keymap|nil Options
 local function inoremap(lhs, rhs, opts)
   local opts_ = vim.tbl_deep_extend("keep", { noremap = true }, opts or {})
-  vim.api.nvim_set_keymap("i", lhs, rhs, opts_)
+  vim.keymap.set("i", lhs, rhs, opts_)
 end
 --- Create a new mapping for visual mode.
 ---@param lhs string Keybind
@@ -392,7 +395,7 @@ end
 ---@param opts vim.api.keyset.keymap|nil Options
 local function vnoremap(lhs, rhs, opts)
   local opts_ = vim.tbl_deep_extend("keep", { noremap = true }, opts or {})
-  vim.api.nvim_set_keymap("v", lhs, rhs, opts_)
+  vim.keymap.set("v", lhs, rhs, opts_)
 end
 --- like ":map" but for Insert mode
 ---@param lhs string Keybind
@@ -400,7 +403,7 @@ end
 ---@param opts vim.api.keyset.keymap|nil Options
 local function imap(lhs, rhs, opts)
   local opts_ = vim.tbl_deep_extend("keep", { noremap = false }, opts or {})
-  vim.api.nvim_set_keymap("i", lhs, rhs, opts_)
+  vim.keymap.set("i", lhs, rhs, opts_)
 end
 --- like ":map" but for select mode
 ---@param lhs string Keybind
@@ -408,7 +411,7 @@ end
 ---@param opts vim.api.keyset.keymap|nil Options
 local function smap(lhs, rhs, opts)
   local opts_ = vim.tbl_deep_extend("keep", { noremap = false }, opts or {})
-  vim.api.nvim_set_keymap("s", lhs, rhs, opts_)
+  vim.keymap.set("s", lhs, rhs, opts_)
 end
 
 -- Keybindings are set below the lazy.nvim invocation
@@ -1108,8 +1111,8 @@ local spec = {
   {
     "junegunn/vim-easy-align",
     config = function()
-      vim.api.nvim_set_keymap("x", "ga", "<Plug>(EasyAlign)", { noremap = false })
-      vim.api.nvim_set_keymap("n", "ga", "<Plug>(EasyAlign)", { noremap = false })
+      vim.keymap.set("x", "ga", "<Plug>(EasyAlign)", { noremap = false })
+      vim.keymap.set("n", "ga", "<Plug>(EasyAlign)", { noremap = false })
     end,
   },
   { "junegunn/vim-peekaboo" },
@@ -1658,6 +1661,25 @@ while True:
             keyOrdering = false,
           },
         },
+      }))
+
+      -- ━━ Basedpyright ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      local prev_pyright = vim.lsp.config["basedpyright"]
+      vim.lsp.config("basedpyright", vim.tbl_deep_extend("keep", prev_pyright, {
+        settings = {
+          -- python = {
+          --   pythonPath = ".venv/bin/python",
+          -- },
+          basedpyright = {
+            analysis = {
+              diagnosticMode = "openFilesOnly", -- or "workspace"
+              typeCheckingMode = "recommended",
+              inlayHints = {
+                genericTypes = true,
+              },
+            }
+          }
+        }
       }))
 
       -- ━━ Bacon LSP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -3225,7 +3247,7 @@ while True:
     end,
     config = function()
       -- This will insert a `,` into the terminal.
-      vim.api.nvim_set_keymap("t", ",,", "<C-\\><C-n>i,", { silent = true })
+      vim.keymap.set("t", ",,", "<C-\\><C-n>i,", { silent = true })
 
       local wk = require("which-key")
       wk.add({
