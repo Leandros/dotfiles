@@ -1756,10 +1756,12 @@ while True:
 
       -- ━━ Toggle LSP Diagnostics ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       vim.g.diagnostics_active = true
+      vim.g.diagnostics_config = {}
       function _G.toggle_diagnostics()
         if vim.g.diagnostics_active then
           vim.g.diagnostics_active = false
           vim.diagnostic.reset()
+          vim.g.diagnostics_config = vim.diagnostic.config(nil)
           vim.diagnostic.config({
             virtual_text = false,
             signs = false,
@@ -1767,12 +1769,7 @@ while True:
             update_in_insert = false,
           })
         else
-          vim.diagnostic.config({
-            virtual_text = true,
-            signs = true,
-            underline = true,
-            update_in_insert = true,
-          })
+          vim.diagnostic.config(vim.g.diagnostics_config)
           vim.g.diagnostics_active = true
         end
       end
