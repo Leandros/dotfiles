@@ -2645,6 +2645,7 @@ while True:
           "python",
           "html",
           "regex",
+          "yaml",
         },
         auto_install = false,
         highlight = {
