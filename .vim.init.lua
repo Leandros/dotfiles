@@ -36,10 +36,10 @@ if vim.fn.has("win32") == 1 or vim.fn.has("win16") == 1 then
 else
   local venv_path = vim.fn.stdpath("data") .. "/python3-venv"
   if vim.fn.filereadable(venv_path .. "/bin/python3") == 0 then
-    print('Python3 VENV not created, run: python3 -m venv ' .. venv_path)
-    print('source the venv: . ' .. venv_path .. '/bin/activate')
-    print('install pynvim: pip install pynvim')
-    print('falling back to system python')
+    print("Python3 VENV not created, run: python3 -m venv " .. venv_path)
+    print("source the venv: . " .. venv_path .. "/bin/activate")
+    print("install pynvim: pip install pynvim")
+    print("falling back to system python")
     vim.g.python3_host_prog = "python3"
   else
     vim.g.python3_host_prog = venv_path .. "/bin/python3"
@@ -934,9 +934,7 @@ vim.api.nvim_create_user_command("EnableDarkMode", EnableDarkMode, {})
 local _Logger = nil
 ---@diagnostic disable-next-line: unused-function,unused-local
 local function get_logger()
-  if _Logger == nil then
-    _Logger = require("logger"):new({ log_level = "debug", prefix = "init.lua", echo_messages = true })
-  end
+  if _Logger == nil then _Logger = require("logger"):new({ log_level = "debug", prefix = "init.lua", echo_messages = true }) end
   return _Logger
 end
 
@@ -1656,13 +1654,16 @@ while True:
 
       -- ━━ YAML LS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       local prev_yamlls = vim.lsp.config["yamlls"]
-      vim.lsp.config("yamlls", vim.tbl_deep_extend("keep", prev_yamlls, {
-        settings = {
-          yaml = {
-            keyOrdering = false,
+      vim.lsp.config(
+        "yamlls",
+        vim.tbl_deep_extend("keep", prev_yamlls, {
+          settings = {
+            yaml = {
+              keyOrdering = false,
+            },
           },
-        },
-      }))
+        })
+      )
 
       -- ━━ sourcekit-lsp ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       -- To enable this for Xcode/iOS projects, install `xcode-build-server` (homebrew)
@@ -1671,29 +1672,35 @@ while True:
       -- or
       -- $ xcode-build-server config -scheme <XXX> -project *.xcodeproj
       local prev_sourcekit = vim.lsp.config["sourcekit"]
-      vim.lsp.config("sourcekit", vim.tbl_deep_extend("keep", prev_sourcekit, {
-        cmd = { "xcrun", "--toolchain", "swift", "sourcekit-lsp" },
-      }))
+      vim.lsp.config(
+        "sourcekit",
+        vim.tbl_deep_extend("keep", prev_sourcekit, {
+          cmd = { "xcrun", "--toolchain", "swift", "sourcekit-lsp" },
+        })
+      )
       vim.lsp.enable("sourcekit")
 
       -- ━━ Basedpyright ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       local prev_pyright = vim.lsp.config["basedpyright"]
-      vim.lsp.config("basedpyright", vim.tbl_deep_extend("keep", prev_pyright, {
-        settings = {
-          -- python = {
-          --   pythonPath = ".venv/bin/python",
-          -- },
-          basedpyright = {
-            analysis = {
-              diagnosticMode = "openFilesOnly", -- or "workspace"
-              typeCheckingMode = "recommended",
-              inlayHints = {
-                genericTypes = true,
+      vim.lsp.config(
+        "basedpyright",
+        vim.tbl_deep_extend("keep", prev_pyright, {
+          settings = {
+            -- python = {
+            --   pythonPath = ".venv/bin/python",
+            -- },
+            basedpyright = {
+              analysis = {
+                diagnosticMode = "openFilesOnly", -- or "workspace"
+                typeCheckingMode = "recommended",
+                inlayHints = {
+                  genericTypes = true,
+                },
               },
-            }
-          }
-        }
-      }))
+            },
+          },
+        })
+      )
 
       -- ━━ Bacon LSP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       -- find location with: `:lua =require('vim.lsp.log').get_filename()`
@@ -1702,35 +1709,38 @@ while True:
       --  require('vim.lsp.log').set_format_func(vim.inspect)
       --end
       local prev_bacon_config = vim.lsp.config["bacon_ls"]
-      vim.lsp.config("bacon_ls", vim.tbl_deep_extend("keep", prev_bacon_config, {
-        -- cmd = { 'bacon-ls' },
-        -- cmd = { "/local/home/gerstarv/github/bacon-ls/target/release/bacon-ls" },
-        single_file_support = false,
-        on_attach = on_attach,
-        on_init = on_init,
-        capabilities = lsp_defaults.capabilities,
-        init_options = {
-          updateOnSave = true,
-          updateOnSaveWaitMillis = 200,
-          runBaconInBackground = false,
-          synchronizeAllOpenFilesWaitMillis = 1000,
-          -- BETA:
-          useCargoBackend = true,
-          cargoEnv = "CARGO_TARGET_DIR=.checkTarget",
-          --cargoCommandArguments = "check --tests --all-targets --message-format json-diagnostic-rendered-ansi",
-          -- Clippy takes longer.
-          -- add `--all-features` if it works for your project:
-          cargoCommandArguments = "clippy --workspace --all-targets --message-format json-diagnostic-rendered-ansi",
+      vim.lsp.config(
+        "bacon_ls",
+        vim.tbl_deep_extend("keep", prev_bacon_config, {
+          -- cmd = { 'bacon-ls' },
+          -- cmd = { "/local/home/gerstarv/github/bacon-ls/target/release/bacon-ls" },
+          single_file_support = false,
+          on_attach = on_attach,
+          on_init = on_init,
+          capabilities = lsp_defaults.capabilities,
+          init_options = {
+            updateOnSave = true,
+            updateOnSaveWaitMillis = 200,
+            runBaconInBackground = false,
+            synchronizeAllOpenFilesWaitMillis = 1000,
+            -- BETA:
+            useCargoBackend = true,
+            cargoEnv = "CARGO_TARGET_DIR=.checkTarget",
+            --cargoCommandArguments = "check --tests --all-targets --message-format json-diagnostic-rendered-ansi",
+            -- Clippy takes longer.
+            -- add `--all-features` if it works for your project:
+            cargoCommandArguments = "clippy --workspace --all-targets --message-format json-diagnostic-rendered-ansi",
 
-          -- This copies the entire source tree to a temporary directory, and will
-          -- therefore not work for most cases.
-          updateOnChange = false,
-          updateOnChangeCooldownMillis = 5000,
-        },
-      }))
+            -- This copies the entire source tree to a temporary directory, and will
+            -- therefore not work for most cases.
+            updateOnChange = false,
+            updateOnChangeCooldownMillis = 5000,
+          },
+        })
+      )
       if vim.fn.executable("bacon-ls") ~= 0 then
         -- enable bacon_ls if not installed by mason, and skip by mason.
-        vim.lsp.enable('bacon_ls')
+        vim.lsp.enable("bacon_ls")
       end
 
       -- ━━ Fish LSP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -2676,7 +2686,7 @@ while True:
     "nvim-treesitter/nvim-treesitter-context",
     opts = {
       enable = true,
-      separator = '―',
+      separator = "―",
       min_window_height = 20,
       max_lines = 10,
     },
