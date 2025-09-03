@@ -1663,6 +1663,18 @@ while True:
         },
       }))
 
+      -- ━━ sourcekit-lsp ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      -- To enable this for Xcode/iOS projects, install `xcode-build-server` (homebrew)
+      -- and run it in the root directory to generate the `buildServer.json`:
+      -- $ xcode-build-server config -scheme <XXX> -workspace *.xcworkspace
+      -- or
+      -- $ xcode-build-server config -scheme <XXX> -project *.xcodeproj
+      local prev_sourcekit = vim.lsp.config["sourcekit"]
+      vim.lsp.config("sourcekit", vim.tbl_deep_extend("keep", prev_sourcekit, {
+        cmd = { "xcrun", "--toolchain", "swift", "sourcekit-lsp" },
+      }))
+      vim.lsp.enable("sourcekit")
+
       -- ━━ Basedpyright ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       local prev_pyright = vim.lsp.config["basedpyright"]
       vim.lsp.config("basedpyright", vim.tbl_deep_extend("keep", prev_pyright, {
@@ -2989,6 +3001,15 @@ while True:
         },
         vue = {
           require("formatter.filetypes.vue").prettier,
+        },
+        swift = {
+          function()
+            return {
+              exe = "xcrun",
+              args = { "--toolchain", "swift", "swift-format", "format", "-" },
+              stdin = true,
+            }
+          end,
         },
         hcl = {
           function()
