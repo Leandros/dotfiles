@@ -35,7 +35,7 @@ if vim.fn.has("win32") == 1 or vim.fn.has("win16") == 1 then
   vim.g.python3_host_prog = "C:\\Python310\\python.exe"
 else
   local venv_path = vim.fn.stdpath("data") .. "/python3-venv"
-  if not vim.fn.filereadable(venv_path) then
+  if vim.fn.filereadable(venv_path .. "/bin/python3") == 0 then
     print('Python3 VENV not created, run: python3 -m venv ' .. venv_path)
     print('source the venv: . ' .. venv_path .. '/bin/activate')
     print('install pynvim: pip install pynvim')
