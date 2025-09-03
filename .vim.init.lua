@@ -1818,6 +1818,11 @@ while True:
           extension_path = vim.env.HOME .. "/.vscode/extensions/vadimcn.vscode-lldb-1.9.0/"
           codelldb_path = extension_path .. "adapter/codelldb"
           liblldb_path = extension_path .. "lldb/lib/liblldb.dylib"
+        ---@diagnostic disable-next-line: undefined-field
+        elseif vim.loop.os_uname().sysname == "Linux" then
+          extension_path = vim.env.HOME .. "/bin/codelldb/extension/"
+          codelldb_path = extension_path .. "adapter/codelldb"
+          liblldb_path = extension_path .. "lldb/lib/liblldb.so"
         end
 
         local lsp_defaults = make_lsp_defaults()
@@ -2152,6 +2157,8 @@ while True:
     end,
   }, -- end nvim-navbuddy
 
+  -- Install CodeLLDB with:
+  -- :VimspectorInstall! --no-check-certificate --verbose CodeLLDB
   {
     "puremourning/vimspector",
     dependencies = {
@@ -2162,6 +2169,7 @@ while True:
     init = function()
       vim.g.vimspector_enable_mappings = "HUMAN"
       vim.g.vimspector_install_gadgets = { "CodeLLDB" }
+      vim.g.vimspector_base_dir = vim.fn.stdpath("data") .. "/lazy/vimspector"
     end,
     config = function()
       local vimspector_bindings = {
