@@ -2728,7 +2728,7 @@ while True:
     config = function()
       local wk = require("which-key")
       wk.setup({
-        preset = "modern",
+        preset = "classic",
         triggers = {
           { "<auto>", mode = "nixsotc" },
           { "m", mode = { "n", "v" } },
