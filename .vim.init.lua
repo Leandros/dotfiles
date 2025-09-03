@@ -1728,6 +1728,10 @@ while True:
           updateOnChangeCooldownMillis = 5000,
         },
       }))
+      if vim.fn.executable("bacon-ls") ~= 0 then
+        -- enable bacon_ls if not installed by mason, and skip by mason.
+        vim.lsp.enable('bacon_ls')
+      end
 
       -- ━━ Fish LSP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       vim.lsp.config("fish_lsp", {
@@ -1739,8 +1743,8 @@ while True:
       -- ━━ Mason LSP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       local mason_servers = require("mason-lspconfig").get_installed_servers()
       for _, server in ipairs(mason_servers) do
-        -- skip rust analyzer to avoid double activation
-        if server ~= "rust_analyzer" and server ~= "bacon_ls" then
+        if not (server == "rust_analyzer" or server == "bacon_ls") then
+          -- only enable servers which are not otherwise enabled.
           vim.lsp.enable(server)
         end
       end
