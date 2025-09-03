@@ -1739,7 +1739,7 @@ while True:
       local mason_servers = require("mason-lspconfig").get_installed_servers()
       for _, server in ipairs(mason_servers) do
         -- skip rust analyzer to avoid double activation
-        if server ~= "rust_analyzer" then
+        if server ~= "rust_analyzer" and server ~= "bacon_ls" then
           vim.lsp.enable(server)
         end
       end
