@@ -1799,12 +1799,17 @@ while True:
       })
 
       -- ━━ Refresh LSP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-      _G.refresh_lsp = function()
+      function _G.refresh_lsp()
         vim.lsp.stop_client(vim.lsp.get_clients())
         vim.defer_fn(function() vim.cmd("edit") end, 500)
       end
+      function _G.stop_lsp()
+        -- stops all lsp clients
+        vim.lsp.stop_client(vim.lsp.get_clients())
+      end
 
       vim.api.nvim_create_user_command("RefreshLSP", _G.refresh_lsp, { bang = true })
+      vim.api.nvim_create_user_command("LspStopAll", _G.stop_lsp, { bang = true })
     end,
   }, -- end lspconfig
 
