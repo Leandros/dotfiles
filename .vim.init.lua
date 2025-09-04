@@ -731,12 +731,14 @@ end
 local function hi(name, opts) vim.api.nvim_set_hl(0, name, opts) end
 
 local function setup_highlights_dark()
+  -- Reset bufferline.
+  clear_bufferline_highlights()
+
   -- Set correct colors. The autodetected colors are not ideal.
   hi("BufferLineFill", { bg = "#002b36" })
   hi("BufferLineTab", { fg = "#586e75", bg = "#002028" })
-
-  -- Reset bufferline.
-  clear_bufferline_highlights()
+  hi("BufferLineIndicatorSelected", { fg = "#2aa198", bg = "#002b36" })
+  hi("BufferLineSeparator", { fg = "#002028", bg = "#002028" })
 
   -- Color was previously: #073642
   -- hi("IblScope", { fg="#073642", bg="none", gui="nocombine", })
@@ -773,14 +775,16 @@ local function setup_highlights_dark()
 end
 
 local function setup_highlights_light()
+  -- Reset bufferline.
+  clear_bufferline_highlights()
+
   -- Set correct colors. The autodetected colors are not ideal.
   hi("BufferLineFill", { bg = "#fdf6e3" })
   hi("BufferLineTab", { fg = "#93a1a1", bg = "#fdf6e3" })
   hi("BufferLineTabSelected", { fg = "#93a1a1", bg = "#fdf6e3" })
   hi("BufferLineBufferSelected", { fg = "#93a1a1", bg = "#fdf6e3" })
-
-  -- Reset bufferline.
-  clear_bufferline_highlights()
+  hi("BufferLineIndicatorSelected", { fg = "#268bd2" })
+  hi("BufferLineSeparator", { fg = "#fdf6e3", bg = "#fdf6e3" })
 
   -- Reset some special rules.
   hi("@ibl.scope.char.1", { bg = "#eee8d5" })
@@ -2405,11 +2409,13 @@ while True:
 
   {
     "akinsho/bufferline.nvim",
+    version = "*",
+    dependencies = 'nvim-tree/nvim-web-devicons',
     config = function()
       function _G.bufferline_setup()
         require("bufferline").setup({
           options = {
-            mode = "tabs",
+            mode = "tabs", -- only show tab pages, not buffers
             show_tab_indicators = false, -- don't need them with mode=tabs
             --style_preset = bufferline.style_preset.minimal,
             -- disable mouse
@@ -2417,7 +2423,7 @@ while True:
             left_mouse_command = nil,
             middle_mouse_command = nil,
             diagnostics = "nvim_lsp",
-            separator_style = { "|", "|" },
+            separator_style = { "|", "|" }, -- or "slant" | "slope" | "thick" | "thin"
             hover = {
               enabled = false,
             },
@@ -2437,7 +2443,7 @@ while True:
               },
             },
             diagnostics_indicator = function(count, level)
-              local icon = level:match("error") and " " or ""
+              local icon = level:match("error") and " " or " "
               return " " .. icon .. count
             end,
           },
