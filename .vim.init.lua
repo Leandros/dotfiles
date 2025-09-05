@@ -3302,6 +3302,15 @@ while True:
     config = function()
       -- This will insert a `,` into the terminal.
       vim.keymap.set("t", ",,", "<C-\\><C-n>i,", { silent = true })
+      -- Go back to **VIM** normal-mode.
+      -- Described here: <https://github.com/voldikss/vim-floaterm/issues/140>
+      vim.keymap.set("t", ",d", "<C-\\><C-n>", { silent = true })
+      -- Go back to prev buffer
+      vim.keymap.set("t", ",e", "<C-\\><C-n><C-w>w", { silent = true })
+      vim.keymap.set("n", ",e", "<C-\\><C-n><C-w>w", { silent = true })
+      -- V-Split/H-Split terminals.
+      vim.keymap.set("n", ",t", ":FloatermNew --wintype=split --height=20<CR>", { silent = true })
+      vim.keymap.set("n", ",i", ":FloatermNew --wintype=vsplit --width=90<CR>", { silent = true })
 
       local wk = require("which-key")
       wk.add({
@@ -3313,6 +3322,12 @@ while True:
         { ",Q", desc = "Kill Terminal", mode = { "n", "t" } },
         { ",q", desc = "Hide Terminal", mode = { "n", "t" } },
         { ",,", desc = "Insert `,`", mode = { "n", "t" } },
+        { ",i", desc = "Split Vertical", mode = { "n", "t" } },
+        { ",t", desc = "Split Horizontal", mode = { "n", "t" } },
+        { ",e", desc = "Go to last terminal", mode = { "n" } },
+
+        { ",d", desc = "Normal Mode", mode = { "t" } },
+        { ",e", desc = "Back to last buffer", mode = { "t" } },
       })
     end,
   }, -- end floaterm
