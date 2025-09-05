@@ -2816,7 +2816,8 @@ while True:
       function _G.ibl_setup()
         require("ibl").setup({
           indent = {
-            char = "│",
+            char = "",
+            -- char = "│",
           },
           exclude = {
             filetypes = {
