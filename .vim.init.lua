@@ -3532,6 +3532,11 @@ while True:
 -- ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 -- ┃                     Install plugins                     ┃
 -- ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+-- By folke at: https://github.com/folke/lazy.nvim/issues/120#issuecomment-1364482723
+local LazyViewConfig = require('lazy.view.config')
+-- see ~/.local/share/nvim/lazy/lazy.nvim/lua/lazy/view/config.lua
+LazyViewConfig.commands.restore.key_plugin = "gr"
+
 require("lazy").setup({
   spec = spec,
   -- Configure any other settings here. See the documentation for more details.
