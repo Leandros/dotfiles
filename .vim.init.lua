@@ -57,7 +57,7 @@ vim.g["isDevDsk"] = vim.startswith(vim.fn.hostname(), "dev-dsk")
 if vim.g["isDevDsk"] then vim.env.PATH = os.getenv("HOME") .. "/.cargo/bin:" .. vim.env.PATH end
 
 -- Configuration
-vim.g["has_navigator"] = 1
+vim.g["has_navigator"] = 0
 
 -- ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 -- ┃                    Language / Shell                     ┃
@@ -991,6 +991,29 @@ local function on_attach(client, bufnr)
     for _, kb in ipairs(navigator_bindings) do
       vim.keymap.set(kb[1], kb[2], kb[3], { noremap = false, silent = true, desc = kb[4], buffer = bufnr })
     end
+  else
+    local alt_lsp_bindings = {
+      { "n", "<leader>k", "<cmd>lua vim.diagnostic.open_float({ scope = 'line' })<CR>", "LSP: Show Diagnostic Under Cursor" },
+    }
+
+    for _, kb in ipairs(alt_lsp_bindings) do
+      vim.keymap.set(kb[1], kb[2], kb[3], { noremap = false, silent = true, desc = kb[4] })
+    end
+  end
+
+
+  local lsp_bindings = {
+    { "i", "<c-k>", "<cmd>lua vim.lsp.buf.signature_help({ border = 'single', max_width = 120 })<CR>", "LSP: Signature Help" },
+
+    { "n", "<c-k>", "<cmd>lua vim.lsp.buf.signature_help({ border = 'single', max_width = 120 })<CR>", "LSP: Signature Help" },
+    { "n", "K", "<cmd>lua vim.lsp.buf.hover({ border = 'single', max_width = 120 })<CR>", "LSP: Hover Docs" },
+    { "n", "<leader>re", "<cmd>lua vim.lsp.buf.rename()<CR>", "LSP: Rename" },
+    { "n", "[e", "<cmd>lua vim.diagnostic.goto_next({ border = 'rounded', max_width = 80 })<CR>", "LSP: Next Diagnostic" },
+    { "n", "]e", "<cmd>lua vim.diagnostic.goto_prev({ border = 'rounded', max_width = 80 })<CR>", "LSP: Prev Diagnostic" },
+  }
+
+  for _, kb in ipairs(lsp_bindings) do
+    vim.keymap.set(kb[1], kb[2], kb[3], { noremap = false, silent = true, desc = kb[4] })
   end
 
   -- setup buffer keymaps etc.
@@ -2461,6 +2484,8 @@ while True:
 
   {
     "ray-x/navigator.lua",
+    commit = "17ed4fafd213c5dc821dc6a7051b2b7f156410e4",
+    enabled = vim.g["has_navigator"] ~= 0,
     dependencies = {
       {
         "ray-x/guihua.lua",
@@ -2545,25 +2570,6 @@ while True:
           treesitter_defult = "",
         },
       })
-
-      local lsp_bindings = {
-        { "i", "<c-k>", "<cmd>lua vim.lsp.buf.signature_help({ border = single, max_width = 120 })<CR>", "LSP: Signature Help" },
-
-        { "n", "<c-k>", "<cmd>lua vim.lsp.buf.signature_help({ border = single, max_width = 120 })<CR>", "LSP: Signature Help" },
-        { "n", "K", "<cmd>lua vim.lsp.buf.hover({ border = single, max_width = 120 })<CR>", "LSP: Hover Docs" },
-        { "n", "<leader>re", "<cmd>lua vim.lsp.buf.rename()<CR>", "LSP: Rename" },
-
-        { "n", "[e", "<cmd>lua vim.diagnostic.goto_next({ border = 'rounded', max_width = 80 })<CR>", "LSP: Next Diagnostic" },
-        { "n", "]e", "<cmd>lua vim.diagnostic.goto_prev({ border = 'rounded', max_width = 80 })<CR>", "LSP: Prev Diagnostic" },
-        { "n", "<c-]>", "<cmd>lua require('navigator.definition').definition()<CR>", "" },
-        { "n", "gd", "<cmd>lua require('navigator.definition').definition_preview()<CR>", "LSP: Preview Definition" },
-        { "n", "<leader>rn", "<cmd>lua require('navigator.rename').rename()<CR>", "LSP: Rename Symbol" },
-        { "n", "<leader>k", "<cmd>lua require('navigator.diagnostics').show_diagnostics()<CR>", "LSP: Show Diagnostic Under Cursor" },
-      }
-
-      for _, kb in ipairs(lsp_bindings) do
-        vim.keymap.set(kb[1], kb[2], kb[3], { noremap = false, silent = true, desc = kb[4] })
-      end
     end,
   }, -- end navigator.lua
 
