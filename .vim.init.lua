@@ -1871,6 +1871,15 @@ while True:
           liblldb_path = extension_path .. "lldb/lib/liblldb.so"
         end
 
+        local function is_valid_file_path(path)
+          local normalized_path = vim.fs.normalize(path, { expand_env = false })
+          local sysname = vim.uv.os_uname().sysname
+          if sysname == 'Windows' or sysname == 'Windows_NT' then
+            return normalized_path:match('^%a:') ~= nil
+          end
+          return vim.startswith(normalized_path, '/')
+        end
+
         local lsp_defaults = make_lsp_defaults()
         local rust_analyzer_capabilities = vim.tbl_deep_extend(
           "force",
@@ -1908,6 +1917,25 @@ while True:
             on_init = on_init,
             capabilities = rust_analyzer_capabilities,
             flags = { allow_incremental_sync = false },
+            auto_attach = function(bufnr)
+              if #vim.bo[bufnr].buftype > 0 then
+                return false
+              end
+              local path = vim.api.nvim_buf_get_name(bufnr)
+              if not is_valid_file_path(path) then
+                return false
+              end
+              -- we don't want to attach if we already have an instance of rust-analyzer
+              local clients = vim.lsp.get_clients({ bufnr = bufnr, name = "rust-analyzer" })
+              ---@diagnostic disable-next-line: unused-local
+              for _k,v in pairs(clients) do
+                if v.name == "rust-analyzer" then
+                  print("trying to attach rust-analyzer to buffer with RA attached!!!")
+                  return false
+                end
+              end
+              return true
+            end,
             commands = {
               RustOpenDocs = {
                 function()
