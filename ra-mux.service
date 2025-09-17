@@ -1,0 +1,12 @@
+[Unit]
+Description=Rust analyzer multiplex server
+
+[Service]
+Type=exec
+ExecStart=/local/home/gerstarv/.cargo/bin/ra-multiplex server
+Environment=RUSTUP_HOME=/local/home/gerstarv/.rustup
+Environment=CARGO_HOME=/local/home/gerstarv/.cargo
+Environment=PATH=/local/home/gerstarv/bin:/local/home/gerstarv/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+[Install]
+WantedBy=default.target
