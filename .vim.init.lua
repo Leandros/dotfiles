@@ -1869,9 +1869,11 @@ while True:
           liblldb_path = extension_path .. "lldb/lib/liblldb.dylib"
         ---@diagnostic disable-next-line: undefined-field
         elseif vim.loop.os_uname().sysname == "Linux" then
-          extension_path = vim.env.HOME .. "/bin/codelldb/extension/"
-          codelldb_path = extension_path .. "adapter/codelldb"
-          liblldb_path = extension_path .. "lldb/lib/liblldb.so"
+          -- CodeLLDB is installed with:
+          -- :VimspectorInstall! --no-check-certificate --verbose CodeLLDB
+          local vs_codelldb = vim.fn.stdpath("data") .. "/lazy/vimspector/gadgets/linux/CodeLLDB"
+          codelldb_path = vs_codelldb .. "adapter/codelldb"
+          liblldb_path = vs_codelldb .. "lldb/lib/liblldb.so"
         end
 
         local function is_valid_file_path(path)
