@@ -1349,6 +1349,9 @@ while True:
           "packer",
           "checkhealth",
           "man",
+          "guihua",
+          "guihua_rust",
+          "clap_input",
         },
       })
 
@@ -1431,6 +1434,7 @@ while True:
       "hrsh7th/cmp-path", -- Completion for paths
       "hrsh7th/cmp-buffer", -- Completion from buffer
       "hrsh7th/cmp-cmdline", -- Completion for :... commands
+      "windwp/nvim-autopairs",
     },
     config = function()
       local cmp = require("cmp")
@@ -2631,6 +2635,7 @@ while True:
 
   {
     "lewis6991/gitsigns.nvim",
+    lazy = false,
     config = function()
       local function gitsigns_keymap_attach(bufnr)
         ---@diagnostic disable-next-line: redefined-local
@@ -2663,9 +2668,11 @@ while True:
         vim.keymap.set("n", "<leader>sB", blame_file, opts("Blame File"))
         vim.keymap.set("n", "<leader>sS", "<cmd>Gitsigns stage_buffer<CR>", opts("Stage Buffer"))
         vim.keymap.set("n", "<leader>sU", "<cmd>Gitsigns reset_buffer_index<CR>", opts("Reset Buffer Index"))
+        vim.keymap.set("n", "<leader>sg", "<cmd>Gitsigns<CR>", opts("Picker"))
 
         vim.keymap.set("v", "<leader>sr", ":Gitsigns reset_hunk<CR>", opts("ResetHunk (Visual)"))
         vim.keymap.set("v", "<leader>ss", ":Gitsigns stage_hunk<CR>", opts("StageHunk (Visual)"))
+        vim.keymap.set("v", "<leader>sg", ":Gitsigns<CR>", opts("Picker (Visual)"))
 
         autocmd("FileType", {
           pattern = "gitsigns-blame",
@@ -2861,14 +2868,14 @@ while True:
         { "<leader>,", group = "zoom" },
         { "<leader>a", group = "picker" },
         { "<leader>b", group = "debugger" },
-        { "<leader>c", group = "codeaction" },
+        { "<leader>c", group = "codeaction", mode = { "n", "v" } },
         { "<leader>d", group = "lsp" },
         { "<leader>f", group = "findfiles" },
         { "<leader>g", group = "diagnostics/+jump" },
         { "<leader>n", group = "neogen" },
         { "<leader>q", group = "quickfix" },
         { "<leader>r", group = "rename" },
-        { "<leader>s", group = "git" },
+        { "<leader>s", group = "git", mode = { "n", "v" } },
         { "<leader>x", group = "trouble" },
         { "m", group = "bookmarks" },
       })
