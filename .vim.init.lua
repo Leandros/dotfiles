@@ -1001,7 +1001,6 @@ local function on_attach(client, bufnr)
     end
   end
 
-
   local lsp_bindings = {
     { "i", "<c-k>", "<cmd>lua vim.lsp.buf.signature_help({ border = 'single', max_width = 120 })<CR>", "LSP: Signature Help" },
 
@@ -1873,11 +1872,10 @@ while True:
 
         local function is_valid_file_path(path)
           local normalized_path = vim.fs.normalize(path, { expand_env = false })
+          ---@diagnostic disable-next-line: undefined-field
           local sysname = vim.uv.os_uname().sysname
-          if sysname == 'Windows' or sysname == 'Windows_NT' then
-            return normalized_path:match('^%a:') ~= nil
-          end
-          return vim.startswith(normalized_path, '/')
+          if sysname == "Windows" or sysname == "Windows_NT" then return normalized_path:match("^%a:") ~= nil end
+          return vim.startswith(normalized_path, "/")
         end
 
         local lsp_defaults = make_lsp_defaults()
@@ -1898,7 +1896,7 @@ while True:
           -- Plugin configuration
           ---@type rustaceanvim.tools.Opts
           tools = {
-            reload_workspace_from_cargo_toml = true,
+            reload_workspace_from_cargo_toml = false,
             float_win_config = {
               border = "rounded",
             },
@@ -1913,25 +1911,48 @@ while True:
           -- LSP configuration
           ---@type rustaceanvim.lsp.ClientOpts
           server = {
-            on_attach = on_attach,
+            -- Automatically detect whether ra-multiplex is installed.
+            -- Install with: $ cargo install --locked ra-multiplex
+            ra_multiplex = {
+              enable = true,
+              host = "127.0.0.1",
+              port = 27631,
+            },
+            -- If ra-multiplex autodetection doesn't work use below.
+            -- cmd = vim.lsp.rpc.connect("127.0.0.1", 27631),
+
+            ---@diagnostic disable-next-line: unused-local
+            on_attach = function(client, bufnr)
+              vim.keymap.set(
+                "n",
+                "K",
+                "<cmd>lua vim.cmd.RustLsp({ 'hover', 'actions' })<CR>",
+                { silent = true, buffer = bufnr, desc = "LSP: Hover" }
+              )
+              vim.keymap.set(
+                "n",
+                "ca",
+                "<cmd>lua vim.cmd.RustLsp('codeaction')<CR>",
+                { silent = true, buffer = bufnr, desc = "LSP: Code Action" }
+              )
+
+              -- Make sure to call this!
+              on_attach(client, bufnr)
+            end,
             on_init = on_init,
             capabilities = rust_analyzer_capabilities,
             flags = { allow_incremental_sync = false },
             auto_attach = function(bufnr)
-              if #vim.bo[bufnr].buftype > 0 then
-                return false
-              end
+              if #vim.bo[bufnr].buftype > 0 then return false end
               local path = vim.api.nvim_buf_get_name(bufnr)
-              if not is_valid_file_path(path) then
-                return false
-              end
+              if not is_valid_file_path(path) then return false end
               -- we don't want to attach if we already have an instance of rust-analyzer
               local clients = vim.lsp.get_clients({ bufnr = bufnr, name = "rust-analyzer" })
               ---@diagnostic disable-next-line: unused-local
-              for _k,v in pairs(clients) do
+              for _k, v in pairs(clients) do
                 if v.name == "rust-analyzer" then
                   print("trying to attach rust-analyzer to buffer with RA attached!!!")
-                  return false
+                  -- return false
                 end
               end
               return true
@@ -1984,6 +2005,13 @@ while True:
             default_settings = {
               -- Options documented here: https://rust-analyzer.github.io/book/configuration.html
               ["rust-analyzer"] = {
+                -- Enables ra-multiplex
+                lspMux = {
+                  version = "1",
+                  method = "connect",
+                  -- rust-analyzer needs to be in PATH, or specify full path
+                  server = "rust-analyzer",
+                },
                 cargo = {
                   features = "all",
                   --cfgs = {"debug_assertions", "miri", "unix"},
@@ -1997,7 +2025,7 @@ while True:
                   -- extraEnv = { CARGO_TARGET_DIR = '.ra_target' },
                   -- target = "x86_64-unknown-linux-gnu",
 
-                  autoreload = false,
+                  autoreload = true,
                   buildScripts = {
                     enable = true,
                   },
@@ -2466,7 +2494,7 @@ while True:
   {
     "akinsho/bufferline.nvim",
     version = "*",
-    dependencies = 'nvim-tree/nvim-web-devicons',
+    dependencies = "nvim-tree/nvim-web-devicons",
     config = function()
       function _G.bufferline_setup()
         require("bufferline").setup({
@@ -2685,15 +2713,19 @@ while True:
     end,
   }, -- end gitsigns.nvim
 
+  -- {
+  --   "tpope/vim-fugitive",
+  -- }, -- end vim-fugitive
+
   {
     "NeogitOrg/neogit",
     dependencies = {
-      "nvim-lua/plenary.nvim",         -- required
-      "sindrets/diffview.nvim",        -- optional - Diff integration
+      "nvim-lua/plenary.nvim", -- required
+      "sindrets/diffview.nvim", -- optional - Diff integration
       "nvim-telescope/telescope.nvim", -- optional
     },
     config = function()
-      require('neogit').setup({
+      require("neogit").setup({
         mappings = {
           rebase_editior = {
             ["r"] = "Reword",
@@ -2707,7 +2739,7 @@ while True:
           status = {
             ["n"] = "MoveDown",
             ["r"] = "MoveUp",
-          }
+          },
         },
       })
     end,
@@ -3561,7 +3593,7 @@ while True:
 -- ┃                     Install plugins                     ┃
 -- ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 -- By folke at: https://github.com/folke/lazy.nvim/issues/120#issuecomment-1364482723
-local LazyViewConfig = require('lazy.view.config')
+local LazyViewConfig = require("lazy.view.config")
 -- see ~/.local/share/nvim/lazy/lazy.nvim/lua/lazy/view/config.lua
 LazyViewConfig.commands.restore.key_plugin = "gr"
 
