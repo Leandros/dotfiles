@@ -2642,19 +2642,17 @@ while True:
     lazy = false,
     config = function()
       local function gitsigns_keymap_attach(bufnr)
-        ---@diagnostic disable-next-line: redefined-local
-        local autocmd = vim.api.nvim_create_autocmd
         local function opts(desc) return { desc = "git: " .. desc, buffer = bufnr, noremap = true, silent = true, nowait = true } end
 
         --vim.keymap.set('n', 'a', api.fs.create, opts('Create'))
         --vim.api.nvim_buf_set_keymap(bufnr, 'n', 'hs', '<cmd>lua require"gitsigns".stage_hunk()<CR>', {})
 
         local function blame_file()
-          ---@diagnostic disable-next-line: redefined-local
-          local function cb(opts)
-            print("callback!" .. vim.inspect(opts))
-            vim.keymap.set("n", "r", "<Up>", { noremap = true, silent = true, buffer = opts.buf })
+          local function cb()
+            local buf = vim.api.nvim_get_current_buf()
+            vim.keymap.set("n", "r", "<Up>", { noremap = true, silent = true, buffer = buf })
           end
+          ---@diagnostic disable-next-line: param-type-mismatch
           require("gitsigns").blame(cb)
         end
 
@@ -2677,12 +2675,6 @@ while True:
         vim.keymap.set("v", "<leader>sr", ":Gitsigns reset_hunk<CR>", opts("ResetHunk (Visual)"))
         vim.keymap.set("v", "<leader>ss", ":Gitsigns stage_hunk<CR>", opts("StageHunk (Visual)"))
         vim.keymap.set("v", "<leader>sg", ":Gitsigns<CR>", opts("Picker (Visual)"))
-
-        autocmd("FileType", {
-          pattern = "gitsigns-blame",
-          ---@diagnostic disable-next-line: redefined-local
-          callback = function(opts) vim.keymap.set("n", "r", "<Up>", { noremap = false, silent = true, buffer = opts.buf }) end,
-        })
       end
 
       require("gitsigns").setup({
