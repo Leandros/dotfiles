@@ -1658,6 +1658,8 @@ while True:
       local lsp_defaults = make_lsp_defaults()
       vim.lsp.config("*", {
         capabilities = lsp_defaults.capabilities,
+        on_attach = on_attach,
+        on_init = on_init,
       })
 
       vim.api.nvim_create_autocmd("LspAttach", {
