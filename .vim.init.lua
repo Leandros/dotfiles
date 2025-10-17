@@ -1688,7 +1688,10 @@ while True:
       local prev_yamlls = vim.lsp.config["yamlls"]
       vim.lsp.config(
         "yamlls",
-        vim.tbl_deep_extend("keep", prev_yamlls, {
+        vim.tbl_deep_extend("force", prev_yamlls, {
+          capabilities = lsp_defaults.capabilities,
+          on_attach = on_attach,
+          on_init = on_init,
           settings = {
             yaml = {
               keyOrdering = false,
@@ -1706,7 +1709,10 @@ while True:
       local prev_sourcekit = vim.lsp.config["sourcekit"]
       vim.lsp.config(
         "sourcekit",
-        vim.tbl_deep_extend("keep", prev_sourcekit, {
+        vim.tbl_deep_extend("force", prev_sourcekit, {
+          capabilities = lsp_defaults.capabilities,
+          on_attach = on_attach,
+          on_init = on_init,
           cmd = { "xcrun", "--toolchain", "swift", "sourcekit-lsp" },
         })
       )
@@ -1714,9 +1720,13 @@ while True:
 
       -- ━━ Basedpyright ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       local prev_pyright = vim.lsp.config["basedpyright"]
+      -- print(vim.inspect(prev_pyright))
       vim.lsp.config(
         "basedpyright",
-        vim.tbl_deep_extend("keep", prev_pyright, {
+        vim.tbl_deep_extend("force", prev_pyright, {
+          capabilities = lsp_defaults.capabilities,
+          on_attach = on_attach,
+          on_init = on_init,
           settings = {
             -- python = {
             --   pythonPath = ".venv/bin/python",
@@ -1743,7 +1753,7 @@ while True:
       local prev_bacon_config = vim.lsp.config["bacon_ls"]
       vim.lsp.config(
         "bacon_ls",
-        vim.tbl_deep_extend("keep", prev_bacon_config, {
+        vim.tbl_deep_extend("force", prev_bacon_config, {
           -- cmd = { 'bacon-ls' },
           -- cmd = { "/local/home/gerstarv/github/bacon-ls/target/release/bacon-ls" },
           single_file_support = false,
