@@ -1052,9 +1052,15 @@ local spec = {
       vim.cmd("highlight ColorColumn guibg=#004653")
     end,
   },
+  {
+    'Joakker/lua-json5',
+    priority = 999,
+    build = './install.sh',
+  }, -- end json5
 
   -- ━━ Vimscript Plugins ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   { "rmagatti/logger.nvim" },
+  { "AndrewRadev/bufferize.vim" },
   { "nvim-lua/plenary.nvim" },
   { "rcarriga/nvim-notify" },
   { "tpope/vim-commentary" },
@@ -1852,7 +1858,9 @@ while True:
   }, -- end lspconfig
 
   {
-    "mrcjkb/rustaceanvim",
+    -- "mrcjkb/rustaceanvim",
+    "leandros/rustaceanvim",
+    branch = "reuse_client",
     version = "^6", -- Recommended
     lazy = false, -- This plugin is already lazy
     dependencies = {
@@ -1939,6 +1947,9 @@ while True:
             -- If ra-multiplex autodetection doesn't work use below.
             -- cmd = vim.lsp.rpc.connect("127.0.0.1", 27631),
 
+            -- make sure to load it with our settings
+            load_vscode_settings = true,
+
             ---@diagnostic disable-next-line: unused-local
             on_attach = function(client, bufnr)
               vim.keymap.set(
@@ -2004,7 +2015,7 @@ while True:
                   local clients = util.get_lsp_clients({ bufnr = bufnr, name = "rust-analyzer" })
                   for _, client in ipairs(clients) do
                     vim.notify("Reloading Cargo Workspace")
-                    client.request("rust-analyzer/reloadWorkspace", nil, function(err)
+                    client:request("rust-analyzer/reloadWorkspace", nil, function(err)
                       if err then
                         print("error:" .. tostring(err))
                         error(tostring(err))
