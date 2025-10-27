@@ -1908,8 +1908,9 @@ while True:
 
   {
     -- "mrcjkb/rustaceanvim",
-    "leandros/rustaceanvim",
-    branch = "reuse_client",
+    -- "leandros/rustaceanvim",
+    -- branch = "reuse_client",
+    dir = vim.fs.joinpath(os.getenv("HOME"), "/github/rustaceanvim"),
     version = "^6", -- Recommended
     lazy = false, -- This plugin is already lazy
     dependencies = {
