@@ -460,11 +460,12 @@ alias gb1='goobook -c ~/.mutt/goobook/goobookrc_private'
 alias gb2='goobook -c ~/.mutt/goobook/goobookrc_appico'
 alias gb3='goobook -c ~/.mutt/goobook/goobookrc_arvidio'
 alias ccp='rsync -ah --progress'
-alias ytdl="youtube-dl -f 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'"
+alias ytdl="yt-dlp -f 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'"
 alias vim='nvim'
 alias tf='tofu'
 alias p='pnpm'
 alias pnx="pnpm nx"
+alias bc='bc -l'
 
 # Less modes
 export LESS="-R"
@@ -510,6 +511,11 @@ fi
 # Highlight current day
 cal() {
     /usr/bin/cal $* | grep --color -EC6 "\b$(date +%e | sed "s/ //g")\b"
+}
+
+# Print the current week of the year (with Monday as first day of week).
+week() {
+    /usr/bin/date +"Week %V of %Y"
 }
 
 # Easyily convert between hex and decimal
@@ -634,6 +640,51 @@ rscp () {
     done
 
     rsync -avzh --info=progress2 -e "ssh ${sshflags}" "$@"
+}
+
+# Create temporary directory and cd to it.
+tempe () {
+    cd "$(mktemp -d)"
+    chmod -R 0700 .
+    if [[ $# -eq 1 ]]; then
+        mkdir -p "$1"
+        cd "$1"
+        chmod -R 0700 .
+    fi
+}
+
+# Move items to the trash, like `rm`, but with restore.
+trash () {
+    if [[ "$(uname)" == 'Darwin' ]]; then
+        # Heavily modified from [this script][0], licensed under the MIT License.
+        # [0]: https://github.com/morgant/tools-osx/blob/71c2db389c48cee8d03931eeb083cfc68158f7ed/src/trash#L293-L311
+        for arg in "$@"; do
+           file="$(realpath "$arg")"
+           /usr/bin/osascript -e "tell application \"Finder\" to delete POSIX file \"$file\"" > /dev/null
+        done
+    else
+        gio trash "$@"
+    fi
+}
+
+# create a new bash script
+mksh () {
+    if [ -f "$1" ]; then
+        echo "$1: already exists"
+        return 1
+    fi
+    cat <<EOF > "$1"
+#!/usr/bin/env bash
+set -euo pipefail
+EOF
+    chmod +x "$1"
+    nvim "$1"
+}
+
+scratch () {
+    file=$(mktemp)
+    echo "opening $file"
+    nvim "$file"
 }
 
 # Docker shortcodes
