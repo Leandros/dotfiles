@@ -1053,9 +1053,9 @@ local spec = {
     end,
   },
   {
-    'Joakker/lua-json5',
+    "Joakker/lua-json5",
     priority = 999,
-    build = './install.sh',
+    build = "./install.sh",
   }, -- end json5
 
   -- ━━ Vimscript Plugins ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -3417,7 +3417,20 @@ while True:
           "build",
           "env",
         },
-        file = { "*.sw?", "~$*", "*.bak", "*.exe", "*.o", "*.so", "*.pyco", "*.dll", "*.meta", "AssemblyU2DCSharp*", "*.a", "*.lib" },
+        file = {
+          "*.sw?",
+          "~$*",
+          "*.bak",
+          "*.exe",
+          "*.o",
+          "*.so",
+          "*.pyco",
+          "*.dll",
+          "*.meta",
+          "AssemblyU2DCSharp*",
+          "*.a",
+          "*.lib",
+        },
       }
       vim.g.Lf_CommandMap = {
         ["<C-R>"] = { "<C-E>" },
