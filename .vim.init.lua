@@ -1858,6 +1858,55 @@ while True:
   }, -- end lspconfig
 
   {
+    "rachartier/tiny-inline-diagnostic.nvim",
+    event = "VeryLazy",
+    priority = 1000,
+    config = function()
+      require("tiny-inline-diagnostic").setup({
+        -- Choose a preset style for diagnostic appearance
+        -- Available: "modern", "classic", "minimal", "powerline", "ghost", "simple", "nonerdfont", "amongus"
+        preset = "simple",
+
+        -- Make diagnostic background transparent
+        transparent_bg = false,
+
+        -- Make cursorline background transparent for diagnostics
+        transparent_cursorline = true,
+
+        options = {
+          -- Display the source of diagnostics (e.g., "lua_ls", "pyright")
+          show_source = {
+            enabled = true, -- Enable showing source names
+            if_many = true, -- Only show source if multiple sources exist for the same diagnostic
+          },
+
+          -- Control how diagnostic messages are displayed
+          -- NOTE: When using display_count = true, you need to enable multiline diagnostics with multilines.enabled = true
+          --       If you want them to always be displayed, you can also set multilines.always_show = true.
+          add_messages = {
+            messages = true, -- Show full diagnostic messages
+            display_count = true, -- Show diagnostic count instead of messages when cursor not on line
+            use_max_severity = false, -- When counting, only show the most severe diagnostic
+            show_multiple_glyphs = true, -- Show multiple icons for multiple diagnostics of same severity
+          },
+
+          -- Settings for multiline diagnostics
+          multilines = {
+            enabled = true, -- Enable support for multiline diagnostic messages
+            always_show = false, -- Always show messages on all lines of multiline diagnostics
+            trim_whitespaces = false, -- Remove leading/trailing whitespace from each line
+            tabstop = 4, -- Number of spaces per tab when expanding tabs
+          },
+        },
+      })
+
+      -- Already done in lspconfig
+      -- vim.diagnostic.config({ virtual_text = false }) -- Disable Neovim's default virtual text diagnostics
+      vim.diagnostic.open_float = require("tiny-inline-diagnostic.override").open_float
+    end,
+  }, -- end tiny-inline-diagnostic
+
+  {
     -- "mrcjkb/rustaceanvim",
     "leandros/rustaceanvim",
     branch = "reuse_client",
