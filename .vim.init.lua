@@ -1291,41 +1291,18 @@ while True:
         vim.cmd("call('Uncrustify2', extend(" .. language .. ", , [a:firstline, a:lastline])")
       end
 
+      -- stylua: ignore start
       autocmd(nil, { "FileType" }, "c", function() noremap("<C-f>", ":call v:lua.UncrustifyWrapper('c')<CR>", { buffer = true }) end)
       autocmd(nil, { "FileType" }, "c", function() vnoremap("<C-f>", ":call v:lua.RangeUncrustifyWrapper('c')<CR>", { buffer = true }) end)
       autocmd(nil, { "FileType" }, "cs", function() noremap("<C-f>", ":call v:lua.UncrustifyWrapper('cs')<CR>", { buffer = true }) end)
-      autocmd(
-        nil,
-        { "FileType" },
-        "cs",
-        function() vnoremap("<C-f>", ":call v:lua.RangeUncrustifyWrapper('cs')<CR>", { buffer = true }) end
-      )
+      autocmd(nil, { "FileType" }, "cs", function() vnoremap("<C-f>", ":call v:lua.RangeUncrustifyWrapper('cs')<CR>", { buffer = true }) end)
       autocmd(nil, { "FileType" }, "cpp", function() noremap("<C-f>", ":call v:lua.UncrustifyWrapper('cpp')<CR>", { buffer = true }) end)
-      autocmd(
-        nil,
-        { "FileType" },
-        "cpp",
-        function() vnoremap("<C-f>", ":call v:lua.RangeUncrustifyWrapper('cpp')<CR>", { buffer = true }) end
-      )
+      autocmd(nil, { "FileType" }, "cpp", function() vnoremap("<C-f>", ":call v:lua.RangeUncrustifyWrapper('cpp')<CR>", { buffer = true }) end)
       autocmd(nil, { "FileType" }, "objc", function() noremap("<C-f>", ":call v:lua.UncrustifyWrapper('objc')<CR>", { buffer = true }) end)
-      autocmd(
-        nil,
-        { "FileType" },
-        "objc",
-        function() vnoremap("<C-f>", ":call v:lua.RangeUncrustifyWrapper('objc')<CR>", { buffer = true }) end
-      )
-      autocmd(
-        nil,
-        { "FileType" },
-        "objcpp",
-        function() noremap("<C-f>", ":call v:lua.UncrustifyWrapper('objcpp')<CR>", { buffer = true }) end
-      )
-      autocmd(
-        nil,
-        { "FileType" },
-        "objcpp",
-        function() vnoremap("<C-f>", ":call v:lua.RangeUncrustifyWrapper('objcpp')<CR>", { buffer = true }) end
-      )
+      autocmd(nil, { "FileType" }, "objc", function() vnoremap("<C-f>", ":call v:lua.RangeUncrustifyWrapper('objc')<CR>", { buffer = true }) end)
+      autocmd(nil, { "FileType" }, "objcpp", function() noremap("<C-f>", ":call v:lua.UncrustifyWrapper('objcpp')<CR>", { buffer = true }) end)
+      autocmd(nil, { "FileType" }, "objcpp", function() vnoremap("<C-f>", ":call v:lua.RangeUncrustifyWrapper('objcpp')<CR>", { buffer = true }) end)
+      -- stylua: ignore end
     end,
   },
 
