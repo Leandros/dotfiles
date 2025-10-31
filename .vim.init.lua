@@ -1580,6 +1580,33 @@ while True:
     },
   }, -- end mason
 
+  -- ━━ codesettings.nvim ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  {
+    "mrjones2014/codesettings.nvim",
+    branch = "mrj/41/multi-root-support",
+    -- dir = vim.fs.joinpath(os.getenv("HOME"), "github/codesettings.nvim"),
+    opts = {
+      config_file_paths = { ".vscode/settings.json", "codesettings.json", "lspsettings.json" },
+      jsonls_integration = true,
+      jsonc_filetype = true,
+      ---Provide your own root dir; can be a string or function returning a string.
+      ---It should be/return the full absolute path to the root directory.
+      ---If not set, defaults to `require('codesettings.util').get_root()`
+      root_dir = function()
+        local filename = vim.api.nvim_buf_get_name(0)
+        local dirs = vim.fs.find({ ".vscode" }, { upward = true, path = vim.fs.dirname(filename), type = "directory" })
+        if #dirs == 0 then return vim.fs.root(0, { "Cargo.toml", ".git", ".jj" }) end
+        local root_dir = vim.fs.dirname(dirs[1])
+        return root_dir
+      end,
+      default_merge_opts = {
+        --- How to merge lists; 'append' (default), 'prepend' or 'replace'
+        list_behavior = "append",
+      },
+    },
+    ft = { "json", "jsonc" },
+  }, -- end codesettings.nvim
+
   -- ━━ Mason LSP Config ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   -- Mostly Supported Servers:
   --  "tsserver",
@@ -1778,11 +1805,29 @@ while True:
       -- ━━ Mason LSP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       local mason_servers = require("mason-lspconfig").get_installed_servers()
       for _, server in ipairs(mason_servers) do
-        if not (server == "rust_analyzer" or server == "bacon_ls") then
+        if not (server == "rust_analyzer" or server == "bacon_ls" or server == "rust-analyzer") then
           -- only enable servers which are not otherwise enabled.
           vim.lsp.enable(server)
         end
       end
+
+      -- ━━ Rust Analyzer ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      vim.lsp.config("rust-analyzer", {
+        capabilities = lsp_defaults.capabilities,
+        on_attach = on_attach,
+        on_init = on_init,
+        before_init = function(
+          _ --[[params--]],
+          config
+        )
+          local c = require("codesettings")
+          config.settings = c.loader()
+            :root_dir(config.root_dir)
+            :merge_list_behavior("prepend")
+            :config_file_paths({ ".vscode/settings.json", ".myprojectsettings.json" })
+            :with_local_settings(config.name, config)
+        end,
+      })
 
       -- ━━ Custom CargoReload ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       local function cargo_reload()
@@ -1976,7 +2021,7 @@ while True:
             -- cmd = vim.lsp.rpc.connect("127.0.0.1", 27631),
 
             -- make sure to load it with our settings
-            load_vscode_settings = true,
+            load_vscode_settings = false,
 
             ---@diagnostic disable-next-line: unused-local
             on_attach = function(client, bufnr)
@@ -2808,6 +2853,7 @@ while True:
         ensure_installed = {
           "rust",
           "json",
+          "jsonc",
           "javascript",
           "typescript",
           "tsx",
