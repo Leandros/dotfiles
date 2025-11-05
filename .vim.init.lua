@@ -1583,7 +1583,7 @@ while True:
   -- ━━ codesettings.nvim ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   {
     "mrjones2014/codesettings.nvim",
-    branch = "mrj/41/multi-root-support",
+    -- branch = "mrj/41/multi-root-support",
     -- dir = vim.fs.joinpath(os.getenv("HOME"), "github/codesettings.nvim"),
     opts = {
       config_file_paths = { ".vscode/settings.json", "codesettings.json", "lspsettings.json" },
@@ -1821,7 +1821,9 @@ while True:
           config
         )
           local c = require("codesettings")
+          local env_ext = require("codesettings.extensions.env")
           config.settings = c.loader()
+            :loader_extensions({ env_ext })
             :root_dir(config.root_dir)
             :merge_list_behavior("prepend")
             :config_file_paths({ ".vscode/settings.json", ".myprojectsettings.json" })
