@@ -3670,8 +3670,10 @@ local spec = {
 
   {
     "folke/lazydev.nvim",
+    ft = "lua",
     opts = {
       library = {
+        vim.fs.joinpath(tostring(vim.fn.stdpath("data")), "lazy"),
         -- resolved relative to plugin dir
         "lazy.nvim",
       },
