@@ -3669,6 +3669,36 @@ local spec = {
   }, -- end lsp-endhints
 
   {
+    "Mythos-404/xmake.nvim",
+    version = "^3",
+    enabled = false,
+    lazy = true,
+    event = "BufReadPost",
+    opts = {
+      on_save = {
+        reload_project_info = true,
+        -- Configuration for generating `compile_commands.json`
+        lsp_compile_commands = {
+          enable = true,
+          -- Directory name (relative path) for output file
+          output_dir = "build",
+        },
+      },
+      lsp = {
+        enable = true,
+        language = "en",
+      },
+      runner = {
+        type = "quickfix",
+      },
+      execute = {
+        type = "quickfix",
+      },
+      dev_debug = false,
+    },
+  }, -- end xmake.nvim
+
+  {
     "folke/lazydev.nvim",
     ft = "lua",
     opts = {
