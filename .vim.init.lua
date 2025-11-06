@@ -1252,43 +1252,21 @@ local spec = {
     ft = { "cpp", "c", "cs", "objc", "objcpp" },
     config = function()
       _G.GetUncrustifyCfg = function()
-        vim.fn.py3eval([[
-import vim
-import os
-
-file_name = ".uncrustify.cfg"
-cur_dir = os.getcwd()
-
-while True:
-    file_list = os.listdir(cur_dir)
-    parent_dir = os.path.dirname(cur_dir)
-    if file_name in file_list:
-        vim.command("let g:sUncPath = '%s'" % cur_dir)
-        break
-    else:
-        if cur_dir == parent_dir:
-            vim.command("let g:sUncPath = '%s'" % "__non__")
-            break
-        else:
-            cur_dir = parent_dir
-        ]])
-
-        if vim.g.sUncPath == "__non__" then
-          return 0
-        else
-          vim.g.uncrustify_cfg_file_path = vim.g.sUncPath .. "/.uncrustify.cfg"
-          return 1
-        end
+        local filename = vim.api.nvim_buf_get_name(0)
+        local files = vim.fs.find({ ".uncrustify.cfg" }, { upward = true, path = vim.fs.dirname(filename), type = "file" })
+        if #files == 0 then return 0 end
+        vim.g.uncrustify_cfg_file_path = files[1]
+        return 1
       end
 
       _G.UncrustifyWrapper = function(language)
         _G.GetUncrustifyCfg()
-        vim.cmd("call Uncrustify(" .. language .. ")")
+        vim.cmd("call Uncrustify('" .. language .. "')")
       end
 
       _G.RangeUncrustifyWrapper = function(language)
         _G.GetUncrustifyCfg()
-        vim.cmd("call('Uncrustify2', extend(" .. language .. ", , [a:firstline, a:lastline])")
+        vim.cmd("call('Uncrustify2', extend('" .. language .. "', , [a:firstline, a:lastline])")
       end
 
       -- stylua: ignore start
