@@ -1816,6 +1816,8 @@ local spec = {
         )
           local c = require("codesettings")
           local env_ext = require("codesettings.extensions.env")
+          -- TODO: don't overwrite `rust_analyzer_capabilities` and keep them set here
+          -- to disable the completion.
           config.settings = c.loader()
             :loader_extensions({ env_ext })
             :root_dir(config.root_dir)
