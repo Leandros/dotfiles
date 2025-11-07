@@ -1698,6 +1698,7 @@ local spec = {
       vim.lsp.config(
         "sourcekit",
         vim.tbl_deep_extend("force", prev_sourcekit, {
+          filetypes = { "swift" },
           capabilities = lsp_defaults.capabilities,
           on_attach = on_attach,
           on_init = on_init,
@@ -1788,6 +1789,21 @@ local spec = {
           vim.lsp.enable(server)
         end
       end
+
+      -- ━━ clangd ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      vim.lsp.config("clangd", {
+        capabilities = lsp_defaults.capabilities,
+        on_attach = on_attach,
+        on_init = on_init,
+        cmd = { "clangd", "--clang-tidy", "--background-index", "--enable-config" },
+        settings = {
+          -- must exist, otherwise it won't work.
+          clangd = {},
+        },
+        init_options = {
+          fallbackFlags = { "-std=c23" },
+        },
+      })
 
       -- ━━ Rust Analyzer ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       vim.lsp.config("rust-analyzer", {
@@ -3667,36 +3683,6 @@ local spec = {
       autoEnableHints = true,
     },
   }, -- end lsp-endhints
-
-  {
-    "Mythos-404/xmake.nvim",
-    version = "^3",
-    enabled = false,
-    lazy = true,
-    event = "BufReadPost",
-    opts = {
-      on_save = {
-        reload_project_info = true,
-        -- Configuration for generating `compile_commands.json`
-        lsp_compile_commands = {
-          enable = true,
-          -- Directory name (relative path) for output file
-          output_dir = "build",
-        },
-      },
-      lsp = {
-        enable = true,
-        language = "en",
-      },
-      runner = {
-        type = "quickfix",
-      },
-      execute = {
-        type = "quickfix",
-      },
-      dev_debug = false,
-    },
-  }, -- end xmake.nvim
 
   {
     "folke/lazydev.nvim",
