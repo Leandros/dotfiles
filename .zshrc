@@ -676,6 +676,7 @@ mksh () {
     cat <<EOF > "$1"
 #!/usr/bin/env bash
 set -euo pipefail
+dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 EOF
     chmod +x "$1"
     nvim "$1"
