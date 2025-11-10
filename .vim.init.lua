@@ -982,12 +982,14 @@ local function on_attach(client, bufnr)
       require("navigator.codeAction").code_action_prompt(client, bufnr, {})
     end
 
+    -- stylua: ignore start
     local navigator_bindings = {
       { "n", "<c-]>", "<cmd>lua require('navigator.definition').definition()<CR>", "" },
       { "n", "gd", "<cmd>lua require('navigator.definition').definition_preview()<CR>", "LSP: Preview Definition" },
       { "n", "<leader>rn", "<cmd>lua require('navigator.rename').rename()<CR>", "LSP: Rename Symbol" },
       { "n", "<leader>k", "<cmd>lua require('navigator.diagnostics').show_diagnostics()<CR>", "LSP: Show Diagnostic Under Cursor" },
     }
+    -- stylua: ignore end
     for _, kb in ipairs(navigator_bindings) do
       vim.keymap.set(kb[1], kb[2], kb[3], { noremap = false, silent = true, desc = kb[4], buffer = bufnr })
     end
@@ -1001,6 +1003,7 @@ local function on_attach(client, bufnr)
     end
   end
 
+  -- stylua: ignore start
   local lsp_bindings = {
     { "i", "<c-k>", "<cmd>lua vim.lsp.buf.signature_help({ border = 'single', max_width = 120 })<CR>", "LSP: Signature Help" },
 
@@ -1010,6 +1013,7 @@ local function on_attach(client, bufnr)
     { "n", "[e", "<cmd>lua vim.diagnostic.goto_next({ border = 'rounded', max_width = 80 })<CR>", "LSP: Next Diagnostic" },
     { "n", "]e", "<cmd>lua vim.diagnostic.goto_prev({ border = 'rounded', max_width = 80 })<CR>", "LSP: Prev Diagnostic" },
   }
+  -- stylua: ignore end
 
   for _, kb in ipairs(lsp_bindings) do
     vim.keymap.set(kb[1], kb[2], kb[3], { noremap = false, silent = true, desc = kb[4] })
@@ -2982,6 +2986,7 @@ local spec = {
         --debug = true,
       })
 
+      -- stylua: ignore start
       local gotopreview_bindings = {
         { "n", "<leader>dd", "<cmd>lua require('goto-preview').goto_preview_definition()<CR>", "Goto Definition" },
         { "n", "<leader>dy", "<cmd>lua require('goto-preview').goto_preview_type_definition()<CR>", "Goto Type Definition" },
@@ -2990,6 +2995,7 @@ local spec = {
         { "n", "<leader>dq", "<cmd>lua require('goto-preview').close_all_win()<CR>", "Close all Floating Windows" },
         { "n", "<leader>dr", "<cmd>lua require('goto-preview').goto_preview_references()<CR>", "Goto References" },
       }
+      -- stylua: ignore end
 
       for _, kb in ipairs(gotopreview_bindings) do
         vim.keymap.set(kb[1], kb[2], kb[3], { noremap = false, silent = true, desc = kb[4] })
@@ -3373,6 +3379,7 @@ local spec = {
       require("telescope").load_extension("ui-select")
       require("telescope").load_extension("live_grep_args")
 
+      -- stylua: ignore start
       local telescope_bindings = {
         { "n", "<leader>fn", "<cmd>lua require('telescope.builtin').resume()<cr>", "Telescope: Resume" },
         { "n", "<leader>gr", "<cmd>lua require('telescope.builtin').lsp_references()<cr>", "LSP: Find References" },
@@ -3397,6 +3404,7 @@ local spec = {
         { "n", "<leader>fs", "<cmd>lua require('telescope.builtin').current_buffer_fuzzy_find()<cr>", "Fuzzy Find (Current Buf)" },
         { "n", "<leader>v", "<cmd>lua require('telescope.builtin').treesitter()<cr>", "Show Treesitter Symbols" },
       }
+      -- stylua: ignore end
 
       for _, kb in ipairs(telescope_bindings) do
         vim.keymap.set(kb[1], kb[2], kb[3], { noremap = false, silent = true, desc = kb[4] })
@@ -3572,10 +3580,12 @@ local spec = {
           disable_defaults = false,
           diff4 = {
             -- Mappings in 4-way diff layouts
+            -- stylua: ignore start
             { { "n", "x" }, "1do", actions.diffget("base"), { desc = "Obtain the diff hunk from the BASE version of the file" } },
             { { "n", "x" }, "2do", actions.diffget("ours"), { desc = "Obtain the diff hunk from the OURS version of the file" } },
             { { "n", "x" }, "3do", actions.diffget("theirs"), { desc = "Obtain the diff hunk from the THEIRS version of the file" } },
             { "n", "g?", actions.help({ "view", "diff4" }), { desc = "Open the help panel" } },
+            -- stylua: ignore end
           },
         },
         hooks = {
