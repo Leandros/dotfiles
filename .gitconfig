@@ -80,6 +80,11 @@
     lazy = commit --allow-empty-message -am \"\"
     out = push
 
+    # Shows the root of the git tree
+    root = rev-parse --show-toplevel
+    # always executed in the root of the git tree
+    exec = !exec
+
     # Gerrit
     fc = "!f() { rev=$(echo \"$1\" | sed -E 's|[0-9]+([0-9]{2})/[0-9]+|\\1|g'); git fetch gerrit refs/changes/$rev/$1; }; f"
     fcc = "!f() { rev=$(echo \"$1\" | sed -E 's|[0-9]+([0-9]{2})/[0-9]+|\\1|g'); git fetch gerrit refs/changes/$rev/$1 && git checkout FETCH_HEAD}; f"
