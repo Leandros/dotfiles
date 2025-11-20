@@ -1248,6 +1248,14 @@ local spec = {
   { "leafgarland/typescript-vim" },
   { "pangloss/vim-javascript" },
   { "elzr/vim-json" },
+  {
+    "ziglang/zig.vim",
+    config = function()
+      vim.g.zig_fmt_autosave = 0
+      -- don't show parse errors in a separate window
+      vim.g.zig_fmt_parse_errors = 0
+    end,
+  },
 
   -- ━━ Prettier ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   {
@@ -1604,6 +1612,7 @@ local spec = {
   --  "erlangls",
   --  "clangd",
   --  "cmake",
+  --  "zls", -- zig
   {
     "mason-org/mason-lspconfig.nvim",
     opts = {
@@ -1778,21 +1787,26 @@ local spec = {
         vim.lsp.enable("bacon_ls")
       end
 
+      -- ━━ ZLS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      vim.lsp.config("zls", {
+        on_attach = on_attach,
+        on_init = on_init,
+        capabilities = lsp_defaults.capabilities,
+        settings = {
+          zls = {
+            -- Further information about build-on save:
+            -- https://zigtools.org/zls/guides/build-on-save/
+            -- enable_build_on_save = true,
+          }
+        }
+      })
+
       -- ━━ Fish LSP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       vim.lsp.config("fish_lsp", {
         on_attach = on_attach,
         on_init = on_init,
         capabilities = lsp_defaults.capabilities,
       })
-
-      -- ━━ Mason LSP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-      local mason_servers = require("mason-lspconfig").get_installed_servers()
-      for _, server in ipairs(mason_servers) do
-        if not (server == "rust_analyzer" or server == "bacon_ls" or server == "rust-analyzer") then
-          -- only enable servers which are not otherwise enabled.
-          vim.lsp.enable(server)
-        end
-      end
 
       -- ━━ clangd ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       vim.lsp.config("clangd", {
@@ -1808,6 +1822,15 @@ local spec = {
           fallbackFlags = { "-std=c23" },
         },
       })
+
+      -- ━━ Mason LSP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      local mason_servers = require("mason-lspconfig").get_installed_servers()
+      for _, server in ipairs(mason_servers) do
+        if not (server == "rust_analyzer" or server == "bacon_ls" or server == "rust-analyzer") then
+          -- only enable servers which are not otherwise enabled.
+          vim.lsp.enable(server)
+        end
+      end
 
       -- ━━ Rust Analyzer ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       vim.lsp.config("rust-analyzer", {
@@ -2870,6 +2893,7 @@ local spec = {
           "html",
           "regex",
           "yaml",
+          "zig",
         },
         auto_install = false,
         highlight = {
@@ -3252,6 +3276,15 @@ local spec = {
             }
           end,
         },
+        zig = {
+          function()
+            return {
+              exe = "zig",
+              args = { "fmt", "--stdin" },
+              stdin = true,
+            }
+          end,
+        }
       }
 
       -- Provides the Format, FormatWrite, FormatLock, and FormatWriteLock commands
