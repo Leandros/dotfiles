@@ -1797,8 +1797,8 @@ local spec = {
             -- Further information about build-on save:
             -- https://zigtools.org/zls/guides/build-on-save/
             -- enable_build_on_save = true,
-          }
-        }
+          },
+        },
       })
 
       -- ━━ Fish LSP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -3284,7 +3284,7 @@ local spec = {
               stdin = true,
             }
           end,
-        }
+        },
       }
 
       -- Provides the Format, FormatWrite, FormatLock, and FormatWriteLock commands
