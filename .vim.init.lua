@@ -2879,6 +2879,7 @@ local spec = {
           "rust",
           "json",
           "jsonc",
+          "json5",
           "javascript",
           "typescript",
           "tsx",
