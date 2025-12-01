@@ -2876,8 +2876,12 @@ local spec = {
     },
     build = function() vim.cmd(":TSUpdate") end,
     config = function()
+      ---@diagnostic disable-next-line: missing-fields
       require("nvim-treesitter.configs").setup({
         ensure_installed = {
+          "c",
+          "cpp",
+          "cmake",
           "rust",
           "json",
           "jsonc",
@@ -2899,6 +2903,7 @@ local spec = {
           "zig",
         },
         auto_install = false,
+        sync_install = false,
         highlight = {
           enable = true,
           disable = { "typescript" },
