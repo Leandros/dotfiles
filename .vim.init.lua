@@ -1573,12 +1573,14 @@ local spec = {
   -- ━━ codesettings.nvim ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   {
     "mrjones2014/codesettings.nvim",
-    -- branch = "mrj/41/multi-root-support",
+    commit = "161731f802c742b48ee3f6850ff47638ca351f82",
     -- dir = vim.fs.joinpath(os.getenv("HOME"), "github/codesettings.nvim"),
     opts = {
       config_file_paths = { ".vscode/settings.json", "codesettings.json", "lspsettings.json" },
       jsonls_integration = true,
+      lua_ls_integration = true,
       jsonc_filetype = true,
+      live_reload = true,
       ---Provide your own root dir; can be a string or function returning a string.
       ---It should be/return the full absolute path to the root directory.
       ---If not set, defaults to `require('codesettings.util').get_root()`
@@ -1589,12 +1591,10 @@ local spec = {
         local root_dir = vim.fs.dirname(dirs[1])
         return root_dir
       end,
-      default_merge_opts = {
-        --- How to merge lists; 'append' (default), 'prepend' or 'replace'
-        list_behavior = "append",
-      },
+      --- How to merge lists; 'append' (default), 'prepend' or 'replace'
+      merge_lists = "append",
     },
-    ft = { "json", "jsonc" },
+    ft = { "json", "jsonc", "lua" },
   }, -- end codesettings.nvim
 
   -- ━━ Mason LSP Config ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1794,9 +1794,14 @@ local spec = {
         capabilities = lsp_defaults.capabilities,
         settings = {
           zls = {
-            -- Further information about build-on save:
-            -- https://zigtools.org/zls/guides/build-on-save/
-            -- enable_build_on_save = true,
+            --     -- Further information about build-on save:
+            --     -- https://zigtools.org/zls/guides/build-on-save/
+            --     -- enable_build_on_save = true,
+            semantic_tokens = "full",
+            completion_label_details = true,
+            enable_argument_placeholders = false,
+            inlay_hints_show_variable_type_hints = true,
+            warn_style = true,
           },
         },
       })
@@ -1831,28 +1836,6 @@ local spec = {
           vim.lsp.enable(server)
         end
       end
-
-      -- ━━ Rust Analyzer ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-      vim.lsp.config("rust-analyzer", {
-        capabilities = lsp_defaults.capabilities,
-        on_attach = on_attach,
-        on_init = on_init,
-        before_init = function(
-          _ --[[params--]],
-          config
-        )
-          local c = require("codesettings")
-          local env_ext = require("codesettings.extensions.env")
-          -- TODO: don't overwrite `rust_analyzer_capabilities` and keep them set here
-          -- to disable the completion.
-          config.settings = c.loader()
-            :loader_extensions({ env_ext })
-            :root_dir(config.root_dir)
-            :merge_list_behavior("prepend")
-            :config_file_paths({ ".vscode/settings.json", ".myprojectsettings.json" })
-            :with_local_settings(config.name, config)
-        end,
-      })
 
       -- ━━ Custom CargoReload ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       local function cargo_reload()
@@ -2047,6 +2030,25 @@ local spec = {
 
             -- make sure to load it with our settings
             load_vscode_settings = false,
+
+            -- replaces the `before_init` hook in `vim.lsp.config(...)`.
+            settings = function(_, default_settings)
+              local c = require("codesettings")
+              local env_ext = require("codesettings.extensions.env")
+              local config = c
+                .loader()
+                :loader_extensions({ env_ext })
+                -- :root_dir(config.root_dir)
+                :merge_lists("prepend")
+                :config_file_paths({ ".vscode/settings.json", ".myprojectsettings.json" })
+                :with_local_settings("rust-analyzer", { settings = default_settings })
+
+              -- Return value should have the following format:
+              -- {
+              --   ["rust-analyzer"] = settings,
+              -- }
+              return config.settings
+            end,
 
             ---@diagnostic disable-next-line: unused-local
             on_attach = function(client, bufnr)
