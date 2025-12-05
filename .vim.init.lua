@@ -1942,7 +1942,7 @@ local spec = {
     branch = "reuse_client",
     -- For development:
     -- dir = vim.fs.joinpath(os.getenv("HOME"), "/github/rustaceanvim"),
-    version = "^6", -- Recommended
+    -- version = "^6", -- Recommended
     lazy = false, -- This plugin is already lazy
     dependencies = {
       "nvim-lua/lsp-status.nvim",
@@ -2047,6 +2047,9 @@ local spec = {
               -- {
               --   ["rust-analyzer"] = settings,
               -- }
+              if vim.tbl_isempty(config.settings) then
+                return default_settings
+              end
               return config.settings
             end,
 
