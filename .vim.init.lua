@@ -3182,7 +3182,7 @@ local spec = {
           },
         },
         renderer = {
-          group_empty = true,
+          group_empty = false,
           add_trailing = true,
           root_folder_label = ":~:s?$?/..?",
           indent_width = 2,
