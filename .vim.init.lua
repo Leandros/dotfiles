@@ -3744,6 +3744,8 @@ local spec = {
     },
   }, -- end lsp-endhints
 
+  { "tmccombs/ansify.nvim" },
+
   {
     "folke/lazydev.nvim",
     ft = "lua",
