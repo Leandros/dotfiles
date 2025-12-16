@@ -1587,7 +1587,11 @@ local spec = {
       root_dir = function()
         local filename = vim.api.nvim_buf_get_name(0)
         local dirs = vim.fs.find({ ".vscode" }, { upward = true, path = vim.fs.dirname(filename), type = "directory" })
-        if #dirs == 0 then return vim.fs.root(0, { "Cargo.toml", ".git", ".jj" }) end
+        if #dirs == 0 then
+          local root = vim.fs.root(0, { "Cargo.toml", ".git", ".jj" })
+          if root == nil then return "/" end
+          return root
+        end
         local root_dir = vim.fs.dirname(dirs[1])
         return root_dir
       end,
