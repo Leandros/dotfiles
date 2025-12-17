@@ -1573,7 +1573,8 @@ local spec = {
   -- ━━ codesettings.nvim ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   {
     "mrjones2014/codesettings.nvim",
-    commit = "161731f802c742b48ee3f6850ff47638ca351f82",
+    -- commit = "161731f802c742b48ee3f6850ff47638ca351f82",
+    tag = "v1.5.3",
     -- dir = vim.fs.joinpath(os.getenv("HOME"), "github/codesettings.nvim"),
     opts = {
       config_file_paths = { ".vscode/settings.json", "codesettings.json", "lspsettings.json" },
@@ -1589,7 +1590,6 @@ local spec = {
         local dirs = vim.fs.find({ ".vscode" }, { upward = true, path = vim.fs.dirname(filename), type = "directory" })
         if #dirs == 0 then
           local root = vim.fs.root(0, { "Cargo.toml", ".git", ".jj" })
-          if root == nil then return "/" end
           return root
         end
         local root_dir = vim.fs.dirname(dirs[1])
