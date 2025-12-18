@@ -2170,9 +2170,9 @@ local spec = {
                 -- Disable `cargo check` on save. Use `bacon-ls` instead.
                 checkOnSave = false,
                 check = {
-                  command = "check",
+                  -- command = "check",
                   -- Clippy eats more resources and takes longer.
-                  -- command = "clippy",
+                  command = "clippy",
 
                   -- Use command or overrideCommand:
                   -- overrideCommand = "clippy --tests --all-features --all-targets --message-format json-diagnostic-rendered-ansi",
