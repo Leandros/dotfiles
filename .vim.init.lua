@@ -1969,16 +1969,16 @@ local spec = {
           liblldb_path = extension_path .. "lldb/lib/liblldb.lib"
         ---@diagnostic disable-next-line: undefined-field
         elseif vim.loop.os_uname().sysname == "Darwin" then
-          extension_path = vim.env.HOME .. "/.vscode/extensions/vadimcn.vscode-lldb-1.9.0/"
-          codelldb_path = extension_path .. "adapter/codelldb"
-          liblldb_path = extension_path .. "lldb/lib/liblldb.dylib"
+          local vs_codelldb = vim.fn.stdpath("data") .. "/lazy/vimspector/gadgets/macos/CodeLLDB"
+          codelldb_path = vs_codelldb .. "/adapter/codelldb"
+          liblldb_path = vs_codelldb .. "/lldb/lib/liblldb.dylib"
         ---@diagnostic disable-next-line: undefined-field
         elseif vim.loop.os_uname().sysname == "Linux" then
           -- CodeLLDB is installed with:
           -- :VimspectorInstall! --no-check-certificate --verbose CodeLLDB
           local vs_codelldb = vim.fn.stdpath("data") .. "/lazy/vimspector/gadgets/linux/CodeLLDB"
-          codelldb_path = vs_codelldb .. "adapter/codelldb"
-          liblldb_path = vs_codelldb .. "lldb/lib/liblldb.so"
+          codelldb_path = vs_codelldb .. "/adapter/codelldb"
+          liblldb_path = vs_codelldb .. "/lldb/lib/liblldb.so"
         end
 
         local function is_valid_file_path(path)
