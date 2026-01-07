@@ -1577,7 +1577,12 @@ local spec = {
     tag = "v1.5.3",
     -- dir = vim.fs.joinpath(os.getenv("HOME"), "github/codesettings.nvim"),
     opts = {
-      config_file_paths = { ".vscode/settings.json", "codesettings.json", "lspsettings.json" },
+      config_file_paths = {
+        ".vscode/settings.json",
+        ".vscode/settings.jsonc",
+        "codesettings.json",
+        "lspsettings.json",
+      },
       jsonls_integration = true,
       lua_ls_integration = true,
       jsonc_filetype = true,
