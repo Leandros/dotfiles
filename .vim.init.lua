@@ -3236,7 +3236,13 @@ local spec = {
           --require("formatter.filetypes.python").isort,
         },
         rust = {
-          require("formatter.filetypes.rust").rustfmt,
+          function()
+            return {
+              exe = "rustfmt",
+              args = { "--edition 2024" },
+              stdin = true,
+            }
+          end,
         },
         lua = {
           require("formatter.filetypes.lua").stylua,
