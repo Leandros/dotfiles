@@ -2945,12 +2945,18 @@ local spec = {
     "folke/flash.nvim",
     config = function()
       require("flash").setup({
-        labels = "ctieobnrsjduaxphlmwfvyz",
+        labels = "ctieobnrsgjduaxphlmwfvyz",
         char = {
           enabled = false,
           keys = {},
         },
         modes = {
+          treesitter = {
+            labels = "ctieobnrsgjduaxphlmwfvyz",
+          },
+          char = {
+            label = { exclude = "bnrsiadc" },
+          },
           search = {
             enabled = false,
           },
