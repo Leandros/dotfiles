@@ -166,6 +166,9 @@ vim.o.completeopt = "menuone,noinsert,noselect"
 -- Avoid showing extra messages when using completion
 vim.opt.shortmess:append("c")
 
+-- Show tabs / newlines (enable with `set list!`)
+vim.o.listchars = 'tab:▸ ,eol:¬'
+
 -- ━━ Undo ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 -- Write undo tree to a file to resume from next time the file is opened.
 if vim.fn.has("persistent_undo") == 1 then
