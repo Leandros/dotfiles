@@ -323,7 +323,7 @@ auft("hcl", function() vim.opt_local.commentstring = "# %s" end)
 auft("hcl", function() vim.opt_local.comments = ":#" end)
 
 -- Use Dashes in identifiers
-auft("hcl", function() vim.opt_local.iskeyword = vim.o.iskeyword .. "-" end)
+auft("hcl", function() vim.opt_local.iskeyword:append("-") end)
 
 -- Use Tabs in Makefiles
 auft("make", function() vim.opt_local.expandtab = false end)
