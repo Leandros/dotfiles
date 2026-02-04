@@ -772,6 +772,15 @@ local function setup_highlights_dark()
   -- - Fish ---
   hi("fishParameter", { bg = "none", ctermbg = 0 })
   hi("fishOption", { bg = "none", ctermbg = 0 })
+
+  -- - Rainbow --
+  -- hi("RainbowDelimiterRed", { fg = "firebrick" });
+  -- hi("RainbowDelimiterYellow", { fg = "yellow" });
+  -- hi("RainbowDelimiterBlue", { fg = "royalblue3" });
+  -- hi("RainbowDelimiterOrange", { fg = "darkorange3" });
+  -- hi("RainbowDelimiterGreen", { fg = "seagreen3" });
+  -- hi("RainbowDelimiterViolet", { fg = "magenta1" });
+  -- hi("RainbowDelimiterCyan", { fg = "darkorchid3" });
 end
 
 local function setup_highlights_light()
@@ -1218,7 +1227,7 @@ local spec = {
   -- ━━ Syntax plugins ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   { "dummyunit/vim-fastbuild", ft = { "fastbuild" } },
   { "wlangstroth/vim-racket", ft = { "racket" } },
-  { "luochen1990/rainbow", ft = { "scheme", "lisp", "racket" } },
+  --{ "luochen1990/rainbow", ft = { "scheme", "lisp", "racket" } },
   { "leandros/hlsl.vim", ft = { "hlsl" } },
   { "leandros/vim-gn", ft = { "gn" } },
   { "aexpl/vim-aexpl", ft = { "aexpl" } },
@@ -3796,6 +3805,21 @@ local spec = {
     -- available after the first executing of it or after a keymap of text-case.nvim has been used.
     lazy = false,
   },
+
+  {
+    "HiPhish/rainbow-delimiters.nvim",
+    config = function()
+      ---@type rainbow_delimiters.config
+        vim.g.rainbow_delimiters = {
+          query = {
+            -- Use parentheses by default
+            [''] = 'rainbow-delimiters',
+            -- Use blocks for Lua
+            lua = 'rainbow-blocks',
+          },
+        }
+    end,
+  }, -- end rainbow-delimiters
 
   {
     "folke/lazydev.nvim",
