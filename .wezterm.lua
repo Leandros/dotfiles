@@ -46,28 +46,36 @@ config.send_composed_key_when_left_alt_is_pressed = true -- Required to enable B
 config.send_composed_key_when_right_alt_is_pressed = true -- Required to enable Bone2 layout
 
 local act = wezterm.action
+local ctrlkey
+if wezterm.target_triple == 'x86_64-pc-windows-msvc' then
+  -- Use ctrl over SUPER (which is the WIN key) on Windows only.
+  ctrlkey = 'CTRL'
+  config.use_ime = false
+else
+  ctrlkey = 'SUPER'
+end
 local general_keys = {
-    { key = '1', mods = 'SUPER', action = act.ActivateTab(0) },
-    { key = '2', mods = 'SUPER', action = act.ActivateTab(1) },
-    { key = '3', mods = 'SUPER', action = act.ActivateTab(2) },
-    { key = '4', mods = 'SUPER', action = act.ActivateTab(3) },
-    { key = '5', mods = 'SUPER', action = act.ActivateTab(4) },
-    { key = '6', mods = 'SUPER', action = act.ActivateTab(5) },
-    { key = '7', mods = 'SUPER', action = act.ActivateTab(6) },
-    { key = '8', mods = 'SUPER', action = act.ActivateTab(7) },
-    { key = '9', mods = 'SUPER', action = act.ActivateTab(-1) },
+    { key = '1', mods = ctrlkey, action = act.ActivateTab(0) },
+    { key = '2', mods = ctrlkey, action = act.ActivateTab(1) },
+    { key = '3', mods = ctrlkey, action = act.ActivateTab(2) },
+    { key = '4', mods = ctrlkey, action = act.ActivateTab(3) },
+    { key = '5', mods = ctrlkey, action = act.ActivateTab(4) },
+    { key = '6', mods = ctrlkey, action = act.ActivateTab(5) },
+    { key = '7', mods = ctrlkey, action = act.ActivateTab(6) },
+    { key = '8', mods = ctrlkey, action = act.ActivateTab(7) },
+    { key = '9', mods = ctrlkey, action = act.ActivateTab(-1) },
 
-    { key = 't', mods = 'SUPER', action = act.SpawnTab 'CurrentPaneDomain' },
-    { key = 'w', mods = 'SUPER', action = act.CloseCurrentTab{ confirm = true } },
-    { key = 'n', mods = 'SUPER', action = act.SpawnWindow },
-    { key = 'q', mods = 'SUPER', action = act.QuitApplication },
+    { key = 't', mods = ctrlkey .. '|SHIFT', action = act.SpawnTab 'CurrentPaneDomain' },
+    { key = 'w', mods = ctrlkey .. '|SHIFT', action = act.CloseCurrentTab{ confirm = true } },
+    { key = 'n', mods = ctrlkey .. '|SHIFT', action = act.SpawnWindow },
+    { key = 'q', mods = ctrlkey .. '|SHIFT', action = act.QuitApplication },
     { key = 'p', mods = 'CTRL|SHIFT', action = act.ActivateCommandPalette },
 
-    { key = 'c', mods = 'SUPER|SHIFT', action = act.CopyTo 'ClipboardAndPrimarySelection', },
-    { key = 'v', mods = 'SUPER|SHIFT', action = act.PasteFrom 'Clipboard' },
+    { key = 'c', mods = ctrlkey .. '|SHIFT', action = act.CopyTo 'ClipboardAndPrimarySelection', },
+    { key = 'v', mods = ctrlkey .. '|SHIFT', action = act.PasteFrom 'Clipboard' },
 
-    { key = 'c', mods = 'SUPER', action = act.CopyTo 'ClipboardAndPrimarySelection', },
-    { key = 'v', mods = 'SUPER', action = act.PasteFrom 'Clipboard' },
+    { key = 'c', mods = ctrlkey .. '|SHIFT', action = act.CopyTo 'ClipboardAndPrimarySelection', },
+    { key = 'v', mods = ctrlkey .. '|SHIFT', action = act.PasteFrom 'Clipboard' },
 
     -- We need to rebind OPT + Space otherwise odd things are happenings:
     { key = ' ', mods = 'OPT', action = act.SendKey { key = ' ' } },
