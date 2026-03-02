@@ -162,6 +162,10 @@ function __bash_prompt {
 }
 PROMPT_COMMAND=__bash_prompt
 
+## VI mode
+set -o vi
+# bindings are in `.inputrc`
+
 # Functions
 function up()
 {

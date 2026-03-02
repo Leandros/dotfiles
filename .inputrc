@@ -11,6 +11,11 @@ set menu-complete-display-prefix on
 # Enable vi mode
 set editing-mode vi
 
+# Set bar & block cursor in Vi modes
+set show-mode-in-prompt on
+set vi-ins-mode-string \1\e[6 q\2
+set vi-cmd-mode-string \1\e[2 q\2
+
 
 ###############################################################################
 ## Normal mode bindings
@@ -20,6 +25,10 @@ set keymap vi-command
 "s": forward-char
 "B": backward-word
 "S": forward-word
+"u": vi-undo
+"j": vi-redo
+"$": end-of-line
+"^": beginning-of-line
 
 "r": history-search-backward
 "n": history-search-forward
