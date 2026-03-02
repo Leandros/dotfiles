@@ -676,7 +676,37 @@ mksh () {
     cat <<EOF > "$1"
 #!/usr/bin/env bash
 set -euo pipefail
-dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+dir="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
+EOF
+    chmod +x "$1"
+    nvim "$1"
+}
+
+# create a new python script
+mkpy () {
+    if [ -f "$1" ]; then
+        echo "$1: already exists"
+        return 1
+    fi
+    cat <<EOF > "$1"
+#!/bin/bash
+"""exec" uv run --script "$0" "$@"
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+# ]
+# ///
+"""
+
+import sys
+
+
+def main(argv: list[str]):
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
 EOF
     chmod +x "$1"
     nvim "$1"
