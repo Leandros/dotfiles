@@ -141,6 +141,13 @@ if command -v zoxide &> /dev/null; then
 fi
 
 # Prompt
+function __pyvenv_prompt {
+    if [ -x "$VIRTUAL_ENV" ]; then
+        venv_name=$(basename "$VIRTUAL_ENV")
+        echo " 🐍(${venv_name})"
+    fi
+}
+
 function __bash_prompt {
     local exitcode=$?
     local NONE="\[\033[0m\]"        # Reset Prompt
@@ -149,7 +156,7 @@ function __bash_prompt {
     local B="\[\033[0;34m\]"        # Blue
     local Y="\[\033[0;33m\]"        # Yellow
     local C="\[\033[0;36m\]"        # Cyan
-    PS1="${G}\n\u@\h ${Y}\w${C}`__git_ps1`${NONE}\n$ "
+    PS1="${G}\n\u@\h ${Y}\w${C}`__git_ps1`${NONE}$(__pyvenv_prompt)\n$ "
 
     log_bash_persistent_history
 }
