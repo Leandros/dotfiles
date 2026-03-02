@@ -135,11 +135,6 @@ if command -v fnm &> /dev/null; then
     eval "`fnm env`"
 fi
 
-# Use zoxide if installed.
-if command -v zoxide &> /dev/null; then
-    eval "$(zoxide init bash)"
-fi
-
 # Prompt
 function __pyvenv_prompt {
     if [ -x "$VIRTUAL_ENV" ]; then
@@ -165,6 +160,18 @@ PROMPT_COMMAND=__bash_prompt
 ## VI mode
 set -o vi
 # bindings are in `.inputrc`
+
+## Toggle in-and-out of suspended programs (e.g. vim)
+# use ctrl-z to toggle in and out of bg
+if [[ $- == *i* ]]; then 
+  stty susp undef
+  bind '"\C-z":" fg\015"'
+fi
+
+# Use zoxide if installed.
+if command -v zoxide &> /dev/null; then
+    eval "$(zoxide init bash)"
+fi
 
 # Functions
 function up()
