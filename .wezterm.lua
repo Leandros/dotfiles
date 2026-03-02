@@ -38,6 +38,74 @@ config.window_frame = {
     font_size = 14.0,
 }
 
+-- Command palette
+config.command_palette_font_size = 11.0
+
+-- Windows specific changes
+local ctrlkey
+local launch_menu = {}
+
+if wezterm.target_triple == 'x86_64-pc-windows-msvc' then
+  -- Use ctrl over SUPER (which is the WIN key) on Windows only.
+  ctrlkey = 'CTRL'
+  config.use_ime = false
+
+	table.insert(launch_menu, {
+	  label = "Git Bash",
+	  args = { "C:\\Program Files\\Git\\bin\\bash.exe", "--login", "-i" },
+    domain = { DomainName = 'local' },
+  })
+
+  table.insert(launch_menu, {
+    label = 'WSL Ubuntu',
+    domain = { DomainName = 'WSL:Ubuntu' },
+  })
+
+  table.insert(launch_menu, {
+    label = 'Command Prompt',
+    args = { 'cmd.exe' },
+    domain = { DomainName = 'local' },
+  })
+
+	table.insert(launch_menu, {
+		label = "PowerShell",
+		args = { "powershell.exe" },
+    domain = { DomainName = 'local' },
+	})
+
+  -- Find installed visual studio version(s) and add their compilation
+  -- environment command prompts to the menu
+  for _, vsvers in
+    ipairs(
+      wezterm.glob('Microsoft Visual Studio/*', 'C:/Program Files')
+    )
+  do
+    local year = vsvers:gsub('Microsoft Visual Studio/', '')
+    table.insert(launch_menu, {
+      label = 'x64 Native Tools VS ' .. year,
+      args = {
+        'cmd.exe',
+        '/k',
+        'C:/Program Files/Microsoft Visual Studio/'
+        .. year
+        .. '/Community/Common7/Tools/VsDevCmd.bat',
+        '-startdir=none', '-arch=x64', '-host_arch=x64',
+      },
+      domain = { DomainName = 'local' },
+    })
+  end
+
+  -- By default, launch in git bash.
+	config.default_prog = { "C:\\Program Files\\Git\\bin\\bash.exe", "--login", "-i" }
+
+  -- By default, launch a shell in WSL.
+  -- config.default_domain = "WSL:Ubuntu"
+else
+  ctrlkey = 'SUPER'
+end
+
+config.launch_menu = launch_menu
+
 -- Keybindings:
 config.disable_default_key_bindings = true
 config.use_dead_keys = false
@@ -46,14 +114,7 @@ config.send_composed_key_when_left_alt_is_pressed = true -- Required to enable B
 config.send_composed_key_when_right_alt_is_pressed = true -- Required to enable Bone2 layout
 
 local act = wezterm.action
-local ctrlkey
-if wezterm.target_triple == 'x86_64-pc-windows-msvc' then
-  -- Use ctrl over SUPER (which is the WIN key) on Windows only.
-  ctrlkey = 'CTRL'
-  config.use_ime = false
-else
-  ctrlkey = 'SUPER'
-end
+
 local general_keys = {
     { key = '1', mods = ctrlkey, action = act.ActivateTab(0) },
     { key = '2', mods = ctrlkey, action = act.ActivateTab(1) },
@@ -82,14 +143,69 @@ local general_keys = {
 }
 
 -- Tmux Replacement:
-local tmux_keys_enabled = false
+local tmux_keys_enabled = true
 local tmux_keys = {}
 if tmux_keys_enabled then
-    config.leader = { key = 'e', mods = 'CTRL', timeout_milliseconds = 1000 }
+    local launcher_choices = {}
+    for id, item in ipairs(launch_menu) do
+      table.insert(launcher_choices, {
+        id = tostring(id),
+        label = item.label,
+      })
+    end
+
+    config.leader = { key = 'e', mods = 'ALT', timeout_milliseconds = 1000 }
     tmux_keys = {
-        { key = 'c', mods = 'LEADER', action = act.SpawnTab 'CurrentPaneDomain' },
-        { key = 'i', mods = 'LEADER', action = act.SplitHorizontal { domain = 'CurrentPaneDomain' } },
-        { key = 't', mods = 'LEADER', action = act.SplitVertical { domain = 'CurrentPaneDomain' } },
+        --{ key = 'c', mods = 'LEADER', action = act.SpawnTab 'CurrentPaneDomain' },
+        --{ key = 'i', mods = 'LEADER', action = act.SplitHorizontal { domain = 'CurrentPaneDomain' } },
+        --{ key = 't', mods = 'LEADER', action = act.SplitVertical { domain = 'CurrentPaneDomain' } },
+
+        { key = 'c', mods = 'LEADER', action = act.InputSelector {
+          action = wezterm.action_callback(function(window, pane, id, label)
+            if not id and not label then return end
+            for _, item in ipairs(launch_menu) do
+              if item.label == label then
+                window:perform_action(act.SpawnCommandInNewTab(item), pane)
+                return
+              end
+            end
+          end),
+          title = 'Select shell',
+          fuzzy = false,
+          alphabet = '1234567890ctieobsgjduaxphlmwfvüäöyz,.k',
+          choices = launcher_choices,
+        }},
+        { key = 'i', mods = 'LEADER', action = act.InputSelector {
+          action = wezterm.action_callback(function(window, pane, id, label)
+            if not id and not label then return end
+            for _, item in ipairs(launch_menu) do
+              if item.label == label then
+                window:perform_action(act.SplitHorizontal(item), pane)
+                return
+              end
+            end
+          end),
+          title = 'Select shell',
+          fuzzy = false,
+          alphabet = '1234567890ctieobsgjduaxphlmwfvüäöyz,.k',
+          choices = launcher_choices,
+        }},
+        { key = 't', mods = 'LEADER', action = act.InputSelector {
+          action = wezterm.action_callback(function(window, pane, id, label)
+            if not id and not label then return end
+            for _, item in ipairs(launch_menu) do
+              if item.label == label then
+                window:perform_action(act.SplitVertical(item), pane)
+                return
+              end
+            end
+          end),
+          title = 'Select shell',
+          fuzzy = false,
+          alphabet = '1234567890ctieobsgjduaxphlmwfvüäöyz,.k',
+          choices = launcher_choices,
+        }},
+
         { key = 'b', mods = 'LEADER', action = act.ActivatePaneDirection 'Left' },
         { key = 's', mods = 'LEADER', action = act.ActivatePaneDirection 'Right' },
         { key = 'n', mods = 'LEADER', action = act.ActivatePaneDirection 'Down' },
@@ -114,11 +230,48 @@ if tmux_keys_enabled then
         { key = 'z', mods = 'LEADER', action = act.TogglePaneZoomState },
 
         { key = '[', mods = 'LEADER', action = act.ActivateCopyMode },
+
+        { key = 'o', mods = 'LEADER', action = act.ShowLauncherArgs { flags = 'FUZZY|LAUNCH_MENU_ITEMS' }},
+        { key = 'g', mods = 'LEADER', action = wezterm.action_callback(function(window, pane)
+
+          window:perform_action(
+            act.InputSelector {
+              action = wezterm.action_callback(function(window, pane, id, label)
+                if not id and not label then return end
+                for _, item in ipairs(launch_menu) do
+                  if item.label == label then
+                    window:perform_action(act.SplitHorizontal(item), pane)
+                    return
+                  end
+                end
+              end),
+              title = 'Select default shell',
+              fuzzy = false,
+              alphabet = '1234567890ctieobsgjduaxphlmwfvüäöyz,.k',
+              choices = choices,
+            },
+            pane)
+        end)
+        }
     }
 end
 
 -- Set keys:
 config.keys = TableConcat(general_keys, tmux_keys)
+
+local copy_mode = nil
+if wezterm.gui then
+  copy_mode = wezterm.gui.default_key_tables().copy_mode
+  TableConcat(copy_mode, {
+    { key = 'b', mods = 'NONE', action = act.CopyMode 'MoveLeft' },
+    { key = 'n', mods = 'NONE', action = act.CopyMode 'MoveDown' },
+    { key = 'r', mods = 'NONE', action = act.CopyMode 'MoveUp' },
+    { key = 's', mods = 'NONE', action = act.CopyMode 'MoveRight' },
+  })
+end
+config.key_tables = {
+  copy_mode = copy_mode,
+}
 
 -- Font
 config.font = wezterm.font_with_fallback {

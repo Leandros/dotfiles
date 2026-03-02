@@ -32,7 +32,7 @@ vim.g.maplocalleader = " "
 
 -- Python paths
 if vim.fn.has("win32") == 1 or vim.fn.has("win16") == 1 then
-  vim.g.python3_host_prog = "C:\\Python310\\python.exe"
+  vim.g.python3_host_prog = vim.env.LOCALAPPDATA .. '\\Python\\bin\\python3'
 else
   local venv_path = vim.fn.stdpath("data") .. "/python3-venv"
   if vim.fn.filereadable(venv_path .. "/bin/python3") == 0 then
