@@ -102,6 +102,33 @@ if [ -f "$HOME/.p4creds" ]; then
     source "$HOME/.p4creds"
 fi
 
+# =============================================================================
+# FZF
+export FZF_DEFAULT_COMMAND='fd --strip-cwd-prefix --hidden --follow --exclude .git'
+
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+
+# Preview file content using bat (https://github.com/sharkdp/bat)
+export FZF_CTRL_T_OPTS="
+  --preview 'bat -n --color=always {}'
+  --bind 'ctrl-t:change-preview-window(down|hidden|)'"
+
+export FZF_DEFAULT_OPTS="--bind=ctrl-n:down,ctrl-r:up,ctrl-b:backward-char,ctrl-s:forward-char"
+
+export FZF_CTRL_R_OPTS="
+  --preview 'echo {}' --preview-window up:3:hidden:wrap
+  --bind 'ctrl-p:toggle-preview'
+  --bind 'ctrl-y:execute-silent(echo -n {2..} | pbcopy)+abort'
+  --bind=ctrl-n:down,ctrl-r:up,ctrl-b:backward-char,ctrl-s:forward-char
+  --bind=ctrl-t:toggle-sort
+  --color header:italic
+  --header 'Press CTRL-Y to copy command into clipboard'"
+
+# Init fzf
+if [ -x "$(command -v fzf)" ]; then
+    eval "$(fzf --bash)"
+fi
+
 # Use fnm, if it exists
 if command -v fnm &> /dev/null; then
     # export PATH=$HOME/.fnm:$PATH
