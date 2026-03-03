@@ -1656,7 +1656,7 @@ EOF
       --- How to merge lists; 'append' (default), 'prepend' or 'replace'
       merge_lists = "append",
     },
-    ft = { "json", "jsonc", "lua" },
+    ft = { "json", "jsonc" },
   }, -- end codesettings.nvim
 
   -- ━━ Mason LSP Config ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
