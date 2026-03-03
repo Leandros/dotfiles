@@ -1426,6 +1426,9 @@ EOF
   -- ━━ Completion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   -- Snippet syntax described here:
   -- <https://github.com/Microsoft/language-server-protocol/blob/master/snippetSyntax.md>
+  --
+  -- Press <c-j> to close autocomplete menu and navigate between locations in
+  -- the snippet.
   {
     "hrsh7th/vim-vsnip",
     init = function()
