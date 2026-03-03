@@ -3543,9 +3543,9 @@ EOF
     build = function() vim.cmd(":LeaderfInstallCExtension") end,
     config = function()
       -- Unmap <leader>b to have it trigger which-key
-      autocmd(nil, { "BufReadPost", "BufWinEnter" }, "*", function() 
-        vim.cmd("silent! unmap <leader>b") 
-        vim.cmd("silent! unmap <leader>f") 
+      autocmd(nil, { "BufReadPost", "BufWinEnter" }, "*", function()
+        vim.cmd("silent! unmap <leader>b")
+        vim.cmd("silent! unmap <leader>f")
       end)
       vim.g.Lf_ShortcutF = "<Leader>o"
       vim.g.Lf_UseVersionControlTool = 0
