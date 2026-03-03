@@ -1134,6 +1134,12 @@ local spec = {
             call AutoPairsToggle()
           endif
 
+lua << EOF
+            if package.loaded["blink.pairs"] ~= nil then
+              require("blink.pairs.mappings").disable()
+            end
+EOF
+
           " Add mappings here if desired:
           " Example: nmap <buffer> b <Left>
         endfunction
@@ -1145,6 +1151,12 @@ local spec = {
           if exists("AutoPairsToggle")
             call AutoPairsToggle()
           endif
+
+lua << EOF
+            if package.loaded["blink.pairs"] ~= nil then
+              require("blink.pairs.mappings").enable()
+            end
+EOF
 
           " And unmap them again here:
           " Example: nunmap <buffer> b
@@ -1310,16 +1322,22 @@ local spec = {
 
   -- ━━ Autopairs ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   {
-    "windwp/nvim-autopairs",
-    lazy = false,
-    priority = 999,
-    config = function()
-      local Rule = require("nvim-autopairs.rule")
-      local npairs = require("nvim-autopairs")
-      local cond = require("nvim-autopairs.conds")
+    'saghen/blink.pairs',
+    version = '*', -- (recommended) only required with prebuilt binaries
+    dependencies = 'saghen/blink.download', -- download prebuilt binaries from github releases
 
-      npairs.setup({
-        disable_filetype = {
+    --- @module 'blink.pairs'
+    --- @type blink.pairs.Config
+    opts = {
+      mappings = {
+        -- you can call require("blink.pairs.mappings").enable()
+        -- and require("blink.pairs.mappings").disable()
+        -- to enable/disable mappings at runtime
+        enabled = true,
+        cmdline = true,
+        -- or disable with `vim.g.pairs = false` (global) and `vim.b.pairs = false` (per-buffer)
+        -- and/or with `vim.g.blink_pairs = false` and `vim.b.blink_pairs = false`
+        disabled_filetypes = {
           "TelescopePrompt",
           "TelescopeResults",
           "Trouble",
@@ -1338,19 +1356,42 @@ local spec = {
           "guihua_rust",
           "clap_input",
         },
-      })
+        -- see the defaults:
+        -- https://github.com/Saghen/blink.pairs/blob/main/lua/blink/pairs/config/mappings.lua#L14
+        pairs = {
+          ['`'] = {
+            {
+              '```',
+              when = function(ctx) return ctx:text_before_cursor(2) == '``' end,
+              languages = { 'markdown', 'markdown_inline', 'typst', 'vimwiki', 'rmarkdown', 'rmd', 'quarto', 'rust' },
+            },
+          },
+        },
+      },
+      highlights = {
+        enabled = true,
+        -- requires require('vim._extui').enable({}), otherwise has no effect
+        cmdline = true,
+        groups = {
+          'BlinkPairsOrange',
+          'BlinkPairsPurple',
+          'BlinkPairsBlue',
+        },
+        unmatched_group = 'BlinkPairsUnmatched',
 
-      npairs.add_rules({
-        Rule("<", ">", { "-html", "-javascriptreact", "-typescriptreact" })
-          :with_pair(cond.not_after_regex("[%w%.]"))
-          :with_pair(cond.before_regex("%a+:?:?$", 3))
-          :with_move(function(opts) return opts.char == ">" end),
-        Rule("```", "```", { "rust", "markdown", "vimwiki", "rmarkdown", "rmd", "pandoc", "quarto" }):with_pair(
-          cond.not_before_char("`", 3)
-        ),
-        Rule("```.*$", "```", { "rust", "markdown", "vimwiki", "rmarkdown", "rmd", "pandoc", "quarto" }):only_cr():use_regex(true),
-      })
-    end,
+        -- highlights matching pairs under the cursor
+        matchparen = {
+          enabled = true,
+          -- known issue where typing won't update matchparen highlight, disabled by default
+          cmdline = false,
+          -- also include pairs not on top of the cursor, but surrounding the cursor
+          include_surrounding = false,
+          group = 'BlinkPairsMatchParen',
+          priority = 250,
+        },
+      },
+      debug = false,
+    },
   },
 
   -- ━━ autotag (autoclose html) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
