@@ -3059,11 +3059,16 @@ EOF
     "folke/which-key.nvim",
     config = function()
       local wk = require("which-key")
+      ---@class wk.Opts
       wk.setup({
         preset = "classic",
         triggers = {
           { "<auto>", mode = "nixsotc" },
           { "m", mode = { "n", "v" } },
+        },
+        ---@type wk.Win.opts
+        win = {
+          border = "single",
         },
       })
       wk.add({
