@@ -1007,7 +1007,12 @@ local function on_attach(client, bufnr)
     end
   else
     local alt_lsp_bindings = {
-      { "n", "<leader>k", "<cmd>lua vim.diagnostic.open_float({ scope = 'line' })<CR>", "LSP: Show Diagnostic Under Cursor" },
+      {
+        "n",
+        "<leader>k",
+        "<cmd>lua vim.diagnostic.open_float({ scope = 'line' })<CR>",
+        "LSP: Show Diagnostic Under Cursor",
+      },
     }
 
     for _, kb in ipairs(alt_lsp_bindings) do
@@ -1191,7 +1196,12 @@ EOF
         { "mh", ":BookmarkMoveUp<CR>", mode = "n", desc = "Move Up" },
         { "ml", ":BookmarkMoveDown<CR>", mode = "n", desc = "Move Down" },
         { "mg", ":BookmarkMoveToLine<CR>", mode = "n", desc = "Move To Line" },
-        { "mA", "<cmd>lua require('telescope.builtin').marks()<cr>", mode = "n", desc = "Show All (Telescope)" },
+        {
+          "mA",
+          "<cmd>lua require('telescope.builtin').marks()<cr>",
+          mode = "n",
+          desc = "Show All (Telescope)",
+        },
       }
 
       autocmd("BufEnter", {
