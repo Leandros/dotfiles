@@ -2236,6 +2236,17 @@ local spec = {
   }, -- end rustaceanvim
 
   {
+    "cordx56/rustowl",
+    version = "*", -- Latest stable version
+    build = "cargo binstall rustowl",
+    lazy = false, -- This plugin is already lazy
+    opts = {
+      auto_attach = false,
+      auto_enable = false,
+    },
+  }, -- end rustowl
+
+  {
     "saecki/crates.nvim",
     tag = "stable",
     opts = {
