@@ -1767,10 +1767,10 @@ local spec = {
           },
         })
       )
-      if vim.fn.executable("bacon-ls") ~= 0 then
-        -- enable bacon_ls if not installed by mason, and skip by mason.
-        vim.lsp.enable("bacon_ls")
-      end
+      -- if vim.fn.executable("bacon-ls") ~= 0 then
+      --   -- enable bacon_ls if not installed by mason, and skip by mason.
+      --   -- vim.lsp.enable("bacon_ls")
+      -- end
 
       -- ━━ ZLS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       vim.lsp.config("zls", {
@@ -1922,12 +1922,12 @@ local spec = {
   }, -- end tiny-inline-diagnostic
 
   {
-    -- "mrcjkb/rustaceanvim",
-    "leandros/rustaceanvim",
-    branch = "reuse_client",
+    "mrcjkb/rustaceanvim",
+    version = "^7", -- Recommended
+    -- "leandros/rustaceanvim",
+    -- branch = "reuse_client",
     -- For development:
     -- dir = vim.fs.joinpath(os.getenv("HOME"), "/github/rustaceanvim"),
-    -- version = "^6", -- Recommended
     lazy = false, -- This plugin is already lazy
     dependencies = {
       "nvim-lua/lsp-status.nvim",
@@ -2032,9 +2032,7 @@ local spec = {
               -- {
               --   ["rust-analyzer"] = settings,
               -- }
-              if vim.tbl_isempty(config.settings) then
-                return default_settings
-              end
+              if vim.tbl_isempty(config.settings) then return default_settings end
               return config.settings
             end,
 
@@ -2149,7 +2147,7 @@ local spec = {
                 },
 
                 -- Disable `cargo check` on save. Use `bacon-ls` instead.
-                checkOnSave = false,
+                checkOnSave = true,
                 check = {
                   -- command = "check",
                   -- Clippy eats more resources and takes longer.
