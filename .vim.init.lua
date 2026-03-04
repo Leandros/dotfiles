@@ -1813,6 +1813,70 @@ local spec = {
         },
       })
 
+      -- ━━ rust-analyzer ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      vim.lsp.config("rust-analyzer", {
+        capabilities = lsp_defaults.capabilities,
+        on_attach = function(client, bufnr)
+          vim.keymap.set(
+            "n",
+            "K",
+            "<cmd>lua vim.cmd.RustLsp({ 'hover', 'actions' })<CR>",
+            { silent = true, buffer = bufnr, desc = "LSP: Hover" }
+          )
+          vim.keymap.set(
+            "n",
+            "ca",
+            "<cmd>lua vim.cmd.RustLsp('codeaction')<CR>",
+            { silent = true, buffer = bufnr, desc = "LSP: Code Action" }
+          )
+
+          -- Make sure to call the global/default on_attach!
+          on_attach(client, bufnr)
+        end,
+        on_init = on_init,
+        flags = { allow_incremental_sync = false },
+        commands = {
+          RustOpenDocs = {
+            function()
+              vim.lsp.buf_request(
+                vim.api.nvim_get_current_buf(),
+                "experimental/externalDocs",
+                vim.lsp.util.make_position_params(0, "utf-8"),
+                function(err, url)
+                  if err then
+                    error(tostring(err))
+                  elseif url then
+                    ---@diagnostic disable-next-line: undefined-field
+                    vim.loop.spawn("open", { args = { "-a", "firefox", "--args", url } })
+                  else
+                    print("no documentation found")
+                  end
+                end
+              )
+            end,
+            description = "Open documentation for the symbol under the cursor in default browser",
+          },
+          CargoReload = {
+            function()
+              local util = require("lspconfig.util")
+              local bufnr = 0 -- current buffer
+              bufnr = util.validate_bufnr(bufnr)
+              local clients = util.get_lsp_clients({ bufnr = bufnr, name = "rust-analyzer" })
+              for _, client in ipairs(clients) do
+                vim.notify("Reloading Cargo Workspace")
+                client:request("rust-analyzer/reloadWorkspace", nil, function(err)
+                  if err then
+                    print("error:" .. tostring(err))
+                    error(tostring(err))
+                  end
+                  vim.notify("Cargo workspace reloaded")
+                end, 0)
+              end
+            end,
+            description = "Reload current cargo workspace",
+          },
+        },
+      })
       -- ━━ Mason LSP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       local mason_servers = require("mason-lspconfig").get_installed_servers()
       for _, server in ipairs(mason_servers) do
@@ -1923,7 +1987,7 @@ local spec = {
 
   {
     "mrcjkb/rustaceanvim",
-    version = "^7", -- Recommended
+    version = "^8",
     -- "leandros/rustaceanvim",
     -- branch = "reuse_client",
     -- For development:
@@ -2003,18 +2067,15 @@ local spec = {
           -- LSP configuration
           ---@type rustaceanvim.lsp.ClientOpts
           server = {
-            -- Automatically detect whether ra-multiplex is installed.
-            -- Install with: $ cargo install --locked ra-multiplex
-            ra_multiplex = {
+            -- Automatically detect whether lspmux is installed.
+            -- Install with: $ cargo install --locked lspmux
+            lspmux = {
               enable = true,
               host = "127.0.0.1",
               port = 27631,
             },
-            -- If ra-multiplex autodetection doesn't work use below.
+            -- If lspmux autodetection doesn't work use below.
             -- cmd = vim.lsp.rpc.connect("127.0.0.1", 27631),
-
-            -- make sure to load it with our settings
-            load_vscode_settings = false,
 
             -- replaces the `before_init` hook in `vim.lsp.config(...)`.
             settings = function(_, default_settings)
@@ -2036,27 +2097,12 @@ local spec = {
               return config.settings
             end,
 
-            ---@diagnostic disable-next-line: unused-local
-            on_attach = function(client, bufnr)
-              vim.keymap.set(
-                "n",
-                "K",
-                "<cmd>lua vim.cmd.RustLsp({ 'hover', 'actions' })<CR>",
-                { silent = true, buffer = bufnr, desc = "LSP: Hover" }
-              )
-              vim.keymap.set(
-                "n",
-                "ca",
-                "<cmd>lua vim.cmd.RustLsp('codeaction')<CR>",
-                { silent = true, buffer = bufnr, desc = "LSP: Code Action" }
-              )
-
-              -- Make sure to call this!
-              on_attach(client, bufnr)
-            end,
-            on_init = on_init,
+            -- the following settings are now set on `vim.lsp.config`:
+            -- * on_init
+            -- * on_attach
+            -- * flags
+            -- * commands
             capabilities = rust_analyzer_capabilities,
-            flags = { allow_incremental_sync = false },
             auto_attach = function(bufnr)
               if #vim.bo[bufnr].buftype > 0 then return false end
               local path = vim.api.nvim_buf_get_name(bufnr)
@@ -2072,47 +2118,6 @@ local spec = {
               end
               return true
             end,
-            commands = {
-              RustOpenDocs = {
-                function()
-                  vim.lsp.buf_request(
-                    vim.api.nvim_get_current_buf(),
-                    "experimental/externalDocs",
-                    vim.lsp.util.make_position_params(0, "utf-8"),
-                    function(err, url)
-                      if err then
-                        error(tostring(err))
-                      elseif url then
-                        ---@diagnostic disable-next-line: undefined-field
-                        vim.loop.spawn("open", { args = { "-a", "firefox", "--args", url } })
-                      else
-                        print("no documentation found")
-                      end
-                    end
-                  )
-                end,
-                description = "Open documentation for the symbol under the cursor in default browser",
-              },
-              CargoReload = {
-                function()
-                  local util = require("lspconfig.util")
-                  local bufnr = 0 -- current buffer
-                  bufnr = util.validate_bufnr(bufnr)
-                  local clients = util.get_lsp_clients({ bufnr = bufnr, name = "rust-analyzer" })
-                  for _, client in ipairs(clients) do
-                    vim.notify("Reloading Cargo Workspace")
-                    client:request("rust-analyzer/reloadWorkspace", nil, function(err)
-                      if err then
-                        print("error:" .. tostring(err))
-                        error(tostring(err))
-                      end
-                      vim.notify("Cargo workspace reloaded")
-                    end, 0)
-                  end
-                end,
-                description = "Reload current cargo workspace",
-              },
-            },
             -- If rust-analyzer isn't working, try the following:
             -- 1. `cargo clean`
             -- 2. `rm -rf target`
