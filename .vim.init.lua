@@ -1640,8 +1640,8 @@ EOF
   -- ━━ codesettings.nvim ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   {
     "mrjones2014/codesettings.nvim",
+    tag = "v1.6.3",
     -- commit = "161731f802c742b48ee3f6850ff47638ca351f82",
-    tag = "v1.5.3",
     -- dir = vim.fs.joinpath(os.getenv("HOME"), "github/codesettings.nvim"),
     opts = {
       config_file_paths = {
@@ -1670,7 +1670,7 @@ EOF
       --- How to merge lists; 'append' (default), 'prepend' or 'replace'
       merge_lists = "append",
     },
-    ft = { "json", "jsonc" },
+    ft = { "json", "jsonc", "lua" },
   }, -- end codesettings.nvim
 
   -- ━━ Mason LSP Config ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
