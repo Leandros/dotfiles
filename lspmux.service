@@ -1,12 +1,12 @@
 [Unit]
-Description=Rust analyzer multiplex server
+Description=Language server multiplexer server
 
 [Service]
-Type=exec
-ExecStart=/local/home/gerstarv/.cargo/bin/ra-multiplex server
+Type=simple
 Environment=RUSTUP_HOME=/local/home/gerstarv/.rustup
 Environment=CARGO_HOME=/local/home/gerstarv/.cargo
 Environment=PATH=/local/home/gerstarv/bin:/local/home/gerstarv/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/local/home/gerstarv/.cargo/bin/lspmux server
 
 [Install]
 WantedBy=default.target
