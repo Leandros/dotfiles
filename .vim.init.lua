@@ -1887,6 +1887,8 @@ local spec = {
           },
         },
       })
+      vim.lsp.enable("rust-analyzer")
+
       -- ━━ Mason LSP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       local mason_servers = require("mason-lspconfig").get_installed_servers()
       for _, server in ipairs(mason_servers) do
