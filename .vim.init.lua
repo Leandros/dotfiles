@@ -1815,7 +1815,17 @@ local spec = {
 
       -- ━━ rust-analyzer ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       vim.lsp.config("rust-analyzer", {
-        capabilities = lsp_defaults.capabilities,
+        capabilities = vim.tbl_deep_extend(
+          "force",
+          lsp_defaults.capabilities,
+          -- https://github.com/rust-lang/rust-analyzer/issues/12613
+          {
+            workspace = { didChangeWatchedFiles = { dynamicRegistration = true } },
+            -- This disables snippets, which also means no expansion of function parameters/arguments
+            -- when a completion is triggered.
+            textDocument = { completion = { completionItem = { snippetSupport = false } } },
+          }
+        ),
         on_attach = function(client, bufnr)
           vim.keymap.set(
             "n",
@@ -2034,19 +2044,6 @@ local spec = {
           return vim.startswith(normalized_path, "/")
         end
 
-        local lsp_defaults = make_lsp_defaults()
-        local rust_analyzer_capabilities = vim.tbl_deep_extend(
-          "force",
-          lsp_defaults.capabilities,
-          -- https://github.com/rust-lang/rust-analyzer/issues/12613
-          {
-            workspace = { didChangeWatchedFiles = { dynamicRegistration = true } },
-            -- This disables snippets, which also means no expansion of function parameters/arguments
-            -- when a completion is triggered.
-            textDocument = { completion = { completionItem = { snippetSupport = false } } },
-          }
-        )
-
         local cfg = require("rustaceanvim.config")
         return {
           -- Plugin configuration
@@ -2102,7 +2099,7 @@ local spec = {
             -- * on_attach
             -- * flags
             -- * commands
-            capabilities = rust_analyzer_capabilities,
+            -- * capabilities
             auto_attach = function(bufnr)
               if #vim.bo[bufnr].buftype > 0 then return false end
               local path = vim.api.nvim_buf_get_name(bufnr)
