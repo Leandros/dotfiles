@@ -93,12 +93,15 @@ vim.o.signcolumn = "number"
 
 vim.cmd("syntax enable")
 vim.o.hidden = true -- Hide buffer, instead of closing it.
-vim.o.number = true -- Always show line numbers.
 vim.o.hlsearch = true -- Hightlight found searches.
 vim.o.incsearch = true -- Show matched searches as you type.
 vim.o.ignorecase = true -- Ignore case when searching.
 vim.o.smartcase = true -- Ignore case if search pattern is all lowercase, case-sensitive otherwise.
 vim.o.wrapscan = false -- Do not wrap when searching
+
+-- Enable relative line numbers
+vim.o.number = true -- Always show line numbers.
+vim.o.relativenumber = true
 
 vim.o.history = 1000 -- Larger command history.
 vim.o.undolevels = 1000 -- Undo ALL the changes.
