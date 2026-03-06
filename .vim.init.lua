@@ -1998,10 +1998,10 @@ local spec = {
   }, -- end tiny-inline-diagnostic
 
   {
-    "mrcjkb/rustaceanvim",
-    version = "^8",
-    -- "leandros/rustaceanvim",
-    -- branch = "reuse_client",
+    -- "mrcjkb/rustaceanvim",
+    -- version = "^8",
+    "leandros/rustaceanvim",
+    branch = "reuse_client_v8.0.4",
     -- For development:
     -- dir = vim.fs.joinpath(os.getenv("HOME"), "/github/rustaceanvim"),
     lazy = false, -- This plugin is already lazy
