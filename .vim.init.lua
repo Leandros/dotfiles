@@ -3854,6 +3854,34 @@ local spec = {
   }, -- end rainbow-delimiters
 
   {
+    'stevearc/quicker.nvim',
+    ft = "qf",
+    ---@module "quicker"
+    ---@type quicker.SetupOptions
+    opts = {
+      keys = {
+        {
+          ">",
+          function()
+            require("quicker").expand({ before = 2, after = 2, add_to_existing = true })
+          end,
+          desc = "Expand quickfix context",
+        },
+        {
+          "<",
+          function()
+            require("quicker").collapse()
+          end,
+          desc = "Collapse quickfix context",
+        },
+      },
+    },
+    keys = {
+      { "<leader>q", function() require("quicker").toggle() end, desc = "toggle quickfix" },
+    },
+  }, -- end quicker.nvim
+
+  {
     "folke/lazydev.nvim",
     ft = "lua",
     opts = {
@@ -3994,11 +4022,6 @@ nnoremap("<C-t>", ":split<CR>")
 vim.api.nvim_create_user_command("Bd", "bp|bd #", { bang = true })
 nnoremap("<C-q>", ":BD<CR>")
 -- nnoremap("<C-w>", ":bd<CR>")
-
--- Close / Open quickfix
-nnoremap("<Leader>qq", ":cclose<CR>")
-nnoremap("<Leader>qc", ":cclose<CR>")
-nnoremap("<Leader>qo", ":copen<CR>")
 
 -- Map Y to y$, to behave like D and C
 nnoremap("Y", "y$")
