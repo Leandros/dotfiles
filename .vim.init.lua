@@ -172,6 +172,7 @@ vim.opt.shortmess:append("c")
 -- Show tabs / newlines (enable with `set list!`)
 vim.o.listchars = 'tab:▸ ,eol:¬'
 
+
 -- ━━ Undo ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 -- Write undo tree to a file to resume from next time the file is opened.
 if vim.fn.has("persistent_undo") == 1 then
@@ -373,7 +374,7 @@ vim.g["c_no_if0_fold"] = 1
 -- ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 --- Create a new mapping for all modes.
 ---@param lhs string Keybind
----@param rhs string Action
+---@param rhs string|function Action
 ---@param opts vim.api.keyset.keymap|nil Options
 local function noremap(lhs, rhs, opts)
   local opts_ = vim.tbl_deep_extend("keep", { noremap = true }, opts or {})
@@ -3214,6 +3215,7 @@ local spec = {
   {
     "nvim-tree/nvim-tree.lua",
     config = function()
+      local prev_bufnr = nil
       local function nvim_tree_attach(bufnr)
         local api = require("nvim-tree.api")
 
@@ -3233,16 +3235,23 @@ local spec = {
         vim.keymap.set("n", "R", api.fs.rename, opts("Rename"))
         vim.keymap.set("n", "u", api.tree.change_root_to_parent, opts("Up"))
         vim.keymap.set("n", "a", api.fs.create, opts("Create"))
+
+        vim.keymap.set("n", "e", function()
+          api.tree.find_file({ buf = prev_bufnr, open = true, focus = true })
+        end, opts("Find Current File"))
       end
 
       require("nvim-tree").setup({
         sort_by = "case_sensitive",
         sync_root_with_cwd = true, -- Changes the tree root directory on `DirChanged` and refreshes the tree.
         reload_on_bufenter = true, -- Automatically reloads the tree on `BufEnter` nvim-tree.
+        hijack_cursor = true, -- keep cursor on first letter of filename
         on_attach = nvim_tree_attach,
         view = {
           adaptive_size = true,
           preserve_window_proportions = true,
+          relativenumber = true,
+          signcolumn = "auto",
           width = {
             max = 40,
           },
@@ -3273,7 +3282,10 @@ local spec = {
         },
       })
 
-      noremap("<Leader>e", ":NvimTreeToggle<CR>")
+      noremap("<Leader>e", function()
+        prev_bufnr = vim.api.nvim_get_current_buf()
+        require("nvim-tree.api").tree.toggle()
+      end, { desc = "Open NvimTree" })
     end,
   }, -- end nvim-tree
 
