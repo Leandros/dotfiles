@@ -1734,6 +1734,16 @@ local spec = {
         })
       )
 
+      -- ━━ Ty (Python) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      local prev_ty = vim.lsp.config["ty"]
+      vim.lsp.config("ty", vim.tbl_deep_extend("force", prev_ty, {
+        settings = {
+          ty = {
+            diagnosticMode = "workspace",
+          },
+        },
+      }))
+
       -- ━━ Bacon LSP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       -- find location with: `:lua =require('vim.lsp.log').get_filename()`
       --vim.lsp.set_log_level('debug')
