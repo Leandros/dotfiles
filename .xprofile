@@ -7,8 +7,15 @@ xset -b
 xbindkeys -p
 
 # Key Repeat: xset r rate <delay before repeat> <repeat rate>
+# May require to install xset (sudo dnf install xset)
 xset r rate 200 50
 
 # Kill X with Ctrl+Alt+Backspace
 setxkbmap -option terminate:ctrl_alt_bksp
-setxkbmap de bone
+
+# This will use the built-in bone2 layout.
+# setxkbmap de bone
+
+# This will use our custom bone2 layout.
+setxkbmap de
+xmodmap ~/.Xmodmap

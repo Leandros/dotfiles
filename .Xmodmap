@@ -54,6 +54,14 @@ clear Mod2
 clear Mod3
 clear Mod5
 
+!! Remap Left Ctrl to Left Alt, and vice versa
+clear control
+clear mod1
+keycode 37 = Alt_L
+keycode 64 = Control_L
+add control = Control_L Control_R
+add mod1 = Alt_L
+
 !! Media Keys
 keycode 121 = XF86AudioMute
 keycode 122 = XF86AudioLowerVolume

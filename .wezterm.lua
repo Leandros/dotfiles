@@ -138,6 +138,8 @@ local general_keys = {
     { key = 'c', mods = ctrlkey .. '|SHIFT', action = act.CopyTo 'ClipboardAndPrimarySelection', },
     { key = 'v', mods = ctrlkey .. '|SHIFT', action = act.PasteFrom 'Clipboard' },
 
+    { key = 'Insert', mods = 'SHIFT', action = act.PasteFrom 'Clipboard' },
+
     -- We need to rebind OPT + Space otherwise odd things are happenings:
     { key = ' ', mods = 'OPT', action = act.SendKey { key = ' ' } },
 }
