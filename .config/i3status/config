@@ -7,9 +7,26 @@ general {
     color_bad       =   "#dc322f"
 }
 
+order += "wireless _first_"
+order += "ethernet _first_"
+order += "battery _first_"
 order += "volume master"
 order += "cpu_usage"
 order += "time"
+
+wireless _first_ {
+        format_up = "W: (%quality at %essid)"
+        format_down = "W: down"
+}
+
+ethernet _first_ {
+        format_up = "E: %ip"
+        format_down = "E: down"
+}
+
+battery _first_ {
+    format = "%status %percentage %remaining"
+}
 
 volume master {
     format      = "♪: %volume"
@@ -20,5 +37,5 @@ volume master {
 }
 
 time {
-    format      = "%H:%M - %a %d.%m.%y"
+    format      = "%H:%M - %a %d.%m.%Y"
 }
