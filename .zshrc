@@ -113,6 +113,14 @@ elif [[ "Linux" == "`uname`" ]]; then
         fi
     }
 
+    function y() {
+        local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+        command yazi "$@" --cwd-file="$tmp"
+        IFS= read -r -d '' cwd < "$tmp"
+        [ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd"
+        rm -f -- "$tmp"
+    }
+
     # Linux specifics.
     export BROWSER="/usr/bin/google-chrome-stable"
     export PNPM_HOME="$HOME/.local/share/pnpm"
