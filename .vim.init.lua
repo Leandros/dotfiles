@@ -1805,6 +1805,15 @@ local spec = {
         },
       })
 
+      -- ━━ Harper LS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      vim.lsp.config("harper_ls", {
+        on_attach = on_attach,
+        on_init = on_init,
+        capabilities = lsp_defaults.capabilities,
+        settings = {
+        },
+      })
+
       -- ━━ Fish LSP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       vim.lsp.config("fish_lsp", {
         on_attach = on_attach,
