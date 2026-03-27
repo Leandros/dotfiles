@@ -479,6 +479,10 @@ alias bc='bc -l'
 export LESS="-R"
 export LESSOPEN="|~/.lessfilter %s"
 
+# Difft
+export DFT_SORT_PATHS="true"
+export DFT_SKIP_UNCHANGED="true"
+
 # Ignore these commands in history
 alias cd=' cd'
 
@@ -698,7 +702,7 @@ mkpy () {
     fi
     cat <<EOF > "$1"
 #!/bin/bash
-"""exec" uv run --script "$0" "$@"
+"""exec" uv run --script "\$0" "\$@"
 # /// script
 # requires-python = ">=3.12"
 # dependencies = [
