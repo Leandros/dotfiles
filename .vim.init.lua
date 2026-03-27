@@ -1274,6 +1274,7 @@ local spec = {
   { "leafgarland/typescript-vim" },
   { "pangloss/vim-javascript" },
   { "elzr/vim-json" },
+  { "jasdel/vim-smithy" },
   {
     "ziglang/zig.vim",
     config = function()
