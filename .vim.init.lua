@@ -467,6 +467,23 @@ else
 end
 
 -- ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+-- ┃                    Neovide Settings                     ┃
+-- ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+if vim.g.neovide then
+  vim.g.neovide_position_animation_length = 0
+  vim.g.neovide_cursor_animation_length = 0.00
+  vim.g.neovide_cursor_trail_size = 0
+  vim.g.neovide_cursor_animate_in_insert_mode = false
+  vim.g.neovide_cursor_animate_command_line = false
+  vim.g.neovide_scroll_animation_far_lines = 0
+  vim.g.neovide_scroll_animation_length = 0.00
+
+  vim.o.guifont = "PragmataPro Mono Liga:h11"
+
+  vim.g.neovide_title_background_color = "#002b36"
+end
+
+-- ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 -- ┃                        Commands                         ┃
 -- ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 -- Invoke P4
@@ -3650,6 +3667,9 @@ local spec = {
   {
     "voldikss/vim-floaterm",
     init = function()
+      if vim.fn.has("win32") then
+        vim.g.floaterm_shell = '"C:\\Program Files\\Git\\bin\\bash.exe" --login -i'
+      end
       vim.g.floaterm_keymap_new = ",a"
       vim.g.floaterm_keymap_toggle = ",n"
       vim.g.floaterm_keymap_prev = ",b"
