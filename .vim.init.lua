@@ -780,7 +780,7 @@ local function setup_highlights_dark()
   hi("fishParameter", { bg = "none", ctermbg = 0 })
   hi("fishOption", { bg = "none", ctermbg = 0 })
 
-  -- - Rainbow --
+  -- -- - Rainbow --
   -- hi("RainbowDelimiterRed", { fg = "firebrick" });
   -- hi("RainbowDelimiterYellow", { fg = "yellow" });
   -- hi("RainbowDelimiterBlue", { fg = "royalblue3" });
@@ -1244,7 +1244,6 @@ local spec = {
   -- ━━ Syntax plugins ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   { "dummyunit/vim-fastbuild", ft = { "fastbuild" } },
   { "wlangstroth/vim-racket", ft = { "racket" } },
-  --{ "luochen1990/rainbow", ft = { "scheme", "lisp", "racket" } },
   { "leandros/hlsl.vim", ft = { "hlsl" } },
   { "leandros/vim-gn", ft = { "gn" } },
   { "aexpl/vim-aexpl", ft = { "aexpl" } },
