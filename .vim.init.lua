@@ -1382,6 +1382,11 @@ local spec = {
         javascriptreact = { "javascript" },
         typescriptreact = { "javascript" },
       }
+
+      -- Cache completion items once when loading the buffer.
+      vim.api.nvim_exec([[
+	      autocmd FileType * call vsnip#get_complete_items(bufnr())
+      ]], false)
     end,
   }, -- end vim-vsnip
 
