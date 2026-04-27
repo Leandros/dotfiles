@@ -106,8 +106,8 @@ keymap = [
 	# Find
 	{ on = "/", run = "find --smart",            desc = "Find next file" },
 	{ on = "?", run = "find --previous --smart", desc = "Find previous file" },
-	{ on = "n", run = "find_arrow",              desc = "Next found" },
-	{ on = "N", run = "find_arrow --previous",   desc = "Previous found" },
+	{ on = "?", run = "find_arrow",              desc = "Next found" },
+	{ on = "-", run = "find_arrow --previous",   desc = "Previous found" },
 
 	# Sorting
 	{ on = [ ",", "m" ], run = [ "sort mtime --reverse=no", "linemode mtime" ],  desc = "Sort by modified time" },
@@ -295,8 +295,8 @@ keymap = [
 	{ on = "D", run = [ "delete --cut", "move eol" ],                      desc = "Cut until EOL" },
 	{ on = "c", run = "delete --cut --insert",                             desc = "Cut selected characters, and enter insert mode" },
 	{ on = "C", run = [ "delete --cut --insert", "move eol" ],             desc = "Cut until EOL, and enter insert mode" },
-	{ on = "s", run = [ "delete --cut --insert", "move 1" ],               desc = "Cut current character, and enter insert mode" },
-	{ on = "S", run = [ "move bol", "delete --cut --insert", "move eol" ], desc = "Cut from BOL until EOL, and enter insert mode" },
+	#{ on = "s", run = [ "delete --cut --insert", "move 1" ],               desc = "Cut current character, and enter insert mode" },
+	#{ on = "S", run = [ "move bol", "delete --cut --insert", "move eol" ], desc = "Cut from BOL until EOL, and enter insert mode" },
 	{ on = "x", run = [ "delete --cut", "move 1 --in-operating" ],         desc = "Cut current character" },
 	{ on = "y", run = "yank",                                              desc = "Copy selected characters" },
 	{ on = "p", run = "paste",                                             desc = "Paste copied characters after the cursor" },
