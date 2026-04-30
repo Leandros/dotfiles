@@ -36,6 +36,11 @@ config.window_frame = {
         'Apple Color Emoji',
     },
     font_size = 14.0,
+
+-- Disable bell
+config.visual_bell = {
+  fade_in_duration_ms = 0,
+  fade_out_duration_ms = 0,
 }
 
 -- Command palette
@@ -59,6 +64,18 @@ if wezterm.target_triple == 'x86_64-pc-windows-msvc' then
   table.insert(launch_menu, {
     label = 'WSL Ubuntu',
     domain = { DomainName = 'WSL:Ubuntu' },
+  })
+
+  table.insert(launch_menu, {
+    label = 'MSYS2 gcc64',
+    args = { "D:\\msys2\\msys2_shell.cmd", "-defterm", "-here", "-no-start", "-ucrt64", "-shell", "bash" },
+    domain = { DomainName = 'local' },
+  })
+
+  table.insert(launch_menu, {
+    label = 'MSYS2 clang64',
+    args = { "D:\\msys2\\msys2_shell.cmd", "-defterm", "-here", "-no-start", "-clang64", "-shell", "bash" },
+    domain = { DomainName = 'local' },
   })
 
   table.insert(launch_menu, {
