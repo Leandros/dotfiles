@@ -19,15 +19,29 @@ log_bash_persistent_history()
   ]]
   local date_part="${BASH_REMATCH[1]}"
   local command_part="${BASH_REMATCH[2]}"
-  if [ "$command_part" != "$PERSISTENT_HISTORY_LAST" ]
-  then
-    echo $date_part "|" "$command_part" >> ~/.persistent_history
+  if [ "$command_part" != "$PERSISTENT_HISTORY_LAST" ]; then
+    echo "$date_part" "|" "$command_part" >> ~/.persistent_history
     export PERSISTENT_HISTORY_LAST="$command_part"
   fi
 }
 
 # Defaults
-export EDITOR=nvim
+if [ -x "$(command -v nvim)" ]; then
+    export EDITOR=nvim
+    export VISUAL=nvim
+else
+    export EDITOR=vim
+    export VISUAL=vim
+fi
+export LANG=en_us.UTF-8
+export LC_ALL=en_US.UTF-8
+export AWS_DEFAULT_REGION="us-east-1"
+export AWS_PAGER=""
+# if you wish to use IMDS set AWS_EC2_METADATA_DISABLED=false
+export AWS_EC2_METADATA_DISABLED=true
+export VIRTUAL_ENV_DISABLE_PROMPT=1
+export TERRAFORM_BINARY_NAME=tofu
+export DOTNET_CLI_TELEMETRY_OPTOUT=1
 # export TERM=xterm-256color
 
 # Detect Windows
@@ -40,6 +54,7 @@ set bell-style none
 set show-all-if-ambiguous on
 set completion-ignore-case on
 set menu-complete-display-prefix on
+set colored-stats on
 
 # Enable advanced globbing
 shopt -s globstar
@@ -81,7 +96,7 @@ alias tf='terraform'
 alias pkc='packer'
 if [ "$IS_WINDOWS" = "1" ]; then
     alias http='winpty http'
-    pbcopy() { read data; echo "$data" > /dev/clipboard; }
+    pbcopy() { read -r data; echo "$data" > /dev/clipboard; }
     pbpaste() { cat /dev/clipboard; }
 fi
 
@@ -92,7 +107,7 @@ lg()
     lazygit "$@"
 
     if [ -f $LAZYGIT_NEW_DIR_FILE ]; then
-            cd "$(cat $LAZYGIT_NEW_DIR_FILE)"
+            cd "$(cat $LAZYGIT_NEW_DIR_FILE)" || exit 1
             rm -f $LAZYGIT_NEW_DIR_FILE > /dev/null
     fi
 }
@@ -132,10 +147,17 @@ fi
 # Use fnm, if it exists
 if command -v fnm &> /dev/null; then
     # export PATH=$HOME/.fnm:$PATH
-    eval "`fnm env`"
+    eval "$(fnm env)"
 fi
 
 # Prompt
+function __git_prompt {
+    # local ref=$(command git symbolic-ref HEAD 2>/dev/null || command git rev-parse --short HEAD 2>/dev/null)
+    if [ "$(type -t "__git_ps1")" = "function" ]; then
+        __git_ps1
+    fi
+}
+
 function __pyvenv_prompt {
     if [ -x "$VIRTUAL_ENV" ]; then
         venv_name=$(basename "$VIRTUAL_ENV")
@@ -151,11 +173,7 @@ function __bash_prompt {
     local B="\[\033[0;34m\]"        # Blue
     local Y="\[\033[0;33m\]"        # Yellow
     local C="\[\033[0;36m\]"        # Cyan
-    if [ "$(type -t "__git_ps1")" = "function" ]; then
-        PS1="${G}\n\u@\h ${Y}\w${C}$(__git_ps1)${NONE}$(__pyvenv_prompt)\n$ "
-    else
-        PS1="${G}\n\u@\h ${Y}\w${C}${NONE}$(__pyvenv_prompt)\n$ "
-    fi
+    PS1="${G}\n\u@\h ${Y}\w${C}$(__git_prompt)${NONE}$(__pyvenv_prompt)\n$ "
 
     log_bash_persistent_history
 }
@@ -185,13 +203,13 @@ function up()
         dir=..
     elif [[ $1 =~ ^[0-9]+$ ]]; then
         x=0
-        while [ $x -lt ${1:-1} ]; do
+        while [ $x -lt "${1:-1}" ]; do
             dir=${dir}../
-            x=$(($x+1))
+            x=$((x+1))
         done
     else
-        dir=${PWD%/$1/*}/$1
+        dir=${PWD%/"$1"/*}/$1
     fi
-    cd "$dir";
+    cd "$dir" || exit 1;
 }
 
