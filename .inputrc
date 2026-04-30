@@ -7,6 +7,7 @@ set bell-style none
 set show-all-if-ambiguous on
 set completion-ignore-case on
 set menu-complete-display-prefix on
+set colored-stats on
 
 # Enable vi mode
 set editing-mode vi
