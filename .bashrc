@@ -151,7 +151,11 @@ function __bash_prompt {
     local B="\[\033[0;34m\]"        # Blue
     local Y="\[\033[0;33m\]"        # Yellow
     local C="\[\033[0;36m\]"        # Cyan
-    PS1="${G}\n\u@\h ${Y}\w${C}`__git_ps1`${NONE}$(__pyvenv_prompt)\n$ "
+    if [ "$(type -t "__git_ps1")" = "function" ]; then
+        PS1="${G}\n\u@\h ${Y}\w${C}$(__git_ps1)${NONE}$(__pyvenv_prompt)\n$ "
+    else
+        PS1="${G}\n\u@\h ${Y}\w${C}${NONE}$(__pyvenv_prompt)\n$ "
+    fi
 
     log_bash_persistent_history
 }
