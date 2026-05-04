@@ -29,6 +29,7 @@ log_bash_persistent_history()
 if [ -x "$(command -v nvim)" ]; then
     export EDITOR=nvim
     export VISUAL=nvim
+    alias vim='nvim'
 else
     export EDITOR=vim
     export VISUAL=vim
@@ -90,7 +91,6 @@ export LESSOPEN="|~/.lessfilter %s"
 # Aliases
 nvim-qt() { NVIM_GUI=1 command nvim-qt "$@"; }
 alias ti='tig status'
-alias vim='nvim'
 alias vimdiff='nvim -d'
 alias tf='terraform'
 alias pkc='packer'
