@@ -2,11 +2,19 @@
 set nocompatible
 filetype off
 
+" Vim-plug
+call plug#begin('~/.vim/bundle')
+
+Plug 'altercation/vim-colors-solarized'
+Plug 'preservim/nerdtree'
+
+call plug#end()
+
 " Set mapleader before plugin loads
 nnoremap <SPACE> <Nop>
 let mapleader=" "
 let maplocalleader=" "
-"
+
 " General
 set langmenu=en_US.UTF-8
 let $LANG='en_US'
@@ -427,3 +435,35 @@ vnoremap <C-a> :call Incr()<CR>
 
 " Change current working directory
 nnoremap ,cd :cd %:p:h<CR>:pwd<CR>
+
+" ━━ Nerdtree ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+let g:NERDTreeMapRefresh='<C-a>'
+let g:NERDTreeMapRefreshRoot='<C-u>'
+let g:NERDTreeMapOpenSplit='t'
+let g:NERDTreeMapOpenVSplit='i'
+let g:NERDTreeMenuDown='n'
+let g:NERDTreeMenuUp='r'
+
+let g:NERDTreeMapChdir='C'
+let g:NERDTreeMapUpdir='u'
+" let g:NERDTreeMapActivateNode='<CR>'
+" let NERDTreeMapNextSibling='N'
+" let NERDTreeMapPrevSibling='R'
+
+" Custom bindings
+augroup nerdtreebuf
+    autocmd!
+    autocmd FileType nerdtree nnoremap <buffer> <silent> <CR> :call nerdtree#ui_glue#invokeKeyMap("o")<CR>
+augroup END
+
+" Open NERDTree
+map <Leader>e :NERDTreeToggle<CR>
+
+" NERDTree options
+let g:NERDTreeChDirMode = 2
+let g:NERDTreeShowHidden = 1
+let g:NERDTreeQuitOnOpen = 1
+let g:NERDTreeMinimalUI = 1
+let g:NERDTreeAutoDeleteBuffer = 1
+let g:NERDTreeShowLineNumbers = 0
+let g:NERDTreeIgnore = ['\.meta$','^\.DS_Store$']
