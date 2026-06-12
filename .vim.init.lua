@@ -1109,6 +1109,7 @@ local spec = {
   -- { "tpope/vim-repeat" " remaps <c-r> },
   { "tpope/vim-surround" },
   { "tpope/vim-speeddating" },
+  { "will133/vim-dirdiff" },
   {
     "Konfekt/FastFold",
     init = function() vim.g.fastfold_fold_command_suffixes = {} end,
