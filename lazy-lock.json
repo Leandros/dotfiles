@@ -80,6 +80,7 @@
   "vim-bookmarks": { "branch": "master", "commit": "9cc5fa7ecc23b052bd524d07c85356c64b92aeef" },
   "vim-bufkill": { "branch": "master", "commit": "304137ee65513dbe440ed674ade614b02577be30" },
   "vim-commentary": { "branch": "master", "commit": "64a654ef4a20db1727938338310209b6a63f60c9" },
+  "vim-dirdiff": { "branch": "master", "commit": "84bc8999fde4b3c2d8b228b560278ab30c7ea4c9" },
   "vim-easy-align": { "branch": "master", "commit": "9815a55dbcd817784458df7a18acacc6f82b1241" },
   "vim-elixir": { "branch": "master", "commit": "6dff29176eb35e025bc94b262bf6d4e517e11f7d" },
   "vim-fastbuild": { "branch": "master", "commit": "f43e2e138d35ea4f9e303b4fb9b206d9d8894514" },
