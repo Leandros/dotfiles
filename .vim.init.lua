@@ -3939,6 +3939,16 @@ local spec = {
   }, -- end quicker.nvim
 
   {
+    'chomosuke/typst-preview.nvim',
+    lazy = false, -- or ft = 'typst'
+    version = '1.*',
+    opts = {
+      -- if you want to use tinymist from mason:
+      -- dependencies_bin = { tinymist = 'tinymist' }
+    },
+  }, -- end typst-preview.nvim
+
+  {
     "folke/lazydev.nvim",
     ft = "lua",
     opts = {

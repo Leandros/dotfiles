@@ -75,6 +75,7 @@
   "tiny-inline-diagnostic.nvim": { "branch": "main", "commit": "5be9a188e154ae287b9c49f9670162890ad8c939" },
   "trouble.nvim": { "branch": "main", "commit": "76030c5542c5d132aeeb467ca0ab370f3f79a697" },
   "typescript-vim": { "branch": "master", "commit": "4740441db1e070ef8366c888c658000dd032e4cb" },
+  "typst-preview.nvim": { "branch": "master", "commit": "325036ee145ca51d9efb145c09ac16bce3bc8b7d" },
   "vim-aexpl": { "branch": "master", "commit": "c3b5fee301c081448983f666326d9cb2a27c69a2" },
   "vim-asm_ca65": { "branch": "master", "commit": "57e1203db2411c2541b55a13c3498d282c0236f3" },
   "vim-bookmarks": { "branch": "master", "commit": "9cc5fa7ecc23b052bd524d07c85356c64b92aeef" },
