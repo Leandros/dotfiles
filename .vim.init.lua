@@ -1065,6 +1065,25 @@ local function on_attach(client, bufnr)
 
   -- Turn on inlay hints
   vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+
+  -- clangd switch between source and header
+  if client:supports_method("textDocument/switchSourceHeader") then
+    vim.keymap.set("n", "<leader>gs", function()
+      local params = vim.lsp.util.make_text_document_params(bufnr)
+      -- https://neovim.io/doc/user/lsp/#Client%3Arequest()
+      client:request("textDocument/switchSourceHeader", params, function(err, result)
+        if err then
+          error(err.tostring())
+          return
+        end
+        if not result then
+          vim.notify("file could not be determined: "..vim.inspect(params))
+          return
+        end
+        vim.cmd.edit(vim.uri_to_fname(result))
+      end, bufnr)
+    end, { noremap = false, silent = true, desc = "Switch Source/Header" })
+  end
 end
 
 local function on_init(client)
@@ -1292,6 +1311,7 @@ local spec = {
   { "pangloss/vim-javascript" },
   { "elzr/vim-json" },
   { "jasdel/vim-smithy" },
+  { "jubnzv/IEC.vim" },
   {
     "ziglang/zig.vim",
     config = function()
@@ -1376,6 +1396,8 @@ local spec = {
   --
   -- Press <c-j> to close autocomplete menu and navigate between locations in
   -- the snippet.
+  --
+  -- Add a new snippet with :VsnipOpen when in a file of the correct file type.
   {
     "hrsh7th/vim-vsnip",
     init = function()
@@ -1855,7 +1877,7 @@ local spec = {
           clangd = {},
         },
         init_options = {
-          fallbackFlags = { "-std=c23" },
+          fallbackFlags = { "-std=c++17" },
         },
       })
 
