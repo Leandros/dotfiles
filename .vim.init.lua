@@ -3348,6 +3348,7 @@ local spec = {
     config = function()
       ---@diagnostic disable-next-line: redefined-local
       local autocmd = vim.api.nvim_create_autocmd
+      local util = require("formatter.util")
 
       local filetypes = {
         sh = {
@@ -3368,6 +3369,18 @@ local spec = {
             return {
               exe = "rustfmt",
               args = { "--edition 2024" },
+              stdin = true,
+            }
+          end,
+        },
+        cpp = {
+          function()
+            return {
+              exe = "clang-format",
+              args = {
+                "-assume-filename",
+                util.escape_path(util.get_current_buffer_file_name()),
+              },
               stdin = true,
             }
           end,
