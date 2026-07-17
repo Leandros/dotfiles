@@ -3984,6 +3984,29 @@ local spec = {
   }, -- end typst-preview.nvim
 
   {
+    "AckslD/nvim-neoclip.lua",
+    dependencies = {
+      -- you'll need at least one of these
+      {'nvim-telescope/telescope.nvim'},
+      -- {'ibhagwan/fzf-lua'},
+    },
+    config = function()
+      require('neoclip').setup({
+        enable_persistent_history = false,
+        continuous_sync = true,
+        db_path = vim.fn.stdpath("data") .. "/databases/neoclip.sqlite3",
+
+        on_select = { move_to_front = true },
+        on_paste = { move_to_front = true },
+        on_replay = { move_to_front = true },
+      })
+    end,
+    keys = {
+      { "<leader>p", "<cmd>Telescope neoclip<CR>", mode = "n", desc = "Neoclip" },
+    },
+  }, -- end neoclip
+
+  {
     "folke/lazydev.nvim",
     ft = "lua",
     opts = {
