@@ -1817,7 +1817,7 @@ local spec = {
             --cargoCommandArguments = "check --tests --all-targets --message-format json-diagnostic-rendered-ansi",
             -- Clippy takes longer.
             -- add `--all-features` if it works for your project:
-            cargoCommandArguments = "clippy --workspace --all-targets --message-format json-diagnostic-rendered-ansi",
+            cargoCommandArguments = "clippy --workspace --tests --all-targets --message-format json-diagnostic-rendered-ansi",
 
             -- This copies the entire source tree to a temporary directory, and will
             -- therefore not work for most cases.
