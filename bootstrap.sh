@@ -21,32 +21,57 @@ set -euo pipefail
 # =============================================================================
 # Versions
 # =============================================================================
+# https://github.com/neovim/neovim/releases
 readonly NVIM_VERSION="0.11.4"
+# https://github.com/tmux/tmux/releases
 readonly TMUX_VERSION_LINUX="3.5a"
 readonly TMUX_VERSION_MACOS="3.4"
+# https://www.zsh.org/pub/
 readonly ZSH_VERSION_PIN="5.9.2"
+# https://github.com/junegunn/fzf/releases
 readonly FZF_VERSION="0.74.5"
+# https://github.com/ajeetdsouza/zoxide/releases
 readonly ZOXIDE_VERSION="0.10.0"
+# https://github.com/sxyazi/yazi/releases
 readonly YAZI_VERSION="26.9.1"
+# https://github.com/jesseduffield/lazygit/releases
 readonly LAZYGIT_VERSION="0.66.1"
+# https://github.com/astral-sh/uv/releases
 readonly UV_VERSION="0.13.1"
+# https://github.com/sharkdp/fd/releases
 readonly FD_VERSION="10.5.0"
+# https://github.com/BurntSushi/ripgrep/releases
 readonly RIPGREP_VERSION="15.2.0"
+# https://github.com/jdx/mise/releases
 readonly MISE_VERSION="2026.10.10"
+# https://github.com/direnv/direnv/releases
 readonly DIRENV_VERSION="2.38.2"
+# https://github.com/jarun/nnn/releases (nnn/nnn-keybindings.patch must apply)
 readonly NNN_VERSION="5.3"
+# https://nodejs.org/dist/index.json (v20.x)
+# AL2 x86_64: https://unofficial-builds.nodejs.org/download/release/
 readonly NODE_VERSION="20.20.2"
 # Newest official node with glibc 2.17 support. AL2 aarch64 has no node 20.
 readonly NODE_VERSION_AL2_AARCH64="16.20.2"
+# https://www.npmjs.com/package/neovim
 readonly NODE_NEOVIM_VERSION="5.5.0"
+# https://github.com/astral-sh/python-build-standalone/releases (via uv)
 readonly PYTHON_VERSION="3.12"
+# https://pypi.org/project/pynvim/
 readonly PYNVIM_VERSION="0.6.0"
+# https://github.com/libevent/libevent/releases
 readonly LIBEVENT_VERSION="2.1.12-stable"
 
+# Git commits. Bump with: git ls-remote <url> HEAD
+# https://github.com/ohmyzsh/ohmyzsh
 readonly OHMYZSH_REF="964ddf789b022b6958b27d02d7fa54f552de21e9"
+# https://github.com/zsh-users/zsh-autosuggestions
 readonly ZSH_AUTOSUGGESTIONS_REF="85919cd1ffa7d2d5412f6d3fe437ebdbeeec4fc5"
+# https://github.com/zsh-users/zsh-syntax-highlighting
 readonly ZSH_SYNTAX_HIGHLIGHTING_REF="e6683f20e5c38d3e5447f45845d04ddda75d0f23"
+# https://github.com/zdharma-continuum/fast-syntax-highlighting
 readonly FAST_SYNTAX_HIGHLIGHTING_REF="4672ad5dd9ad68a7effc1476d65afb7c584ce2b3"
+# https://github.com/tmux-plugins/tpm
 readonly TPM_REF="e261deb1b47614eed3400089ce7197dc68acc4eb"
 
 # Overridable so test/bootstrap can install from a local snapshot.
