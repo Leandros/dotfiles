@@ -1,0 +1,65 @@
+--- a/src/nnn.h
++++ b/src/nnn.h
+@@ -133,18 +133,18 @@
+ static struct key bindings[] = {
+ 	/* Back */
+ 	{ KEY_LEFT,       SEL_BACK },
+-	{ 'h',            SEL_BACK },
++	{ 'b',            SEL_BACK },
+ 	/* Inside or select */
+ 	{ KEY_ENTER,      SEL_OPEN },
+ 	{ '\r',           SEL_OPEN },
+ 	/* Pure navigate inside */
+ 	{ KEY_RIGHT,      SEL_NAV_IN },
+-	{ 'l',            SEL_NAV_IN },
++	{ 's',            SEL_NAV_IN },
+ 	/* Next */
+-	{ 'j',            SEL_NEXT },
++	{ 'n',            SEL_NEXT },
+ 	{ KEY_DOWN,       SEL_NEXT },
+ 	/* Previous */
+-	{ 'k',            SEL_PREV },
++	{ 'r',            SEL_PREV },
+ 	{ KEY_UP,         SEL_PREV },
+ 	/* Page down */
+ 	{ KEY_NPAGE,      SEL_PGDN },
+@@ -176,7 +176,7 @@
+ 	/* Go to / */
+ 	{ '`',            SEL_CDROOT },
+ 	/* Leader key */
+-	{ 'b',            SEL_BMOPEN },
++	{ CONTROL('F'),   SEL_BMOPEN },
+ 	{ CONTROL('_'),   SEL_BMOPEN },
+ 	/* Connect to server over SSHFS */
+ 	{ 'c',            SEL_REMOTE },
+@@ -207,7 +207,6 @@
+ 	{ 'd',            SEL_DETAIL },
+ 	/* File details */
+ 	{ 'f',            SEL_STATS },
+-	{ CONTROL('F'),   SEL_STATS },
+ 	/* Toggle executable status */
+ 	{ '*',            SEL_CHMODX },
+ 	/* Create archive */
+@@ -245,11 +244,11 @@
+ 	{ 'o',            SEL_OPENWITH },
+ 	{ CONTROL('O'),   SEL_OPENWITH },
+ 	/* Create a new file */
+-	{ 'n',            SEL_NEW },
++	{ 'N',            SEL_NEW },
+ 	/* Show rename prompt */
+ 	{ CONTROL('R'),   SEL_RENAME },
+ 	/* Rename contents of current dir */
+-	{ 'r',            SEL_RENAMEMUL },
++	{ 'R',            SEL_RENAMEMUL },
+ 	/* Disconnect a SSHFS mount point */
+ 	{ 'u',            SEL_UMOUNT },
+ 	/* Show help */
+@@ -272,7 +271,7 @@
+ 	/* Lock screen */
+ 	{ '0',            SEL_LOCK },
+ 	/* Manage sessions */
+-	{ 's',            SEL_SESSIONS },
++	{ CONTROL('S'),   SEL_SESSIONS },
+ 	/* Export list */
+ 	{ '>',            SEL_EXPORT },
+ 	/* Set time type */
