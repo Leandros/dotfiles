@@ -6,7 +6,7 @@
 #            (x86_64 and aarch64), macOS on Apple Silicon.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/Leandros/dotfiles/master/bootstrap.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/Leandros/dotfiles/refs/heads/master/bootstrap.sh | bash
 #
 # Re-running is safe: tools whose stamp matches the pinned version are skipped,
 # others are updated. Tools go to /usr/local (all users), configs to $HOME.

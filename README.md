@@ -13,7 +13,7 @@ All fonts are patched to work with powerline / airline.
 Debian 12+, Ubuntu 22.04+, Amazon Linux 2 / 2023 (x86_64, aarch64), macOS (Apple Silicon):
 
 ```
-curl -fsSL "https://raw.githubusercontent.com/Leandros/dotfiles/master/bootstrap.sh" | bash
+curl -fsSL "https://raw.githubusercontent.com/Leandros/dotfiles/refs/heads/master/bootstrap.sh" | bash
 ```
 
 Installs pinned tool versions to `/usr/local`, clones this repository to
