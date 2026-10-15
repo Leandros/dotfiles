@@ -775,6 +775,7 @@ local function setup_highlights_dark()
   hi("IblWhitespace", { fg = "#234854", bg = "none", nocombine = true })
   hi("Comment", { ctermfg = 92, fg = "#586e75", bg = "NONE", sp = "NONE" })
   hi("Visual", { ctermbg = 92, ctermfg = 7, bg = "#586e75", fg = "#002b36", nocombine = true, sp = "none" })
+  hi("ColorColumn", { bg = "#004653" })
 
   -- --- RUST ---
   -- Pmenu:
@@ -829,6 +830,7 @@ local function setup_highlights_light()
   hi("IblWhitespace", { fg = "#eee8d5", bg = "none", nocombine = true })
   hi("Comment", { ctermfg = 92, fg = "#93a1a1", bg = "NONE", sp = "NONE" })
   hi("Visual", { ctermbg = 92, ctermfg = 7, bg = "#93a1a1", fg = "#fdf6e3", nocombine = true, sp = "none" })
+  hi("ColorColumn", { bg = "#eee8d5" })
 
   hi("Pmenu", { ctermfg = 11, ctermbg = 0, fg = "#657b83", bg = "#eee8d5", sp = "NONE" })
   hi("FloatBorder", { ctermfg = 0, fg = "#000000", bg = "NONE", sp = "NONE" })
@@ -858,10 +860,13 @@ local function init_solarized_scheme()
       local green = colors.green
       local cyan = colors.cyan
       local orange = colors.orange
-      local base0 = colors.base0
-      local base03 = colors.base03
       local blue = colors.blue
       local violet = colors.violet
+      -- The palette is not swapped for light mode: base03 stays the dark
+      -- background. Pick the editor background and body text per mode.
+      local is_dark = vim.o.background == "dark"
+      local base03 = is_dark and colors.base03 or colors.base3
+      local base0 = is_dark and colors.base0 or colors.base00
 
       ---@type solarized.highlights
       local groups = {
@@ -920,41 +925,32 @@ vim.api.nvim_create_autocmd({ "ColorScheme" }, {
 -- Toggling between dark and light mode.
 vim.g["custom#isdarkmode"] = 1
 
-function EnableDarkMode()
-  vim.g["custom#isdarkmode"] = 1
+---@param mode "dark"|"light"
+local function set_color_mode(mode)
+  local is_dark = mode == "dark"
+  vim.g["custom#isdarkmode"] = is_dark and 1 or 0
+  vim.o.background = mode
 
-  vim.o.background = "dark"
+  -- Fires ColorScheme, which applies setup_highlights_<mode>.
   init_solarized_scheme()
-  setup_highlights_dark()
   vim.cmd("colorscheme solarized")
-  vim.cmd("highlight ColorColumn guibg=#004653")
 
-  -- Plugins:
-  lualine_setup()
-  ibl_setup()
-  bufferline_setup()
+  -- These plugins bake colors in at setup() and must be re-run.
+  for _, setup in ipairs({ _G.lualine_setup, _G.ibl_setup, _G.bufferline_setup }) do
+    if setup then setup() end
+  end
 
-  -- We'll need to setup custom highlights again.
-  setup_highlights_dark()
+  -- bufferline_setup() redefines BufferLine* groups; ours go last.
+  if is_dark then
+    setup_highlights_dark()
+  else
+    setup_highlights_light()
+  end
 end
 
-function EnableLightMode()
-  vim.g["custom#isdarkmode"] = 0
+function EnableDarkMode() set_color_mode("dark") end
 
-  vim.o.background = "light"
-  init_solarized_scheme()
-  setup_highlights_light()
-  vim.cmd("colorscheme solarized")
-  vim.cmd("highlight ColorColumn guibg=#eee8d5")
-
-  -- Plugins:
-  lualine_setup()
-  ibl_setup()
-  bufferline_setup()
-
-  -- We'll need to setup custom highlights again.
-  setup_highlights_light()
-end
+function EnableLightMode() set_color_mode("light") end
 
 vim.api.nvim_create_user_command("EnableLightMode", EnableLightMode, {})
 vim.api.nvim_create_user_command("EnableDarkMode", EnableDarkMode, {})
@@ -2979,16 +2975,12 @@ local spec = {
 
       local task = require("nvim-treesitter").install(parsers)
       -- Headless runs (bootstrap.sh) must not exit before parsers are built.
-      if #vim.api.nvim_list_uis() == 0 then
-        task:wait(headless_install_timeout_ms)
-      end
+      if #vim.api.nvim_list_uis() == 0 then task:wait(headless_install_timeout_ms) end
 
       vim.api.nvim_create_autocmd("FileType", {
         group = vim.api.nvim_create_augroup("treesitter_highlight", {}),
         callback = function(ev)
-          if highlight_disabled[ev.match] then
-            return
-          end
+          if highlight_disabled[ev.match] then return end
           -- Fails for filetypes without a parser.
           pcall(vim.treesitter.start, ev.buf)
         end,
