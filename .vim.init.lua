@@ -2837,15 +2837,6 @@ local spec = {
         --vim.keymap.set('n', 'a', api.fs.create, opts('Create'))
         --vim.api.nvim_buf_set_keymap(bufnr, 'n', 'hs', '<cmd>lua require"gitsigns".stage_hunk()<CR>', {})
 
-        local function blame_file()
-          local function cb()
-            local buf = vim.api.nvim_get_current_buf()
-            vim.keymap.set("n", "r", "<Up>", { noremap = true, silent = true, buffer = buf })
-          end
-          ---@diagnostic disable-next-line: param-type-mismatch
-          require("gitsigns").blame(cb)
-        end
-
         vim.keymap.set("n", "<leader>ss", "<cmd>Gitsigns stage_hunk<CR>", opts("Stage Hunk"))
         vim.keymap.set("n", "<leader>su", "<cmd>Gitsigns undo_stage_hunk<CR>", opts("Undo Staging Hunk"))
         vim.keymap.set("n", "<leader>sr", "<cmd>Gitsigns reset_hunk<CR>", opts("Reset Hunk"))
@@ -2857,7 +2848,7 @@ local spec = {
           '<cmd>lua require"gitsigns".blame_line{full=true, ignore_whitespace=true}<CR>',
           opts("Blame Line")
         )
-        vim.keymap.set("n", "<leader>sB", blame_file, opts("Blame File"))
+        vim.keymap.set("n", "<leader>sB", require("gitsigns").blame, opts("Blame File"))
         vim.keymap.set("n", "<leader>sS", "<cmd>Gitsigns stage_buffer<CR>", opts("Stage Buffer"))
         vim.keymap.set("n", "<leader>sU", "<cmd>Gitsigns reset_buffer_index<CR>", opts("Reset Buffer Index"))
         vim.keymap.set("n", "<leader>sg", "<cmd>Gitsigns<CR>", opts("Picker"))
@@ -2866,6 +2857,28 @@ local spec = {
         vim.keymap.set("v", "<leader>ss", ":Gitsigns stage_hunk<CR>", opts("StageHunk (Visual)"))
         vim.keymap.set("v", "<leader>sg", ":Gitsigns<CR>", opts("Picker (Visual)"))
       end
+
+      -- gitsigns maps `r` to "reblame at commit" in its blame buffer, which
+      -- shadows the Colemak `r` = up mapping. Move reblame to <C-r>.
+      vim.api.nvim_create_autocmd("FileType", {
+        pattern = "gitsigns-blame",
+        group = vim.api.nvim_create_augroup("config.gitsigns_blame", { clear = true }),
+        callback = function(ev)
+          -- gitsigns defines its mappings after setting 'filetype'; run after it.
+          vim.schedule(function()
+            if not vim.api.nvim_buf_is_valid(ev.buf) then return end
+            vim.api.nvim_buf_call(ev.buf, function()
+              local reblame = vim.fn.maparg("r", "n", false, true)
+              if reblame.buffer == 1 and reblame.callback then
+                vim.keymap.set("n", "<C-r>", reblame.callback, { buffer = ev.buf, expr = true, desc = reblame.desc })
+                -- The <CR> popup menu entry replays the key `r`; point it at <C-r>.
+                vim.cmd([[nmenu <silent> ]GitsignsBlame.Reblame\ at\ commit\ \ \ \ \ \ \ \ (r) <C-r>]])
+              end
+              vim.keymap.set("n", "r", "<Up>", { buffer = ev.buf, desc = "up" })
+            end)
+          end)
+        end,
+      })
 
       require("gitsigns").setup({
         on_attach = gitsigns_keymap_attach,
