@@ -237,8 +237,11 @@ git_pin() {
 }
 
 run_root_env() {
-    # sudo resets PATH and environment; pass both explicitly.
-    $SUDO env PATH="$PREFIX/bin:$PATH" "$@"
+    # -H: keep root from writing caches into the caller's HOME.
+    # sudo resets PATH; pass it explicitly.
+    local sudo_h=()
+    [[ -n "$SUDO" ]] && sudo_h=("$SUDO" -H)
+    "${sudo_h[@]+"${sudo_h[@]}"}" env PATH="$PREFIX/bin:$PATH" "$@"
 }
 
 skip_step() {
@@ -364,6 +367,23 @@ ensure_locale() {
         return
     fi
     $SUDO localedef -i en_US -f UTF-8 en_US.UTF-8
+}
+
+# =============================================================================
+# Home directory
+# =============================================================================
+# A previous "sudo <tool>" can leave root-owned dirs in HOME.
+fix_home_ownership() {
+    local dir
+    for dir in "$HOME/.local" "$HOME/.config" "$HOME/.cache"; do
+        mkdir -p "$dir" 2>/dev/null || true
+        [[ -d "$dir" ]] || continue
+        if [[ -n "$(find "$dir" -maxdepth 1 ! -user "$USER_NAME" -print -quit)" ]]; then
+            log "chown $dir"
+            $SUDO chown -R "$USER_NAME" "$dir"
+        fi
+    done
+    mkdir -p "$HOME/.local/bin" "$HOME/.local/share" "$HOME/.config"
 }
 
 # =============================================================================
@@ -857,6 +877,7 @@ report() {
 # =============================================================================
 run_all() {
     step packages install_system_packages
+    step home fix_home_ownership
     step dotfiles clone_dotfiles
 
     step zsh install_zsh
