@@ -228,6 +228,10 @@ fi
 ZSH=$HOME/.oh-my-zsh
 ENABLE_CORRECTION="false"
 COMPLETION_WAITING_DOTS=false
+# bracketed-paste-magic feeds pastes through zle one character at a time;
+# with autosuggestions and syntax highlighting a long URL takes >10s and
+# url-quote-magic backslash-escapes ? & = in it.
+DISABLE_MAGIC_FUNCTIONS=true
 export ZSH_THEME=""
 export UPDATE_ZSH_DAYS=7
 
