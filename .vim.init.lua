@@ -3495,7 +3495,6 @@ local spec = {
 
   {
     "nvim-telescope/telescope.nvim",
-    branch = "0.1.x",
     dependencies = {
       "nvim-telescope/telescope-live-grep-args.nvim",
       "nvim-telescope/telescope-ui-select.nvim", -- Use telescope as native vim select popup, required from NVIM v0.7.0
