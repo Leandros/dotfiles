@@ -3513,6 +3513,11 @@ local spec = {
               ["<esc>"] = actions.close,
               ["<C-n>"] = actions.move_selection_next,
               ["<C-r>"] = actions.move_selection_previous,
+              -- Default <C-r><C-x> chords make <C-r> wait for 'timeoutlen'.
+              ["<C-r><C-w>"] = false,
+              ["<C-r><C-a>"] = false,
+              ["<C-r><C-f>"] = false,
+              ["<C-r><C-l>"] = false,
             },
 
             n = {
