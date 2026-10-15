@@ -499,6 +499,7 @@ nnoremap(",cd", ":cd %:p:h<CR>:pwd<CR>")
 vim.cmd([[cnoreabbrev w!! w ! sudo tee % > /dev/null]])
 
 -- ━━ Profiling ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-- :profile covers Vimscript only; jit.p covers Lua (profile.lua.log).
 vim.api.nvim_create_user_command(
   "ProfileStart",
   function()
@@ -507,11 +508,13 @@ vim.api.nvim_create_user_command(
     :profile func *
     :profile file *
   ]])
+    require("jit.p").start("Fl", "profile.lua.log")
   end,
   { bang = true }
 )
 
 vim.api.nvim_create_user_command("ProfileEnd", function()
+  require("jit.p").stop()
   vim.cmd([[
     :profile pause
     :noautocmd qall!
