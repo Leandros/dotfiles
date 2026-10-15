@@ -9,7 +9,7 @@ readonly SRC="${1:-/src}"
 FAILED=0
 
 # Pull the pinned versions from the script itself.
-eval "$(grep -E '^readonly [A-Z_0-9]+_(VERSION|VERSION_PIN|REF|VERSION_LINUX|VERSION_MACOS|VERSION_AL2_AARCH64)=' "$SRC/bootstrap.sh")"
+eval "$(grep -E '^readonly [A-Z_0-9]+_(VERSION|VERSION_PIN|REF|VERSION_LINUX|VERSION_MACOS|VERSION_AL2_AARCH64|TOOLCHAIN)=' "$SRC/bootstrap.sh")"
 
 fail() { printf 'FAIL: %s\n' "$*"; FAILED=1; }
 ok()   { printf 'ok:   %s\n' "$*"; }
@@ -66,6 +66,8 @@ check_version fd      "fd $FD_VERSION" fd --version
 check_version rg      "ripgrep $RIPGREP_VERSION" rg --version
 check_version mise    "$MISE_VERSION" mise --version
 check_version direnv  "$DIRENV_VERSION" direnv version
+check_version rustc   "rustc $RUST_TOOLCHAIN" "$HOME/.cargo/bin/rustc" --version
+check_version tree-sitter "tree-sitter $TREE_SITTER_VERSION" tree-sitter --version
 check_version node    "v$node_want" node --version
 check_version python  "Python $PYTHON_VERSION" "/usr/local/bin/python$PYTHON_VERSION" --version
 check_version nnn     "$NNN_VERSION" nnn -V
@@ -123,6 +125,33 @@ if [[ -d "$HOME/.local/share/nvim/lazy/lazy.nvim" ]]; then
     ok "lazy.nvim installed"
 else
     fail "lazy.nvim missing"
+fi
+
+ts_main="$(git -C "$HOME/.local/share/nvim/lazy/nvim-treesitter" rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+if [[ "$ts_main" == "main" ]]; then
+    ok "nvim-treesitter on main"
+else
+    fail "nvim-treesitter branch: $ts_main"
+fi
+
+parser_dir="$HOME/.local/share/nvim/site/parser"
+missing_parsers=""
+for lang in c cpp cmake rust json json5 javascript typescript tsx vim lua go haskell bash markdown markdown_inline python html regex yaml zig; do
+    [[ -f "$parser_dir/$lang.so" ]] || missing_parsers="$missing_parsers $lang"
+done
+if [[ -z "$missing_parsers" ]]; then
+    ok "treesitter parsers built"
+else
+    fail "treesitter parsers missing:$missing_parsers"
+fi
+
+# The hover window renders markdown with injections; this is what broke on master.
+# shellcheck disable=SC2016
+if nvim --headless -c 'set ft=markdown' -c 'call setline(1, ["```rust", "fn main() {}", "```"])' \
+    -c 'lua vim.treesitter.get_parser(0):parse(true)' +qa! >/tmp/ts.log 2>&1; then
+    ok "markdown injection parse"
+else
+    fail "markdown injection parse: $(head -n 2 /tmp/ts.log)"
 fi
 
 nvim --headless -c 'checkhealth vim.provider' -c 'w! /tmp/health.txt' +qa >/dev/null 2>&1 || true

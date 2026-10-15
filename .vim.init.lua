@@ -2123,6 +2123,7 @@ local spec = {
             float_win_config = {
               border = "rounded",
             },
+            enable_nextest = false,
           },
 
           -- DAP configuration
@@ -2940,50 +2941,54 @@ local spec = {
 
   {
     "nvim-treesitter/nvim-treesitter",
-    dependencies = {
-      "nvim-treesitter/playground",
-    },
-    build = function() vim.cmd(":TSUpdate") end,
+    branch = "main",
+    lazy = false,
+    build = ":TSUpdate",
     config = function()
-      ---@diagnostic disable-next-line: missing-fields
-      require("nvim-treesitter.configs").setup({
-        ensure_installed = {
-          "c",
-          "cpp",
-          "cmake",
-          "rust",
-          "json",
-          "jsonc",
-          "json5",
-          "javascript",
-          "typescript",
-          "tsx",
-          "vim",
-          "lua",
-          "go",
-          "haskell",
-          "bash",
-          "markdown",
-          "markdown_inline",
-          "python",
-          "html",
-          "regex",
-          "yaml",
-          "zig",
-        },
-        auto_install = false,
-        sync_install = false,
-        highlight = {
-          enable = true,
-          disable = { "typescript" },
-          additional_vim_regex_highlighting = false,
-          custom_captures = {
-            ["punctuation.bracket"] = "Variable",
-            ["punctuation.delimiter"] = "Variable",
-            ["include"] = "Keyword",
-            ["keyword.function"] = "Keyword",
-          },
-        },
+      local parsers = {
+        "c",
+        "cpp",
+        "cmake",
+        "rust",
+        "json",
+        "json5",
+        "javascript",
+        "typescript",
+        "tsx",
+        "vim",
+        "lua",
+        "go",
+        "haskell",
+        "bash",
+        "markdown",
+        "markdown_inline",
+        "python",
+        "html",
+        "regex",
+        "yaml",
+        "zig",
+      }
+      local highlight_disabled = { typescript = true }
+      local headless_install_timeout_ms = 10 * 60 * 1000
+
+      -- No jsonc grammar exists; the json one handles it.
+      vim.treesitter.language.register("json", "jsonc")
+
+      local task = require("nvim-treesitter").install(parsers)
+      -- Headless runs (bootstrap.sh) must not exit before parsers are built.
+      if #vim.api.nvim_list_uis() == 0 then
+        task:wait(headless_install_timeout_ms)
+      end
+
+      vim.api.nvim_create_autocmd("FileType", {
+        group = vim.api.nvim_create_augroup("treesitter_highlight", {}),
+        callback = function(ev)
+          if highlight_disabled[ev.match] then
+            return
+          end
+          -- Fails for filetypes without a parser.
+          pcall(vim.treesitter.start, ev.buf)
+        end,
       })
     end,
   }, -- end treesitter

@@ -22,7 +22,7 @@ set -euo pipefail
 # Versions
 # =============================================================================
 # https://github.com/neovim/neovim/releases
-readonly NVIM_VERSION="0.11.4"
+readonly NVIM_VERSION="0.12.6"
 # https://github.com/tmux/tmux/releases
 readonly TMUX_VERSION_LINUX="3.5a"
 readonly TMUX_VERSION_MACOS="3.4"
@@ -61,6 +61,11 @@ readonly PYTHON_VERSION="3.12"
 readonly PYNVIM_VERSION="0.6.0"
 # https://github.com/libevent/libevent/releases
 readonly LIBEVENT_VERSION="2.1.12-stable"
+# https://github.com/rust-lang/rust/releases
+readonly RUST_TOOLCHAIN="1.99.0"
+# https://github.com/tree-sitter/tree-sitter/releases
+# Release binaries need glibc 2.39; built with cargo instead.
+readonly TREE_SITTER_VERSION="0.27.1"
 
 # Git commits. Bump with: git ls-remote <url> HEAD
 # https://github.com/ohmyzsh/ohmyzsh
@@ -499,7 +504,7 @@ install_nnn() {
 # Neovim
 # =============================================================================
 readonly NVIM_HOME="$PREFIX/lib/nvim"
-# Release tarballs for 0.11 need glibc 2.34.
+# Release tarballs for 0.11+ need glibc 2.34.
 readonly NVIM_TARBALL_MIN_GLIBC="2.34"
 
 install_nvim() {
@@ -650,6 +655,42 @@ install_direnv() {
     fetch "$GITHUB/direnv/direnv/releases/download/v$DIRENV_VERSION/direnv.$os-$GO_ARCH" "$WORK_DIR/direnv"
     install_bin "$WORK_DIR/direnv" direnv
     mark_current direnv "$DIRENV_VERSION"
+}
+
+# =============================================================================
+# Rust
+# =============================================================================
+readonly CARGO_HOME_DIR="${CARGO_HOME:-$HOME/.cargo}"
+readonly RUSTUP_HOME_DIR="${RUSTUP_HOME:-$HOME/.rustup}"
+
+install_rust() {
+    export CARGO_HOME="$CARGO_HOME_DIR" RUSTUP_HOME="$RUSTUP_HOME_DIR"
+    local rustup="$CARGO_HOME_DIR/bin/rustup"
+
+    if [[ ! -x "$rustup" ]]; then
+        fetch https://sh.rustup.rs "$WORK_DIR/rustup-init.sh"
+        quiet sh "$WORK_DIR/rustup-init.sh" -y -q --no-modify-path \
+            --profile minimal --default-toolchain "$RUST_TOOLCHAIN"
+        return
+    fi
+
+    if ! "$rustup" run "$RUST_TOOLCHAIN" rustc --version >/dev/null 2>&1; then
+        quiet "$rustup" toolchain install -q --profile minimal "$RUST_TOOLCHAIN"
+    fi
+    if ! "$rustup" default >/dev/null 2>&1; then
+        quiet "$rustup" default "$RUST_TOOLCHAIN"
+    fi
+}
+
+# nvim-treesitter (main) needs the CLI to build parsers.
+install_tree_sitter() {
+    is_current tree-sitter "$TREE_SITTER_VERSION" "$PREFIX/bin/tree-sitter" && return
+
+    export CARGO_HOME="$CARGO_HOME_DIR" RUSTUP_HOME="$RUSTUP_HOME_DIR"
+    quiet "$CARGO_HOME_DIR/bin/cargo" "+$RUST_TOOLCHAIN" install -q --locked \
+        --root "$WORK_DIR/tree-sitter" "tree-sitter-cli@$TREE_SITTER_VERSION"
+    install_bin "$WORK_DIR/tree-sitter/bin/tree-sitter" tree-sitter
+    mark_current tree-sitter "$TREE_SITTER_VERSION"
 }
 
 # =============================================================================
@@ -830,7 +871,8 @@ setup_tmux_plugins() {
 }
 
 setup_nvim_plugins() {
-    # Restores plugins to lazy-lock.json.
+    # Restores plugins to lazy-lock.json. The treesitter config blocks until
+    # all parsers are built when running headless.
     nvim --headless "+Lazy! restore" +qa >/dev/null 2>&1 || warn "nvim: plugin restore failed, run :Lazy restore"
 }
 
@@ -842,9 +884,9 @@ print_version() {
     shift
     local out
     if out="$("$@" 2>&1 | head -n 1)"; then
-        printf '  %-10s %s\n' "$name" "$out"
+        printf '  %-12s %s\n' "$name" "$out"
     else
-        printf '  %-10s MISSING\n' "$name"
+        printf '  %-12s MISSING\n' "$name"
     fi
 }
 
@@ -862,6 +904,8 @@ report() {
     print_version rg rg --version
     print_version mise mise --version
     print_version direnv direnv version
+    print_version rustc "$CARGO_HOME_DIR/bin/rustc" --version
+    print_version tree-sitter tree-sitter --version
     print_version node node --version
     print_version python "$PREFIX/bin/python$PYTHON_VERSION" --version
     if [[ "$OS" == "linux" ]]; then
@@ -892,6 +936,8 @@ run_all() {
     step ripgrep install_ripgrep
     step mise install_mise
     step direnv install_direnv
+    step rust install_rust
+    step tree-sitter install_tree_sitter
     step node install_node
     step python install_python
     step nnn install_nnn
