@@ -1881,6 +1881,38 @@ local spec = {
       })
 
       -- ━━ rust-analyzer ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      -- rust-analyzer >= 2026-09-24 sends the display label ("derive(…)") as
+      -- the edit text for attribute completions when the client has no
+      -- snippet support. Drop the "…" placeholders: a trailing "(…)" is cut
+      -- entirely so the cursor stays before the parenthesis; inner ones leave
+      -- the surrounding syntax ("doc = include_str!(\"\")").
+      local function strip_attr_placeholder(items)
+        for _, item in ipairs(items) do
+          local text = item.textEdit and item.textEdit.newText or item.insertText
+          if text ~= nil and text == item.label and text:find("…", 1, true) then
+            local stripped = text:gsub("%(…%)$", ""):gsub("…", "")
+            if item.textEdit then item.textEdit.newText = stripped end
+            if item.insertText then item.insertText = stripped end
+          end
+        end
+      end
+
+      -- Wraps client.request: completion sources (nvim-cmp) pass their own
+      -- callback, which bypasses client.handlers.
+      local function ra_on_init(client, init_result)
+        local request = client.request
+        client.request = function(self, method, params, handler, bufnr)
+          if method ~= "textDocument/completion" or handler == nil then
+            return request(self, method, params, handler, bufnr)
+          end
+          return request(self, method, params, function(err, result, ctx)
+            if result then strip_attr_placeholder(result.items or result) end
+            return handler(err, result, ctx)
+          end, bufnr)
+        end
+        return on_init(client, init_result)
+      end
+
       vim.lsp.config("rust-analyzer", {
         capabilities = vim.tbl_deep_extend(
           "force",
@@ -1910,7 +1942,7 @@ local spec = {
           -- Make sure to call the global/default on_attach!
           on_attach(client, bufnr)
         end,
-        on_init = on_init,
+        on_init = ra_on_init,
         flags = { allow_incremental_sync = false },
         commands = {
           RustOpenDocs = {
