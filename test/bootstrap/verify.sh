@@ -73,6 +73,14 @@ check_version node    "v$node_want" node --version
 check_version python  "Python $PYTHON_VERSION" "/usr/local/bin/python$PYTHON_VERSION" --version
 check_version nnn     "$NNN_VERSION" nnn -V
 
+codelldb_dir="$HOME/.local/share/nvim/lazy/vimspector/gadgets/linux/CodeLLDB"
+if [[ -x "$codelldb_dir/adapter/codelldb" && -f "$codelldb_dir/lldb/lib/liblldb.so" ]] \
+    && "$codelldb_dir/adapter/codelldb" --help >/dev/null 2>&1; then
+    ok "codelldb $CODELLDB_VERSION"
+else
+    fail "codelldb missing or not runnable in $codelldb_dir"
+fi
+
 check_version pynvim  "$PYNVIM_VERSION" \
     "$HOME/.local/share/nvim/python3-venv/bin/python" -c 'import importlib.metadata as m; print(m.version("pynvim"))'
 check_version node-neovim "neovim@$NODE_NEOVIM_VERSION" npm ls -g --prefix /usr/local neovim --depth=0 --parseable --long

@@ -44,6 +44,8 @@ readonly FD_VERSION="10.5.0"
 readonly RIPGREP_VERSION="15.2.0"
 # https://github.com/sharkdp/bat/releases
 readonly BAT_VERSION="0.26.1"
+# https://github.com/vadimcn/codelldb/releases
+readonly CODELLDB_VERSION="1.12.3"
 # https://github.com/jdx/mise/releases
 readonly MISE_VERSION="2026.10.10"
 # https://github.com/direnv/direnv/releases
@@ -756,6 +758,47 @@ install_node() {
 }
 
 # =============================================================================
+# CodeLLDB
+# =============================================================================
+# Debug adapter for rustaceanvim/vimspector. The nvim config expects the
+# unpacked vsix "extension" directory at this per-user path, inside the
+# vimspector plugin checkout (vimspector's own gadget directory).
+codelldb_dir() {
+    local os="linux"
+    [[ "$OS" == "macos" ]] && os="macos"
+    echo "$HOME/.local/share/nvim/lazy/vimspector/gadgets/$os/CodeLLDB"
+}
+
+install_codelldb() {
+    local dir version_file
+    dir="$(codelldb_dir)"
+    version_file="$dir/.bootstrap-version"
+    if [[ -x "$dir/adapter/codelldb" && -f "$version_file" \
+        && "$(cat "$version_file")" == "$CODELLDB_VERSION" ]]; then
+        return
+    fi
+
+    local asset
+    if [[ "$OS" == "macos" ]]; then
+        asset="darwin-arm64"
+    elif [[ "$ARCH" == "x86_64" ]]; then
+        asset="linux-x64"
+    else
+        asset="linux-arm64"
+    fi
+
+    local vsix="$WORK_DIR/codelldb.vsix" unpack="$WORK_DIR/codelldb"
+    fetch "$GITHUB/vadimcn/codelldb/releases/download/v$CODELLDB_VERSION/codelldb-$asset.vsix" "$vsix"
+    mkdir -p "$unpack"
+    unzip -q "$vsix" -d "$unpack"
+
+    rm -rf "$dir"
+    mkdir -p "$(dirname "$dir")"
+    mv "$unpack/extension" "$dir"
+    echo "$CODELLDB_VERSION" > "$version_file"
+}
+
+# =============================================================================
 # Python
 # =============================================================================
 readonly UV_SYSTEM_PYTHON_DIR="$PREFIX/share/uv/python"
@@ -924,6 +967,7 @@ report() {
     if [[ "$OS" == "linux" ]]; then
         print_version nnn nnn -V
     fi
+    print_version codelldb cat "$(codelldb_dir)/.bootstrap-version"
     if [[ -d "$BACKUP_DIR" ]]; then
         log "backups in $BACKUP_DIR"
     fi
@@ -962,6 +1006,8 @@ run_all() {
     step shell set_login_shell
     step nvim-python setup_nvim_python
     step nvim-plugins setup_nvim_plugins
+    # After nvim-plugins: lazy.nvim replaces the vimspector checkout it lives in.
+    step codelldb install_codelldb
     step tmux-plugins setup_tmux_plugins
 
     report
