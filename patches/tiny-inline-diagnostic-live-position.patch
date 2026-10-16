@@ -1,0 +1,57 @@
+--- a/lua/tiny-inline-diagnostic/cache.lua
++++ b/lua/tiny-inline-diagnostic/cache.lua
+@@ -12,10 +12,53 @@
+   return sorted
+ end
+ 
++--- Neovim keeps a tracking extmark per diagnostic that follows buffer
++--- edits, while `vim.diagnostic.get()` keeps the server-reported position
++--- until the server republishes. Resolve the live position so rendering
++--- stays on the right line between publishes.
++---@param diag table
++---@return table
++local function with_live_position(diag)
++  if not diag._extmark_id or not diag.bufnr or not diag.namespace then
++    return diag
++  end
++
++  local ok, ns = pcall(vim.diagnostic.get_namespace, diag.namespace)
++  if not ok or not ns.user_data or not ns.user_data.location_ns then
++    return diag
++  end
++
++  local extmark = vim.api.nvim_buf_get_extmark_by_id(
++    diag.bufnr,
++    ns.user_data.location_ns,
++    diag._extmark_id,
++    { details = true }
++  )
++  if next(extmark) == nil or extmark[3].invalid then
++    return diag
++  end
++
++  local live = vim.deepcopy(diag)
++  live.lnum = extmark[1]
++  live.col = extmark[2]
++  live.end_lnum = extmark[3].end_row or extmark[1]
++  live.end_col = extmark[3].end_col or extmark[2]
++  return live
++end
++
+ ---@param bufnr number
+ ---@return table
+ function M.get(bufnr)
+-  return diagnostics_cache[bufnr] or {}
++  local cached = diagnostics_cache[bufnr]
++  if not cached then
++    return {}
++  end
++
++  local live = {}
++  for i, diag in ipairs(cached) do
++    live[i] = with_live_position(diag)
++  end
++  return live
+ end
+ 
+ ---@param opts table

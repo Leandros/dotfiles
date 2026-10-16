@@ -2051,6 +2051,18 @@ local spec = {
     "rachartier/tiny-inline-diagnostic.nvim",
     event = "VeryLazy",
     priority = 1000,
+    -- Upstream renders at the server-reported line, which goes stale when
+    -- lines are inserted above a diagnostic until the server republishes.
+    -- The patch resolves the live position from Neovim's tracking extmarks.
+    build = function(plugin)
+      -- init.lua is a symlink into the dotfiles repo; patches/ sits next to it.
+      local dotfiles = vim.fs.dirname(vim.uv.fs_realpath(vim.fn.stdpath("config") .. "/init.lua"))
+      local patch = dotfiles .. "/patches/tiny-inline-diagnostic-live-position.patch"
+      local applied = vim.system({ "git", "apply", "--check", "--reverse", patch }, { cwd = plugin.dir }):wait()
+      if applied.code == 0 then return end
+      local res = vim.system({ "git", "apply", patch }, { cwd = plugin.dir }):wait()
+      if res.code ~= 0 then error("tiny-inline-diagnostic patch failed: " .. res.stderr) end
+    end,
     config = function()
       require("tiny-inline-diagnostic").setup({
         -- Choose a preset style for diagnostic appearance
