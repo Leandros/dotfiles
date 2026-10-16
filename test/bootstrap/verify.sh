@@ -64,6 +64,7 @@ check_version lazygit "version=$LAZYGIT_VERSION" lazygit --version
 check_version uv      "uv $UV_VERSION" uv --version
 check_version fd      "fd $FD_VERSION" fd --version
 check_version rg      "ripgrep $RIPGREP_VERSION" rg --version
+check_version bat     "bat $BAT_VERSION" bat --version
 check_version mise    "$MISE_VERSION" mise --version
 check_version direnv  "$DIRENV_VERSION" direnv version
 check_version rustc   "rustc $RUST_TOOLCHAIN" "$HOME/.cargo/bin/rustc" --version

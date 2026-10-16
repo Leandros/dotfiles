@@ -42,6 +42,8 @@ readonly UV_VERSION="0.13.1"
 readonly FD_VERSION="10.5.0"
 # https://github.com/BurntSushi/ripgrep/releases
 readonly RIPGREP_VERSION="15.2.0"
+# https://github.com/sharkdp/bat/releases
+readonly BAT_VERSION="0.26.1"
 # https://github.com/jdx/mise/releases
 readonly MISE_VERSION="2026.10.10"
 # https://github.com/direnv/direnv/releases
@@ -628,6 +630,16 @@ install_ripgrep() {
     mark_current ripgrep "$RIPGREP_VERSION"
 }
 
+install_bat() {
+    is_current bat "$BAT_VERSION" "$PREFIX/bin/bat" && return
+    local target="$RUST_TARGET_LINUX_MUSL"
+    [[ "$OS" == "macos" ]] && target="$RUST_TARGET_DARWIN"
+    local dir
+    dir="$(fetch_unpack "$GITHUB/sharkdp/bat/releases/download/v$BAT_VERSION/bat-v$BAT_VERSION-$target.tar.gz")"
+    install_bin_from "$dir" bat
+    mark_current bat "$BAT_VERSION"
+}
+
 install_mise() {
     if ! is_current mise "$MISE_VERSION" "$PREFIX/bin/mise"; then
         local asset
@@ -902,6 +914,7 @@ report() {
     print_version uv uv --version
     print_version fd fd --version
     print_version rg rg --version
+    print_version bat bat --version
     print_version mise mise --version
     print_version direnv direnv version
     print_version rustc "$CARGO_HOME_DIR/bin/rustc" --version
@@ -934,6 +947,7 @@ run_all() {
     step uv install_uv
     step fd install_fd
     step ripgrep install_ripgrep
+    step bat install_bat
     step mise install_mise
     step direnv install_direnv
     step rust install_rust
