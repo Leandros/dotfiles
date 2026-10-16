@@ -1085,6 +1085,132 @@ local function on_attach(client, bufnr)
   end
 end
 
+-- ━━ Live diagnostic positions ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-- vim.diagnostic.get() reports server positions, which go stale when text
+-- above a diagnostic is edited until the server republishes. Neovim keeps a
+-- tracking extmark per diagnostic; resolve positions from it.
+---@param d vim.Diagnostic
+---@return vim.Diagnostic
+local function with_live_position(d)
+  if not d._extmark_id or not d.bufnr then return d end
+  local ok, ns = pcall(vim.diagnostic.get_namespace, d.namespace)
+  if not ok or not ns.user_data or not ns.user_data.location_ns then return d end
+  local m = vim.api.nvim_buf_get_extmark_by_id(d.bufnr, ns.user_data.location_ns, d._extmark_id, { details = true })
+  if next(m) == nil or m[3].invalid then return d end
+  local live = vim.deepcopy(d)
+  live.lnum, live.col = m[1], m[2]
+  live.end_lnum = m[3].end_row or m[1]
+  live.end_col = m[3].end_col or m[2]
+  return live
+end
+
+---@param bufnr integer
+---@param lnum integer 0-based line
+---@param col integer 0-based byte column
+---@return vim.Diagnostic[] diagnostics covering the position, with live coordinates
+local function live_diagnostics_at(bufnr, lnum, col)
+  local result = {}
+  for _, d in ipairs(vim.diagnostic.get(bufnr)) do
+    local live = with_live_position(d)
+    local after_start = lnum > live.lnum or (lnum == live.lnum and col >= live.col)
+    local before_end = lnum < live.end_lnum or (lnum == live.end_lnum and col <= live.end_col)
+    if after_start and before_end then result[#result + 1] = live end
+  end
+  return result
+end
+
+-- Rewrite the LSP range of each diagnostic to its live position so the server
+-- looks for fixes where the diagnostic actually is now.
+---@param diagnostics vim.Diagnostic[]
+---@param offset_encoding string
+---@return lsp.Diagnostic[]
+local function to_lsp_diagnostics(diagnostics, offset_encoding)
+  return vim.tbl_map(function(d)
+    local lsp_d = vim.deepcopy(d.user_data and d.user_data.lsp or vim.lsp.diagnostic.from({ d })[1])
+    lsp_d.range = {
+      start = { line = d.lnum, character = vim.lsp.util.character_offset(d.bufnr, d.lnum, d.col, offset_encoding) },
+      ["end"] = {
+        line = d.end_lnum,
+        character = vim.lsp.util.character_offset(d.bufnr, d.end_lnum, d.end_col, offset_encoding),
+      },
+    }
+    return lsp_d
+  end, diagnostics)
+end
+
+-- vim.lsp.buf.code_action() with the diagnostic context taken from live
+-- positions. Without it, no fix is offered once the diagnostic has moved.
+---@param opts? vim.lsp.buf.code_action.Opts
+function _G.code_action_live(opts)
+  opts = opts or {}
+  local bufnr = vim.api.nvim_get_current_buf()
+  local client = vim.lsp.get_clients({ bufnr = bufnr, method = "textDocument/codeAction" })[1]
+  if not client then return vim.lsp.buf.code_action(opts) end
+  local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+  local diagnostics = live_diagnostics_at(bufnr, row - 1, col)
+  opts.context = vim.tbl_extend("force", opts.context or {}, {
+    diagnostics = to_lsp_diagnostics(diagnostics, client.offset_encoding),
+  })
+  return vim.lsp.buf.code_action(opts)
+end
+
+---@param d vim.Diagnostic
+---@return boolean true when the position reported by the server differs from the live one
+local function has_moved(d)
+  local live = with_live_position(d)
+  return live.lnum ~= d.lnum or live.col ~= d.col
+end
+
+-- Flycheck (cargo check) fixes are stored in rust-analyzer at the position
+-- of the last check and are not shifted on edits; only a save re-runs the
+-- check. Native diagnostics do not need this.
+local FLYCHECK_REPUBLISH_TIMEOUT_MS = 10000
+
+---@param bufnr integer
+---@param diagnostics vim.Diagnostic[]
+---@return boolean saved
+local function save_if_flycheck_moved(bufnr, diagnostics)
+  if not vim.bo[bufnr].modified then return false end
+  local push_ns = vim.lsp.diagnostic.get_namespace(vim.lsp.get_clients({ bufnr = bufnr, name = "rust-analyzer" })[1].id)
+  local needs_check = false
+  for _, d in ipairs(diagnostics) do
+    if d.namespace == push_ns and has_moved(d) then needs_check = true end
+  end
+  if not needs_check then return false end
+
+  local before = vim.diagnostic.get(bufnr, { namespace = push_ns })
+  vim.api.nvim_buf_call(bufnr, function() vim.cmd("silent write") end)
+  vim.wait(FLYCHECK_REPUBLISH_TIMEOUT_MS, function()
+    local now = vim.diagnostic.get(bufnr, { namespace = push_ns })
+    return #now ~= #before or (now[1] and before[1] and now[1].lnum ~= before[1].lnum)
+  end)
+  return true
+end
+
+-- rustaceanvim's grouped code action UI reads vim.diagnostic.get() for the
+-- cursor line directly and offers no hook. Serve it live diagnostics for the
+-- duration of its synchronous request setup.
+function _G.rust_code_action_live()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local client = vim.lsp.get_clients({ bufnr = bufnr, name = "rust-analyzer" })[1]
+  if not client then return vim.cmd.RustLsp("codeaction") end
+  local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+
+  save_if_flycheck_moved(bufnr, vim.diagnostic.get(bufnr))
+
+  local live = live_diagnostics_at(bufnr, row - 1, col)
+  for _, d in ipairs(live) do
+    d.user_data = d.user_data or {}
+    d.user_data.lsp = to_lsp_diagnostics({ d }, client.offset_encoding)[1]
+  end
+
+  local get = vim.diagnostic.get
+  vim.diagnostic.get = function() return live end
+  local ok, err = pcall(vim.cmd.RustLsp, "codeaction")
+  vim.diagnostic.get = get
+  if not ok then error(err) end
+end
+
 local function on_init(client)
   -- disable highlighting from lsp
   if client.server_capabilities then
@@ -1935,7 +2061,7 @@ local spec = {
           vim.keymap.set(
             "n",
             "ca",
-            "<cmd>lua vim.cmd.RustLsp('codeaction')<CR>",
+            "<cmd>lua rust_code_action_live()<CR>",
             { silent = true, buffer = bufnr, desc = "LSP: Code Action" }
           )
 
@@ -3641,7 +3767,7 @@ local spec = {
         { "n", "<leader>gr", "<cmd>lua require('telescope.builtin').lsp_references()<cr>", "LSP: Find References" },
         { "n", "<leader>gd", "<cmd>lua require('telescope.builtin').diagnostics()<cr>", "LSP: Show Diagnostics" },
         { "n", "<leader>gn", "<cmd>lua require('telescope.builtin').diagnostics({ bufnr = 0 })<cr>", "LSP: Show Current File Diagnostics" },
-        { "n", "<leader>ca", "<cmd>lua vim.lsp.buf.code_action()<cr>", "LSP: Code Actions" },
+        { "n", "<leader>ca", "<cmd>lua code_action_live()<cr>", "LSP: Code Actions" },
         {
           "v",
           "<leader>ca",
