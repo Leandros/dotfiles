@@ -1296,17 +1296,31 @@ local spec = {
         ["Motion j"] = "n",
         ["Motion k"] = "r",
         ["Motion l"] = "s",
+        -- Same delta at every cursor (4 4 4 -> 5 5 5).
+        ["Increase"] = "<C-a>",
+        ["Decrease"] = "<C-x>",
+        -- Plugin default g<C-a> starts at +1 (4 4 4 -> 5 6 7); the sequence
+        -- variants below keep the first cursor (4 4 4 -> 4 5 6).
+        ["gIncrease"] = "",
+        ["gDecrease"] = "",
       }
 
       vim.cmd([[
+        " Increment by count*index per cursor, first cursor unchanged.
+        " Plugin's progressive mode starts at +count, so step back once.
+        function! VM_SequenceNumbers(increase, count)
+          call vm#commands#increase_or_decrease(a:increase, 0, a:count, v:true)
+          call vm#commands#increase_or_decrease(!a:increase, 0, a:count, v:false)
+        endfunction
+
         function! VM_Start()
           let g:yankring_record_enabled = 0
           if exists("AutoPairsToggle")
             call AutoPairsToggle()
           endif
 
-          " Add mappings here if desired:
-          " Example: nmap <buffer> b <Left>
+          nnoremap <buffer> <silent> g<C-a> :<C-u>call VM_SequenceNumbers(1, v:count1)<CR>
+          nnoremap <buffer> <silent> g<C-x> :<C-u>call VM_SequenceNumbers(0, v:count1)<CR>
         endfunction
       ]])
 
@@ -1317,8 +1331,8 @@ local spec = {
             call AutoPairsToggle()
           endif
 
-          " And unmap them again here:
-          " Example: nunmap <buffer> b
+          silent! nunmap <buffer> g<C-a>
+          silent! nunmap <buffer> g<C-x>
         endfunction
       ]])
     end,
