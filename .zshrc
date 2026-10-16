@@ -252,6 +252,18 @@ source $ZSH/oh-my-zsh.sh
 # Man pages config
 less_termcap[md]="${fg_bold[blue]}"
 
+# Whole-line copies end with a newline; pasted literally it becomes an empty
+# second line and the cursor sits at its start. Drop trailing newlines.
+_paste_strip_newline() {
+    local content
+    zle .bracketed-paste -N content
+    while [[ $content == *$'\n' ]]; do
+        content=${content%$'\n'}
+    done
+    LBUFFER+=$content
+}
+zle -N bracketed-paste _paste_strip_newline
+
 function __git_prompt {
     # local ref=$(command git symbolic-ref HEAD 2>/dev/null || command git rev-parse --short HEAD 2>/dev/null)
     # if [ "$ref" != "" ]; then
