@@ -246,7 +246,7 @@ export ZSH_AUTOSUGGEST_COMPLETION_IGNORE="z *"
 # $ git clone https://github.com/zdharma-continuum/fast-syntax-highlighting.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/fast-syntax-highlighting
 
 # Order is important.
-plugins=(git git-prompt direnv colored-man-pages zsh-autosuggestions fast-syntax-highlighting)
+plugins=(git direnv git-prompt zsh-autosuggestions fast-syntax-highlighting)
 source $ZSH/oh-my-zsh.sh
 
 # Man pages config
@@ -904,9 +904,6 @@ if [ -e /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
     export NIX_PROFILES="/nix/var/nix/profiles/default $HOME/.nix-profile"
     export PATH="$HOME/.nix-profile/bin:/nix/var/nix/profiles/default/bin:$PATH"
 fi
-
-# ━━ Direnv ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-command -v direnv >/dev/null && eval "$(direnv hook zsh)"
 
 # ━━ Broot ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 [[ -s "$HOME/.config/broot/launcher/bash/br" ]] && . "$HOME/.config/broot/launcher/bash/br"
