@@ -689,7 +689,7 @@ install_rust() {
     fi
 
     if ! "$rustup" run "$RUST_TOOLCHAIN" rustc --version >/dev/null 2>&1; then
-        quiet "$rustup" toolchain install -q --profile minimal "$RUST_TOOLCHAIN"
+        quiet "$rustup" toolchain install --profile minimal "$RUST_TOOLCHAIN"
     fi
     if ! "$rustup" default >/dev/null 2>&1; then
         quiet "$rustup" default "$RUST_TOOLCHAIN"
