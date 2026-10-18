@@ -398,11 +398,26 @@ fix_home_ownership() {
 # =============================================================================
 # Dotfiles
 # =============================================================================
+# Discard local edits to lazy-lock.json, keeping a copy in BACKUP_DIR.
+reset_lazy_lock() {
+    local lock="$DOTFILES_DIR/lazy-lock.json"
+    git -C "$DOTFILES_DIR" diff --quiet HEAD -- lazy-lock.json && return
+    mkdir -p "$BACKUP_DIR"
+    cp "$lock" "$BACKUP_DIR/lazy-lock.json"
+    git -C "$DOTFILES_DIR" checkout -q HEAD -- lazy-lock.json
+    log "reset lazy-lock.json (local copy in $BACKUP_DIR)"
+}
+
 clone_dotfiles() {
     if [[ ! -d "$DOTFILES_DIR/.git" ]]; then
         git clone -q --branch "$DOTFILES_REF" "$DOTFILES_REPO" "$DOTFILES_DIR"
         return
     fi
+
+    # nvim rewrites lazy-lock.json on its own (e.g. lazy.nvim bumping
+    # hererocks). The repo copy is authoritative, so reset it instead of
+    # letting it block the update.
+    reset_lazy_lock
 
     local changes
     changes="$(git -C "$DOTFILES_DIR" status --porcelain)"
@@ -929,6 +944,9 @@ setup_nvim_plugins() {
     # Restores plugins to lazy-lock.json. The treesitter config blocks until
     # all parsers are built when running headless.
     nvim --headless "+Lazy! restore" +qa >/dev/null 2>&1 || warn "nvim: plugin restore failed, run :Lazy restore"
+    # Restore can rewrite the lockfile; keep the repo clean so the next run
+    # is not blocked by "local changes".
+    reset_lazy_lock
 }
 
 # =============================================================================
