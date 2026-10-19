@@ -449,7 +449,10 @@ if [ -z "$(command -v fzf)" ]; then
     bindkey -M isearch "" history-incremental-pattern-search-backward
 fi
 
-export KEYTIMEOUT=1
+# Also bounds bracketed-paste: zsh ends the paste at the first pause longer
+# than this, and a paste over ssh arrives in chunks. 10ms (=1) truncated
+# long URLs; 50ms is still instant for Esc in vi mode.
+export KEYTIMEOUT=5
 
 # This will put (n)vim in the background and revive it back.
 # It's triggered with ^Z.
