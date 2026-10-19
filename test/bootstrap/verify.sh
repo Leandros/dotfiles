@@ -136,11 +136,13 @@ else
     fail "lazy.nvim missing"
 fi
 
-ts_main="$(git -C "$HOME/.local/share/nvim/lazy/nvim-treesitter" rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
-if [[ "$ts_main" == "main" ]]; then
-    ok "nvim-treesitter on main"
+# lazy.nvim may leave the checkout detached; compare against the lockfile pin.
+ts_want="$(sed -nE 's/.*"nvim-treesitter": \{ "branch": "main", "commit": "([0-9a-f]+)".*/\1/p' "$SRC/lazy-lock.json")"
+ts_have="$(git -C "$HOME/.local/share/nvim/lazy/nvim-treesitter" rev-parse HEAD 2>/dev/null || true)"
+if [[ -n "$ts_want" && "$ts_have" == "$ts_want" ]]; then
+    ok "nvim-treesitter at main pin $ts_want"
 else
-    fail "nvim-treesitter branch: $ts_main"
+    fail "nvim-treesitter: want main@$ts_want got $ts_have"
 fi
 
 parser_dir="$HOME/.local/share/nvim/site/parser"

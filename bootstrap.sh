@@ -6,7 +6,10 @@
 #            (x86_64 and aarch64), macOS on Apple Silicon.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/Leandros/dotfiles/refs/heads/master/bootstrap.sh | bash
+#   curl -fsSLo bootstrap.sh https://raw.githubusercontent.com/Leandros/dotfiles/refs/heads/master/bootstrap.sh
+#   bash bootstrap.sh
+#
+# Do not pipe into bash: prompts (sudo password, dpkg) would read the script.
 #
 # Re-running is safe: tools whose stamp matches the pinned version are skipped,
 # others are updated. Tools go to /usr/local (all users), configs to $HOME.
@@ -15,6 +18,7 @@
 #   BOOTSTRAP_SKIP="tmux nnn"        skip steps by name (see run_all)
 #   BOOTSTRAP_DOTFILES_REPO=<url>    dotfiles source (default: GitHub)
 #   BOOTSTRAP_DOTFILES_REF=<branch>  dotfiles branch (default: master)
+#   BOOTSTRAP_NONINTERACTIVE=1       allow a non-tty stdin (CI, tests)
 #
 set -euo pipefail
 
@@ -336,9 +340,12 @@ detect_sudo() {
 install_system_packages() {
     case "$DISTRO" in
         debian|ubuntu)
-            export DEBIAN_FRONTEND=noninteractive
-            $SUDO apt-get update -qq
-            $SUDO apt-get install -y -qq --no-install-recommends \
+            # sudo resets the environment, so DEBIAN_FRONTEND must be passed
+            # through it. confold keeps existing config files (sshd_config)
+            # instead of prompting.
+            $SUDO env DEBIAN_FRONTEND=noninteractive apt-get update -qq
+            $SUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
+                -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold \
                 build-essential autoconf automake pkg-config cmake bison \
                 git rsync openssh-client tree wget curl ca-certificates \
                 file unzip xz-utils patch gettext locales \
@@ -1031,7 +1038,16 @@ run_all() {
     report
 }
 
+# With "curl ... | bash" the script arrives on stdin, so every prompt (sudo
+# password, dpkg dialog) would consume script text and hang. Refuse that;
+# README shows the download-then-run form.
+require_tty_stdin() {
+    [[ -t 0 || "${BOOTSTRAP_NONINTERACTIVE:-0}" == "1" ]] && return
+    die "stdin is not a terminal. Run: curl -fsSLo bootstrap.sh <url> && bash bootstrap.sh"
+}
+
 main() {
+    require_tty_stdin
     detect_platform
     detect_sudo
     WORK_DIR="$(mktemp -d)"
