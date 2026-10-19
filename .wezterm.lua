@@ -267,7 +267,7 @@ if tmux_keys_enabled then
               title = 'Select default shell',
               fuzzy = false,
               alphabet = '1234567890ctieobsgjduaxphlmwfvüäöyz,.k',
-              choices = choices,
+              choices = launcher_choices,
             },
             pane)
         end)
