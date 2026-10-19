@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+#
+# kb - switch the X keyboard layout.
+#
+# Usage: kb            interactive menu
+#        kb us|de|bone2
+#
+set -euo pipefail
+
+readonly LAYOUTS=(us de bone2)
+readonly XMODMAP_FILE="$HOME/.Xmodmap"
+
+die() { printf 'kb: %s\n' "$*" >&2; exit 1; }
+
+# ~/.xprofile sets this; a plain `setxkbmap <layout>` call would clear it.
+readonly XKB_OPTIONS="terminate:ctrl_alt_bksp"
+
+apply() {
+    case "$1" in
+        us)    setxkbmap -layout us -option "$XKB_OPTIONS" ;;
+        de)    setxkbmap -layout de -option "$XKB_OPTIONS" ;;
+        # bone2 is the de layout with the Neo-derived levels from ~/.Xmodmap.
+        bone2) setxkbmap -layout de -option "$XKB_OPTIONS" && xmodmap "$XMODMAP_FILE" ;;
+        *)     die "unknown layout: $1 (one of: ${LAYOUTS[*]})" ;;
+    esac
+    echo "keyboard layout: $1"
+}
+
+# Menu on stderr so the chosen name is the only thing on stdout.
+choose() {
+    local i
+    for i in "${!LAYOUTS[@]}"; do
+        printf '  %d) %s\n' "$((i + 1))" "${LAYOUTS[$i]}" >&2
+    done
+    local reply
+    read -r -p "layout [1-${#LAYOUTS[@]}]: " reply
+    [[ "$reply" =~ ^[0-9]+$ && "$reply" -ge 1 && "$reply" -le "${#LAYOUTS[@]}" ]] || die "invalid choice: $reply"
+    echo "${LAYOUTS[$((reply - 1))]}"
+}
+
+main() {
+    [[ -n "${DISPLAY:-}" ]] || die "no X display"
+    if [[ $# -ge 1 ]]; then
+        apply "$1"
+    else
+        apply "$(choose)"
+    fi
+}
+
+main "$@"

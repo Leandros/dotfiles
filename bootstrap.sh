@@ -20,7 +20,8 @@
 #   BOOTSTRAP_DOTFILES_REPO=<url>    dotfiles source (default: GitHub)
 #   BOOTSTRAP_DOTFILES_REF=<branch>  dotfiles branch (default: master)
 #   BOOTSTRAP_NONINTERACTIVE=1       allow a non-tty stdin (CI, tests)
-#   BOOTSTRAP_XORG=1                 also set up an Xorg/i3 desktop (Debian, Ubuntu)
+#   BOOTSTRAP_XORG=1                 also set up an Xorg/i3 desktop (Debian, Ubuntu, Fedora, RHEL 9)
+#   BOOTSTRAP_DPI_SCALE=1|1.5|1.75|2 display scale for the desktop; prompted when unset
 #
 set -euo pipefail
 
@@ -121,6 +122,7 @@ GLIBC=""     # e.g. 2.26 (linux only)
 GO_ARCH=""   # amd64 | arm64
 RUST_TARGET_LINUX_MUSL=""
 RUST_TARGET_DARWIN=""
+DPI_SCALE=""      # chosen Xorg display scale (xorg step only)
 
 # =============================================================================
 # Helpers
@@ -998,12 +1000,55 @@ install_wezterm() {
     esac
 }
 
+# Xft.dpi for the chosen scale, relative to the X default of 96.
+readonly BASE_DPI=96
+readonly DPI_SCALES=(1 1.5 1.75 2)
+
+choose_dpi_scale() {
+    local scale="${BOOTSTRAP_DPI_SCALE:-}"
+    if [[ -z "$scale" ]]; then
+        local i
+        echo "Display scale for the Xorg desktop:" >&2
+        for i in "${!DPI_SCALES[@]}"; do
+            printf '  %d) %sx (%s dpi)\n' "$((i + 1))" "${DPI_SCALES[$i]}" \
+                "$(awk "BEGIN { print $BASE_DPI * ${DPI_SCALES[$i]} }")" >&2
+        done
+        local reply
+        read -r -p "scale [1-${#DPI_SCALES[@]}]: " reply
+        [[ "$reply" =~ ^[0-9]+$ && "$reply" -ge 1 && "$reply" -le "${#DPI_SCALES[@]}" ]] \
+            || die "invalid scale choice: $reply"
+        scale="${DPI_SCALES[$((reply - 1))]}"
+    fi
+    [[ " ${DPI_SCALES[*]} " == *" $scale "* ]] || die "unsupported DPI scale: $scale (one of: ${DPI_SCALES[*]})"
+    echo "$scale"
+}
+
+# ~/.Xresources is rendered from the repo template; the DPI is machine specific.
+write_xresources() {
+    local scale="$1" dpi tmp="$WORK_DIR/Xresources"
+    dpi="$(awk "BEGIN { print $BASE_DPI * $scale }")"
+    sed -e "s|##XFT_DPI##|$dpi|g" "$DOTFILES_DIR/.Xresources" > "$tmp"
+
+    if [[ -f "$HOME/.Xresources" ]] && cmp -s "$tmp" "$HOME/.Xresources"; then
+        return
+    fi
+    if [[ -e "$HOME/.Xresources" && ! -L "$HOME/.Xresources" ]]; then
+        mkdir -p "$BACKUP_DIR"
+        mv "$HOME/.Xresources" "$BACKUP_DIR/.Xresources"
+        log "backed up $HOME/.Xresources"
+    fi
+    rm -f "$HOME/.Xresources"
+    cp "$tmp" "$HOME/.Xresources"
+    log "Xft.dpi set to $dpi (${scale}x)"
+}
+
 link_xorg_dotfiles() {
     local d="$DOTFILES_DIR"
     link "$d/.wezterm.lua" "$HOME/.wezterm.lua"
+    # Layout switcher: `kb` (us, de, bone2); ~/bin is on PATH in .zshrc.
+    link "$d/bin/kb" "$HOME/bin/kb"
     link "$d/.xinitrc" "$HOME/.xinitrc"
     link "$d/.xprofile" "$HOME/.xprofile"
-    link "$d/.Xresources" "$HOME/.Xresources"
     link "$d/.Xmodmap" "$HOME/.Xmodmap"
     link "$d/.xbindkeysrc" "$HOME/.xbindkeysrc"
     link "$d/.backlight.sh" "$HOME/.backlight.sh"
@@ -1022,6 +1067,7 @@ setup_xorg() {
     install_xorg_packages
     install_wezterm
     link_xorg_dotfiles
+    write_xresources "$DPI_SCALE"
 }
 
 write_zshrc() {
@@ -1199,6 +1245,10 @@ main() {
     require_tty_stdin
     detect_platform
     detect_sudo
+    # Ask up front so the run does not stall on a prompt after minutes of installs.
+    if xorg_requested && xorg_supported; then
+        DPI_SCALE="$(choose_dpi_scale)"
+    fi
     WORK_DIR="$(mktemp -d)"
     export PATH="$PREFIX/bin:$PATH"
     log "platform: $DISTRO $ARCH${GLIBC:+ glibc $GLIBC}"

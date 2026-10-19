@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# Xft.dpi and font settings; i3 (pango) and wezterm read them from here.
+[ -f ~/.Xresources ] && xrdb -merge ~/.Xresources
+
 # Disable bell
 xset -b
 

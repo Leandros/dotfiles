@@ -108,7 +108,19 @@ esac
 if [[ $xorg_expected -eq 1 ]]; then
     check_link "$HOME/.xinitrc" "$D/.xinitrc"
     check_link "$HOME/.xprofile" "$D/.xprofile"
-    check_link "$HOME/.Xresources" "$D/.Xresources"
+    check_link "$HOME/bin/kb" "$D/bin/kb"
+    if [[ -f "$HOME/.Xresources" && ! -L "$HOME/.Xresources" ]] && grep -qE '^Xft\.dpi:\s+144$' "$HOME/.Xresources" \
+        && ! grep -q '##XFT_DPI##' "$HOME/.Xresources"; then
+        ok ".Xresources rendered with Xft.dpi 144 (1.5x)"
+    else
+        fail ".Xresources: $(grep -E '^Xft\.dpi' "$HOME/.Xresources" 2>/dev/null || echo missing)"
+    fi
+    kb_out="$(env -u DISPLAY "$HOME/bin/kb" 2>&1 || true)"
+    if [[ "$kb_out" == *"no X display"* ]]; then
+        ok "kb runs and refuses without DISPLAY"
+    else
+        fail "kb: $kb_out"
+    fi
     check_link "$HOME/.Xmodmap" "$D/.Xmodmap"
     check_link "$HOME/.xbindkeysrc" "$D/.xbindkeysrc"
     check_link "$HOME/.config/i3" "$D/.config/i3"

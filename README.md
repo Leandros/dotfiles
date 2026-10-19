@@ -28,7 +28,10 @@ at the top of `bootstrap.sh`.
 For an Xorg/i3 desktop (Debian, Ubuntu, Fedora, RHEL 9) run with `BOOTSTRAP_XORG=1`;
 this installs i3, i3status, dmenu, xbindkeys, the wezterm nightly and the X utilities
 and links `.xinitrc`, `.xprofile`, `.Xresources`, `.Xmodmap`, `.xbindkeysrc`,
-`.wezterm.lua`, `.config/i3` and `.config/i3status`. Start with `startx`.
+`.wezterm.lua`, `.config/i3` and `.config/i3status`, plus `~/bin/kb` to switch
+the keyboard layout (`us`, `de`, `bone2`). The script asks for a display scale
+(1x, 1.5x, 1.75x, 2x) and renders `~/.Xresources` with the matching `Xft.dpi`;
+set `BOOTSTRAP_DPI_SCALE` to skip the prompt. Start with `startx`.
 
 Test in Docker: `test/bootstrap/run.sh [debian12|ubuntu2204|fedora44|rocky9|al2|al2023]`.
 

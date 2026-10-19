@@ -73,6 +73,7 @@ run_distro() {
         -e BOOTSTRAP_DOTFILES_REF=master \
         -e BOOTSTRAP_NONINTERACTIVE=1 \
         -e BOOTSTRAP_XORG=1 \
+        -e BOOTSTRAP_DPI_SCALE=1.5 \
         "$image" bash -c '
             set -euo pipefail
             # /src is owned by the host user; git refuses it otherwise.
