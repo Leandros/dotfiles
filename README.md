@@ -30,7 +30,7 @@ this installs i3, i3status, dmenu, xbindkeys, the wezterm nightly and the X util
 and links `.xinitrc`, `.xprofile`, `.Xresources`, `.Xmodmap`, `.xbindkeysrc`,
 `.wezterm.lua`, `.config/i3` and `.config/i3status`. Start with `startx`.
 
-Test in Docker: `test/bootstrap/run.sh [debian12|ubuntu2204|fedora42|rocky9|al2|al2023]`.
+Test in Docker: `test/bootstrap/run.sh [debian12|ubuntu2204|fedora44|rocky9|al2|al2023]`.
 
 
 ### Quick Init on ephemeral Linux machines (bash + vim only)
