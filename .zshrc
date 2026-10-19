@@ -249,8 +249,6 @@ export ZSH_AUTOSUGGEST_COMPLETION_IGNORE="z *"
 plugins=(git direnv git-prompt zsh-autosuggestions fast-syntax-highlighting)
 source $ZSH/oh-my-zsh.sh
 
-# Man pages config
-less_termcap[md]="${fg_bold[blue]}"
 
 # Whole-line copies end with a newline; pasted literally it becomes an empty
 # second line and the cursor sits at its start. Drop trailing newlines.
@@ -597,6 +595,18 @@ up() {
 # GNU manpages for programs that are GNU ones, and fallback to OSX manpages
 # otherwise oh, and colorized
 alias gnuman='_() { echo $1; man -M $(brew --prefix)/opt/coreutils/libexec/gnuman $1 1>/dev/null 2>&1;  if [ "$?" -eq 0  ]; then man -M $(brew --prefix)/opt/coreutils/libexec/gnuman $1; else man $1; fi  }; _'
+
+man() {
+    env \
+        LESS_TERMCAP_mb=$(printf "\e[1;31m") \
+        LESS_TERMCAP_md=$(printf "\e[1;31m") \
+        LESS_TERMCAP_me=$(printf "\e[0m") \
+        LESS_TERMCAP_se=$(printf "\e[0m") \
+        LESS_TERMCAP_so=$(printf "\e[1;44;33m") \
+        LESS_TERMCAP_ue=$(printf "\e[0m") \
+        LESS_TERMCAP_us=$(printf "\e[1;32m") \
+            command man "$@"
+}
 
 # Convert man page to pdf
 man-pdf () {
