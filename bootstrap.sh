@@ -71,10 +71,12 @@ readonly PYTHON_VERSION="3.12"
 readonly PYNVIM_VERSION="0.6.0"
 # https://github.com/libevent/libevent/releases
 readonly LIBEVENT_VERSION="2.1.12-stable"
-# https://github.com/wezterm/wezterm/releases/tag/nightly (Xorg desktop only)
-# Rolling tag: the asset is replaced on every build, so no version is pinned
-# here; the installed build is tracked by the version inside the .deb.
+# Xorg desktop only. Rolling nightly, so no version is pinned; the installed
+# build is tracked by the package version.
+# Debian/Ubuntu: https://github.com/wezterm/wezterm/releases/tag/nightly
 readonly WEZTERM_RELEASE="nightly"
+# Fedora/RHEL: https://copr.fedorainfracloud.org/coprs/wezfurlong/wezterm-nightly/
+readonly WEZTERM_COPR="wezfurlong/wezterm-nightly"
 # https://github.com/rust-lang/rust/releases
 readonly RUST_TOOLCHAIN="1.99.0"
 # https://github.com/tree-sitter/tree-sitter/releases
@@ -946,53 +948,54 @@ install_xorg_packages() {
     esac
 }
 
-# wezterm nightly assets: one .deb for Debian 12 and Ubuntu 22.04 (they run
-# on newer releases of the same family since glibc only grows); for rpm
-# distros a meta package plus the three split packages it requires, built for
-# the newest Fedora available and for EL9.
-readonly WEZTERM_RPM_FEDORA="fedora41"
-readonly WEZTERM_RPM_RHEL="centos9"
-readonly WEZTERM_RPM_PARTS="wezterm wezterm-common wezterm-gui wezterm-mux-server"
-
-# Prints the asset file names, one per line.
-wezterm_assets() {
-    local arch_suffix="" rpm_dist part
+# One nightly .deb serves Debian 12 and Ubuntu 22.04 and newer releases of
+# the same family, since glibc only grows.
+wezterm_deb_asset() {
+    local arch_suffix=""
     [[ "$ARCH" == "aarch64" ]] && arch_suffix=".arm64"
     case "$DISTRO" in
-        debian) echo "wezterm-$WEZTERM_RELEASE.Debian12$arch_suffix.deb"; return ;;
-        ubuntu) echo "wezterm-$WEZTERM_RELEASE.Ubuntu22.04$arch_suffix.deb"; return ;;
-        fedora) rpm_dist="$WEZTERM_RPM_FEDORA" ;;
-        rhel)   rpm_dist="$WEZTERM_RPM_RHEL" ;;
-        *)      die "wezterm: no build for $DISTRO" ;;
+        debian) echo "wezterm-$WEZTERM_RELEASE.Debian12$arch_suffix.deb" ;;
+        ubuntu) echo "wezterm-$WEZTERM_RELEASE.Ubuntu22.04$arch_suffix.deb" ;;
+        *)      die "wezterm: no .deb for $DISTRO" ;;
     esac
-    for part in $WEZTERM_RPM_PARTS; do
-        echo "$part-$WEZTERM_RELEASE-$rpm_dist.rpm"
-    done
+}
+
+install_wezterm_deb() {
+    local asset pkg version
+    asset="$(wezterm_deb_asset)"
+    pkg="$WORK_DIR/$asset"
+    fetch "$GITHUB/wezterm/wezterm/releases/download/$WEZTERM_RELEASE/$asset" "$pkg"
+    version="$(dpkg-deb -f "$pkg" Version)"
+    is_current wezterm "$version" "/usr/bin/wezterm" && return
+
+    # apt resolves the file's dependencies; dpkg -i would not.
+    $SUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
+        -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold --allow-downgrades "$pkg"
+    mark_current wezterm "$version"
+}
+
+# Fedora resolves its copr chroot itself. RHEL clones report their own name
+# (rocky, almalinux) and must be told the rhel-<major> chroot explicitly.
+install_wezterm_copr() {
+    local chroot=()
+    [[ "$DISTRO" == "rhel" ]] && chroot=("rhel-$DISTRO_MAJOR-$ARCH")
+
+    $SUDO dnf install -y -q dnf-plugins-core
+    quiet $SUDO dnf copr enable -y "$WEZTERM_COPR" "${chroot[@]+"${chroot[@]}"}"
+    # The copr tracks upstream; dnf upgrades in place when a newer build exists.
+    quiet $SUDO dnf install -y -q --allowerasing wezterm
+    quiet $SUDO dnf upgrade -y -q --allowerasing wezterm
+
+    # The copr build reports the rpm version verbatim (underscores).
+    mark_current wezterm "$(rpm -q --qf '%{VERSION}' wezterm)"
 }
 
 install_wezterm() {
-    local asset pkgs=() version
-    for asset in $(wezterm_assets); do
-        fetch "$GITHUB/wezterm/wezterm/releases/download/$WEZTERM_RELEASE/$asset" "$WORK_DIR/$asset"
-        pkgs+=("$WORK_DIR/$asset")
-    done
-
-    if [[ "${pkgs[0]}" == *.deb ]]; then
-        version="$(dpkg-deb -f "${pkgs[0]}" Version)"
-    else
-        # rpm forbids dashes in versions; wezterm --version prints them.
-        version="$(rpm -qp --qf '%{VERSION}' "${pkgs[0]}" | tr '_' '-')"
-    fi
-    is_current wezterm "$version" "/usr/bin/wezterm" && return
-
-    # The package managers resolve the files' dependencies; dpkg/rpm would not.
-    if [[ "${pkgs[0]}" == *.deb ]]; then
-        $SUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
-            -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold --allow-downgrades "${pkgs[@]}"
-    else
-        $SUDO dnf install -y -q --allowerasing "${pkgs[@]}"
-    fi
-    mark_current wezterm "$version"
+    case "$DISTRO" in
+        debian|ubuntu) install_wezterm_deb ;;
+        fedora|rhel)   install_wezterm_copr ;;
+        *)             die "wezterm: no build for $DISTRO" ;;
+    esac
 }
 
 link_xorg_dotfiles() {

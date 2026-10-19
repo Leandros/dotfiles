@@ -5,7 +5,7 @@
 #
 # Usage:
 #   test/bootstrap/run.sh                 all distros
-#   test/bootstrap/run.sh al2 debian12    subset (debian12 ubuntu2204 fedora42 rocky9 al2 al2023)
+#   test/bootstrap/run.sh al2 debian12    subset (debian12 ubuntu2204 fedora44 rocky9 al2 al2023)
 #
 # The working tree (including uncommitted changes) is snapshotted into a
 # temporary git repository that bootstrap.sh clones from, so the test covers
@@ -17,14 +17,14 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "$HERE/../.." && pwd)"
 readonly HERE REPO
 readonly LOG_DIR="$HERE/logs"
-readonly ALL_DISTROS="debian12 ubuntu2204 fedora42 rocky9 al2 al2023"
+readonly ALL_DISTROS="debian12 ubuntu2204 fedora44 rocky9 al2 al2023"
 readonly IMAGE_PREFIX="dotfiles-bootstrap"
 
 base_image() {
     case "$1" in
         debian12)   echo "debian:12" ;;
         ubuntu2204) echo "ubuntu:22.04" ;;
-        fedora42)   echo "fedora:42" ;;
+        fedora44)   echo "fedora:44" ;;
         rocky9)     echo "rockylinux:9" ;;
         al2)        echo "amazonlinux:2" ;;
         al2023)     echo "amazonlinux:2023" ;;
@@ -37,7 +37,7 @@ pkg_cmd() {
     case "$1" in
         debian12|ubuntu2204) echo "apt-get update -q && apt-get install -y -q --no-install-recommends sudo && rm -rf /var/lib/apt/lists/*" ;;
         al2)                 echo "yum install -y -q sudo shadow-utils && yum clean all" ;;
-        al2023|fedora42|rocky9) echo "dnf install -y -q sudo shadow-utils && dnf clean all" ;;
+        al2023|fedora44|rocky9) echo "dnf install -y -q sudo shadow-utils && dnf clean all" ;;
     esac
 }
 
