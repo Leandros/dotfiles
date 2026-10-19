@@ -95,7 +95,17 @@ check_link "$HOME/.tmux/custom" "$D/.tmux/custom"
 check_link "$HOME/.config/yazi" "$D/.config/yazi"
 check_link "$HOME/.config/lazygit/config.yml" "$D/AppData/Roaming/lazygit/config.yml"
 
-if grep -qE '^ID=(debian|ubuntu)$' /etc/os-release; then
+# Xorg checks: distros where bootstrap installs the desktop (RHEL only up to 9).
+xorg_expected=0
+# shellcheck disable=SC1091
+os_id="$(. /etc/os-release && echo "$ID")"
+# shellcheck disable=SC1091
+os_major="$(. /etc/os-release && echo "${VERSION_ID%%.*}")"
+case "$os_id" in
+    debian|ubuntu|fedora) xorg_expected=1 ;;
+    rocky|almalinux|centos|rhel) [[ "$os_major" -le 9 ]] && xorg_expected=1 ;;
+esac
+if [[ $xorg_expected -eq 1 ]]; then
     check_link "$HOME/.xinitrc" "$D/.xinitrc"
     check_link "$HOME/.xprofile" "$D/.xprofile"
     check_link "$HOME/.Xresources" "$D/.Xresources"
@@ -111,9 +121,13 @@ if grep -qE '^ID=(debian|ubuntu)$' /etc/os-release; then
     else
         fail "wezterm stamp not a nightly build: '$wezterm_stamp'"
     fi
-    for bin in i3 i3status dmenu xbindkeys xsetroot xset setxkbmap xmodmap amixer brightnessctl startx; do
+    for bin in i3 i3status dmenu xsetroot xset setxkbmap xmodmap amixer brightnessctl startx; do
         if command -v "$bin" >/dev/null; then ok "xorg bin $bin"; else fail "xorg bin missing: $bin"; fi
     done
+    # Not packaged for EL9.
+    if grep -qE '^ID=(debian|ubuntu|fedora)$' /etc/os-release; then
+        if command -v xbindkeys >/dev/null; then ok "xorg bin xbindkeys"; else fail "xorg bin missing: xbindkeys"; fi
+    fi
     # i3 validates its config without a display.
     if i3 -C -c "$HOME/.config/i3/config" >/tmp/i3.log 2>&1; then
         ok "i3 config valid"

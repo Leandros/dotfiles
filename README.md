@@ -10,7 +10,8 @@ All fonts are patched to work with powerline / airline.
 
 ### Bootstrap a new machine
 
-Debian 12+, Ubuntu 22.04+, Amazon Linux 2 / 2023 (x86_64, aarch64), macOS (Apple Silicon):
+Debian 12+, Ubuntu 22.04+, Fedora 41+, RHEL 9+ and clones (Rocky, Alma,
+CentOS Stream), Amazon Linux 2 / 2023 (x86_64, aarch64), macOS (Apple Silicon):
 
 ```
 curl -fsSLo bootstrap.sh "https://raw.githubusercontent.com/Leandros/dotfiles/refs/heads/master/bootstrap.sh"
@@ -24,12 +25,12 @@ Installs pinned tool versions to `/usr/local`, clones this repository to
 `~/.dotfiles`, and symlinks the configs. Safe to re-run; versions are pinned
 at the top of `bootstrap.sh`.
 
-For an Xorg/i3 desktop (Debian, Ubuntu only) run with `BOOTSTRAP_XORG=1`;
+For an Xorg/i3 desktop (Debian, Ubuntu, Fedora, RHEL 9) run with `BOOTSTRAP_XORG=1`;
 this installs i3, i3status, dmenu, xbindkeys, the wezterm nightly and the X utilities
 and links `.xinitrc`, `.xprofile`, `.Xresources`, `.Xmodmap`, `.xbindkeysrc`,
 `.wezterm.lua`, `.config/i3` and `.config/i3status`. Start with `startx`.
 
-Test in Docker: `test/bootstrap/run.sh [debian12|ubuntu2204|al2|al2023]`.
+Test in Docker: `test/bootstrap/run.sh [debian12|ubuntu2204|fedora42|rocky9|al2|al2023]`.
 
 
 ### Quick Init on ephemeral Linux machines (bash + vim only)

@@ -2,7 +2,8 @@
 #
 # bootstrap.sh - install Arvid's environment on a fresh machine.
 #
-# Supported: Debian 12+, Ubuntu 22.04+, Amazon Linux 2, Amazon Linux 2023
+# Supported: Debian 12+, Ubuntu 22.04+, Fedora 41+, RHEL 9+ and clones
+#            (Rocky, Alma, CentOS Stream), Amazon Linux 2, Amazon Linux 2023
 #            (x86_64 and aarch64), macOS on Apple Silicon.
 #
 # Usage:
@@ -111,7 +112,8 @@ readonly USER_NAME="${USER:-$(id -un)}"
 WORK_DIR=""
 SUDO=""
 OS=""        # linux | macos
-DISTRO=""    # debian | ubuntu | amzn2 | amzn2023 | macos
+DISTRO=""    # debian | ubuntu | fedora | rhel | amzn2 | amzn2023 | macos
+DISTRO_MAJOR=""  # major version number (linux only)
 ARCH=""      # x86_64 | aarch64
 GLIBC=""     # e.g. 2.26 (linux only)
 GO_ARCH=""   # amd64 | arm64
@@ -309,14 +311,19 @@ detect_platform() {
     fi
 
     [[ -r /etc/os-release ]] || die "/etc/os-release missing"
-    local id version_id
+    local id id_like version_id
     # shellcheck disable=SC1091
     id="$(. /etc/os-release && echo "$ID")"
     # shellcheck disable=SC1091
+    id_like="$(. /etc/os-release && echo "${ID_LIKE:-}")"
+    # shellcheck disable=SC1091
     version_id="$(. /etc/os-release && echo "${VERSION_ID:-}")"
+    DISTRO_MAJOR="${version_id%%.*}"
     case "$id" in
         debian) DISTRO="debian" ;;
         ubuntu) DISTRO="ubuntu" ;;
+        fedora) DISTRO="fedora" ;;
+        rhel|centos|rocky|almalinux) DISTRO="rhel" ;;
         amzn)
             case "$version_id" in
                 2)    DISTRO="amzn2" ;;
@@ -324,7 +331,14 @@ detect_platform() {
                 *)    die "unsupported Amazon Linux: $version_id" ;;
             esac
             ;;
-        *) die "unsupported distro: $id" ;;
+        *)
+            # Other RHEL rebuilds (Oracle, Alibaba) declare their lineage here.
+            if [[ " $id_like " == *" rhel "* ]]; then
+                DISTRO="rhel"
+            else
+                die "unsupported distro: $id"
+            fi
+            ;;
     esac
 
     GLIBC="$(getconf GNU_LIBC_VERSION | awk '{print $2}')"
@@ -364,7 +378,7 @@ install_system_packages() {
                 file unzip xz tar gzip patch gettext gettext-devel which \
                 ncurses-devel readline-devel
             ;;
-        amzn2023)
+        amzn2023|fedora|rhel)
             # curl-minimal is preinstalled and conflicts with curl.
             $SUDO dnf install -y -q \
                 gcc gcc-c++ make binutils autoconf automake pkgconf-pkg-config cmake bison \
@@ -887,50 +901,97 @@ link_dotfiles() {
 # =============================================================================
 # Xorg / i3 desktop (opt-in)
 # =============================================================================
-readonly XORG_DISTROS=" debian ubuntu "
+# Fedora has everything. RHEL 9 gets i3 and friends from EPEL (xbindkeys is
+# missing there); RHEL 10 ships no Xorg server or i3 at all.
+readonly XORG_DISTROS=" debian ubuntu fedora rhel "
+readonly RHEL_XORG_MAX_MAJOR=9
 
 xorg_requested() {
     [[ "${BOOTSTRAP_XORG:-0}" == "1" ]]
 }
 
 xorg_supported() {
-    [[ "$XORG_DISTROS" == *" $DISTRO "* ]]
+    [[ "$XORG_DISTROS" == *" $DISTRO "* ]] || return 1
+    if [[ "$DISTRO" == "rhel" && "$DISTRO_MAJOR" -gt "$RHEL_XORG_MAX_MAJOR" ]]; then
+        return 1
+    fi
 }
 
 # Tools referenced by .xprofile, .xbindkeysrc and the i3 config. Versions
 # matter little here, so the distro repositories are fine.
 install_xorg_packages() {
-    $SUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
-        -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold \
-        xorg xinit x11-xserver-utils xbindkeys \
-        i3 i3status suckless-tools \
-        alsa-utils brightnessctl
-}
-
-# wezterm ships .deb files for Debian 12 and Ubuntu 22.04; both run on newer
-# releases of the same family since glibc only grows.
-wezterm_deb_suffix() {
     case "$DISTRO" in
-        debian) echo "Debian12" ;;
-        ubuntu) echo "Ubuntu22.04" ;;
-        *)      die "wezterm: no build for $DISTRO" ;;
+        debian|ubuntu)
+            $SUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
+                -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold \
+                xorg xinit x11-xserver-utils xbindkeys \
+                i3 i3status suckless-tools \
+                alsa-utils brightnessctl
+            ;;
+        fedora)
+            $SUDO dnf install -y -q \
+                xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap xbindkeys \
+                i3 i3status dmenu \
+                alsa-utils brightnessctl
+            ;;
+        rhel)
+            $SUDO dnf install -y -q epel-release
+            $SUDO dnf config-manager --set-enabled crb
+            # xbindkeys is not packaged for EL9; .xprofile tolerates its absence.
+            $SUDO dnf install -y -q \
+                xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap \
+                i3 i3status dmenu \
+                alsa-utils brightnessctl
+            ;;
     esac
 }
 
-install_wezterm() {
-    local suffix arch_suffix=""
-    suffix="$(wezterm_deb_suffix)"
-    [[ "$ARCH" == "aarch64" ]] && arch_suffix=".arm64"
-    local deb="$WORK_DIR/wezterm.deb"
-    fetch "$GITHUB/wezterm/wezterm/releases/download/$WEZTERM_RELEASE/wezterm-$WEZTERM_RELEASE.$suffix$arch_suffix.deb" "$deb"
+# wezterm nightly assets: one .deb for Debian 12 and Ubuntu 22.04 (they run
+# on newer releases of the same family since glibc only grows); for rpm
+# distros a meta package plus the three split packages it requires, built for
+# the newest Fedora available and for EL9.
+readonly WEZTERM_RPM_FEDORA="fedora41"
+readonly WEZTERM_RPM_RHEL="centos9"
+readonly WEZTERM_RPM_PARTS="wezterm wezterm-common wezterm-gui wezterm-mux-server"
 
-    local version
-    version="$(dpkg-deb -f "$deb" Version)"
+# Prints the asset file names, one per line.
+wezterm_assets() {
+    local arch_suffix="" rpm_dist part
+    [[ "$ARCH" == "aarch64" ]] && arch_suffix=".arm64"
+    case "$DISTRO" in
+        debian) echo "wezterm-$WEZTERM_RELEASE.Debian12$arch_suffix.deb"; return ;;
+        ubuntu) echo "wezterm-$WEZTERM_RELEASE.Ubuntu22.04$arch_suffix.deb"; return ;;
+        fedora) rpm_dist="$WEZTERM_RPM_FEDORA" ;;
+        rhel)   rpm_dist="$WEZTERM_RPM_RHEL" ;;
+        *)      die "wezterm: no build for $DISTRO" ;;
+    esac
+    for part in $WEZTERM_RPM_PARTS; do
+        echo "$part-$WEZTERM_RELEASE-$rpm_dist.rpm"
+    done
+}
+
+install_wezterm() {
+    local asset pkgs=() version
+    for asset in $(wezterm_assets); do
+        fetch "$GITHUB/wezterm/wezterm/releases/download/$WEZTERM_RELEASE/$asset" "$WORK_DIR/$asset"
+        pkgs+=("$WORK_DIR/$asset")
+    done
+
+    if [[ "${pkgs[0]}" == *.deb ]]; then
+        version="$(dpkg-deb -f "${pkgs[0]}" Version)"
+    else
+        # rpm forbids dashes in versions; wezterm --version prints them.
+        version="$(rpm -qp --qf '%{VERSION}' "${pkgs[0]}" | tr '_' '-')"
+    fi
     is_current wezterm "$version" "/usr/bin/wezterm" && return
 
-    # apt resolves the .deb's dependencies; dpkg -i would not.
-    $SUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
-        -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold --allow-downgrades "$deb"
+    # The package managers resolve the files' dependencies; dpkg/rpm would not.
+    if [[ "${pkgs[0]}" == *.deb ]]; then
+        $SUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
+            -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold --allow-downgrades "${pkgs[@]}"
+    else
+        $SUDO dnf install -y -q --allowerasing "${pkgs[@]}"
+    fi
     mark_current wezterm "$version"
 }
 
