@@ -19,6 +19,7 @@
 #   BOOTSTRAP_DOTFILES_REPO=<url>    dotfiles source (default: GitHub)
 #   BOOTSTRAP_DOTFILES_REF=<branch>  dotfiles branch (default: master)
 #   BOOTSTRAP_NONINTERACTIVE=1       allow a non-tty stdin (CI, tests)
+#   BOOTSTRAP_XORG=1                 also set up an Xorg/i3 desktop (Debian, Ubuntu)
 #
 set -euo pipefail
 
@@ -69,6 +70,10 @@ readonly PYTHON_VERSION="3.12"
 readonly PYNVIM_VERSION="0.6.0"
 # https://github.com/libevent/libevent/releases
 readonly LIBEVENT_VERSION="2.1.12-stable"
+# https://github.com/wezterm/wezterm/releases/tag/nightly (Xorg desktop only)
+# Rolling tag: the asset is replaced on every build, so no version is pinned
+# here; the installed build is tracked by the version inside the .deb.
+readonly WEZTERM_RELEASE="nightly"
 # https://github.com/rust-lang/rust/releases
 readonly RUST_TOOLCHAIN="1.99.0"
 # https://github.com/tree-sitter/tree-sitter/releases
@@ -879,6 +884,82 @@ link_dotfiles() {
     link "$d/AppData/Roaming/lazygit/config.yml" "$(lazygit_config_dir)/config.yml"
 }
 
+# =============================================================================
+# Xorg / i3 desktop (opt-in)
+# =============================================================================
+readonly XORG_DISTROS=" debian ubuntu "
+
+xorg_requested() {
+    [[ "${BOOTSTRAP_XORG:-0}" == "1" ]]
+}
+
+xorg_supported() {
+    [[ "$XORG_DISTROS" == *" $DISTRO "* ]]
+}
+
+# Tools referenced by .xprofile, .xbindkeysrc and the i3 config. Versions
+# matter little here, so the distro repositories are fine.
+install_xorg_packages() {
+    $SUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
+        -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold \
+        xorg xinit x11-xserver-utils xbindkeys \
+        i3 i3status suckless-tools \
+        alsa-utils brightnessctl
+}
+
+# wezterm ships .deb files for Debian 12 and Ubuntu 22.04; both run on newer
+# releases of the same family since glibc only grows.
+wezterm_deb_suffix() {
+    case "$DISTRO" in
+        debian) echo "Debian12" ;;
+        ubuntu) echo "Ubuntu22.04" ;;
+        *)      die "wezterm: no build for $DISTRO" ;;
+    esac
+}
+
+install_wezterm() {
+    local suffix arch_suffix=""
+    suffix="$(wezterm_deb_suffix)"
+    [[ "$ARCH" == "aarch64" ]] && arch_suffix=".arm64"
+    local deb="$WORK_DIR/wezterm.deb"
+    fetch "$GITHUB/wezterm/wezterm/releases/download/$WEZTERM_RELEASE/wezterm-$WEZTERM_RELEASE.$suffix$arch_suffix.deb" "$deb"
+
+    local version
+    version="$(dpkg-deb -f "$deb" Version)"
+    is_current wezterm "$version" "/usr/bin/wezterm" && return
+
+    # apt resolves the .deb's dependencies; dpkg -i would not.
+    $SUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
+        -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold --allow-downgrades "$deb"
+    mark_current wezterm "$version"
+}
+
+link_xorg_dotfiles() {
+    local d="$DOTFILES_DIR"
+    link "$d/.wezterm.lua" "$HOME/.wezterm.lua"
+    link "$d/.xinitrc" "$HOME/.xinitrc"
+    link "$d/.xprofile" "$HOME/.xprofile"
+    link "$d/.Xresources" "$HOME/.Xresources"
+    link "$d/.Xmodmap" "$HOME/.Xmodmap"
+    link "$d/.xbindkeysrc" "$HOME/.xbindkeysrc"
+    link "$d/.backlight.sh" "$HOME/.backlight.sh"
+    link "$d/.config/i3" "$HOME/.config/i3"
+    link "$d/.config/i3status" "$HOME/.config/i3status"
+}
+
+setup_xorg() {
+    if ! xorg_requested; then
+        return
+    fi
+    if ! xorg_supported; then
+        warn "xorg: no i3 packages for $DISTRO, skipping"
+        return
+    fi
+    install_xorg_packages
+    install_wezterm
+    link_xorg_dotfiles
+}
+
 write_zshrc() {
     local tmp="$WORK_DIR/zshrc"
     sed -e "s|##NEWHOME##|$HOME|g" -e "s|##NEWUSER##|$USER_NAME|g" \
@@ -993,6 +1074,9 @@ report() {
         print_version nnn nnn -V
     fi
     print_version codelldb cat "$(codelldb_dir)/.bootstrap-version"
+    if xorg_requested && xorg_supported; then
+        print_version wezterm wezterm --version
+    fi
     if [[ -d "$BACKUP_DIR" ]]; then
         log "backups in $BACKUP_DIR"
     fi
@@ -1026,6 +1110,7 @@ run_all() {
     step nnn install_nnn
 
     step link link_dotfiles
+    step xorg setup_xorg
     step zshrc write_zshrc
     step ohmyzsh setup_ohmyzsh
     step shell set_login_shell

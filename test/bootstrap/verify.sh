@@ -95,6 +95,33 @@ check_link "$HOME/.tmux/custom" "$D/.tmux/custom"
 check_link "$HOME/.config/yazi" "$D/.config/yazi"
 check_link "$HOME/.config/lazygit/config.yml" "$D/AppData/Roaming/lazygit/config.yml"
 
+if grep -qE '^ID=(debian|ubuntu)$' /etc/os-release; then
+    check_link "$HOME/.xinitrc" "$D/.xinitrc"
+    check_link "$HOME/.xprofile" "$D/.xprofile"
+    check_link "$HOME/.Xresources" "$D/.Xresources"
+    check_link "$HOME/.Xmodmap" "$D/.Xmodmap"
+    check_link "$HOME/.xbindkeysrc" "$D/.xbindkeysrc"
+    check_link "$HOME/.config/i3" "$D/.config/i3"
+    check_link "$HOME/.config/i3status" "$D/.config/i3status"
+    check_link "$HOME/.wezterm.lua" "$D/.wezterm.lua"
+    wezterm_stamp="$(cat /usr/local/share/bootstrap/wezterm 2>/dev/null || true)"
+    check_version wezterm "wezterm $wezterm_stamp" wezterm --version
+    if [[ "$wezterm_stamp" == 2026* || "$wezterm_stamp" == 2027* ]]; then
+        ok "wezterm is a recent nightly ($wezterm_stamp)"
+    else
+        fail "wezterm stamp not a nightly build: '$wezterm_stamp'"
+    fi
+    for bin in i3 i3status dmenu xbindkeys xsetroot xset setxkbmap xmodmap amixer brightnessctl startx; do
+        if command -v "$bin" >/dev/null; then ok "xorg bin $bin"; else fail "xorg bin missing: $bin"; fi
+    done
+    # i3 validates its config without a display.
+    if i3 -C -c "$HOME/.config/i3/config" >/tmp/i3.log 2>&1; then
+        ok "i3 config valid"
+    else
+        fail "i3 config: $(head -n 2 /tmp/i3.log)"
+    fi
+fi
+
 check_pin "$HOME/.oh-my-zsh" "$OHMYZSH_REF"
 check_pin "$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions" "$ZSH_AUTOSUGGESTIONS_REF"
 check_pin "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting" "$ZSH_SYNTAX_HIGHLIGHTING_REF"
@@ -165,8 +192,15 @@ else
     fail "markdown injection parse: $(head -n 2 /tmp/ts.log)"
 fi
 
-nvim --headless -c 'checkhealth vim.provider' -c 'w! /tmp/health.txt' +qa >/dev/null 2>&1 || true
-python_section="$(awk '/Python 3 provider/{p=1} /Ruby provider/{p=0} p' /tmp/health.txt)"
+# checkhealth probes providers asynchronously; retry if the report came back empty.
+python_section=""
+for _ in 1 2 3; do
+    rm -f /tmp/health.txt
+    nvim --headless -c 'checkhealth vim.provider' -c 'w! /tmp/health.txt' +qa >/dev/null 2>&1 || true
+    python_section="$(awk '/Python 3 provider/{p=1} /Ruby provider/{p=0} p' /tmp/health.txt 2>/dev/null)"
+    [[ -n "$python_section" ]] && break
+    sleep 2
+done
 if [[ "$python_section" == *"OK"* && "$python_section" != *"ERROR"* ]]; then
     ok "nvim :checkhealth python3 provider"
 else
