@@ -121,6 +121,12 @@ elif [[ "Linux" == "`uname`" ]]; then
         rm -f -- "$tmp"
     }
 
+    function logout() {
+        echo "logging out in 5 s ... (ctrl-c to cancel)"
+        sleep 5
+        pkill -KILL -u $(whoami)
+    }
+
     # Linux specifics.
     export BROWSER="/usr/bin/google-chrome-stable"
     export PNPM_HOME="$HOME/.local/share/pnpm"
