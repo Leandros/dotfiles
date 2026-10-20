@@ -61,6 +61,8 @@ keycode  83 = KP_Period
 
 keycode   1 = Escape
 keycode  14 = Delete
+keycode  29 = Control
+keycode  56 = Alt
 keycode  97 = Control
 keycode 103 = Up
 keycode 105 = Left
@@ -83,10 +85,6 @@ alt keycode 105 = Decr_Console
 alt keycode 106 = Incr_Console
 alt keycode  99 = Control_backslash
 alt keycode  70 = Show_Registers
-
-keycode  29 = Alt
-
-keycode  56 = Control
 
 keycode  42 = Shift
 

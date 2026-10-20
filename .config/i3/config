@@ -42,7 +42,9 @@ client.urgent               $yellow $yellow $baseB3 $orange
 #
 # Please see http://i3wm.org/docs/userguide.html for a complete reference!
 
-set $mod Mod1
+# Win key; Alt is remapped to Ctrl by xremap (~/.config/xremap/config.yml),
+# which also turns Alt+digit into $mod+digit.
+set $mod Mod4
 
 # Font for window titles. Will also be used by the bar unless a different font
 # is used in the bar {} block below.

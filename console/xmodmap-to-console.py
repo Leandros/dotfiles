@@ -105,8 +105,9 @@ KEYPAD_KEYS = {
     96: "KP_Enter", 71: "KP_7", 72: "KP_8", 73: "KP_9", 75: "KP_4", 76: "KP_5", 77: "KP_6",
     79: "KP_1", 80: "KP_2", 81: "KP_3", 82: "KP_0", 83: "KP_Period",
 }
+# 29/56 are left Ctrl/Alt; xremap swaps them in X, the console keeps them plain.
 FIXED_KEYS = {
-    1: "Escape", 14: "Delete", 97: "Control", 103: "Up", 105: "Left", 106: "Right", 108: "Down",
+    1: "Escape", 14: "Delete", 29: "Control", 56: "Alt", 97: "Control", 103: "Up", 105: "Left", 106: "Right", 108: "Down",
     110: "Insert", 102: "Home", 104: "PageUp", 111: "Remove", 107: "End", 109: "PageDown",
     84: "Last_Console", 99: "VoidSymbol", 70: "Scroll_Lock", 101: "Break", 119: "Pause",
 }

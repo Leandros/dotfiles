@@ -78,6 +78,8 @@ readonly LIBEVENT_VERSION="2.1.12-stable"
 readonly WEZTERM_RELEASE="nightly"
 # Fedora/RHEL: https://copr.fedorainfracloud.org/coprs/wezfurlong/wezterm-nightly/
 readonly WEZTERM_COPR="wezfurlong/wezterm-nightly"
+# https://github.com/xremap/xremap/releases (Xorg desktop only)
+readonly XREMAP_VERSION="0.15.15"
 # https://github.com/rust-lang/rust/releases
 readonly RUST_TOOLCHAIN="1.99.0"
 # https://github.com/tree-sitter/tree-sitter/releases
@@ -993,6 +995,36 @@ install_wezterm_copr() {
     mark_current wezterm "$(rpm -q --qf '%{VERSION}' wezterm)"
 }
 
+# Key remapper below the keymap; the config swaps left Alt and Ctrl. Runs as
+# the user from ~/.xprofile, which needs read access to the event devices
+# and write access to uinput.
+readonly XREMAP_UDEV_RULE="/etc/udev/rules.d/99-xremap-uinput.rules"
+readonly XREMAP_INPUT_GROUP="input"
+
+install_xremap() {
+    if ! is_current xremap "$XREMAP_VERSION" "$PREFIX/bin/xremap"; then
+        local dir
+        dir="$(fetch_unpack "$GITHUB/xremap/xremap/releases/download/v$XREMAP_VERSION/xremap-linux-$ARCH-x11.zip")"
+        install_bin_from "$dir" xremap
+        mark_current xremap "$XREMAP_VERSION"
+    fi
+
+    local rule='KERNEL=="uinput", GROUP="input", TAG+="uaccess", MODE:="0660", OPTIONS+="static_node=uinput"'
+    if [[ "$(cat "$XREMAP_UDEV_RULE" 2>/dev/null)" != "$rule" ]]; then
+        $SUDO install -d /etc/udev/rules.d /etc/modules-load.d
+        echo "$rule" | $SUDO tee "$XREMAP_UDEV_RULE" >/dev/null
+        echo uinput | $SUDO tee /etc/modules-load.d/uinput.conf >/dev/null
+        # Best effort without a reboot; udev may be absent in containers.
+        $SUDO modprobe uinput 2>/dev/null || true
+        $SUDO udevadm control --reload-rules 2>/dev/null || true
+        $SUDO udevadm trigger 2>/dev/null || true
+    fi
+    if ! id -nG "$USER_NAME" | tr ' ' '\n' | grep -qx "$XREMAP_INPUT_GROUP"; then
+        $SUDO usermod -aG "$XREMAP_INPUT_GROUP" "$USER_NAME"
+        log "added $USER_NAME to group $XREMAP_INPUT_GROUP; log in again for it to apply"
+    fi
+}
+
 install_wezterm() {
     case "$DISTRO" in
         debian|ubuntu) install_wezterm_deb ;;
@@ -1056,6 +1088,7 @@ link_xorg_dotfiles() {
     link "$d/.xbindkeysrc" "$HOME/.xbindkeysrc"
     link "$d/.backlight.sh" "$HOME/.backlight.sh"
     link "$d/.config/i3" "$HOME/.config/i3"
+    link "$d/.config/xremap" "$HOME/.config/xremap"
     link "$d/.config/i3status" "$HOME/.config/i3status"
 }
 
@@ -1069,6 +1102,7 @@ setup_xorg() {
     fi
     install_xorg_packages
     install_wezterm
+    install_xremap
     link_xorg_dotfiles
     write_xresources "$DPI_SCALE"
 }

@@ -16,8 +16,10 @@ xset r rate 200 50
 # Kill X with Ctrl+Alt+Backspace
 setxkbmap -option terminate:ctrl_alt_bksp
 
-# This will use the built-in bone2 layout.
-# setxkbmap de bone
-
 # This will use our custom bone2 layout; kb also records it for the status bar.
 ~/bin/kb bone2 2>/dev/null || { setxkbmap de; xmodmap ~/.Xmodmap; }
+
+# Left modifier remap (Alt -> Ctrl, Ctrl -> Alt); needs the input group and
+# the uinput udev rule from bootstrap.sh. --watch follows new keyboards.
+pkill -x xremap 2>/dev/null
+xremap --watch ~/.config/xremap/config.yml >/dev/null 2>&1 &

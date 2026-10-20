@@ -110,6 +110,23 @@ if [[ $xorg_expected -eq 1 ]]; then
     check_link "$HOME/.xprofile" "$D/.xprofile"
     check_link "$HOME/bin/kb" "$D/bin/kb"
     check_link "$HOME/bin/i3status-kb" "$D/bin/i3status-kb"
+    check_link "$HOME/.config/xremap" "$D/.config/xremap"
+    if cmp -s "$D/xorg-conf/50-keyboard-repeat.conf" /etc/X11/xorg.conf.d/50-keyboard-repeat.conf; then
+        ok "xorg.conf.d keyboard repeat installed"
+    else
+        fail "xorg.conf.d/50-keyboard-repeat.conf missing or differs"
+    fi
+    check_version xremap "xremap $XREMAP_VERSION" xremap --version
+    if [[ -f /etc/udev/rules.d/99-xremap-uinput.rules ]] && grep -q uinput /etc/modules-load.d/uinput.conf 2>/dev/null; then
+        ok "xremap udev rule and uinput module config"
+    else
+        fail "xremap udev/uinput config missing"
+    fi
+    if id -nG "$USER" | tr ' ' '\n' | grep -qx input; then
+        ok "user in input group"
+    else
+        fail "user not in input group: $(id -nG "$USER")"
+    fi
     # Third line is the first status array; it must start with the kb block.
     status_line="$(timeout 5 "$HOME/bin/i3status-kb" </dev/null 2>/dev/null | sed -n 3p || true)"
     if [[ "$status_line" == '[{"name":"kb","full_text":"KB: '* ]]; then

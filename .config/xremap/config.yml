@@ -1,0 +1,28 @@
+# Left modifiers laid out as on macOS with Cmd and Ctrl swapped:
+#   Alt (next to Space)  -> Ctrl   terminal control keys, tmux prefix, nvim splits
+#   Ctrl (corner)        -> Alt
+#   Win (middle)         -> Super  i3 modifier ($mod Mod4)
+# Right-hand modifiers are untouched; right Alt stays the bone2 level key.
+# Started from ~/.xprofile. Applies below the keymap, so it holds for us, de
+# and bone2 alike.
+modmap:
+  - name: macOS-style left modifiers
+    remap:
+      Alt_L: Ctrl_L
+      Ctrl_L: Alt_L
+keymap:
+  # keymap sees the remapped keys, so Ctrl here is the physical Alt key.
+  # Alt+digit keeps switching i3 workspaces; Ctrl+digit is lost to applications.
+  # With Shift held the same rule yields Super+Shift+digit (move to workspace).
+  - name: Alt+digit switches the i3 workspace
+    remap:
+      Ctrl-1: Super-1
+      Ctrl-2: Super-2
+      Ctrl-3: Super-3
+      Ctrl-4: Super-4
+      Ctrl-5: Super-5
+      Ctrl-6: Super-6
+      Ctrl-7: Super-7
+      Ctrl-8: Super-8
+      Ctrl-9: Super-9
+      Ctrl-0: Super-0
