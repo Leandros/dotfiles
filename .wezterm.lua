@@ -51,7 +51,7 @@ config.command_palette_font_size = 11.0
 local ctrlkey
 local launch_menu = {}
 
-if wezterm.target_triple == 'x86_64-pc-windows-msvc' then
+if wezterm.target_triple:find('windows') then
   -- Use ctrl over SUPER (which is the WIN key) on Windows only.
   ctrlkey = 'CTRL'
   config.use_ime = false
@@ -118,6 +118,9 @@ if wezterm.target_triple == 'x86_64-pc-windows-msvc' then
 
   -- By default, launch a shell in WSL.
   -- config.default_domain = "WSL:Ubuntu"
+elseif wezterm.target_triple:find('linux') then
+  -- Super key on Linux used for i3.
+  ctrlkey = 'ALT'
 else
   ctrlkey = 'SUPER'
 end

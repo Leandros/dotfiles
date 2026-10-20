@@ -947,14 +947,14 @@ install_xorg_packages() {
                 -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold \
                 xorg xinit x11-xserver-utils xbindkeys \
                 i3 i3status suckless-tools \
-                alsa-utils brightnessctl \
-                kbd console-data
+                alsa-utils brightnessctl xclip \
+                kbd console-data console-setup
             ;;
         fedora)
             $SUDO dnf install -y -q \
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap xbindkeys \
                 i3 i3status dmenu \
-                alsa-utils brightnessctl kbd
+                alsa-utils brightnessctl xclip kbd terminus-fonts-console
             ;;
         rhel)
             $SUDO dnf install -y -q epel-release
@@ -963,7 +963,7 @@ install_xorg_packages() {
             $SUDO dnf install -y -q \
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap \
                 i3 i3status dmenu \
-                alsa-utils brightnessctl kbd
+                alsa-utils brightnessctl xclip kbd terminus-fonts-console
             ;;
     esac
 }

@@ -76,8 +76,8 @@ elif [[ "Linux" == "`uname`" ]]; then
         alias pbpaste='tmux save-buffer -'
         alias pbcopy='tmux load-buffer -w -'
     else
-        alias pbpaste='xclip -o'
-        alias pbcopy='xclip -i'
+        alias pbpaste='xclip -selection clipboard -o'
+        alias pbcopy='xclip -selection clipboard -i'
     fi
 
     # LOL! Free C-s

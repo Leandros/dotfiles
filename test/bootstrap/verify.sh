@@ -183,7 +183,7 @@ if [[ $xorg_expected -eq 1 ]]; then
     else
         fail "wezterm stamp not a nightly build: '$wezterm_stamp'"
     fi
-    for bin in i3 i3status dmenu xsetroot xset setxkbmap xmodmap amixer brightnessctl startx; do
+    for bin in i3 i3status dmenu xsetroot xset setxkbmap xmodmap amixer brightnessctl startx xclip; do
         if command -v "$bin" >/dev/null; then ok "xorg bin $bin"; else fail "xorg bin missing: $bin"; fi
     done
     # Not packaged for EL9.

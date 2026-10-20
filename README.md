@@ -14,9 +14,12 @@ Debian 12+, Ubuntu 22.04+, Fedora 41+, RHEL 9+ and clones (Rocky, Alma,
 CentOS Stream), Amazon Linux 2 / 2023 (x86_64, aarch64), macOS (Apple Silicon):
 
 ```
-curl -fsSLo bootstrap.sh "https://raw.githubusercontent.com/Leandros/dotfiles/refs/heads/master/bootstrap.sh"
-bash bootstrap.sh
+curl -fsSLo bootstrap.sh "https://raw.githubusercontent.com/Leandros/dotfiles/refs/heads/master/bootstrap.sh" && \
+    chmod +x ./bootstrap.sh && \
+    ./bootstrap.sh
 ```
+
+Set `BOOTSTRAP_XORG=1` to also bootstrap Xorg.
 
 Download first; piping into `bash` leaves prompts (sudo password, dpkg
 dialogs) reading from the script and the script refuses to run.

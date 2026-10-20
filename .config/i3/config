@@ -44,6 +44,8 @@ client.urgent               $yellow $yellow $baseB3 $orange
 
 # Win key; Alt is remapped to Ctrl by xremap (~/.config/xremap/config.yml),
 # which also turns Alt+digit into $mod+digit.
+# Mod1 = Alt
+# Mod4 = Win/Super
 set $mod Mod4
 
 # Font for window titles. Will also be used by the bar unless a different font
