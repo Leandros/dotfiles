@@ -451,17 +451,32 @@ clone_dotfiles() {
     # letting it block the update.
     reset_lazy_lock
 
-    local changes
+    # The clone must match the script that links its files, so local edits
+    # are stashed around the update rather than blocking it.
+    local changes stashed=0
     changes="$(git -C "$DOTFILES_DIR" status --porcelain)"
     if [[ -n "$changes" ]]; then
-        warn "dotfiles has local changes, not updating:"
+        log "dotfiles has local changes, stashing for the update:"
         printf '%s\n' "$changes" >&2
-        return
+        git -C "$DOTFILES_DIR" stash push -q -u -m "bootstrap $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        stashed=1
     fi
 
     git -C "$DOTFILES_DIR" fetch -q origin "$DOTFILES_REF"
     git -C "$DOTFILES_DIR" checkout -q "$DOTFILES_REF"
-    git -C "$DOTFILES_DIR" merge -q --ff-only "origin/$DOTFILES_REF"
+    git -C "$DOTFILES_DIR" merge -q --ff-only "origin/$DOTFILES_REF" \
+        || die "dotfiles: $DOTFILES_DIR has commits not on origin/$DOTFILES_REF; rebase or push them first"
+
+    (( stashed )) || return 0
+    if git -C "$DOTFILES_DIR" stash pop -q; then
+        log "dotfiles: local changes restored"
+        return
+    fi
+    # A failed pop keeps the stash; drop the half-applied merge so the links
+    # point at a consistent tree.
+    git -C "$DOTFILES_DIR" reset -q --hard
+    git -C "$DOTFILES_DIR" clean -fdq
+    warn "dotfiles: local changes conflict with the update; kept in 'git -C $DOTFILES_DIR stash list'"
 }
 
 # =============================================================================
