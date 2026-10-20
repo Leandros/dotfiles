@@ -17,7 +17,7 @@ xbindkeys -p
 setxkbmap -option terminate:ctrl_alt_bksp
 
 # This will use our custom bone2 layout; kb also records it for the status bar.
-~/bin/kb bone2 2>/dev/null || { setxkbmap de; xmodmap ~/.Xmodmap; }
+~/bin/kb bone2 </dev/null 2>/dev/null || { setxkbmap de; xmodmap ~/.Xmodmap; }
 
 # Left modifier remap (Alt -> Ctrl, Ctrl -> Alt); needs the input group and
 # the uinput udev rule from bootstrap.sh. --watch follows new keyboards.

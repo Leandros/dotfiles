@@ -10,26 +10,49 @@
 set -euo pipefail
 
 readonly LAYOUTS=(us de bone2)
-# Remembered per session so the status bar can show it; X cannot tell de
-# from bone2 (same xkb layout plus an xmodmap).
+# Remembered per session so the status bar does not query X on every tick.
 readonly STATE_FILE="${XDG_RUNTIME_DIR:-$HOME/.cache}/kb-layout"
 readonly XMODMAP_FILE="$HOME/.Xmodmap"
 # Console keymap for bone2, generated from ~/.Xmodmap; lives next to this script.
 DOTFILES_DIR="$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)"
 readonly DOTFILES_DIR
 readonly BONE2_CONSOLE_MAP="$DOTFILES_DIR/console/bone2.map"
+# xmodmap sends one request per key and every client reloads its keymap each
+# time, which takes seconds on a busy desktop. The resulting keymap is dumped
+# once and reloaded in a single xkbcomp request afterwards.
+readonly XKB_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/kb"
 
 die() { printf 'kb: %s\n' "$*" >&2; exit 1; }
 
 # ~/.xprofile sets this; a plain `setxkbmap <layout>` call would clear it.
 readonly XKB_OPTIONS="terminate:ctrl_alt_bksp"
 
+# Compiled bone2 keymap, keyed by the xmodmap content so edits invalidate it.
+bone2_xkb_cache() {
+    local digest
+    digest="$(sha256sum "$XMODMAP_FILE" | cut -c1-16)"
+    echo "$XKB_CACHE_DIR/bone2-$digest.xkb"
+}
+
+# bone2 is the de layout with the Neo-derived levels from ~/.Xmodmap.
+apply_x_bone2() {
+    local cache
+    cache="$(bone2_xkb_cache)"
+    if [[ -s "$cache" ]]; then
+        xkbcomp -w0 "$cache" "$DISPLAY"
+        return
+    fi
+    setxkbmap -layout de -option "$XKB_OPTIONS"
+    xmodmap "$XMODMAP_FILE"
+    mkdir -p "$XKB_CACHE_DIR"
+    xkbcomp -w0 "$DISPLAY" "$cache.tmp" && mv "$cache.tmp" "$cache"
+}
+
 apply_x() {
     case "$1" in
         us)    setxkbmap -layout us -option "$XKB_OPTIONS" ;;
         de)    setxkbmap -layout de -option "$XKB_OPTIONS" ;;
-        # bone2 is the de layout with the Neo-derived levels from ~/.Xmodmap.
-        bone2) setxkbmap -layout de -option "$XKB_OPTIONS" && xmodmap "$XMODMAP_FILE" ;;
+        bone2) apply_x_bone2 ;;
     esac
 }
 
@@ -48,8 +71,12 @@ apply_console() {
     if loadkeys -u -q "$keymap" 2>/dev/null; then
         return
     fi
-    # Headless hosts have no console at all; the X layout is already set.
-    sudo loadkeys -u -q "$keymap" || echo "kb: console layout unchanged" >&2
+    # Only prompt for the sudo password from a terminal; from .xprofile or a
+    # bar click the prompt would block (startx leaves the console as stdin).
+    local sudo_opts=()
+    [[ -t 0 ]] || sudo_opts=(-n)
+    sudo "${sudo_opts[@]+"${sudo_opts[@]}"}" loadkeys -u -q "$keymap" 2>/dev/null \
+        || echo "kb: console layout unchanged" >&2
 }
 
 apply() {
@@ -67,8 +94,31 @@ apply() {
     echo "keyboard layout: $1"
 }
 
+# Without a state file (first call after login) read the X server: bone2 puts
+# j on keycode 24, where us and de have q.
+detect_x() {
+    [[ -n "${DISPLAY:-}" ]] || return 1
+    # No grep -q: it would exit early and pipefail would report xmodmap's SIGPIPE.
+    if xmodmap -pke 2>/dev/null | grep '^keycode  24 = j ' >/dev/null; then
+        echo bone2
+        return
+    fi
+    setxkbmap -query 2>/dev/null | awk '/^layout:/ { print $2 }' | cut -d, -f1 | grep .
+}
+
 show() {
-    cat "$STATE_FILE" 2>/dev/null || echo "?"
+    if [[ -s "$STATE_FILE" ]]; then
+        cat "$STATE_FILE"
+        return
+    fi
+    local detected
+    if detected="$(detect_x)"; then
+        mkdir -p "$(dirname "$STATE_FILE")"
+        echo "$detected" > "$STATE_FILE"
+        echo "$detected"
+    else
+        echo "?"
+    fi
 }
 
 # Neighbour of the current layout in the LAYOUTS ring; unknown starts at the first.
