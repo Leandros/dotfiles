@@ -1025,6 +1025,19 @@ install_xremap() {
     fi
 }
 
+# Server-side input defaults; they also cover devices added after login.
+readonly XORG_CONF_DIR="/etc/X11/xorg.conf.d"
+
+install_xorg_conf() {
+    local src dst
+    for src in "$DOTFILES_DIR"/xorg-conf/*.conf; do
+        dst="$XORG_CONF_DIR/$(basename "$src")"
+        cmp -s "$src" "$dst" 2>/dev/null && continue
+        $SUDO install -D -m 0644 "$src" "$dst"
+        log "installed $dst"
+    done
+}
+
 install_wezterm() {
     case "$DISTRO" in
         debian|ubuntu) install_wezterm_deb ;;
@@ -1103,6 +1116,7 @@ setup_xorg() {
     install_xorg_packages
     install_wezterm
     install_xremap
+    install_xorg_conf
     link_xorg_dotfiles
     write_xresources "$DPI_SCALE"
 }

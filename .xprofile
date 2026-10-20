@@ -9,9 +9,9 @@ xset -b
 # Custom Media keys
 xbindkeys -p
 
-# Key Repeat: xset r rate <delay before repeat> <repeat rate>
-# May require to install xset (sudo dnf install xset)
-xset r rate 200 50
+# Key repeat is set server-wide in /etc/X11/xorg.conf.d/50-keyboard-repeat.conf
+# (from the dotfiles xorg-conf/); `xset r rate` here would not reach the
+# xremap device created below.
 
 # Kill X with Ctrl+Alt+Backspace
 setxkbmap -option terminate:ctrl_alt_bksp
