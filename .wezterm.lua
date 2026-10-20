@@ -36,6 +36,7 @@ config.window_frame = {
         'Apple Color Emoji',
     },
     font_size = 14.0,
+}
 
 -- Disable bell
 config.visual_bell = {
