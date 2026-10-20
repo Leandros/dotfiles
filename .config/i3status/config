@@ -1,5 +1,7 @@
 general {
     interval        =   5
+    # Auto-detection reads the parent process name; ~/bin/i3status-kb is not i3bar.
+    output_format   =   i3bar
 
     colors          =   true
     color_good      =   "#859900"

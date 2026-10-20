@@ -1,29 +1,84 @@
 #!/usr/bin/env bash
 #
-# kb - switch the X keyboard layout.
+# kb - switch the keyboard layout in X and on the Linux console.
 #
 # Usage: kb            interactive menu
 #        kb us|de|bone2
+#        kb next|prev  cycle through the layouts
+#        kb show       print the current layout
 #
 set -euo pipefail
 
 readonly LAYOUTS=(us de bone2)
+# Remembered per session so the status bar can show it; X cannot tell de
+# from bone2 (same xkb layout plus an xmodmap).
+readonly STATE_FILE="${XDG_RUNTIME_DIR:-$HOME/.cache}/kb-layout"
 readonly XMODMAP_FILE="$HOME/.Xmodmap"
+# Console keymap for bone2, generated from ~/.Xmodmap; lives next to this script.
+DOTFILES_DIR="$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)"
+readonly DOTFILES_DIR
+readonly BONE2_CONSOLE_MAP="$DOTFILES_DIR/console/bone2.map"
 
 die() { printf 'kb: %s\n' "$*" >&2; exit 1; }
 
 # ~/.xprofile sets this; a plain `setxkbmap <layout>` call would clear it.
 readonly XKB_OPTIONS="terminate:ctrl_alt_bksp"
 
-apply() {
+apply_x() {
     case "$1" in
         us)    setxkbmap -layout us -option "$XKB_OPTIONS" ;;
         de)    setxkbmap -layout de -option "$XKB_OPTIONS" ;;
         # bone2 is the de layout with the Neo-derived levels from ~/.Xmodmap.
         bone2) setxkbmap -layout de -option "$XKB_OPTIONS" && xmodmap "$XMODMAP_FILE" ;;
-        *)     die "unknown layout: $1 (one of: ${LAYOUTS[*]})" ;;
     esac
+}
+
+# The kernel keymap is shared by all virtual consoles. Setting it needs the
+# console as controlling tty or CAP_SYS_TTY_CONFIG, so fall back to sudo
+# when run from X.
+apply_console() {
+    local keymap
+    case "$1" in
+        us)    keymap="us" ;;
+        de)    keymap="de-latin1" ;;
+        bone2) keymap="$BONE2_CONSOLE_MAP" ;;
+    esac
+    # -u: the map uses U+ keysyms; without a console loadkeys cannot detect
+    # Unicode mode itself.
+    if loadkeys -u -q "$keymap" 2>/dev/null; then
+        return
+    fi
+    # Headless hosts have no console at all; the X layout is already set.
+    sudo loadkeys -u -q "$keymap" || echo "kb: console layout unchanged" >&2
+}
+
+apply() {
+    [[ " ${LAYOUTS[*]} " == *" $1 "* ]] || die "unknown layout: $1 (one of: ${LAYOUTS[*]})"
+    if [[ -n "${DISPLAY:-}" ]]; then
+        apply_x "$1"
+    fi
+    if command -v loadkeys >/dev/null; then
+        apply_console "$1"
+    else
+        echo "kb: loadkeys not found, console layout unchanged" >&2
+    fi
+    mkdir -p "$(dirname "$STATE_FILE")"
+    echo "$1" > "$STATE_FILE"
     echo "keyboard layout: $1"
+}
+
+show() {
+    cat "$STATE_FILE" 2>/dev/null || echo "?"
+}
+
+# Neighbour of the current layout in the LAYOUTS ring; unknown starts at the first.
+cycle() {
+    local step="$1" current i index=0
+    current="$(show)"
+    for i in "${!LAYOUTS[@]}"; do
+        [[ "${LAYOUTS[$i]}" == "$current" ]] && index="$i"
+    done
+    echo "${LAYOUTS[$(( (index + step + ${#LAYOUTS[@]}) % ${#LAYOUTS[@]} ))]}"
 }
 
 # Menu on stderr so the chosen name is the only thing on stdout.
@@ -39,12 +94,13 @@ choose() {
 }
 
 main() {
-    [[ -n "${DISPLAY:-}" ]] || die "no X display"
-    if [[ $# -ge 1 ]]; then
-        apply "$1"
-    else
-        apply "$(choose)"
-    fi
+    case "${1:-}" in
+        "")   apply "$(choose)" ;;
+        show) show ;;
+        next) apply "$(cycle 1)" ;;
+        prev) apply "$(cycle -1)" ;;
+        *)    apply "$1" ;;
+    esac
 }
 
 main "$@"

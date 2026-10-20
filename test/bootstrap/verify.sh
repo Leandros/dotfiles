@@ -109,18 +109,34 @@ if [[ $xorg_expected -eq 1 ]]; then
     check_link "$HOME/.xinitrc" "$D/.xinitrc"
     check_link "$HOME/.xprofile" "$D/.xprofile"
     check_link "$HOME/bin/kb" "$D/bin/kb"
+    check_link "$HOME/bin/i3status-kb" "$D/bin/i3status-kb"
+    # Third line is the first status array; it must start with the kb block.
+    status_line="$(timeout 5 "$HOME/bin/i3status-kb" </dev/null 2>/dev/null | sed -n 3p || true)"
+    if [[ "$status_line" == '[{"name":"kb","full_text":"KB: '* ]]; then
+        ok "i3status-kb emits the keyboard block"
+    else
+        fail "i3status-kb: ${status_line:-no output}"
+    fi
     if [[ -f "$HOME/.Xresources" && ! -L "$HOME/.Xresources" ]] && grep -qE '^Xft\.dpi:\s+144$' "$HOME/.Xresources" \
         && ! grep -q '##XFT_DPI##' "$HOME/.Xresources"; then
         ok ".Xresources rendered with Xft.dpi 144 (1.5x)"
     else
         fail ".Xresources: $(grep -E '^Xft\.dpi' "$HOME/.Xresources" 2>/dev/null || echo missing)"
     fi
-    kb_out="$(env -u DISPLAY "$HOME/bin/kb" 2>&1 || true)"
-    if [[ "$kb_out" == *"no X display"* ]]; then
-        ok "kb runs and refuses without DISPLAY"
+    kb_out="$("$HOME/bin/kb" xx 2>&1 || true)"
+    if [[ "$kb_out" == *"unknown layout: xx"* ]]; then
+        ok "kb rejects an unknown layout"
     else
         fail "kb: $kb_out"
     fi
+    # No console in the container: compile the keymaps instead of loading them.
+    for keymap in us de-latin1 "$D/console/bone2.map"; do
+        if loadkeys -u -m "$keymap" >/dev/null 2>&1; then
+            ok "console keymap compiles: ${keymap##*/}"
+        else
+            fail "console keymap: $(loadkeys -u -m "$keymap" 2>&1 >/dev/null | head -n 1) (${keymap##*/})"
+        fi
+    done
     check_link "$HOME/.Xmodmap" "$D/.Xmodmap"
     check_link "$HOME/.xbindkeysrc" "$D/.xbindkeysrc"
     check_link "$HOME/.config/i3" "$D/.config/i3"

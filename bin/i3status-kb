@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+#
+# i3status-kb - i3status with a keyboard layout block in front.
+#
+# Runs i3status, adds a "KB: <layout>" block to every status line and cycles
+# the layout with `kb` when the block is clicked (left: next, right: prev).
+# Use as `status_command` in the i3 bar.
+#
+set -euo pipefail
+
+readonly KB="$HOME/bin/kb"
+readonly BLOCK_NAME="kb"
+readonly BUTTON_LEFT=1
+readonly BUTTON_RIGHT=3
+# i3status cannot request clicks itself; i3bar only sends them when the
+# header asks for them.
+readonly HEADER='{"version":1,"click_events":true}'
+FIFO=""
+
+layout_block() {
+    printf '{"name":"%s","full_text":"KB: %s"}' "$BLOCK_NAME" "$("$KB" show)"
+}
+
+# i3bar writes one click event per line on stdin, after a leading "[".
+handle_clicks() {
+    local line
+    while read -r line; do
+        [[ "$line" == *"\"name\":\"$BLOCK_NAME\""* ]] || continue
+        case "$line" in
+            *"\"button\":$BUTTON_LEFT,"*|*"\"button\":$BUTTON_LEFT}"*)   "$KB" next >/dev/null ;;
+            *"\"button\":$BUTTON_RIGHT,"*|*"\"button\":$BUTTON_RIGHT}"*) "$KB" prev >/dev/null ;;
+            *) continue ;;
+        esac
+        # Redraw now instead of at the next interval.
+        kill -USR1 "$I3STATUS_PID"
+    done
+}
+
+# Insert the block as the first element of the status array. The line is
+# either "[...]" or ",[...]"; an empty array needs no trailing comma.
+with_block() {
+    local line="$1" prefix rest
+    prefix="${line%%\[*}"
+    rest="${line#*\[}"
+    if [[ "$rest" == "]" ]]; then
+        echo "${prefix}[$(layout_block)]"
+    else
+        echo "${prefix}[$(layout_block),$rest"
+    fi
+}
+
+cleanup() {
+    rm -f "$FIFO"
+    kill 0 2>/dev/null
+}
+
+main() {
+    FIFO="$(mktemp -u)"
+    mkfifo -m 600 "$FIFO"
+    trap cleanup EXIT
+
+    i3status > "$FIFO" &
+    I3STATUS_PID=$!
+    # Explicit stdin: a background job otherwise reads /dev/null.
+    handle_clicks <&0 &
+
+    local line
+    {
+        # Replace the header; the opening "[" of the endless array passes through.
+        read -r line && echo "$HEADER"
+        read -r line && echo "$line"
+        while read -r line; do
+            with_block "$line"
+        done
+    } < "$FIFO"
+}
+
+main "$@"

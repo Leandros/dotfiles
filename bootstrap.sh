@@ -930,13 +930,14 @@ install_xorg_packages() {
                 -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold \
                 xorg xinit x11-xserver-utils xbindkeys \
                 i3 i3status suckless-tools \
-                alsa-utils brightnessctl
+                alsa-utils brightnessctl \
+                kbd console-data
             ;;
         fedora)
             $SUDO dnf install -y -q \
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap xbindkeys \
                 i3 i3status dmenu \
-                alsa-utils brightnessctl
+                alsa-utils brightnessctl kbd
             ;;
         rhel)
             $SUDO dnf install -y -q epel-release
@@ -945,7 +946,7 @@ install_xorg_packages() {
             $SUDO dnf install -y -q \
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap \
                 i3 i3status dmenu \
-                alsa-utils brightnessctl
+                alsa-utils brightnessctl kbd
             ;;
     esac
 }
@@ -1045,8 +1046,10 @@ write_xresources() {
 link_xorg_dotfiles() {
     local d="$DOTFILES_DIR"
     link "$d/.wezterm.lua" "$HOME/.wezterm.lua"
-    # Layout switcher: `kb` (us, de, bone2); ~/bin is on PATH in .zshrc.
+    # Layout switcher: `kb` (us, de, bone2) for X and the console; ~/bin is on
+    # PATH in .zshrc. The bone2 console map is read from the clone.
     link "$d/bin/kb" "$HOME/bin/kb"
+    link "$d/bin/i3status-kb" "$HOME/bin/i3status-kb"
     link "$d/.xinitrc" "$HOME/.xinitrc"
     link "$d/.xprofile" "$HOME/.xprofile"
     link "$d/.Xmodmap" "$HOME/.Xmodmap"

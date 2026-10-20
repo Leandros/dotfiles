@@ -200,7 +200,8 @@ bar {
     position            top
     tray_output         primary
     font pango:Menlo 10
-    status_command      i3status
+    # i3status plus a clickable keyboard layout block.
+    status_command      ~/bin/i3status-kb
 
     colors {
         separator       $blue

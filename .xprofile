@@ -19,6 +19,5 @@ setxkbmap -option terminate:ctrl_alt_bksp
 # This will use the built-in bone2 layout.
 # setxkbmap de bone
 
-# This will use our custom bone2 layout.
-setxkbmap de
-xmodmap ~/.Xmodmap
+# This will use our custom bone2 layout; kb also records it for the status bar.
+~/bin/kb bone2 2>/dev/null || { setxkbmap de; xmodmap ~/.Xmodmap; }

@@ -29,7 +29,10 @@ For an Xorg/i3 desktop (Debian, Ubuntu, Fedora, RHEL 9) run with `BOOTSTRAP_XORG
 this installs i3, i3status, dmenu, xbindkeys, the wezterm nightly and the X utilities
 and links `.xinitrc`, `.xprofile`, `.Xresources`, `.Xmodmap`, `.xbindkeysrc`,
 `.wezterm.lua`, `.config/i3` and `.config/i3status`, plus `~/bin/kb` to switch
-the keyboard layout (`us`, `de`, `bone2`). The script asks for a display scale
+the keyboard layout (`us`, `de`, `bone2`) in X and on the Linux console; the
+i3 bar shows the layout and cycles it on click (left: next, right: previous). The
+console bone2 keymap is `console/bone2.map`, generated from `.Xmodmap` with
+`console/xmodmap-to-console.py`; regenerate it when `.Xmodmap` changes. The script asks for a display scale
 (1x, 1.5x, 1.75x, 2x) and renders `~/.Xresources` with the matching `Xft.dpi`;
 set `BOOTSTRAP_DPI_SCALE` to skip the prompt. Start with `startx`.
 
