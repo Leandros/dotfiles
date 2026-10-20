@@ -37,7 +37,9 @@ pkg_cmd() {
     case "$1" in
         debian12|ubuntu2204) echo "apt-get update -q && apt-get install -y -q --no-install-recommends sudo && rm -rf /var/lib/apt/lists/*" ;;
         al2)                 echo "yum install -y -q sudo shadow-utils && yum clean all" ;;
-        al2023|fedora44|rocky9) echo "dnf install -y -q sudo shadow-utils && dnf clean all" ;;
+        # kmscon stands in for the Fedora 45 default console.
+        fedora44)      echo "dnf install -y -q sudo shadow-utils kmscon && dnf clean all" ;;
+        al2023|rocky9) echo "dnf install -y -q sudo shadow-utils && dnf clean all" ;;
     esac
 }
 

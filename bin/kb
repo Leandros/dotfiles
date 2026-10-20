@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 #
-# kb - switch the keyboard layout in X and on the Linux console.
+# kb - switch the keyboard layout in X and on the virtual consoles.
+#
+# Consoles run by kmscon (Fedora 45+) take their layout from localectl's X11
+# settings; fbcon consoles are switched with loadkeys.
 #
 # Usage: kb            interactive menu
 #        kb us|de|bone2
@@ -56,10 +59,38 @@ apply_x() {
     esac
 }
 
-# The kernel keymap is shared by all virtual consoles. Setting it needs the
+# Only prompt for the sudo password from a terminal; from .xprofile or a
+# bar click the prompt would block (startx leaves the console as stdin).
+as_root() {
+    local sudo_opts=()
+    [[ -t 0 ]] || sudo_opts=(-n)
+    sudo "${sudo_opts[@]+"${sudo_opts[@]}"}" "$@"
+}
+
+# kmscon owns the consoles when one of its per-VT units is running.
+kmscon_active() {
+    command -v kmscon >/dev/null || return 1
+    [[ -n "$(systemctl list-units --state=active --plain --no-legend 'kmsconvt@*' 2>/dev/null)" ]]
+}
+
+# kmscon follows the X11 keymap published by localed. There is no xkb file
+# for the custom bone2, so the stock de(bone) variant stands in for it.
+apply_console_kmscon() {
+    local args
+    case "$1" in
+        us)    args=(us) ;;
+        de)    args=(de) ;;
+        bone2) args=(de "" bone) ;;
+    esac
+    # --no-convert: leave the fbcon keymap in /etc/vconsole.conf alone.
+    as_root localectl --no-convert set-x11-keymap "${args[@]}" 2>/dev/null \
+        || echo "kb: console layout unchanged" >&2
+}
+
+# The kernel keymap is shared by all fbcon consoles. Setting it needs the
 # console as controlling tty or CAP_SYS_TTY_CONFIG, so fall back to sudo
 # when run from X.
-apply_console() {
+apply_console_fbcon() {
     local keymap
     case "$1" in
         us)    keymap="us" ;;
@@ -71,12 +102,16 @@ apply_console() {
     if loadkeys -u -q "$keymap" 2>/dev/null; then
         return
     fi
-    # Only prompt for the sudo password from a terminal; from .xprofile or a
-    # bar click the prompt would block (startx leaves the console as stdin).
-    local sudo_opts=()
-    [[ -t 0 ]] || sudo_opts=(-n)
-    sudo "${sudo_opts[@]+"${sudo_opts[@]}"}" loadkeys -u -q "$keymap" 2>/dev/null \
+    as_root loadkeys -u -q "$keymap" 2>/dev/null \
         || echo "kb: console layout unchanged" >&2
+}
+
+apply_console() {
+    if kmscon_active; then
+        apply_console_kmscon "$1"
+    else
+        apply_console_fbcon "$1"
+    fi
 }
 
 apply() {
@@ -84,10 +119,10 @@ apply() {
     if [[ -n "${DISPLAY:-}" ]]; then
         apply_x "$1"
     fi
-    if command -v loadkeys >/dev/null; then
+    if command -v loadkeys >/dev/null || command -v kmscon >/dev/null; then
         apply_console "$1"
     else
-        echo "kb: loadkeys not found, console layout unchanged" >&2
+        echo "kb: neither loadkeys nor kmscon found, console layout unchanged" >&2
     fi
     mkdir -p "$(dirname "$STATE_FILE")"
     echo "$1" > "$STATE_FILE"

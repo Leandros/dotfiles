@@ -111,6 +111,23 @@ if [[ $xorg_expected -eq 1 ]]; then
     check_link "$HOME/bin/kb" "$D/bin/kb"
     check_link "$HOME/bin/i3status-kb" "$D/bin/i3status-kb"
     check_link "$HOME/.config/xremap" "$D/.config/xremap"
+    # 1.5x -> 24 px Terminus
+    case "$os_id" in
+        debian|ubuntu) font_line="$(grep -E '^FONT(FACE|SIZE)=' /etc/default/console-setup | tr '\n' ' ')"; font_want='FONTFACE="Terminus" FONTSIZE="12x24" ' ;;
+        *)             font_line="$(grep -E '^FONT=' /etc/vconsole.conf)"; font_want='FONT=ter-124n' ;;
+    esac
+    if [[ "$font_line" == "$font_want" ]]; then
+        ok "console font for 1.5x ($font_want)"
+    else
+        fail "console font: want '$font_want', got '$font_line'"
+    fi
+    if [[ "$os_id" == fedora ]]; then
+        if [[ "$(sed -n 2p /etc/kmscon/kmscon.conf 2>/dev/null)" == "font-size=24" ]]; then
+            ok "kmscon.conf font-size=24"
+        else
+            fail "kmscon.conf: $(cat /etc/kmscon/kmscon.conf 2>&1)"
+        fi
+    fi
     if cmp -s "$D/xorg-conf/50-keyboard-repeat.conf" /etc/X11/xorg.conf.d/50-keyboard-repeat.conf; then
         ok "xorg.conf.d keyboard repeat installed"
     else

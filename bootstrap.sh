@@ -1040,6 +1040,51 @@ install_xremap() {
     fi
 }
 
+# Console font matching the display scale, applied at boot. The Terminus
+# console fonts come in the four sizes the scales need.
+readonly CONSOLE_FONT_BASE_PX=16
+readonly KMSCON_CONF="/etc/kmscon/kmscon.conf"
+readonly KMSCON_CONF_MARKER="# Written by bootstrap.sh; edit the dotfiles instead."
+
+# Set KEY=value in a shell-style config file, replacing or appending.
+set_config_var() {
+    local file="$1" key="$2" value="$3"
+    if $SUDO grep -q "^$key=" "$file" 2>/dev/null; then
+        $SUDO sed -i "s|^$key=.*|$key=$value|" "$file"
+    else
+        echo "$key=$value" | $SUDO tee -a "$file" >/dev/null
+    fi
+}
+
+configure_console_font() {
+    local scale="$1" px
+    px="$(awk "BEGIN { print int($CONSOLE_FONT_BASE_PX * $scale) }")"
+
+    case "$DISTRO" in
+        debian|ubuntu)
+            # console-setup.service renders this on boot; Terminus is bundled.
+            set_config_var /etc/default/console-setup FONTFACE '"Terminus"'
+            set_config_var /etc/default/console-setup FONTSIZE "\"$((px / 2))x$px\""
+            ;;
+        fedora|rhel)
+            # systemd-vconsole-setup applies FONT on boot; ter-1NNn is Terminus
+            # normal weight at NN pixels.
+            set_config_var /etc/vconsole.conf FONT "ter-1${px}n"
+            ;;
+    esac
+    log "console font: Terminus ${px}px (${scale}x)"
+
+    # kmscon (Fedora 45+) renders with freetype and takes a pixel size. Only a
+    # file written by this script is replaced.
+    [[ -d "$(dirname "$KMSCON_CONF")" ]] || return 0
+    if [[ -f "$KMSCON_CONF" ]] && ! head -n 1 "$KMSCON_CONF" | grep -qxF "$KMSCON_CONF_MARKER"; then
+        warn "kmscon: $KMSCON_CONF exists and is not managed; set font-size=$px yourself"
+        return
+    fi
+    printf '%s\nfont-size=%s\n' "$KMSCON_CONF_MARKER" "$px" | $SUDO tee "$KMSCON_CONF" >/dev/null
+    log "kmscon font-size=$px"
+}
+
 # Server-side input defaults; they also cover devices added after login.
 readonly XORG_CONF_DIR="/etc/X11/xorg.conf.d"
 
@@ -1134,6 +1179,7 @@ setup_xorg() {
     install_xorg_conf
     link_xorg_dotfiles
     write_xresources "$DPI_SCALE"
+    configure_console_font "$DPI_SCALE"
 }
 
 write_zshrc() {
