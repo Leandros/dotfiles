@@ -306,8 +306,20 @@ else
     promptchar="%{$fg[magenta]%}%%%{$reset_color%}"
 fi
 
+if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
+    if [ "$EUID" = "0" ]; then
+        colorprefix="%{$fg[red]%}"
+    else
+        colorprefix="%{$fg[magenta]%}"
+    fi
+    sshprefix="${colorprefix}[%n@${HOST:0:16}]%{$reset_color%} "
+else
+    sshprefix=""
+fi
+
+
 export PS1=$'
-%{$fg[blue]%}%~%{$reset_color%} $(__git_prompt)$(__pyvenv_prompt)
+$sshprefix%{$fg[blue]%}%~%{$reset_color%} $(__git_prompt)$(__pyvenv_prompt)%(?..%F{red} [%?]%f)
 $promptchar '
 export PS2="%{$fg_blod[black]%}%_> %{$reset_color%}"
 
