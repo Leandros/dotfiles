@@ -251,6 +251,7 @@ if tmux_keys_enabled then
 
         { key = 't', mods = 'LEADER|CTRL', action = act.QuickSelect },
         { key = 'z', mods = 'LEADER', action = act.TogglePaneZoomState },
+        { key = 'd', modm = 'LEADER', action = act.CloseCurrentPane { confirm = true } },
 
         { key = '[', mods = 'LEADER', action = act.ActivateCopyMode },
 
