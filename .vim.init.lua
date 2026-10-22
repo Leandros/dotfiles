@@ -3036,6 +3036,14 @@ local spec = {
           opts("Blame Line")
         )
         vim.keymap.set("n", "<leader>sB", require("gitsigns").blame, opts("Blame File"))
+        -- Blame runs on the buffer text, so edited lines are "Not Committed
+        -- Yet". Blame the HEAD version instead to see their last authors.
+        vim.keymap.set("n", "<leader>sH", function()
+          require("gitsigns").show("HEAD", function(err)
+            if err then return vim.notify(err, vim.log.levels.ERROR) end
+            require("gitsigns").blame()
+          end)
+        end, opts("Blame File at HEAD"))
         vim.keymap.set("n", "<leader>sS", "<cmd>Gitsigns stage_buffer<CR>", opts("Stage Buffer"))
         vim.keymap.set("n", "<leader>sU", "<cmd>Gitsigns reset_buffer_index<CR>", opts("Reset Buffer Index"))
         vim.keymap.set("n", "<leader>sg", "<cmd>Gitsigns<CR>", opts("Picker"))
