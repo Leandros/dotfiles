@@ -867,6 +867,9 @@ local function init_solarized_scheme()
       local is_dark = vim.o.background == "dark"
       local base03 = is_dark and colors.base03 or colors.base3
       local base0 = is_dark and colors.base0 or colors.base00
+      -- White vanishes on the light background; invert to white on magenta there.
+      local label_fg = is_dark and colors.base04 or colors.base3
+      local label_bg = is_dark and "#ffffff" or colors.magenta
 
       ---@type solarized.highlights
       local groups = {
@@ -899,7 +902,7 @@ local function init_solarized_scheme()
         NormalFloat = { bg = base03 },
         WhichKeyNormal = { bg = base03 },
         TelescopeNormal = { bg = base03 },
-        FlashLabel = { fg = colors.base04, bg = "#ffffff", bold = true },
+        FlashLabel = { fg = label_fg, bg = label_bg, bold = true },
         FloatTitle = { fg = base0, bg = "NONE" },
       }
 
