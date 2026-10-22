@@ -3762,7 +3762,9 @@ local spec = {
           },
           ["ui-select"] = {
             require("telescope.themes").get_dropdown({
-              -- even more opts
+              -- vim.ui.select dialogs (code actions) are transient; keep them
+              -- out of the resume (<leader>fn) history.
+              cache_picker = false,
             }),
           },
         },
