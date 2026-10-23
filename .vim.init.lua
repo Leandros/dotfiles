@@ -2642,7 +2642,10 @@ local spec = {
   {
     "cordx56/rustowl",
     version = "*", -- Latest stable version
-    build = "cargo binstall rustowl",
+    build = {
+      "cargo binstall rustowl --bin rustowl",
+      "rustowl toolchain install",
+    },
     lazy = false, -- This plugin is already lazy
     opts = {
       auto_attach = false,
