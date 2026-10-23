@@ -1214,6 +1214,146 @@ function _G.rust_code_action_live()
   if not ok then error(err) end
 end
 
+-- Shared with the nvim-tree picker below, which builds its own window-picker
+-- instance to draw the window letters.
+local window_picker_opts = {
+  hint = "floating-big-letter",
+  autoselect_one = true,
+  include_current_win = false,
+  selection_chars = "ENCTIRSGOB",
+  use_winbar = "never", -- "always" | "never" | "smart"
+
+  -- the foreground (text) color of the picker
+  fg_color = "#ededed",
+
+  -- if you have include_current_win == true, then current_win_hl_color will
+  -- be highlighted using this background color
+  current_win_hl_color = "#e35e4f",
+
+  -- all the windows except the current window will be highlighted using this
+  -- color
+  other_win_hl_color = "#44cc41",
+}
+
+-- Letters for the split hints on window borders; none of the window letters
+-- above and none of the b/n/r/s motions. Digits take over when they run out.
+local SPLIT_HINT_CHARS = "ADUXPHLMWFVYZ123456789"
+local SPLIT_HINT_HL = "NvimTreeSplitHint"
+local ESC = "\27"
+
+---@alias SplitSide "left"|"right"|"above"|"below"
+
+---@class SplitHint
+---@field win integer window to split
+---@field side SplitSide
+---@field row integer 1-based screen row of the hint
+---@field col integer 1-based screen column of the hint
+
+-- One hint per border of each window: the separator to its right, the status
+-- line below it, and the outer edge for windows on the left or top margin.
+---@param windows integer[]
+---@return SplitHint[]
+local function split_hints(windows)
+  local geometry = {}
+  local min_col, min_row = math.huge, math.huge
+  for _, win in ipairs(windows) do
+    local pos = vim.fn.win_screenpos(win)
+    local g = { row = pos[1], col = pos[2], width = vim.api.nvim_win_get_width(win), height = vim.api.nvim_win_get_height(win) }
+    geometry[win] = g
+    min_col = math.min(min_col, g.col)
+    min_row = math.min(min_row, g.row)
+  end
+
+  local hints = {}
+  for _, win in ipairs(windows) do
+    local g = geometry[win]
+    local mid_row = g.row + math.floor(g.height / 2)
+    local mid_col = g.col + math.floor(g.width / 2)
+    -- The separator column; on the screen edge the hint sits inside the window.
+    table.insert(hints, { win = win, side = "right", row = mid_row, col = math.min(g.col + g.width, vim.o.columns) })
+    table.insert(hints, { win = win, side = "below", row = g.row + g.height, col = mid_col })
+    if g.col == min_col then
+      table.insert(hints, { win = win, side = "left", row = mid_row, col = math.max(g.col - 1, 1) })
+    end
+    if g.row == min_row then
+      table.insert(hints, { win = win, side = "above", row = math.max(g.row - 1, 1), col = mid_col })
+    end
+  end
+  return hints
+end
+
+---@param hint SplitHint
+---@param char string
+---@return integer float window
+local function draw_split_hint(hint, char)
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { char })
+  local win = vim.api.nvim_open_win(buf, false, {
+    relative = "editor",
+    row = hint.row - 1,
+    col = hint.col - 1,
+    width = 1,
+    height = 1,
+    style = "minimal",
+    focusable = false,
+    zindex = 300,
+  })
+  vim.wo[win].winhighlight = "Normal:" .. SPLIT_HINT_HL
+  return win
+end
+
+---@param hint SplitHint
+---@return integer new window
+local function split_at(hint)
+  local command = ({ left = "leftabove vsplit", right = "rightbelow vsplit", above = "leftabove split", below = "rightbelow split" })[hint.side]
+  local new_win
+  -- win_call restores the current window (the tree) afterwards; nvim-tree
+  -- switches to the returned window itself.
+  vim.api.nvim_win_call(hint.win, function()
+    vim.cmd(command)
+    new_win = vim.api.nvim_get_current_win()
+  end)
+  return new_win
+end
+
+-- nvim-tree window picker: the window letters from window-picker plus a
+-- letter on every border; a border letter opens the file in a new split there.
+---@return integer? target window, nil when cancelled
+local function pick_window_or_split()
+  local config = vim.tbl_deep_extend("force", require("window-picker.config"), window_picker_opts)
+  local hint = require("window-picker.hints." .. config.hint .. "-hint"):new()
+  local picker = require("window-picker.builder"):new():set_config(config):set_hint(hint):build()
+
+  local windows = picker:_get_windows()
+  if #windows == 0 then return nil end
+  if config.autoselect_one and #windows == 1 then return windows[1] end
+
+  vim.api.nvim_set_hl(0, SPLIT_HINT_HL, { fg = config.fg_color, bg = config.current_win_hl_color, bold = true })
+  local hints = split_hints(windows)
+  local floats = {}
+  picker.hint:draw(windows)
+  for i, h in ipairs(hints) do
+    if i > #SPLIT_HINT_CHARS then break end
+    floats[#floats + 1] = draw_split_hint(h, SPLIT_HINT_CHARS:sub(i, i))
+  end
+  vim.cmd.redraw()
+
+  local ok, char = pcall(vim.fn.getcharstr)
+  picker.hint:clear()
+  for _, f in ipairs(floats) do
+    if vim.api.nvim_win_is_valid(f) then vim.api.nvim_win_close(f, true) end
+  end
+  vim.cmd.redraw()
+  if not ok or char == ESC then return nil end
+
+  for i, c in ipairs(picker.chars) do
+    if char:lower() == c:lower() and windows[i] then return windows[i] end
+  end
+  local index = SPLIT_HINT_CHARS:find(char:upper(), 1, true)
+  if index and hints[index] then return split_at(hints[index]) end
+  return nil
+end
+
 local function on_init(client)
   -- disable highlighting from lsp
   if client.server_capabilities then
@@ -3454,28 +3594,13 @@ local spec = {
     "s1n7ax/nvim-window-picker",
     name = "window-picker",
     version = "2.*",
-    opts = {
-      hint = "floating-big-letter",
-      autoselect_one = true,
-      include_current_win = false,
-      selection_chars = "ENCTIRSGOB",
-      use_winbar = "never", -- "always" | "never" | "smart"
-
-      -- the foreground (text) color of the picker
-      fg_color = "#ededed",
-
-      -- if you have include_current_win == true, then current_win_hl_color will
-      -- be highlighted using this background color
-      current_win_hl_color = "#e35e4f",
-
-      -- all the windows except the current window will be highlighted using this
-      -- color
-      other_win_hl_color = "#44cc41",
-    },
+    opts = window_picker_opts,
   }, -- end window-picker
 
   {
     "nvim-tree/nvim-tree.lua",
+    -- The custom picker builds a window-picker instance at pick time.
+    dependencies = { "window-picker" },
     config = function()
       local prev_bufnr = nil
       local function nvim_tree_attach(bufnr)
@@ -3532,7 +3657,7 @@ local spec = {
             quit_on_open = true,
             window_picker = {
               enable = true,
-              picker = require("window-picker").pick_window,
+              picker = pick_window_or_split,
             },
           },
           change_dir = {
