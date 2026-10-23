@@ -1239,6 +1239,9 @@ local window_picker_opts = {
 -- above and none of the b/n/r/s motions. Digits take over when they run out.
 local SPLIT_HINT_CHARS = "ADUXPHLMWFVYZ123456789"
 local SPLIT_HINT_HL = "NvimTreeSplitHint"
+-- Split-hint letter colors per background: solarized blue on dark, the
+-- picker accent on light.
+local SPLIT_HINT_FG = { dark = "#268bd2", light = "#e35e4f" }
 local ESC = "\27"
 
 ---@alias SplitSide "left"|"right"|"above"|"below"
@@ -1328,7 +1331,9 @@ local function pick_window_or_split()
   if #windows == 0 then return nil end
   if config.autoselect_one and #windows == 1 then return windows[1] end
 
-  vim.api.nvim_set_hl(0, SPLIT_HINT_HL, { fg = config.fg_color, bg = config.current_win_hl_color, bold = true })
+  -- Resolved at pick time so it follows light/dark mode.
+  local normal_bg = vim.api.nvim_get_hl(0, { name = "Normal", link = false }).bg
+  vim.api.nvim_set_hl(0, SPLIT_HINT_HL, { fg = SPLIT_HINT_FG[vim.o.background], bg = normal_bg, bold = true })
   local hints = split_hints(windows)
   local floats = {}
   picker.hint:draw(windows)
