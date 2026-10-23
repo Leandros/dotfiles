@@ -3544,9 +3544,47 @@ local spec = {
         },
       })
 
+      local function is_tree_win(win) return vim.bo[vim.api.nvim_win_get_buf(win)].filetype == "NvimTree" end
+
+      -- Width of the text area next to the tree (all non-tree columns).
+      local function text_columns()
+        local left, right = math.huge, 0
+        for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+          if not is_tree_win(w) then
+            local col = vim.fn.win_screenpos(w)[2]
+            left = math.min(left, col)
+            right = math.max(right, col + vim.api.nvim_win_get_width(w))
+          end
+        end
+        return right - left
+      end
+
+      -- Opening the tree re-splits the whole layout (vsp + wincmd H), which
+      -- discards the split sizes; preserve_window_proportions only skips the
+      -- final `wincmd =`. Restore heights and scale widths to the space left.
+      local function keep_layout(fn)
+        local before, span = {}, text_columns()
+        for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+          if not is_tree_win(w) then before[w] = { vim.api.nvim_win_get_width(w), vim.api.nvim_win_get_height(w) } end
+        end
+        fn()
+        -- After the tree has drawn; adaptive_size settles its width on render.
+        vim.schedule(function()
+          if span == 0 then return end
+          local scale = text_columns() / span
+          for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+            local size = before[w]
+            if size and vim.api.nvim_win_is_valid(w) then
+              vim.api.nvim_win_set_width(w, math.floor(size[1] * scale + 0.5))
+              vim.api.nvim_win_set_height(w, size[2])
+            end
+          end
+        end)
+      end
+
       noremap("<Leader>e", function()
         prev_bufnr = vim.api.nvim_get_current_buf()
-        require("nvim-tree.api").tree.toggle()
+        keep_layout(function() require("nvim-tree.api").tree.toggle() end)
       end, { desc = "Open NvimTree" })
     end,
   }, -- end nvim-tree
