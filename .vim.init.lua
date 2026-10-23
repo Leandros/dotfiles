@@ -3174,8 +3174,17 @@ local spec = {
 
         vim.keymap.set("n", "<leader>ss", "<cmd>Gitsigns stage_hunk<CR>", opts("Stage Hunk"))
         vim.keymap.set("n", "<leader>su", "<cmd>Gitsigns undo_stage_hunk<CR>", opts("Undo Staging Hunk"))
-        vim.keymap.set("n", "<leader>sr", "<cmd>Gitsigns reset_hunk<CR>", opts("Reset Hunk"))
-        vim.keymap.set("n", "<leader>sR", "<cmd>Gitsigns reset_buffer<CR>", opts("Reset Buffer"))
+        vim.keymap.set("n", "<leader>sa", "<cmd>Gitsigns reset_hunk<CR>", opts("Reset Hunk"))
+        vim.keymap.set("n", "<leader>sA", "<cmd>Gitsigns reset_buffer<CR>", opts("Reset Buffer"))
+        -- Hunk/diff navigation fallback for diff mode and normal mode.
+        local function nav_hunk(direction, diff_fallback)
+          return function()
+            if vim.wo.diff then return vim.cmd.normal({ diff_fallback, bang = true }) end
+            require("gitsigns").nav_hunk(direction)
+          end
+        end
+        vim.keymap.set("n", "<leader>sn", nav_hunk("next", "]c"), opts("Next Hunk"))
+        vim.keymap.set("n", "<leader>sr", nav_hunk("prev", "[c"), opts("Previous Hunk"))
         vim.keymap.set("n", "<leader>sp", "<cmd>Gitsigns preview_hunk<CR>", opts("Preview Hunk"))
         vim.keymap.set(
           "n",
@@ -3196,7 +3205,7 @@ local spec = {
         vim.keymap.set("n", "<leader>sU", "<cmd>Gitsigns reset_buffer_index<CR>", opts("Reset Buffer Index"))
         vim.keymap.set("n", "<leader>sg", "<cmd>Gitsigns<CR>", opts("Picker"))
 
-        vim.keymap.set("v", "<leader>sr", ":Gitsigns reset_hunk<CR>", opts("ResetHunk (Visual)"))
+        vim.keymap.set("v", "<leader>sa", ":Gitsigns reset_hunk<CR>", opts("ResetHunk (Visual)"))
         vim.keymap.set("v", "<leader>ss", ":Gitsigns stage_hunk<CR>", opts("StageHunk (Visual)"))
         vim.keymap.set("v", "<leader>sg", ":Gitsigns<CR>", opts("Picker (Visual)"))
       end
