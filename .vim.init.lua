@@ -610,6 +610,28 @@ end, { bang = true })
 nnoremap("<Leader>m", ":MarkWindowSwap()<CR>", { silent = true })
 nnoremap("<Leader>u", ":DoWindowSwap()<CR>", { silent = true })
 
+-- Zoom the current window like tmux prefix+z: maximise it, and restore the
+-- previous layout on the next press. The layout is kept per tab page and is
+-- dropped when windows were opened or closed meanwhile.
+local ZOOM_VAR = "zoom_layout"
+
+local function toggle_zoom()
+  local tab = vim.api.nvim_get_current_tabpage()
+  local windows = #vim.api.nvim_tabpage_list_wins(tab)
+  local ok, saved = pcall(vim.api.nvim_tabpage_get_var, tab, ZOOM_VAR)
+  if ok and saved.windows == windows then
+    vim.api.nvim_tabpage_del_var(tab, ZOOM_VAR)
+    vim.cmd(saved.restore)
+    return
+  end
+  if windows == 1 then return end
+
+  vim.api.nvim_tabpage_set_var(tab, ZOOM_VAR, { windows = windows, restore = vim.fn.winrestcmd() })
+  vim.cmd("wincmd _ | wincmd |")
+end
+
+nnoremap("<Leader>,", toggle_zoom, { silent = true, desc = "Zoom window (toggle)" })
+
 -- ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 -- ┃                    Close all buffers                    ┃
 -- ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
@@ -3435,7 +3457,6 @@ local spec = {
       })
 
       wk.add({
-        { "<leader>,", group = "zoom" },
         { "<leader>a", group = "picker" },
         { "<leader>b", group = "debugger" },
         { "<leader>c", group = "codeaction", mode = { "n", "v" } },
