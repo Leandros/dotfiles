@@ -3722,28 +3722,86 @@ local spec = {
         return right - left
       end
 
+      -- Layout before the tree opened, per tab page. Close restores it. The
+      -- tree can change width while open (adaptive_size redraws on async git
+      -- status) and takes that space from the next split, so scaling the
+      -- widths at close time makes that split smaller on each toggle.
+      local saved_layouts = {}
+      local keep_layout_on = true
+
+      local function save_layout()
+        local sizes = {}
+        for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+          if not is_tree_win(w) then sizes[w] = { vim.api.nvim_win_get_width(w), vim.api.nvim_win_get_height(w) } end
+        end
+        return { sizes = sizes, span = text_columns() }
+      end
+
+      -- A saved layout is stale when splits were opened or closed meanwhile.
+      local function same_wins(a, b)
+        for w in pairs(a.sizes) do
+          if not b.sizes[w] then return false end
+        end
+        return vim.tbl_count(a.sizes) == vim.tbl_count(b.sizes)
+      end
+
+      -- Restore heights and scale widths to the space next to the tree.
+      local function apply_layout(layout)
+        if layout.span == 0 then return end
+        local scale = text_columns() / layout.span
+        for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+          local size = layout.sizes[w]
+          if size and vim.api.nvim_win_is_valid(w) then
+            vim.api.nvim_win_set_width(w, math.floor(size[1] * scale + 0.5))
+            vim.api.nvim_win_set_height(w, size[2])
+          end
+        end
+      end
+
       -- Opening the tree re-splits the whole layout (vsp + wincmd H), which
       -- discards the split sizes; preserve_window_proportions only skips the
-      -- final `wincmd =`. Restore heights and scale widths to the space left.
+      -- final `wincmd =`. The WinClosed autocmd below restores on close.
       local function keep_layout(fn)
-        local before, span = {}, text_columns()
-        for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-          if not is_tree_win(w) then before[w] = { vim.api.nvim_win_get_width(w), vim.api.nvim_win_get_height(w) } end
-        end
+        if not keep_layout_on then return fn() end
+
+        local tab = vim.api.nvim_get_current_tabpage()
+        local opening = not require("nvim-tree.api").tree.is_visible()
+        local layout, saved = save_layout(), saved_layouts[tab]
+        -- A close with a stale layout restores the current one instead.
+        if opening or not (saved and same_wins(saved, layout)) then saved_layouts[tab] = layout end
+
         fn()
+        if not opening then return end
+
         -- After the tree has drawn; adaptive_size settles its width on render.
-        vim.schedule(function()
-          if span == 0 then return end
-          local scale = text_columns() / span
-          for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-            local size = before[w]
-            if size and vim.api.nvim_win_is_valid(w) then
-              vim.api.nvim_win_set_width(w, math.floor(size[1] * scale + 0.5))
-              vim.api.nvim_win_set_height(w, size[2])
-            end
-          end
-        end)
+        vim.schedule(function() apply_layout(layout) end)
       end
+
+      -- Every close path: toggle, `q`, `:q` and quit_on_open.
+      vim.api.nvim_create_autocmd("WinClosed", {
+        group = vim.api.nvim_create_augroup("nvim_tree_keep_layout", {}),
+        callback = function(ev)
+          local win = tonumber(ev.match)
+          if not keep_layout_on or not vim.api.nvim_win_is_valid(win) or not is_tree_win(win) then return end
+
+          local tab = vim.api.nvim_win_get_tabpage(win)
+          local saved = saved_layouts[tab]
+          saved_layouts[tab] = nil
+          if not saved then return end
+
+          -- WinClosed runs while the tree is still in the layout.
+          vim.schedule(function()
+            if vim.api.nvim_get_current_tabpage() ~= tab or not same_wins(saved, save_layout()) then return end
+            apply_layout(saved)
+          end)
+        end,
+      })
+
+      vim.api.nvim_create_user_command("NvimTreeKeepLayoutToggle", function()
+        keep_layout_on = not keep_layout_on
+        saved_layouts = {}
+        vim.notify("NvimTree keep layout: " .. (keep_layout_on and "on" or "off"))
+      end, { desc = "Toggle restoring the split layout around NvimTree" })
 
       noremap("<Leader>e", function()
         prev_bufnr = vim.api.nvim_get_current_buf()
