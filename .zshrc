@@ -442,7 +442,16 @@ x-cut() {
 zle -N x-cut
 
 x-paste() {
-    PASTE=$(pbpaste)
+    # Try CLIPBOARD, then PRIMARY, then zsh's own kill buffer. xclip fails
+    # when no running program owns the selection (no clipboard manager).
+    local PASTE
+    if (( $+commands[xclip] )) && [[ -n $DISPLAY ]]; then
+        PASTE=$(xclip -selection clipboard -o 2>/dev/null) ||
+            PASTE=$(xclip -selection primary -o 2>/dev/null)
+    else
+        PASTE=$(pbpaste 2>/dev/null)
+    fi
+    [[ -z $PASTE ]] && PASTE=$CUTBUFFER
     LBUFFER="$LBUFFER${RBUFFER:0:1}"
     RBUFFER="$PASTE${RBUFFER:1:${#RBUFFER}}"
 }
