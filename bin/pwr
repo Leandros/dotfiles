@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+#
+# pwr - lock, suspend or hibernate now.
+#
+# xss-lock (started from ~/.xprofile) runs `pwr lock --nofork` on idle
+# and before every suspend or hibernation. Locking through logind lets
+# xss-lock start its single i3lock; a second i3lock could not grab the
+# keyboard. Without xss-lock (EL9), i3lock runs directly. Only the power
+# button wakes the machine (system-sleep/power-button-wake).
+#
+# Usage: pwr lock            lock now
+#        pwr lock --nofork   run i3lock in the foreground (xss-lock locker)
+#        pwr sleep           suspend now
+#        pwr hibernate       hibernate now
+#
+set -euo pipefail
+
+# Solarized base02, the i3 desktop background.
+readonly COLOR="073642"
+readonly USAGE="usage: pwr lock [--nofork] | sleep | hibernate"
+
+usage() {
+    echo "$USAGE" >&2
+    exit 2
+}
+
+xss_lock_running() {
+    pgrep -u "$(id -u)" -x xss-lock >/dev/null
+}
+
+lock() {
+    case "${1:-}" in
+        --nofork) exec i3lock --nofork --color "$COLOR" ;;
+        "") ;;
+        *) usage ;;
+    esac
+
+    if xss_lock_running; then
+        exec loginctl lock-session
+    fi
+    exec i3lock --color "$COLOR"
+}
+
+# xss-lock locks on logind's PrepareForSleep signal. Without it the screen
+# must be locked first; i3lock forks once it holds the keyboard. A console
+# without X has no locker.
+enter() {
+    local action="$1"
+    if [[ -n "${DISPLAY:-}" ]] && ! xss_lock_running; then
+        i3lock --color "$COLOR"
+    fi
+    exec systemctl "$action"
+}
+
+main() {
+    [[ $# -ge 1 ]] || usage
+    local command="$1"
+    shift
+
+    case "$command" in
+        lock)
+            [[ $# -le 1 ]] || usage
+            lock "$@"
+            ;;
+        sleep)
+            [[ $# -eq 0 ]] || usage
+            enter suspend
+            ;;
+        hibernate)
+            [[ $# -eq 0 ]] || usage
+            enter hibernate
+            ;;
+        *) usage ;;
+    esac
+}
+
+main "$@"

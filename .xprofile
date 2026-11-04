@@ -23,3 +23,17 @@ setxkbmap -option terminate:ctrl_alt_bksp
 # the uinput udev rule from bootstrap.sh. --watch follows new keyboards.
 pkill -x xremap 2>/dev/null
 xremap --watch ~/.config/xremap/config.yml >/dev/null 2>&1 &
+
+# Idle timeouts in minutes, from the IDLE_* settings in bootstrap.sh.
+# shellcheck source=/dev/null
+[ -f ~/.config/idle.conf ] && . ~/.config/idle.conf
+
+# Lock on idle, before suspend and on `loginctl lock-session` (~/bin/pwr).
+[ -n "${IDLE_LOCK_MINUTES:-}" ] && xset s $((IDLE_LOCK_MINUTES * 60))
+xss-lock --transfer-sleep-lock -- ~/bin/pwr lock --nofork >/dev/null 2>&1 &
+
+# Suspend on idle. logind IdleAction cannot see X input in a startx session.
+# -detectsleep restarts the count after resume, so the machine does not
+# suspend again at once.
+[ -n "${IDLE_SUSPEND_MINUTES:-}" ] && xautolock -time "$IDLE_SUSPEND_MINUTES" \
+    -locker "systemctl suspend" -detectsleep >/dev/null 2>&1 &

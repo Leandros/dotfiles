@@ -49,8 +49,10 @@ snapshot_repo() {
     mkdir -p "$snap"
     # The container user must be able to read it.
     chmod 755 "$snap"
+    # --ignore-missing-args: tracked files deleted in the working tree are
+    # not on disk and must not be in the snapshot.
     git -C "$REPO" ls-files -co --exclude-standard -z \
-        | rsync -a --files-from=- --from0 "$REPO/" "$snap/"
+        | rsync -a --ignore-missing-args --files-from=- --from0 "$REPO/" "$snap/"
     git -C "$snap" init -q -b master
     git -C "$snap" -c user.name=test -c user.email=test@localhost add -A
     git -C "$snap" -c user.name=test -c user.email=test@localhost commit -q -m snapshot

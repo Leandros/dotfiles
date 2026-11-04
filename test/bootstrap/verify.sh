@@ -110,7 +110,33 @@ if [[ $xorg_expected -eq 1 ]]; then
     check_link "$HOME/.xprofile" "$D/.xprofile"
     check_link "$HOME/bin/kb" "$D/bin/kb"
     check_link "$HOME/bin/i3status-kb" "$D/bin/i3status-kb"
+    check_link "$HOME/bin/pwr" "$D/bin/pwr"
     check_link "$HOME/.config/xremap" "$D/.config/xremap"
+    eval "$(grep -E '^readonly IDLE_[A-Z_]+_MINUTES=' "$SRC/bootstrap.sh")"
+    idle_want="IDLE_LOCK_MINUTES=$IDLE_LOCK_MINUTES IDLE_SUSPEND_MINUTES=$IDLE_SUSPEND_MINUTES "
+    idle_have="$(grep -v '^#' "$HOME/.config/idle.conf" 2>/dev/null | tr '\n' ' ')"
+    if [[ "$idle_have" == "$idle_want" ]]; then
+        ok "idle.conf ($idle_want)"
+    else
+        fail "idle.conf: want '$idle_want', got '$idle_have'"
+    fi
+    if cmp -s "$D/logind-conf/50-lid-suspend.conf" /etc/systemd/logind.conf.d/50-lid-suspend.conf; then
+        ok "logind.conf.d lid suspend installed"
+    else
+        fail "logind.conf.d/50-lid-suspend.conf missing or differs"
+    fi
+    if cmp -s "$D/system-sleep/power-button-wake" /usr/lib/systemd/system-sleep/power-button-wake \
+        && [[ -x /usr/lib/systemd/system-sleep/power-button-wake ]]; then
+        ok "system-sleep power-button-wake hook installed"
+    else
+        fail "system-sleep/power-button-wake missing, differs or not executable"
+    fi
+    pwr_out="$("$HOME/bin/pwr" --bogus 2>&1 || true)"
+    if [[ "$pwr_out" == "usage: pwr lock [--nofork] | sleep | hibernate" ]]; then
+        ok "pwr rejects an unknown command"
+    else
+        fail "pwr: $pwr_out"
+    fi
     # 1.5x -> 24 px Terminus
     case "$os_id" in
         debian|ubuntu) font_line="$(grep -E '^FONT(FACE|SIZE)=' /etc/default/console-setup | tr '\n' ' ')"; font_want='FONTFACE="Terminus" FONTSIZE="12x24" ' ;;
@@ -183,12 +209,14 @@ if [[ $xorg_expected -eq 1 ]]; then
     else
         fail "wezterm stamp not a nightly build: '$wezterm_stamp'"
     fi
-    for bin in i3 i3status dmenu xsetroot xset setxkbmap xmodmap amixer brightnessctl startx xclip; do
+    for bin in i3 i3status dmenu xsetroot xset setxkbmap xmodmap amixer brightnessctl startx xclip i3lock; do
         if command -v "$bin" >/dev/null; then ok "xorg bin $bin"; else fail "xorg bin missing: $bin"; fi
     done
     # Not packaged for EL9.
     if grep -qE '^ID=(debian|ubuntu|fedora)$' /etc/os-release; then
-        if command -v xbindkeys >/dev/null; then ok "xorg bin xbindkeys"; else fail "xorg bin missing: xbindkeys"; fi
+        for bin in xbindkeys xss-lock xautolock; do
+            if command -v "$bin" >/dev/null; then ok "xorg bin $bin"; else fail "xorg bin missing: $bin"; fi
+        done
     fi
     # i3 validates its config without a display.
     if i3 -C -c "$HOME/.config/i3/config" >/tmp/i3.log 2>&1; then

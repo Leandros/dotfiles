@@ -26,6 +26,14 @@
 set -euo pipefail
 
 # =============================================================================
+# Settings
+# =============================================================================
+# Xorg desktop: minutes without input before the screen locks and before the
+# machine suspends. Re-run bootstrap.sh and start X again to apply a change.
+readonly IDLE_LOCK_MINUTES=5
+readonly IDLE_SUSPEND_MINUTES=10
+
+# =============================================================================
 # Versions
 # =============================================================================
 # https://github.com/neovim/neovim/releases
@@ -946,23 +954,25 @@ install_xorg_packages() {
             $SUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
                 -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold \
                 xorg xinit x11-xserver-utils xbindkeys \
-                i3 i3status suckless-tools \
+                i3 i3status suckless-tools i3lock xss-lock xautolock \
                 alsa-utils brightnessctl xclip \
                 kbd console-data console-setup
             ;;
         fedora)
             $SUDO dnf install -y -q \
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap xbindkeys \
-                i3 i3status dmenu \
+                i3 i3status dmenu i3lock xss-lock xautolock \
                 alsa-utils brightnessctl xclip kbd terminus-fonts-console
             ;;
         rhel)
             $SUDO dnf install -y -q epel-release
             $SUDO dnf config-manager --set-enabled crb
-            # xbindkeys is not packaged for EL9; .xprofile tolerates its absence.
+            # xbindkeys, xss-lock and xautolock are not packaged for EL9;
+            # .xprofile tolerates their absence. Without them there is no
+            # lock or suspend on idle; ~/bin/pwr still locks.
             $SUDO dnf install -y -q \
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap \
-                i3 i3status dmenu \
+                i3 i3status dmenu i3lock \
                 alsa-utils brightnessctl xclip kbd terminus-fonts-console
             ;;
     esac
@@ -1098,6 +1108,56 @@ install_xorg_conf() {
     done
 }
 
+# Lid close suspends. logind reads the file only at start.
+readonly LOGIND_CONF_NAME="50-lid-suspend.conf"
+readonly LOGIND_CONF_DIR="/etc/systemd/logind.conf.d"
+
+install_logind_conf() {
+    local src="$DOTFILES_DIR/logind-conf/$LOGIND_CONF_NAME" dst="$LOGIND_CONF_DIR/$LOGIND_CONF_NAME"
+    cmp -s "$src" "$dst" 2>/dev/null && return
+    $SUDO install -D -m 0644 "$src" "$dst"
+    log "installed $dst; applies after a reboot"
+}
+
+# Only the power button wakes from suspend or hibernation. systemd-sleep runs
+# the hooks in this directory before and after every sleep.
+readonly SLEEP_HOOK_NAME="power-button-wake"
+readonly SLEEP_HOOK_DIR="/usr/lib/systemd/system-sleep"
+
+install_sleep_hook() {
+    local src="$DOTFILES_DIR/system-sleep/$SLEEP_HOOK_NAME" dst="$SLEEP_HOOK_DIR/$SLEEP_HOOK_NAME"
+    cmp -s "$src" "$dst" 2>/dev/null && return
+    $SUDO install -D -m 0755 "$src" "$dst"
+    # SELinux: label for the target path, not the home directory source.
+    if have restorecon; then
+        $SUDO restorecon "$dst"
+    fi
+    log "installed $dst"
+}
+
+# Idle timeouts for .xprofile. Settings are static, so check them before
+# minutes of installs.
+readonly IDLE_CONF="$HOME/.config/idle.conf"
+readonly IDLE_CONF_MARKER="# Written by bootstrap.sh; edit the IDLE_* settings there."
+
+check_idle_settings() {
+    local name
+    for name in IDLE_LOCK_MINUTES IDLE_SUSPEND_MINUTES; do
+        [[ "${!name}" =~ ^[1-9][0-9]*$ ]] || die "$name must be a positive number of minutes: ${!name}"
+    done
+}
+
+write_idle_conf() {
+    local tmp="$WORK_DIR/idle.conf"
+    printf '%s\nIDLE_LOCK_MINUTES=%s\nIDLE_SUSPEND_MINUTES=%s\n' \
+        "$IDLE_CONF_MARKER" "$IDLE_LOCK_MINUTES" "$IDLE_SUSPEND_MINUTES" > "$tmp"
+    cmp -s "$tmp" "$IDLE_CONF" 2>/dev/null && return
+
+    mkdir -p "$(dirname "$IDLE_CONF")"
+    cp "$tmp" "$IDLE_CONF"
+    log "lock after $IDLE_LOCK_MINUTES min idle, suspend after $IDLE_SUSPEND_MINUTES min"
+}
+
 install_wezterm() {
     case "$DISTRO" in
         debian|ubuntu) install_wezterm_deb ;;
@@ -1155,6 +1215,7 @@ link_xorg_dotfiles() {
     # PATH in .zshrc. The bone2 console map is read from the clone.
     link "$d/bin/kb" "$HOME/bin/kb"
     link "$d/bin/i3status-kb" "$HOME/bin/i3status-kb"
+    link "$d/bin/pwr" "$HOME/bin/pwr"
     link "$d/.xinitrc" "$HOME/.xinitrc"
     link "$d/.xprofile" "$HOME/.xprofile"
     link "$d/.Xmodmap" "$HOME/.Xmodmap"
@@ -1177,8 +1238,11 @@ setup_xorg() {
     install_wezterm
     install_xremap
     install_xorg_conf
+    install_logind_conf
+    install_sleep_hook
     link_xorg_dotfiles
     write_xresources "$DPI_SCALE"
+    write_idle_conf
     configure_console_font "$DPI_SCALE"
 }
 
@@ -1359,6 +1423,7 @@ main() {
     detect_sudo
     # Ask up front so the run does not stall on a prompt after minutes of installs.
     if xorg_requested && xorg_supported; then
+        check_idle_settings
         DPI_SCALE="$(choose_dpi_scale)"
     fi
     WORK_DIR="$(mktemp -d)"

@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+#
+# power-button-wake - systemd system-sleep hook: only the power button wakes
+# the machine from suspend or hibernation.
+#
+# Before every sleep it disables all other wakeup sources: lid, keyboard,
+# TrackPoint, touchpad, USB, Bluetooth, Wake-on-LAN, AC adapter and RTC
+# alarms. It runs at each sleep because drivers and tools (ethtool, NetworkManager)
+# can enable a source again at any time. The setting only affects system
+# sleep; USB runtime autosuspend does not depend on it.
+#
+# Installed to /usr/lib/systemd/system-sleep/ by bootstrap.sh.
+#
+set -euo pipefail
+
+# Overridable for test/system-sleep/power-button-wake.sh.
+readonly SYSFS="${POWER_BUTTON_WAKE_SYSFS:-/sys}"
+# ACPI fixed and control method power buttons.
+readonly POWER_BUTTON_IDS=(LNXPWRBN PNP0C0C)
+# Intel drivers that report the power button during suspend-to-idle.
+readonly POWER_BUTTON_DRIVERS=(intel-hid intel-vbtn)
+
+driver_of() {
+    local link
+    link="$(readlink "$1/driver" 2>/dev/null)" || return 0
+    echo "${link##*/}"
+}
+
+# The device itself, or its platform device when it is an ACPI companion.
+is_power_button() {
+    local dev="$1" name id node driver
+    name="${dev##*/}"
+    id="${name%%:*}"
+    for name in "${POWER_BUTTON_IDS[@]}"; do
+        [[ "$id" == "$name" ]] && return 0
+    done
+
+    for node in "$dev" "$dev"/physical_node*; do
+        [[ -e "$node" ]] || continue
+        driver="$(driver_of "$node")"
+        for name in "${POWER_BUTTON_DRIVERS[@]}"; do
+            [[ "$driver" == "$name" ]] && return 0
+        done
+    done
+    return 1
+}
+
+main() {
+    [[ "${1:-}" == "pre" ]] || exit 0
+
+    local wakeup state dev
+    while IFS= read -r -d '' wakeup; do
+        state="$(<"$wakeup")" || continue
+        [[ "$state" == "enabled" ]] || continue
+        dev="${wakeup%/power/wakeup}"
+        is_power_button "$dev" && continue
+
+        if echo disabled > "$wakeup"; then
+            echo "power-button-wake: disabled wakeup for ${dev#"$SYSFS"/}"
+        else
+            echo "power-button-wake: cannot disable wakeup for ${dev#"$SYSFS"/}" >&2
+        fi
+    done < <(find "$SYSFS/devices" -path '*/power/wakeup' -type f -print0 2>/dev/null)
+}
+
+main "$@"
