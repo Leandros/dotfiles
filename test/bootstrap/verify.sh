@@ -133,11 +133,37 @@ if [[ $xorg_expected -eq 1 ]]; then
         fail "system-sleep/power-button-wake missing, differs or not executable"
     fi
     pwr_out="$("$HOME/bin/pwr" --bogus 2>&1 || true)"
-    if [[ "$pwr_out" == "usage: pwr lock [--nofork] | sleep | hibernate" ]]; then
+    if [[ "$pwr_out" == "usage: pwr lock [--nofork] | sleep | hibernate | performance | balanced | battery | mode" ]]; then
         ok "pwr rejects an unknown command"
     else
         fail "pwr: $pwr_out"
     fi
+    # Power modes: tuned with its power-profiles-daemon API on Fedora and EL.
+    case "$os_id" in
+        fedora|rocky|almalinux|centos|rhel)
+            if rpm -q tuned tuned-ppd >/dev/null; then ok "tuned and tuned-ppd installed"; else fail "tuned or tuned-ppd missing"; fi
+            enabled="$(systemctl is-enabled tuned.service tuned-ppd.service power-mode-auto.service 2>&1 | tr '\n' ' ' || true)"
+            if [[ "$enabled" == "enabled enabled enabled " ]]; then
+                ok "tuned, tuned-ppd and power-mode-auto enabled"
+            else
+                fail "units not enabled: $enabled"
+            fi
+            for pair in "power-mode-auto:/usr/local/libexec/power-mode-auto" \
+                "power-mode-auto.service:/etc/systemd/system/power-mode-auto.service" \
+                "90-power-mode-auto.rules:/etc/udev/rules.d/90-power-mode-auto.rules"; do
+                if cmp -s "$D/power-mode/${pair%%:*}" "${pair#*:}"; then
+                    ok "installed ${pair#*:}"
+                else
+                    fail "${pair#*:} missing or differs"
+                fi
+            done
+            if [[ -x /usr/local/libexec/power-mode-auto && ! -L /usr/local/libexec/power-mode-auto ]]; then
+                ok "power-mode-auto is a root-owned copy"
+            else
+                fail "power-mode-auto not an executable copy"
+            fi
+            ;;
+    esac
     # 1.5x -> 24 px Terminus
     case "$os_id" in
         debian|ubuntu) font_line="$(grep -E '^FONT(FACE|SIZE)=' /etc/default/console-setup | tr '\n' ' ')"; font_want='FONTFACE="Terminus" FONTSIZE="12x24" ' ;;

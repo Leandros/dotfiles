@@ -1,0 +1,13 @@
+# Power mode for the power source: performance on AC, battery on battery.
+# Started at boot and by 90-power-mode-auto.rules. Installed by bootstrap.sh.
+[Unit]
+Description=Power mode for the power source
+Wants=tuned-ppd.service
+After=tuned-ppd.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/libexec/power-mode-auto
+
+[Install]
+WantedBy=multi-user.target

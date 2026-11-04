@@ -1177,6 +1177,47 @@ install_sleep_hook() {
     log "installed $dst"
 }
 
+# Power modes for `pwr performance|balanced|battery` and the i3 bar: tuned
+# with its power-profiles-daemon API (tuned-ppd), Fedora's default since 41.
+# power-mode-auto picks performance on AC and battery mode on battery. It
+# runs as root, so it is a root-owned copy, not a link into the home.
+readonly POWER_MODE_FILES=(
+    "power-mode-auto:/usr/local/libexec/power-mode-auto:0755"
+    "power-mode-auto.service:/etc/systemd/system/power-mode-auto.service:0644"
+    "90-power-mode-auto.rules:/etc/udev/rules.d/90-power-mode-auto.rules:0644"
+)
+readonly POWER_MODE_UNITS=(tuned.service tuned-ppd.service power-mode-auto.service)
+
+install_power_modes() {
+    [[ "$DISTRO" == "fedora" || "$DISTRO" == "rhel" ]] || return 0
+    if rpm -q tlp >/dev/null 2>&1; then
+        warn "power modes: tlp is installed and conflicts with tuned, skipping"
+        return
+    fi
+    # --allowerasing swaps out power-profiles-daemon, which tuned-ppd replaces.
+    $SUDO dnf install -y -q --allowerasing tuned tuned-ppd
+
+    local entry src dst mode
+    for entry in "${POWER_MODE_FILES[@]}"; do
+        IFS=: read -r src dst mode <<< "$entry"
+        src="$DOTFILES_DIR/power-mode/$src"
+        cmp -s "$src" "$dst" 2>/dev/null && continue
+        $SUDO install -D -m "$mode" "$src" "$dst"
+        if have restorecon; then
+            $SUDO restorecon "$dst"
+        fi
+        log "installed $dst"
+    done
+
+    $SUDO systemctl enable -q "${POWER_MODE_UNITS[@]}"
+    # Containers and chroots have no running systemd.
+    if [[ -d /run/systemd/system ]]; then
+        $SUDO systemctl daemon-reload
+        $SUDO udevadm control --reload-rules
+        $SUDO systemctl start "${POWER_MODE_UNITS[@]}"
+    fi
+}
+
 # Idle timeouts for .xprofile. Settings are static, so check them before
 # minutes of installs.
 readonly IDLE_CONF="$HOME/.config/idle.conf"
@@ -1283,6 +1324,7 @@ setup_xorg() {
     install_xorg_conf
     install_logind_conf
     install_sleep_hook
+    install_power_modes
     link_xorg_dotfiles
     write_xresources "$DPI_SCALE"
     write_idle_conf

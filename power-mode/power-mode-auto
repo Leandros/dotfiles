@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+#
+# power-mode-auto - performance mode on AC, battery mode on battery.
+#
+# Runs as root from power-mode-auto.service: at boot, and from
+# 90-power-mode-auto.rules when the AC adapter is plugged in or out.
+# Machines without an AC adapter (desktops) keep their mode.
+# Installed to /usr/local/libexec/ by bootstrap.sh.
+#
+set -euo pipefail
+
+# Overridable for test/power-mode/test.sh.
+readonly SYSFS="${POWER_MODE_SYSFS:-/sys}"
+readonly PPD_NAME="org.freedesktop.UPower.PowerProfiles"
+readonly PPD_PATH="/org/freedesktop/UPower/PowerProfiles"
+readonly PPD_TIMEOUT_S=10
+
+# Prints "online", "offline", or nothing without an AC adapter. USB-C
+# sources (type USB) can be devices the laptop powers, so only Mains counts.
+ac_state() {
+    local supply found=""
+    for supply in "$SYSFS"/class/power_supply/*; do
+        [[ "$(cat "$supply/type" 2>/dev/null)" == "Mains" ]] || continue
+        found="offline"
+        if [[ "$(cat "$supply/online" 2>/dev/null)" == "1" ]]; then
+            echo online
+            return
+        fi
+    done
+    echo "$found"
+}
+
+main() {
+    local profile
+    case "$(ac_state)" in
+        online) profile=performance ;;
+        offline) profile=power-saver ;;
+        *) exit 0 ;;
+    esac
+
+    busctl --timeout="$PPD_TIMEOUT_S" set-property \
+        "$PPD_NAME" "$PPD_PATH" "$PPD_NAME" ActiveProfile s "$profile"
+    echo "power-mode-auto: $profile"
+}
+
+main "$@"

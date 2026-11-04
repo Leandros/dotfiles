@@ -1,0 +1,3 @@
+# AC adapter plugged in or out: pick the power mode. --no-block, as udev
+# must not wait for D-Bus. Installed by bootstrap.sh.
+SUBSYSTEM=="power_supply", ACTION=="change", ATTR{type}=="Mains", RUN+="/usr/bin/systemctl start --no-block power-mode-auto.service"

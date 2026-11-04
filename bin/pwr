@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# pwr - lock, suspend or hibernate now.
+# pwr - lock, suspend or hibernate now, or switch the power mode.
 #
 # xss-lock (started from ~/.xprofile) runs `pwr lock --nofork` on idle
 # and before every suspend or hibernation. Locking through logind lets
@@ -8,16 +8,29 @@
 # keyboard. Without xss-lock (EL9), i3lock runs directly. Only the power
 # button wakes the machine (system-sleep/power-button-wake).
 #
+# Power modes go through the power-profiles-daemon D-Bus API (tuned-ppd on
+# Fedora); it sets the ThinkPad firmware mode and the CPU energy settings.
+# power-mode/power-mode-auto picks the mode when the AC adapter changes.
+#
 # Usage: pwr lock            lock now
 #        pwr lock --nofork   run i3lock in the foreground (xss-lock locker)
 #        pwr sleep           suspend now
 #        pwr hibernate       hibernate now
+#        pwr performance     maximum performance
+#        pwr balanced        balance performance and power use
+#        pwr battery         longest battery life
+#        pwr mode            print the power mode (i3 bar)
 #
 set -euo pipefail
 
 # Solarized base02, the i3 desktop background.
 readonly COLOR="073642"
-readonly USAGE="usage: pwr lock [--nofork] | sleep | hibernate"
+readonly USAGE="usage: pwr lock [--nofork] | sleep | hibernate | performance | balanced | battery | mode"
+readonly PPD_NAME="org.freedesktop.UPower.PowerProfiles"
+readonly PPD_PATH="/org/freedesktop/UPower/PowerProfiles"
+readonly PPD_PROPERTY="ActiveProfile"
+# The i3 bar asks every few seconds; it must not block on a stuck daemon.
+readonly PPD_TIMEOUT_S=2
 
 usage() {
     echo "$USAGE" >&2
@@ -52,6 +65,28 @@ enter() {
     exec systemctl "$action"
 }
 
+# Power profile names of the D-Bus API; "battery" is "power-saver" there.
+set_mode() {
+    local profile="$1"
+    busctl --timeout="$PPD_TIMEOUT_S" set-property \
+        "$PPD_NAME" "$PPD_PATH" "$PPD_NAME" "$PPD_PROPERTY" s "$profile"
+    # Redraw the i3 bar now instead of at the next interval.
+    pkill -USR1 -x i3status 2>/dev/null || true
+}
+
+show_mode() {
+    local reply profile
+    reply="$(busctl --timeout="$PPD_TIMEOUT_S" get-property \
+        "$PPD_NAME" "$PPD_PATH" "$PPD_NAME" "$PPD_PROPERTY")"
+    # Reply format: s "power-saver"
+    profile="${reply#s \"}"
+    profile="${profile%\"}"
+    case "$profile" in
+        power-saver) echo battery ;;
+        *) echo "$profile" ;;
+    esac
+}
+
 main() {
     [[ $# -ge 1 ]] || usage
     local command="$1"
@@ -69,6 +104,18 @@ main() {
         hibernate)
             [[ $# -eq 0 ]] || usage
             enter hibernate
+            ;;
+        performance|balanced)
+            [[ $# -eq 0 ]] || usage
+            set_mode "$command"
+            ;;
+        battery)
+            [[ $# -eq 0 ]] || usage
+            set_mode power-saver
+            ;;
+        mode)
+            [[ $# -eq 0 ]] || usage
+            show_mode
             ;;
         *) usage ;;
     esac

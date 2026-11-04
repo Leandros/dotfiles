@@ -51,6 +51,20 @@ click() {
     printf '{"name":"%s","instance":"%s","button":%s,"modifiers":[],"x":10,"y":5}\n' "$1" "$2" "$3"
 }
 
+# The first status array the script prints. MODE is what `pwr mode` prints;
+# empty makes it fail like a system without a power profile daemon.
+status_line() {
+    local mode="$1"
+    if [[ -n "$mode" ]]; then
+        # shellcheck disable=SC2016 # $1 belongs to the stub.
+        printf '#!/bin/sh\n[ "$1" = mode ] && echo %s\n' "$mode" > "$TMP/home/bin/pwr"
+    else
+        printf '#!/bin/sh\nexit 1\n' > "$TMP/home/bin/pwr"
+    fi
+    chmod +x "$TMP/home/bin/pwr"
+    HOME="$TMP/home" PATH="$TMP/stubs:$PATH" timeout 3 "$SCRIPT" < /dev/null 2>/dev/null | sed -n 3p || true
+}
+
 # Runs i3status-kb with the given click lines on stdin; prints the calls
 # made other than `kb show`.
 run_clicks() {
@@ -77,6 +91,14 @@ main() {
     expect "click on another block does nothing" "" "$(run_clicks "$(click battery _first_ 1)")"
     expect "left click on kb still cycles the layout" "kb next" "$(run_clicks "$(click kb "" 1)")"
     expect "right click on kb still goes back" "kb prev" "$(run_clicks "$(click kb "" 3)")"
+
+    local wireless='{"name":"wireless","instance":"_first_","full_text":"W: up"}'
+    expect "the power mode follows the layout block" \
+        "[{\"name\":\"kb\",\"full_text\":\"KB: us\"},{\"name\":\"power_mode\",\"full_text\":\"PWR: battery\"},$wireless]" \
+        "$(status_line battery)"
+    expect "no power mode block without a daemon" \
+        "[{\"name\":\"kb\",\"full_text\":\"KB: us\"},$wireless]" \
+        "$(status_line "")"
 
     exit "$FAILED"
 }

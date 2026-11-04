@@ -4,6 +4,7 @@
 #
 # Runs i3status, adds a "KB: <layout>" block to every status line and cycles
 # the layout with `kb` when the block is clicked (left: next, right: prev).
+# A "PWR: <mode>" block after it shows the power mode from `pwr mode`.
 # A left click on the wireless or ethernet block opens nmrs-gui.
 # Use as `status_command` in the i3 bar.
 #
@@ -14,6 +15,8 @@ readonly BLOCK_NAME="kb"
 readonly BUTTON_LEFT=1
 readonly BUTTON_RIGHT=3
 readonly NETWORK_GUI="nmrs-gui"
+readonly PWR="$HOME/bin/pwr"
+readonly MODE_BLOCK_NAME="power_mode"
 # i3status cannot request clicks itself; i3bar only sends them when the
 # header asks for them.
 readonly HEADER='{"version":1,"click_events":true}'
@@ -21,6 +24,14 @@ FIFO=""
 
 layout_block() {
     printf '{"name":"%s","full_text":"KB: %s"}' "$BLOCK_NAME" "$("$KB" show)"
+}
+
+# Empty without a power profile daemon.
+mode_block() {
+    local mode
+    mode="$("$PWR" mode 2>/dev/null)" || return 0
+    [[ -n "$mode" ]] || return 0
+    printf ',{"name":"%s","full_text":"PWR: %s"}' "$MODE_BLOCK_NAME" "$mode"
 }
 
 # i3bar writes one click event per line on stdin, after a leading "[".
@@ -60,16 +71,17 @@ network_click() {
     i3-msg -q "exec --no-startup-id $NETWORK_GUI" || true
 }
 
-# Insert the block as the first element of the status array. The line is
-# either "[...]" or ",[...]"; an empty array needs no trailing comma.
+# Insert the blocks at the front of the status array. The line is either
+# "[...]" or ",[...]"; an empty array needs no trailing comma.
 with_block() {
-    local line="$1" prefix rest
+    local line="$1" prefix rest blocks
     prefix="${line%%\[*}"
     rest="${line#*\[}"
+    blocks="$(layout_block)$(mode_block)"
     if [[ "$rest" == "]" ]]; then
-        echo "${prefix}[$(layout_block)]"
+        echo "${prefix}[${blocks}]"
     else
-        echo "${prefix}[$(layout_block),$rest"
+        echo "${prefix}[${blocks},$rest"
     fi
 }
 
