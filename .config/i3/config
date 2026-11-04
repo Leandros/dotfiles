@@ -128,6 +128,9 @@ bindsym $mod+u layout toggle split
 # toggle tiling / floating
 bindsym $mod+Shift+space floating toggle
 
+# nmrs-gui (network settings); a click on the bar's network block opens it.
+for_window [class="^nmrs$"] floating enable
+
 # change focus between tiling / floating windows
 bindsym $mod+space focus mode_toggle
 

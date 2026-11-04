@@ -4,6 +4,7 @@
 #
 # Runs i3status, adds a "KB: <layout>" block to every status line and cycles
 # the layout with `kb` when the block is clicked (left: next, right: prev).
+# A left click on the wireless or ethernet block opens nmrs-gui.
 # Use as `status_command` in the i3 bar.
 #
 set -euo pipefail
@@ -12,6 +13,7 @@ readonly KB="$HOME/bin/kb"
 readonly BLOCK_NAME="kb"
 readonly BUTTON_LEFT=1
 readonly BUTTON_RIGHT=3
+readonly NETWORK_GUI="nmrs-gui"
 # i3status cannot request clicks itself; i3bar only sends them when the
 # header asks for them.
 readonly HEADER='{"version":1,"click_events":true}'
@@ -25,15 +27,37 @@ layout_block() {
 handle_clicks() {
     local line
     while read -r line; do
-        [[ "$line" == *"\"name\":\"$BLOCK_NAME\""* ]] || continue
         case "$line" in
-            *"\"button\":$BUTTON_LEFT,"*|*"\"button\":$BUTTON_LEFT}"*)   "$KB" next >/dev/null ;;
-            *"\"button\":$BUTTON_RIGHT,"*|*"\"button\":$BUTTON_RIGHT}"*) "$KB" prev >/dev/null ;;
-            *) continue ;;
+            *"\"name\":\"$BLOCK_NAME\""*) layout_click "$line" ;;
+            *'"name":"wireless"'*|*'"name":"ethernet"'*) network_click "$line" ;;
         esac
-        # Redraw now instead of at the next interval.
-        kill -USR1 "$I3STATUS_PID"
     done
+}
+
+is_button() {
+    local line="$1" button="$2"
+    [[ "$line" == *"\"button\":$button,"* || "$line" == *"\"button\":$button}"* ]]
+}
+
+layout_click() {
+    local line="$1"
+    if is_button "$line" "$BUTTON_LEFT"; then
+        "$KB" next >/dev/null
+    elif is_button "$line" "$BUTTON_RIGHT"; then
+        "$KB" prev >/dev/null
+    else
+        return 0
+    fi
+    # Redraw now instead of at the next interval.
+    kill -USR1 "$I3STATUS_PID"
+}
+
+# i3 starts the GUI, so it is not in this script's process group, which
+# cleanup kills when the bar restarts. The i3 command is one argument;
+# i3-msg would read --no-startup-id as its own option.
+network_click() {
+    is_button "$1" "$BUTTON_LEFT" || return 0
+    i3-msg -q "exec --no-startup-id $NETWORK_GUI" || true
 }
 
 # Insert the block as the first element of the status array. The line is
