@@ -1412,7 +1412,22 @@ setup_tmux_plugins() {
     "$tpm/bin/install_plugins" >/dev/null 2>&1 || warn "tpm: plugin install failed, run prefix+I in tmux"
 }
 
+# lazy.nvim first, by hand: when nvim starts, lazy.nvim installs missing
+# plugins and writes its own commit into lazy-lock.json, so a restore run
+# by an older lazy.nvim keeps that older lazy.nvim.
+pin_lazy_nvim() {
+    local dir="$HOME/.local/share/nvim/lazy/lazy.nvim" commit
+    [[ -d "$dir/.git" ]] || return 0
+    commit="$(sed -nE 's/.*"lazy\.nvim": \{ "branch": "[^"]+", "commit": "([0-9a-f]+)".*/\1/p' "$DOTFILES_DIR/lazy-lock.json")"
+    [[ -n "$commit" ]] || die "lazy-lock.json has no lazy.nvim commit"
+    [[ "$(git -C "$dir" rev-parse HEAD)" == "$commit" ]] && return
+    git -C "$dir" cat-file -e "$commit^{commit}" 2>/dev/null || git -C "$dir" fetch -q origin "$commit"
+    git -C "$dir" checkout -q "$commit"
+    log "lazy.nvim at ${commit:0:7}"
+}
+
 setup_nvim_plugins() {
+    pin_lazy_nvim
     # Restores plugins to lazy-lock.json. The treesitter config blocks until
     # all parsers are built when running headless.
     nvim --headless "+Lazy! restore" +qa >/dev/null 2>&1 || warn "nvim: plugin restore failed, run :Lazy restore"

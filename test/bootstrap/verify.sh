@@ -325,6 +325,29 @@ else
     fail "nvim-treesitter: want main@$ts_want got $ts_have"
 fi
 
+# lazy.nvim before v11.17.5 misreads "lua==5.1" in rockspecs (rustaceanvim)
+# as a rock and then needs luarocks, which Fedora does not ship.
+lazy_want="$(sed -nE 's/.*"lazy.nvim": \{ "branch": "[^"]+", "commit": "([0-9a-f]+)".*/\1/p' "$SRC/lazy-lock.json")"
+lazy_have="$(git -C "$HOME/.local/share/nvim/lazy/lazy.nvim" rev-parse HEAD 2>/dev/null || true)"
+if [[ -n "$lazy_want" && "$lazy_have" == "$lazy_want" ]]; then
+    ok "lazy.nvim at pin $lazy_want"
+else
+    fail "lazy.nvim: want $lazy_want got $lazy_have"
+fi
+# shellcheck disable=SC2016
+rocks_out="$(nvim --headless -c 'lua
+  local names = {}
+  for name, plugin in pairs(require("lazy.core.config").plugins) do
+    if plugin.build == "rockspec" then names[#names + 1] = name end
+  end
+  table.sort(names)
+  io.stdout:write("rockspec=" .. table.concat(names, ",") .. "\n")' +qa 2>&1 | grep -ao 'rockspec=.*' || true)"
+if [[ "$rocks_out" == "rockspec=" ]]; then
+    ok "no plugin needs luarocks"
+else
+    fail "plugins built with luarocks: ${rocks_out:-no output}"
+fi
+
 parser_dir="$HOME/.local/share/nvim/site/parser"
 missing_parsers=""
 for lang in c cpp cmake rust json json5 javascript typescript tsx vim lua go haskell bash markdown markdown_inline python html regex yaml zig; do
