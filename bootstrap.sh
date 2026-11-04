@@ -927,6 +927,8 @@ link_dotfiles() {
 
     link "$d/.config/yazi" "$HOME/.config/yazi"
     link "$d/AppData/Roaming/lazygit/config.yml" "$(lazygit_config_dir)/config.yml"
+    # fzf CTRL-T list cache, used by .zshrc.
+    link "$d/bin/fzf-cache" "$HOME/bin/fzf-cache"
 }
 
 # =============================================================================

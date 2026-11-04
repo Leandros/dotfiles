@@ -94,6 +94,7 @@ check_link "$HOME/.tmux.conf" "$D/tmux/tmux_linux_$TMUX_VERSION_LINUX/.tmux.conf
 check_link "$HOME/.tmux/custom" "$D/.tmux/custom"
 check_link "$HOME/.config/yazi" "$D/.config/yazi"
 check_link "$HOME/.config/lazygit/config.yml" "$D/AppData/Roaming/lazygit/config.yml"
+check_link "$HOME/bin/fzf-cache" "$D/bin/fzf-cache"
 
 # Xorg checks: distros where bootstrap installs the desktop (RHEL only up to 9).
 xorg_expected=0

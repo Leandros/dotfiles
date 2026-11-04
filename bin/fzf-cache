@@ -1,0 +1,132 @@
+#!/usr/bin/env bash
+#
+# fzf-cache - print a cached file list at once, refresh it in the background.
+#
+# For fzf CTRL-T (.zshrc). `show` prints the list from the last run in this
+# directory, so fzf starts with the full list even in big trees. `update`
+# runs the command, saves its output and prints it; fzf swaps it in with
+# reload-sync when it is complete. Without a cache, `show` streams the
+# command and saves a cache in the background.
+#
+# The refresh runs in its own process group: fzf kills the process group of
+# its reload command on exit, and the cache must still be written. Only one
+# refresh per directory and command runs at a time; other callers wait.
+#
+# Usage: fzf-cache show COMMAND [ARG...]
+#        fzf-cache update COMMAND [ARG...]
+#
+set -euo pipefail
+
+readonly USAGE="usage: fzf-cache show|update COMMAND [ARG...]"
+readonly CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/fzf-cache"
+# XDG_RUNTIME_DIR is cleared at boot, so a lock cannot outlive a reboot.
+readonly LOCK_DIR="${XDG_RUNTIME_DIR:-$CACHE_DIR}/fzf-cache-locks"
+readonly MAX_AGE_DAYS=30
+readonly POLL_S=0.1
+# Shell exit status 126: not executable, 127: not found, 128+N: signal N.
+readonly CANNOT_RUN_STATUS=126
+
+HELD_LOCK=""
+REFRESH_PID=""
+
+usage() {
+    echo "$USAGE" >&2
+    exit 2
+}
+
+# CRC and byte count of the directory and the command.
+cache_key() {
+    local sum
+    sum="$(printf '%s\n' "$PWD" "$@" | cksum)"
+    echo "${sum// /-}"
+}
+
+# A lock is a symlink to the PID of its holder; ln -s creates it atomically.
+lock_alive() {
+    local pid
+    pid="$(readlink "$1" 2>/dev/null)" || return 1
+    kill -0 "$pid" 2>/dev/null
+}
+
+take_lock() {
+    local lock="$1"
+    if ! ln -s "$$" "$lock" 2>/dev/null; then
+        lock_alive "$lock" && return 1
+        rm -f "$lock"
+        ln -s "$$" "$lock" 2>/dev/null || return 1
+    fi
+    HELD_LOCK="$lock"
+}
+
+release_lock() {
+    [[ -n "$HELD_LOCK" ]] && rm -f "$HELD_LOCK"
+}
+
+# Fd reports unreadable directories with exit status 1 but lists the rest,
+# so that output is kept.
+refresh() {
+    local key="$1"
+    shift
+    take_lock "$LOCK_DIR/$key" || return 0
+    trap release_lock EXIT
+    # Bash does not always report 127 for a missing command.
+    command -v "$1" >/dev/null || return 0
+
+    local cache="$CACHE_DIR/$key" status=0
+    "$@" > "$cache.$$" || status=$?
+    if (( status < CANNOT_RUN_STATUS )); then
+        mv -f "$cache.$$" "$cache"
+    else
+        rm -f "$cache.$$"
+    fi
+    find "$CACHE_DIR" -type f -mtime "+$MAX_AGE_DAYS" -delete 2>/dev/null || true
+}
+
+start_refresh() {
+    set -m
+    "${BASH_SOURCE[0]}" _refresh "$@" </dev/null >/dev/null 2>&1 &
+    REFRESH_PID=$!
+    set +m
+}
+
+show() {
+    local key cache
+    key="$(cache_key "$@")"
+    cache="$CACHE_DIR/$key"
+    if [[ -f "$cache" ]]; then
+        exec cat "$cache"
+    fi
+
+    start_refresh "$key" "$@"
+    exec "$@"
+}
+
+update() {
+    local key
+    key="$(cache_key "$@")"
+    start_refresh "$key" "$@"
+    wait "$REFRESH_PID" || true
+
+    # Another caller's refresh may still run.
+    while lock_alive "$LOCK_DIR/$key"; do
+        sleep "$POLL_S"
+    done
+    cat "$CACHE_DIR/$key" 2>/dev/null || true
+}
+
+main() {
+    [[ $# -ge 2 ]] || usage
+    local mode="$1"
+    shift
+
+    umask 077
+    mkdir -p "$CACHE_DIR" "$LOCK_DIR"
+    case "$mode" in
+        show) show "$@" ;;
+        update) update "$@" ;;
+        _refresh) refresh "$@" ;;
+        *) usage ;;
+    esac
+}
+
+main "$@"

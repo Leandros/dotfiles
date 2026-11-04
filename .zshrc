@@ -190,6 +190,14 @@ export FZF_CTRL_T_OPTS="
   --preview 'bat -n --color=always {}'
   --bind 'ctrl-t:change-preview-window(down|hidden|)'"
 
+# CTRL-T shows the list from its last run in this directory at once, then
+# swaps in the fresh list when fd is done.
+if [ -x "$HOME/bin/fzf-cache" ]; then
+    export FZF_CTRL_T_COMMAND="$HOME/bin/fzf-cache show $FZF_DEFAULT_COMMAND"
+    FZF_CTRL_T_OPTS+="
+  --bind 'load:unbind(load)+reload-sync($HOME/bin/fzf-cache update $FZF_DEFAULT_COMMAND)'"
+fi
+
 export FZF_DEFAULT_OPTS="--bind=ctrl-n:down,ctrl-r:up,ctrl-b:backward-char,ctrl-s:forward-char"
 
 export FZF_CTRL_R_OPTS="
