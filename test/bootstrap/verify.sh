@@ -247,9 +247,25 @@ if [[ $xorg_expected -eq 1 ]]; then
     done
     # Not packaged for EL9.
     if grep -qE '^ID=(debian|ubuntu|fedora)$' /etc/os-release; then
-        for bin in xbindkeys xss-lock xautolock; do
+        for bin in xbindkeys xss-lock xautolock blueman-applet blueman-manager; do
             if command -v "$bin" >/dev/null; then ok "xorg bin $bin"; else fail "xorg bin missing: $bin"; fi
         done
+        # Imports all its GObject libraries; Fedora's package misses one.
+        if blueman-applet --help >/dev/null 2>/tmp/blueman.log; then
+            ok "blueman-applet starts"
+        else
+            fail "blueman-applet: $(tail -n 1 /tmp/blueman.log)"
+        fi
+        bt_enabled="$(systemctl is-enabled bluetooth.service 2>&1 || true)"
+        if ! command -v systemctl >/dev/null; then
+            ok "bluetooth.service: no systemctl in this image"
+        elif [[ "$bt_enabled" == "enabled" ]]; then
+            ok "bluetooth.service enabled"
+        else
+            fail "bluetooth.service: $bt_enabled"
+        fi
+        # .xprofile makes an output primary so i3bar shows the tray.
+        if command -v xrandr >/dev/null; then ok "xorg bin xrandr"; else fail "xorg bin missing: xrandr"; fi
     fi
     # i3 validates its config without a display.
     if i3 -C -c "$HOME/.config/i3/config" >/tmp/i3.log 2>&1; then

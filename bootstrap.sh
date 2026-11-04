@@ -958,22 +958,24 @@ install_xorg_packages() {
             $SUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
                 -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold \
                 xorg xinit x11-xserver-utils xbindkeys \
-                i3 i3status suckless-tools i3lock xss-lock xautolock \
+                i3 i3status suckless-tools i3lock xss-lock xautolock blueman \
                 alsa-utils brightnessctl xclip \
                 kbd console-data console-setup
             ;;
         fedora)
+            # gobject-introspection has the xlib typelib blueman-applet
+            # imports; the blueman package does not depend on it.
             $SUDO dnf install -y -q \
-                xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap xbindkeys \
-                i3 i3status dmenu i3lock xss-lock xautolock \
+                xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap xbindkeys xrandr \
+                i3 i3status dmenu i3lock xss-lock xautolock blueman gobject-introspection \
                 alsa-utils brightnessctl xclip kbd terminus-fonts-console
             ;;
         rhel)
             $SUDO dnf install -y -q epel-release
             $SUDO dnf config-manager --set-enabled crb
-            # xbindkeys, xss-lock and xautolock are not packaged for EL9;
-            # .xprofile tolerates their absence. Without them there is no
-            # lock or suspend on idle; ~/bin/pwr still locks.
+            # xbindkeys, xss-lock, xautolock and blueman are not packaged for
+            # EL9; .xprofile tolerates their absence. Without them there is no
+            # lock or suspend on idle and no Bluetooth GUI; ~/bin/pwr still locks.
             $SUDO dnf install -y -q \
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap \
                 i3 i3status dmenu i3lock \
@@ -1218,6 +1220,16 @@ install_power_modes() {
     fi
 }
 
+# blueman needs bluetoothd. Package presets usually enable it already.
+enable_bluetooth() {
+    have blueman-applet || return 0
+    have systemctl || return 0
+    $SUDO systemctl enable -q bluetooth.service
+    if [[ -d /run/systemd/system ]]; then
+        $SUDO systemctl start bluetooth.service
+    fi
+}
+
 # Idle timeouts for .xprofile. Settings are static, so check them before
 # minutes of installs.
 readonly IDLE_CONF="$HOME/.config/idle.conf"
@@ -1325,6 +1337,7 @@ setup_xorg() {
     install_logind_conf
     install_sleep_hook
     install_power_modes
+    enable_bluetooth
     link_xorg_dotfiles
     write_xresources "$DPI_SCALE"
     write_idle_conf

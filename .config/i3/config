@@ -130,6 +130,8 @@ bindsym $mod+Shift+space floating toggle
 
 # nmrs-gui (network settings); a click on the bar's network block opens it.
 for_window [class="^nmrs$"] floating enable
+# blueman (Bluetooth) sets only the WM_CLASS instance; its class is empty.
+for_window [instance="^blueman-"] floating enable
 
 # change focus between tiling / floating windows
 bindsym $mod+space focus mode_toggle
