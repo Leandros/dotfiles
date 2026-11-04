@@ -88,6 +88,8 @@ readonly WEZTERM_RELEASE="nightly"
 readonly WEZTERM_COPR="wezfurlong/wezterm-nightly"
 # https://github.com/xremap/xremap/releases (Xorg desktop only)
 readonly XREMAP_VERSION="0.15.15"
+# https://crates.io/crates/nmrs-gui (Xorg desktop only; needs Rust 1.95+)
+readonly NMRS_GUI_VERSION="2.1.0"
 # https://github.com/rust-lang/rust/releases
 readonly RUST_TOOLCHAIN="1.99.0"
 # https://github.com/tree-sitter/tree-sitter/releases
@@ -1050,6 +1052,44 @@ install_xremap() {
     fi
 }
 
+# NetworkManager GUI; no distro packages it, so cargo builds it. Build needs
+# the fontconfig and xkbcommon headers. At start it loads Vulkan for
+# rendering; mesa has the Intel and AMD drivers and a CPU fallback.
+readonly NMRS_GUI_DESKTOP="$PREFIX/share/applications/nmrs.desktop"
+
+install_nmrs_gui_deps() {
+    case "$DISTRO" in
+        debian|ubuntu)
+            $SUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
+                -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold \
+                libfontconfig-dev libxkbcommon-dev libxkbcommon-x11-dev libvulkan1 mesa-vulkan-drivers
+            ;;
+        fedora|rhel)
+            $SUDO dnf install -y -q \
+                fontconfig-devel libxkbcommon-devel libxkbcommon-x11-devel vulkan-loader mesa-vulkan-drivers
+            ;;
+    esac
+}
+
+install_nmrs_gui() {
+    is_current nmrs-gui "$NMRS_GUI_VERSION" "$PREFIX/bin/nmrs-gui" && return
+
+    install_nmrs_gui_deps
+    export CARGO_HOME="$CARGO_HOME_DIR" RUSTUP_HOME="$RUSTUP_HOME_DIR"
+    quiet "$CARGO_HOME_DIR/bin/cargo" "+$RUST_TOOLCHAIN" install -q --locked \
+        --root "$WORK_DIR/nmrs-gui" "nmrs-gui@$NMRS_GUI_VERSION"
+    install_bin "$WORK_DIR/nmrs-gui/bin/nmrs-gui" nmrs-gui
+
+    # The desktop entry lets i3-dmenu-desktop list it. cargo keeps the
+    # unpacked crate in its registry.
+    local src
+    src="$(find "$CARGO_HOME_DIR/registry/src" -mindepth 2 -maxdepth 2 -type d \
+        -name "nmrs-gui-$NMRS_GUI_VERSION" | head -n 1)"
+    [[ -f "$src/nmrs.desktop" ]] || die "nmrs-gui: nmrs.desktop not found in the cargo registry"
+    $SUDO install -D -m 0644 "$src/nmrs.desktop" "$NMRS_GUI_DESKTOP"
+    mark_current nmrs-gui "$NMRS_GUI_VERSION"
+}
+
 # Console font matching the display scale, applied at boot. The Terminus
 # console fonts come in the four sizes the scales need.
 readonly CONSOLE_FONT_BASE_PX=16
@@ -1237,6 +1277,7 @@ setup_xorg() {
     install_xorg_packages
     install_wezterm
     install_xremap
+    install_nmrs_gui
     install_xorg_conf
     install_logind_conf
     install_sleep_hook
@@ -1362,6 +1403,7 @@ report() {
     print_version codelldb cat "$(codelldb_dir)/.bootstrap-version"
     if xorg_requested && xorg_supported; then
         print_version wezterm wezterm --version
+        print_version nmrs-gui nmrs-gui --version
     fi
     if [[ -d "$BACKUP_DIR" ]]; then
         log "backups in $BACKUP_DIR"

@@ -209,6 +209,12 @@ if [[ $xorg_expected -eq 1 ]]; then
     else
         fail "wezterm stamp not a nightly build: '$wezterm_stamp'"
     fi
+    check_version nmrs-gui "nmrs-gui $NMRS_GUI_VERSION" nmrs-gui --version
+    if grep -qx 'Exec=nmrs-gui' /usr/local/share/applications/nmrs.desktop 2>/dev/null; then
+        ok "nmrs.desktop installed"
+    else
+        fail "nmrs.desktop missing in /usr/local/share/applications"
+    fi
     for bin in i3 i3status dmenu xsetroot xset setxkbmap xmodmap amixer brightnessctl startx xclip i3lock; do
         if command -v "$bin" >/dev/null; then ok "xorg bin $bin"; else fail "xorg bin missing: $bin"; fi
     done
