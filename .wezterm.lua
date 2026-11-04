@@ -130,7 +130,9 @@ config.launch_menu = launch_menu
 -- Keybindings:
 config.disable_default_key_bindings = true
 config.use_dead_keys = false
-config.enable_csi_u_key_encoding = true -- not sure if required ..
+-- Prefer kitty protocol over csi-u encoding.
+config.enable_kitty_keyboard = true
+config.enable_csi_u_key_encoding = false -- not sure if required ..
 config.send_composed_key_when_left_alt_is_pressed = true -- Required to enable Bone2 layout
 config.send_composed_key_when_right_alt_is_pressed = true -- Required to enable Bone2 layout
 
@@ -296,6 +298,24 @@ end
 config.key_tables = {
   copy_mode = copy_mode,
 }
+
+-- Bone2 puts '[' and other symbols on the CapsLock (Mode_switch) layer, but
+-- wezterm does not count CapsLock as a modifier and cancels the leader when
+-- it is pressed. LEADER+CapsLock therefore opens a one-shot table holding the
+-- same leader bindings, so e.g. leader, CapsLock+u ('[') still works.
+if tmux_keys_enabled and wezterm.target_triple:find('linux') then
+  local leader_layer = {}
+  for _, k in ipairs(tmux_keys) do
+    if k.mods == 'LEADER' then
+      table.insert(leader_layer, { key = k.key, mods = 'NONE', action = k.action })
+    end
+  end
+  config.key_tables.leader_layer = leader_layer
+  table.insert(config.keys, {
+    key = 'CapsLock', mods = 'LEADER',
+    action = act.ActivateKeyTable { name = 'leader_layer', one_shot = true, timeout_milliseconds = 1000 },
+  })
+end
 
 -- Font
 config.font = wezterm.font_with_fallback {
