@@ -770,6 +770,14 @@ install_rust() {
     fi
 }
 
+# rust-analyzer for nvim, also through lspmux; it reads the std sources from
+# rust-src. The toolchain builds need glibc 2.17 at most, so they also run on
+# AL2.
+install_rust_analyzer() {
+    export CARGO_HOME="$CARGO_HOME_DIR" RUSTUP_HOME="$RUSTUP_HOME_DIR"
+    quiet "$CARGO_HOME_DIR/bin/rustup" component add --toolchain "$RUST_TOOLCHAIN" rust-analyzer rust-src
+}
+
 # nvim-treesitter (main) needs the CLI to build parsers.
 install_tree_sitter() {
     is_current tree-sitter "$TREE_SITTER_VERSION" "$PREFIX/bin/tree-sitter" && return
@@ -1593,6 +1601,7 @@ report() {
     print_version mise mise --version
     print_version direnv direnv version
     print_version rustc "$CARGO_HOME_DIR/bin/rustc" --version
+    print_version rust-analyzer "$CARGO_HOME_DIR/bin/rust-analyzer" --version
     print_version tree-sitter tree-sitter --version
     print_version lspmux lspmux --version
     print_version node node --version
@@ -1632,6 +1641,7 @@ run_all() {
     step mise install_mise
     step direnv install_direnv
     step rust install_rust
+    step rust-analyzer install_rust_analyzer
     step tree-sitter install_tree_sitter
     step lspmux setup_lspmux
     step node install_node
