@@ -86,7 +86,13 @@ vim.o.encoding = "utf-8"
 vim.o.cursorline = true
 vim.o.ttyfast = true
 vim.o.emoji = true
-vim.opt.clipboard:append("unnamed")
+-- On Linux, yank to both PRIMARY (middle-click) and CLIPBOARD (Ctrl+V); `p`
+-- reads CLIPBOARD. Elsewhere both registers are the same system clipboard.
+if vim.uv.os_uname().sysname == "Linux" then
+  vim.opt.clipboard:append({ "unnamed", "unnamedplus" })
+else
+  vim.opt.clipboard:append("unnamed")
+end
 
 -- Recently vim (nvim > 0.5.0) can merge signcolumn and number column into one
 vim.o.signcolumn = "number"
@@ -4533,6 +4539,13 @@ inoremap("<c-a>", "<c-r>")
 -- Unhighlight searches
 -- using <esc> for this, behaves weird
 nnoremap("<C-d>", ":noh<return>")
+
+-- Deleting or changing with d/D/c/C never touches registers or the clipboard.
+-- Use x (visual) or y to keep text.
+vim.keymap.set({ "n", "x" }, "d", '"_d', { noremap = true, desc = "Delete (black hole)" })
+vim.keymap.set({ "n", "x" }, "D", '"_D', { noremap = true, desc = "Delete to EOL (black hole)" })
+vim.keymap.set({ "n", "x" }, "c", '"_c', { noremap = true, desc = "Change (black hole)" })
+vim.keymap.set({ "n", "x" }, "C", '"_C', { noremap = true, desc = "Change to EOL (black hole)" })
 
 -- Reselect visual blocks after movement
 vnoremap("<", "<gv")
