@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+#
+# flightmode - all radios off and the lowest power mode, or back.
+#
+# on:  blocks every radio with rfkill (Wi-Fi, Bluetooth, WWAN). NetworkManager
+#      and BlueZ follow the block; the kernel keeps it across reboots
+#      (systemd-rfkill). Selects `pwr battery` for the least power while idle.
+#      The machine only has s2idle, where powered radios cost the most.
+# off: unblocks the radios and restores the power mode from before `on`.
+#      power-mode-auto still switches the mode when the AC adapter changes.
+#
+# The logind session has access to /dev/rfkill; from a terminal without it
+# sudo asks for the password.
+#
+# Usage: flightmode on|off|toggle
+#        flightmode show   print on or off
+#
+set -euo pipefail
+
+readonly PWR="$HOME/bin/pwr"
+readonly FLIGHT_MODE="battery"
+# Per boot: after a reboot there is nothing to restore.
+readonly SAVED_MODE="${XDG_RUNTIME_DIR:-$HOME/.cache}/flightmode-mode"
+readonly USAGE="usage: flightmode on | off | toggle | show"
+
+die() { printf 'flightmode: %s\n' "$*" >&2; exit 1; }
+
+radios() {
+    if rfkill "$1" all 2>/dev/null; then
+        return
+    fi
+    [[ -t 0 ]] || die "rfkill $1 failed"
+    sudo rfkill "$1" all
+}
+
+# On when there is a radio and every radio is soft-blocked.
+show() {
+    local states
+    states="$(rfkill -n -o SOFT 2>/dev/null || true)"
+    if [[ -n "$states" && "$states" != *unblocked* ]]; then
+        echo on
+    else
+        echo off
+    fi
+}
+
+on() {
+    radios block
+    local mode
+    if mode="$("$PWR" mode 2>/dev/null)" && [[ -n "$mode" ]]; then
+        # A second `on` must not save the flight mode as the one to restore.
+        [[ "$mode" == "$FLIGHT_MODE" && -s "$SAVED_MODE" ]] || {
+            mkdir -p "$(dirname "$SAVED_MODE")"
+            echo "$mode" > "$SAVED_MODE"
+        }
+        "$PWR" "$FLIGHT_MODE" >/dev/null || echo "flightmode: power mode unchanged" >&2
+    fi
+    echo "flightmode: on"
+}
+
+off() {
+    radios unblock
+    if [[ -s "$SAVED_MODE" ]]; then
+        "$PWR" "$(cat "$SAVED_MODE")" >/dev/null || echo "flightmode: power mode unchanged" >&2
+        rm -f "$SAVED_MODE"
+    fi
+    echo "flightmode: off"
+}
+
+main() {
+    case "${1:-}" in
+        on)     on ;;
+        off)    off ;;
+        toggle) if [[ "$(show)" == on ]]; then off; else on; fi ;;
+        show)   show ;;
+        *)      die "$USAGE" ;;
+    esac
+}
+
+main "$@"

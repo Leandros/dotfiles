@@ -38,7 +38,8 @@ screen brightness (`☀: 65%`) and CPU and RAM use (`C: 12% R: 40%`); a click on
 the volume block opens pavucontrol to pick the audio input and output.
 `~/bin/theme dark|light|toggle` switches i3 between Solarized dark and light and
 sets the desktop color-scheme that Firefox follows and the GTK 3/4 dark preference
-(dark by default; GTK apps pick it up when they start). The
+(dark by default; GTK apps pick it up when they start). `~/bin/flightmode on`
+blocks all radios with rfkill and selects the battery power mode; `off` undoes both. The
 console bone2 keymap is `console/bone2.map`, generated from `.Xmodmap` with
 `console/xmodmap-to-console.py`; regenerate it when `.Xmodmap` changes. On a
 kmscon console (Fedora 45+) `kb` sets the layout through `localectl` instead,

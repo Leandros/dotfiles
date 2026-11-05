@@ -1045,7 +1045,7 @@ install_xorg_packages() {
                 -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold \
                 xorg xinit x11-xserver-utils \
                 i3 i3status suckless-tools i3lock xss-lock xautolock blueman arandr autorandr \
-                alsa-utils pavucontrol brightnessctl xclip \
+                alsa-utils pavucontrol brightnessctl xclip rfkill \
                 kbd console-data console-setup
             ;;
         fedora)
@@ -1445,6 +1445,7 @@ link_xorg_dotfiles() {
     link "$d/bin/i3status-kb" "$HOME/bin/i3status-kb"
     link "$d/bin/pwr" "$HOME/bin/pwr"
     link "$d/bin/theme" "$HOME/bin/theme"
+    link "$d/bin/flightmode" "$HOME/bin/flightmode"
     link "$d/.xinitrc" "$HOME/.xinitrc"
     link "$d/.xprofile" "$HOME/.xprofile"
     link "$d/.Xmodmap" "$HOME/.Xmodmap"
