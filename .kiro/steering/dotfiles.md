@@ -45,6 +45,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `system-sleep/power-button-wake` | `/usr/lib/systemd/system-sleep/` (root copy) |
 | `xinitrc-d/90-xprofile.sh` | `/etc/X11/xinit/xinitrc.d/` (root copy, Fedora/EL) |
 | `power-mode/*` | `/usr/local/libexec`, `/etc/systemd/system`, `/etc/udev/rules.d` (root copies, Fedora/EL) |
+| `lspmux.service` | `/etc/systemd/system/` (rendered root copy, runs as the user, Linux) |
 | `console/bone2.map` | generated from `.Xmodmap` by `console/xmodmap-to-console.py`; regenerate when `.Xmodmap` changes |
 
 Root-run files are root-owned copies, never links into `$HOME`.
@@ -75,6 +76,9 @@ Report, Main.
 - systemd: always `systemctl enable`. Run `start`, `daemon-reload` and
   `udevadm control --reload-rules` only if `/run/systemd/system` exists
   (containers have no systemd).
+- AL2's systemd 219 has no user instances (`user@.service`). Services for the
+  user are system units with `User=`, rendered from `##...##` placeholders
+  (`lspmux.service`).
 - Distro cases: `debian|ubuntu`, `fedora`, `rhel` (EL9 clones; EPEL and CRB),
   `amzn2`, `amzn2023`, `macos`. Tools go to `/usr/local`.
 - `clone_dotfiles` resets `lazy-lock.json`, stashes local edits around a
@@ -125,6 +129,11 @@ New link or system file: install function, `check_link` or `cmp` check in
 - X programs: Xorg dummy driver in a container.
 - Docker pitfalls: `pkill -f` kills its own `bash -c`, use `pkill -x`. Root
   that reads another user's `/proc/*/environ` needs `--cap-add SYS_PTRACE`.
+  A `-v` bind of a missing host path creates a root-owned directory there.
+  The host has cgroup v1: only old systemd (AL2 image) boots as PID 1 in a
+  `--privileged` container.
+- Fast lspmux check: bootstrap with `BOOTSTRAP_SKIP` for all steps except
+  `packages home dotfiles rust lspmux`, then `verify.sh | grep lspmux`.
 
 ## Neovim (`.vim.init.lua`)
 

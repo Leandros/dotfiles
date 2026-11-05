@@ -1,12 +1,24 @@
+# bootstrap.sh fills in the ##...## values and installs this as a system unit:
+# AL2's systemd has no user instances.
 [Unit]
-Description=Language server multiplexer server
+Description=lspmux: share language servers between editors
+Documentation=https://codeberg.org/p2502/lspmux
 
 [Service]
 Type=simple
-Environment=RUSTUP_HOME=/local/home/gerstarv/.rustup
-Environment=CARGO_HOME=/local/home/gerstarv/.cargo
-Environment=PATH=/local/home/gerstarv/bin:/local/home/gerstarv/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ExecStart=/local/home/gerstarv/.cargo/bin/lspmux server
+# lspmux has no authentication and spawns any server a client names. Run it
+# as the user, not root, and let only the user use the socket (path in the
+# lspmux config from bootstrap.sh).
+User=##NEWUSER##
+UMask=0077
+Environment=HOME=##NEWHOME##
+Environment=CARGO_HOME=##CARGO_HOME##
+Environment=RUSTUP_HOME=##RUSTUP_HOME##
+# nvim connects to the socket directly and names "rust-analyzer" without a
+# PATH, so the server looks it up in this one.
+Environment=PATH=##CARGO_HOME##/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/local/bin/lspmux server
+Restart=on-failure
 
 [Install]
 WantedBy=default.target

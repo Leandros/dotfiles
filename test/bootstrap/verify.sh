@@ -72,6 +72,7 @@ check_version tree-sitter "tree-sitter $TREE_SITTER_VERSION" tree-sitter --versi
 check_version node    "v$node_want" node --version
 check_version python  "Python $PYTHON_VERSION" "/usr/local/bin/python$PYTHON_VERSION" --version
 check_version nnn     "$NNN_VERSION" nnn -V
+check_version lspmux  "lspmux $LSPMUX_VERSION" lspmux --version
 
 codelldb_dir="$HOME/.local/share/nvim/lazy/vimspector/gadgets/linux/CodeLLDB"
 if [[ -x "$codelldb_dir/adapter/codelldb" && -f "$codelldb_dir/lldb/lib/liblldb.so" ]] \
@@ -95,6 +96,54 @@ check_link "$HOME/.tmux/custom" "$D/.tmux/custom"
 check_link "$HOME/.config/yazi" "$D/.config/yazi"
 check_link "$HOME/.config/lazygit/config.yml" "$D/AppData/Roaming/lazygit/config.yml"
 check_link "$HOME/bin/fzf-cache" "$D/bin/fzf-cache"
+
+# lspmux: owner-only Unix socket, no TCP port, user service enabled.
+lspmux_dir="$HOME/.local/state/lspmux"
+lspmux_sock="$lspmux_dir/lspmux.sock"
+lspmux_conf="$HOME/.config/lspmux/config.toml"
+if grep -qx "listen = \"$lspmux_sock\"" "$lspmux_conf" 2>/dev/null \
+    && grep -qx "connect = \"$lspmux_sock\"" "$lspmux_conf"; then
+    ok "lspmux config uses $lspmux_sock"
+else
+    fail "lspmux config: $(cat "$lspmux_conf" 2>/dev/null || echo MISSING)"
+fi
+if [[ "$(stat -c %a "$lspmux_dir" 2>/dev/null)" == "700" ]]; then
+    ok "lspmux socket directory is owner-only"
+else
+    fail "lspmux socket directory mode: $(stat -c %a "$lspmux_dir" 2>/dev/null || echo MISSING)"
+fi
+lspmux_unit="/etc/systemd/system/lspmux.service"
+if grep -qx "User=$USER" "$lspmux_unit" 2>/dev/null && ! grep -qE '##[A-Z_]+##' "$lspmux_unit"; then
+    ok "lspmux service runs as $USER"
+else
+    fail "lspmux service missing or not filled in: $lspmux_unit"
+fi
+if ! command -v systemctl >/dev/null; then
+    ok "lspmux service enable skipped (no systemctl)"
+elif [[ "$(readlink /etc/systemd/system/default.target.wants/lspmux.service)" == "$lspmux_unit" ]]; then
+    ok "lspmux service enabled"
+else
+    fail "lspmux service not enabled"
+fi
+# No user manager runs in the container; start the server by hand.
+lspmux server >/tmp/lspmux.log 2>&1 &
+lspmux_pid=$!
+for _ in $(seq 50); do
+    [[ -S "$lspmux_sock" ]] && break
+    sleep 0.1
+done
+if lspmux status >/tmp/lspmux-status.log 2>&1; then
+    ok "lspmux server answers on its socket"
+else
+    fail "lspmux status: $(head -n 3 /tmp/lspmux-status.log)"
+fi
+if (exec 3<>/dev/tcp/127.0.0.1/27631) 2>/dev/null; then
+    fail "lspmux listens on TCP 127.0.0.1:27631"
+else
+    ok "lspmux has no TCP port"
+fi
+kill "$lspmux_pid" 2>/dev/null || true
+wait "$lspmux_pid" 2>/dev/null || true
 
 # Xorg checks: distros where bootstrap installs the desktop (RHEL only up to 9).
 xorg_expected=0

@@ -2446,6 +2446,19 @@ local spec = {
       "nvim-lua/lsp-status.nvim",
     },
     init = function()
+      -- bootstrap.sh runs lspmux as a user service on this socket. lspmux has
+      -- no authentication and spawns any server a client names, so it does
+      -- not listen on TCP, where all local users can connect.
+      local lspmux_socket = vim.fs.joinpath(vim.env.HOME, ".local/state/lspmux/lspmux.sock")
+
+      -- Share one rust-analyzer per workspace through lspmux when it runs.
+      local function rust_analyzer_cmd()
+        local uid = tostring(vim.uv.getuid())
+        local running = vim.system({ "pgrep", "-u", uid, "-x", "lspmux" }):wait().code == 0
+        if running and vim.uv.fs_stat(lspmux_socket) then return vim.lsp.rpc.connect(lspmux_socket) end
+        return { "rust-analyzer", "--log-file", require("rustaceanvim.config.internal").server.logfile }
+      end
+
       vim.g.rustaceanvim = function()
         local extension_path = ""
         local codelldb_path = ""
@@ -2504,15 +2517,9 @@ local spec = {
           -- LSP configuration
           ---@type rustaceanvim.lsp.ClientOpts
           server = {
-            -- Automatically detect whether lspmux is installed.
-            -- Install with: $ cargo install --locked lspmux
-            lspmux = {
-              enable = true,
-              host = "127.0.0.1",
-              port = 27631,
-            },
-            -- If lspmux autodetection doesn't work use below.
-            -- cmd = vim.lsp.rpc.connect("127.0.0.1", 27631),
+            -- rustaceanvim finds lspmux only on TCP.
+            lspmux = { enable = false },
+            cmd = rust_analyzer_cmd,
 
             -- replaces the `before_init` hook in `vim.lsp.config(...)`.
             settings = function(_, default_settings)

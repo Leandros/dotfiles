@@ -95,6 +95,8 @@ readonly RUST_TOOLCHAIN="1.99.0"
 # https://github.com/tree-sitter/tree-sitter/releases
 # Release binaries need glibc 2.39; built with cargo instead.
 readonly TREE_SITTER_VERSION="0.27.1"
+# https://crates.io/crates/lspmux
+readonly LSPMUX_VERSION="0.3.0"
 
 # Git commits. Bump with: git ls-remote <url> HEAD
 # https://github.com/ohmyzsh/ohmyzsh
@@ -777,6 +779,82 @@ install_tree_sitter() {
         --root "$WORK_DIR/tree-sitter" "tree-sitter-cli@$TREE_SITTER_VERSION"
     install_bin "$WORK_DIR/tree-sitter/bin/tree-sitter" tree-sitter
     mark_current tree-sitter "$TREE_SITTER_VERSION"
+}
+
+# lspmux shares one language server per workspace between all editors. It has
+# no authentication and spawns any server a client names, so it runs as the
+# user, not root, and listens on a Unix socket in an owner-only directory, not
+# on TCP, where all local users can connect. .vim.init.lua uses the same path.
+readonly LSPMUX_SOCKET_DIR="$HOME/.local/state/lspmux"
+readonly LSPMUX_UNIT="lspmux.service"
+readonly LSPMUX_UNIT_PATH="/etc/systemd/system/$LSPMUX_UNIT"
+# Set when the binary, config or unit changes; the service then restarts.
+LSPMUX_CHANGED=0
+
+install_lspmux() {
+    is_current lspmux "$LSPMUX_VERSION" "$PREFIX/bin/lspmux" && return
+
+    export CARGO_HOME="$CARGO_HOME_DIR" RUSTUP_HOME="$RUSTUP_HOME_DIR"
+    quiet "$CARGO_HOME_DIR/bin/cargo" "+$RUST_TOOLCHAIN" install -q --locked \
+        --root "$WORK_DIR/lspmux" "lspmux@$LSPMUX_VERSION"
+    install_bin "$WORK_DIR/lspmux/bin/lspmux" lspmux
+    mark_current lspmux "$LSPMUX_VERSION"
+    LSPMUX_CHANGED=1
+}
+
+lspmux_config_dir() {
+    if [[ "$OS" == "macos" ]]; then
+        echo "$HOME/Library/Application Support/lspmux"
+    else
+        echo "${XDG_CONFIG_HOME:-$HOME/.config}/lspmux"
+    fi
+}
+
+write_lspmux_conf() {
+    local sock="$LSPMUX_SOCKET_DIR/lspmux.sock" conf tmp="$WORK_DIR/lspmux.toml"
+    conf="$(lspmux_config_dir)/config.toml"
+    mkdir -p "$LSPMUX_SOCKET_DIR"
+    chmod 0700 "$LSPMUX_SOCKET_DIR"
+
+    printf '# Written by bootstrap.sh.\nlisten = "%s"\nconnect = "%s"\n' "$sock" "$sock" > "$tmp"
+    cmp -s "$tmp" "$conf" 2>/dev/null && return
+    mkdir -p "$(dirname "$conf")"
+    cp "$tmp" "$conf"
+    LSPMUX_CHANGED=1
+}
+
+install_lspmux_service() {
+    [[ "$OS" == "linux" ]] || return 0
+
+    local tmp="$WORK_DIR/$LSPMUX_UNIT"
+    sed -e "s|##NEWUSER##|$USER_NAME|g" -e "s|##NEWHOME##|$HOME|g" \
+        -e "s|##CARGO_HOME##|$CARGO_HOME_DIR|g" -e "s|##RUSTUP_HOME##|$RUSTUP_HOME_DIR|g" \
+        "$DOTFILES_DIR/$LSPMUX_UNIT" > "$tmp"
+    if ! cmp -s "$tmp" "$LSPMUX_UNIT_PATH" 2>/dev/null; then
+        $SUDO install -D -m 0644 "$tmp" "$LSPMUX_UNIT_PATH"
+        if have restorecon; then
+            $SUDO restorecon "$LSPMUX_UNIT_PATH"
+        fi
+        log "installed $LSPMUX_UNIT_PATH"
+        LSPMUX_CHANGED=1
+    fi
+
+    have systemctl || return 0
+    $SUDO systemctl enable -q "$LSPMUX_UNIT"
+    # Containers and chroots have no running systemd.
+    [[ -d /run/systemd/system ]] || return 0
+    $SUDO systemctl daemon-reload
+    # A restart stops the running language servers, so only after a change.
+    local action=start
+    (( LSPMUX_CHANGED )) && action=restart
+    $SUDO systemctl "$action" "$LSPMUX_UNIT" \
+        || warn "lspmux: service did not $action; see systemctl status $LSPMUX_UNIT"
+}
+
+setup_lspmux() {
+    install_lspmux
+    write_lspmux_conf
+    install_lspmux_service
 }
 
 # =============================================================================
@@ -1516,6 +1594,7 @@ report() {
     print_version direnv direnv version
     print_version rustc "$CARGO_HOME_DIR/bin/rustc" --version
     print_version tree-sitter tree-sitter --version
+    print_version lspmux lspmux --version
     print_version node node --version
     print_version python "$PREFIX/bin/python$PYTHON_VERSION" --version
     if [[ "$OS" == "linux" ]]; then
@@ -1554,6 +1633,7 @@ run_all() {
     step direnv install_direnv
     step rust install_rust
     step tree-sitter install_tree_sitter
+    step lspmux setup_lspmux
     step node install_node
     step python install_python
     step nnn install_nnn
