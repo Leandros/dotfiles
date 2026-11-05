@@ -1444,6 +1444,7 @@ link_xorg_dotfiles() {
     link "$d/bin/kb" "$HOME/bin/kb"
     link "$d/bin/i3status-kb" "$HOME/bin/i3status-kb"
     link "$d/bin/pwr" "$HOME/bin/pwr"
+    link "$d/bin/theme" "$HOME/bin/theme"
     link "$d/.xinitrc" "$HOME/.xinitrc"
     link "$d/.xprofile" "$HOME/.xprofile"
     link "$d/.Xmodmap" "$HOME/.Xmodmap"

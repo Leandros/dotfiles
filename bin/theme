@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+#
+# theme - switch the desktop between Solarized dark and light.
+#
+# The i3 config reads its base colors from X resources (set_from_resource,
+# dark fallbacks); this script merges the palette with xrdb and reloads i3.
+# It also sets the freedesktop color-scheme, which Firefox and GTK 4 apps
+# read through xdg-desktop-portal, and gtk-application-prefer-dark-theme for
+# GTK 3 and plain GTK 4 apps, which on X11 read settings.ini when they start
+# (running ones keep their theme). The gsettings key keeps the choice, and
+# ~/.xprofile runs `theme restore` before i3 starts.
+#
+# Usage: theme dark|light   switch
+#        theme toggle       switch to the other one
+#        theme show         print the current theme
+#        theme restore      apply the saved theme (login)
+#
+set -euo pipefail
+
+readonly THEMES=(dark light)
+readonly SCHEMA="org.gnome.desktop.interface"
+readonly KEY="color-scheme"
+readonly USAGE="usage: theme dark | light | toggle | show | restore"
+readonly GTK_KEY="gtk-application-prefer-dark-theme"
+readonly CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+# Variables in the i3 config, in palette order.
+readonly NAMES=(baseA3 baseA2 baseA1 baseA0 baseB0 baseB1 baseB2 baseB3 custom)
+
+die() { printf 'theme: %s\n' "$*" >&2; exit 1; }
+
+# Solarized base03..base3, reversed for light. custom is the unfocused
+# workspace and window color: base02 or base2 mixed with blue.
+palette() {
+    case "$1" in
+        dark)  echo "#002b36 #073642 #586e75 #657b83 #839496 #93a1a1 #eee8d5 #fdf6e3 #1c5766" ;;
+        light) echo "#fdf6e3 #eee8d5 #93a1a1 #839496 #657b83 #586e75 #073642 #002b36 #bcd1d4" ;;
+    esac
+}
+
+resources() {
+    local colors i
+    read -r -a colors <<< "$(palette "$1")"
+    for i in "${!NAMES[@]}"; do
+        printf 'i3wm.%s: %s\n' "${NAMES[$i]}" "${colors[$i]}"
+    done
+}
+
+# Sets GTK_KEY right after the [Settings] header (added at the end when
+# missing) and keeps every other line.
+set_gtk() {
+    local value="$1" version file
+    for version in 3.0 4.0; do
+        file="$CONFIG_HOME/gtk-$version/settings.ini"
+        mkdir -p "$(dirname "$file")"
+        [[ -e "$file" ]] || : > "$file"
+        awk -v key="$GTK_KEY" -v value="$value" '
+            $0 ~ "^" key "[ \t]*=" { next }
+            { print }
+            $0 == "[Settings]" && !done { print key "=" value; done = 1 }
+            END { if (!done) { print "[Settings]"; print key "=" value } }
+        ' "$file" > "$file.tmp"
+        mv "$file.tmp" "$file"
+    done
+}
+
+# Dark unless light was chosen: "default" (no preference) is the i3 fallback.
+show() {
+    if [[ "$(gsettings get "$SCHEMA" "$KEY" 2>/dev/null)" == "'prefer-light'" ]]; then
+        echo light
+    else
+        echo dark
+    fi
+}
+
+apply() {
+    [[ " ${THEMES[*]} " == *" $1 "* ]] || die "unknown theme: $1 (one of: ${THEMES[*]})"
+    if [[ -n "${DISPLAY:-}" ]]; then
+        # -nocpp: the input is plain resources; no C preprocessor needed.
+        resources "$1" | xrdb -nocpp -merge
+    fi
+    gsettings set "$SCHEMA" "$KEY" "prefer-$1" || echo "theme: color-scheme unchanged" >&2
+    if [[ "$1" == dark ]]; then set_gtk 1; else set_gtk 0; fi
+    # Fails before i3 runs (restore from ~/.xprofile); i3 reads the
+    # resources when it starts.
+    i3-msg -q reload >/dev/null 2>&1 || true
+    echo "theme: $1"
+}
+
+main() {
+    case "${1:-}" in
+        dark|light) apply "$1" ;;
+        toggle)
+            if [[ "$(show)" == dark ]]; then apply light; else apply dark; fi
+            ;;
+        show)    show ;;
+        restore) apply "$(show)" ;;
+        "")      die "$USAGE" ;;
+        *)       apply "$1" ;;
+    esac
+}
+
+main "$@"

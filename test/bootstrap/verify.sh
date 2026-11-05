@@ -161,6 +161,13 @@ if [[ $xorg_expected -eq 1 ]]; then
     check_link "$HOME/bin/kb" "$D/bin/kb"
     check_link "$HOME/bin/i3status-kb" "$D/bin/i3status-kb"
     check_link "$HOME/bin/pwr" "$D/bin/pwr"
+    check_link "$HOME/bin/theme" "$D/bin/theme"
+    theme_out="$("$HOME/bin/theme" show 2>&1 || true)"
+    if [[ "$theme_out" == "dark" ]]; then
+        ok "theme defaults to dark"
+    else
+        fail "theme show: $theme_out"
+    fi
     check_link "$HOME/.config/xremap" "$D/.config/xremap"
     eval "$(grep -E '^readonly IDLE_[A-Z_]+_MINUTES=' "$SRC/bootstrap.sh")"
     idle_want="IDLE_LOCK_MINUTES=$IDLE_LOCK_MINUTES IDLE_SUSPEND_MINUTES=$IDLE_SUSPEND_MINUTES "

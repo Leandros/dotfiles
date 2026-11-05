@@ -3,6 +3,10 @@
 # Xft.dpi and font settings; i3 (pango) and wezterm read them from here.
 [ -f ~/.Xresources ] && xrdb -merge ~/.Xresources
 
+# Solarized dark or light (the saved choice): i3 colors as X resources, and
+# the color-scheme Firefox reads. Before i3, which reads the resources once.
+[ -x ~/bin/theme ] && ~/bin/theme restore >/dev/null 2>&1
+
 # Monitor layout: the autorandr profile saved for the connected monitors
 # (arrange with arandr, store with `autorandr --save NAME`). Before i3, so
 # i3 starts on the final outputs. Plugging in or out later runs autorandr

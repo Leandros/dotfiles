@@ -38,7 +38,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `.zshrc` | `~/.zshrc`, rendered copy (`##NEWHOME##`, `##NEWUSER##`) |
 | `.Xresources` | `~/.Xresources`, rendered copy (`##XFT_DPI##`) |
 | `.wezterm.lua`, `.xinitrc`, `.xprofile`, `.Xmodmap`, `.config/{i3,i3status,xremap}` | `$HOME`, links, Xorg only |
-| `bin/{kb,i3status-kb,pwr}` | `~/bin`, links, Xorg only |
+| `bin/{kb,i3status-kb,pwr,theme}` | `~/bin`, links, Xorg only |
 | `bin/fzf-cache` | `~/bin`, link, always |
 | `xorg-conf/*.conf` | `/etc/X11/xorg.conf.d/` (root copy) |
 | `logind-conf/50-lid-suspend.conf` | `/etc/systemd/logind.conf.d/` (root copy, applies after reboot) |
@@ -212,6 +212,14 @@ New link or system file: install function, `check_link` or `cmp` check in
   Fedora/EL). It reads the DPI from `~/.Xresources`.
 - nvim, tmux and wezterm all use Solarized dark and light. Keep their colors
   the same. nvim has `EnableDarkMode()` and `EnableLightMode()`.
+- `theme dark|light|toggle|show|restore`: i3 base colors are
+  `set_from_resource $<name> i3wm.<name> <dark fallback>`, merged with xrdb,
+  then `i3-msg reload`. The choice lives in gsettings
+  `org.gnome.desktop.interface color-scheme` (portal, Firefox). GTK 3/4 on
+  X11 ignore it: `theme` sets `gtk-application-prefer-dark-theme` in
+  `~/.config/gtk-{3.0,4.0}/settings.ini`, read at app start; `.xprofile`
+  runs `theme restore` before i3. i3 cannot use variables set in an included
+  file, so the theme is not an include.
 
 ## Shell
 

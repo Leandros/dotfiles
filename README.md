@@ -35,7 +35,10 @@ and links `.xinitrc`, `.xprofile`, `.Xresources`, `.Xmodmap`,
 the keyboard layout (`us`, `de`, `bone2`) in X and on the Linux console; the
 i3 bar shows the layout and cycles it on click (left: next, right: previous), the
 screen brightness (`☀: 65%`) and CPU and RAM use (`C: 12% R: 40%`); a click on
-the volume block opens pavucontrol to pick the audio input and output. The
+the volume block opens pavucontrol to pick the audio input and output.
+`~/bin/theme dark|light|toggle` switches i3 between Solarized dark and light and
+sets the desktop color-scheme that Firefox follows and the GTK 3/4 dark preference
+(dark by default; GTK apps pick it up when they start). The
 console bone2 keymap is `console/bone2.map`, generated from `.Xmodmap` with
 `console/xmodmap-to-console.py`; regenerate it when `.Xmodmap` changes. On a
 kmscon console (Fedora 45+) `kb` sets the layout through `localectl` instead,

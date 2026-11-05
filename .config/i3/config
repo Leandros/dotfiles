@@ -5,10 +5,8 @@
 # this file and re-run i3-config-wizard(1).
 #
 
-# Solarized Dark Theme
-# color_bad       =   "#DC322F"
-# color_degraded  =   "#B58900"
-# color_good      =   "#859900"
+# Solarized. ~/bin/theme switches dark and light: it merges the base colors
+# as X resources and reloads i3. The fallbacks are the dark palette.
 
 set $yellow     #b58900
 set $orange     #cb4b16
@@ -19,15 +17,15 @@ set $blue       #268bd2
 set $cyan       #2aa198
 set $green      #859900
 
-set $baseA3     #002b36
-set $baseA2     #073642
-set $baseA1     #586e75
-set $baseA0     #657b83
-set $baseB0     #839496
-set $baseB1     #93a1a1
-set $baseB2     #eee8d5
-set $baseB3     #fdf6e3
-set $custom     #1c5766
+set_from_resource $baseA3 i3wm.baseA3 #002b36
+set_from_resource $baseA2 i3wm.baseA2 #073642
+set_from_resource $baseA1 i3wm.baseA1 #586e75
+set_from_resource $baseA0 i3wm.baseA0 #657b83
+set_from_resource $baseB0 i3wm.baseB0 #839496
+set_from_resource $baseB1 i3wm.baseB1 #93a1a1
+set_from_resource $baseB2 i3wm.baseB2 #eee8d5
+set_from_resource $baseB3 i3wm.baseB3 #fdf6e3
+set_from_resource $custom i3wm.custom #1c5766
 
 exec_always --no-startup-id xsetroot -solid '$baseA2'
 
