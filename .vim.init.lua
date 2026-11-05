@@ -3234,7 +3234,7 @@ local spec = {
         -- Blame runs on the buffer text, so edited lines are "Not Committed
         -- Yet". Blame the HEAD version instead to see their last authors.
         vim.keymap.set("n", "<leader>sH", function()
-          require("gitsigns").show("HEAD", function(err)
+          require("gitsigns").show("HEAD:%", nil, function(err)
             if err then return vim.notify(err, vim.log.levels.ERROR) end
             require("gitsigns").blame()
           end)
@@ -3265,6 +3265,25 @@ local spec = {
                 vim.cmd([[nmenu <silent> ]GitsignsBlame.Reblame\ at\ commit\ \ \ \ \ \ \ \ (r) <C-r>]])
               end
               vim.keymap.set("n", "r", "<Up>", { buffer = ev.buf, desc = "up" })
+            end)
+          end)
+        end,
+      })
+
+      -- gitsigns maps <Space> in its diff panel, which delays <leader>.
+      -- Move the staging toggle to "-", the key fugitive uses.
+      vim.api.nvim_create_autocmd("FileType", {
+        pattern = "gitsigns-diff",
+        group = vim.api.nvim_create_augroup("config.gitsigns_diff", { clear = true }),
+        callback = function(ev)
+          -- gitsigns sets the panel mappings after 'filetype'; run after it.
+          vim.schedule(function()
+            if not vim.api.nvim_buf_is_valid(ev.buf) then return end
+            vim.api.nvim_buf_call(ev.buf, function()
+              local toggle = vim.fn.maparg("<Space>", "n", false, true)
+              if toggle.buffer ~= 1 or not toggle.callback then return end
+              vim.keymap.del("n", "<Space>", { buffer = ev.buf })
+              vim.keymap.set("n", "-", toggle.callback, { buffer = ev.buf, desc = toggle.desc })
             end)
           end)
         end,
@@ -3306,6 +3325,10 @@ local spec = {
         },
         signs_staged_enable = true,
       })
+
+      -- Global, so that it also opens from buffers outside Git. "none" shows
+      -- each file with its signs, which mark staged and unstaged hunks.
+      vim.keymap.set("n", "<leader>sd", function() require("gitsigns").diff(nil, nil, { diff = "none" }) end, { desc = "git: Diff Panel" })
     end,
   }, -- end gitsigns.nvim
 
