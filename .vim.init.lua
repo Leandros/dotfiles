@@ -934,6 +934,16 @@ local function init_solarized_scheme()
         FloatTitle = { fg = base0, bg = "NONE" },
       }
 
+      -- Staged hunks: one color for every sign, green like `git status` on
+      -- dark. Violet on light, where green is too faint and marks additions.
+      -- Without these, gitsigns darkens the unstaged colors to near the
+      -- background. Cul is the variant on the cursor line.
+      local staged = is_dark and green or violet
+      for _, kind in ipairs({ "Add", "Change", "Delete", "Changedelete", "Topdelete" }) do
+        groups["GitSignsStaged" .. kind] = { fg = staged }
+        groups["GitSignsStaged" .. kind .. "Cul"] = { fg = staged }
+      end
+
       return groups
     end,
   })
@@ -3287,8 +3297,8 @@ local spec = {
           untracked = { text = "┆" },
         },
         signs_staged = {
-          add = { text = "┃" },
-          change = { text = "┃" },
+          add = { text = "▌" },
+          change = { text = "▌" },
           delete = { text = "_" },
           topdelete = { text = "‾" },
           changedelete = { text = "~" },
