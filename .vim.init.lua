@@ -4080,6 +4080,29 @@ local spec = {
       require("telescope").load_extension("ui-select")
       require("telescope").load_extension("live_grep_args")
 
+      ---@param node TSNode name of a function_item
+      local function is_rust_method(node)
+        local params = node:parent():field("parameters")[1]
+        for child in params:iter_children() do
+          if child:type() == "self_parameter" then return true end
+        end
+        return false
+      end
+
+      -- The Rust locals query captures the name of a method as function and
+      -- as method. Keep only the method entry.
+      local function treesitter_symbols()
+        local opts = { bufnr = vim.api.nvim_get_current_buf(), show_line = true }
+        if vim.bo.filetype == "rust" then
+          local make_entry = require("telescope.make_entry").gen_from_treesitter(opts)
+          opts.entry_maker = function(entry)
+            if entry.kind == "function" and is_rust_method(entry.node) then return nil end
+            return make_entry(entry)
+          end
+        end
+        require("telescope.builtin").treesitter(opts)
+      end
+
       -- stylua: ignore start
       local telescope_bindings = {
         { "n", "<leader>fn", "<cmd>lua require('telescope.builtin').resume()<cr>", "Telescope: Resume" },
@@ -4103,7 +4126,7 @@ local spec = {
         { "n", "<leader>fh", "<cmd>lua require('telescope.builtin').help_tags()<cr>", "Show Help Tags" },
         { "n", "<leader>fm", "<cmd>lua require('telescope.builtin').marks()<cr>", "Show Marks" },
         { "n", "<leader>fs", "<cmd>lua require('telescope.builtin').current_buffer_fuzzy_find()<cr>", "Fuzzy Find (Current Buf)" },
-        { "n", "<leader>v", "<cmd>lua require('telescope.builtin').treesitter()<cr>", "Show Treesitter Symbols" },
+        { "n", "<leader>v", treesitter_symbols, "Show Treesitter Symbols" },
       }
       -- stylua: ignore end
 
