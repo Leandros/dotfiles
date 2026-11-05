@@ -270,8 +270,26 @@ if [[ $xorg_expected -eq 1 ]]; then
         else
             fail "bluetooth.service: $bt_enabled"
         fi
-        # .xprofile makes an output primary so i3bar shows the tray.
+        # The tray needs no primary output; arandr and autorandr use xrandr.
         if command -v xrandr >/dev/null; then ok "xorg bin xrandr"; else fail "xorg bin missing: xrandr"; fi
+        # Monitor layout: arandr to arrange, autorandr to store and reapply.
+        for bin in arandr autorandr; do
+            if command -v "$bin" >/dev/null; then ok "xorg bin $bin"; else fail "xorg bin missing: $bin"; fi
+        done
+        # Imports GTK 3; Fedora's arandr package does not depend on it.
+        if arandr --help 2>/dev/null | grep -q '^Usage: arandr'; then
+            ok "arandr starts"
+        else
+            fail "arandr: $(arandr --help 2>&1 | tail -n 1)"
+        fi
+        ar_enabled="$(systemctl is-enabled autorandr.service 2>&1 || true)"
+        if ! command -v systemctl >/dev/null; then
+            ok "autorandr.service: no systemctl in this image"
+        elif [[ "$ar_enabled" == "enabled" ]]; then
+            ok "autorandr.service enabled (runs after resume)"
+        else
+            fail "autorandr.service: $ar_enabled"
+        fi
     fi
     # CopyQ keeps password-manager copies out of its history only since 8.0.0;
     # bootstrap skips older Debian/Ubuntu packages. CopyQ 8 (EL9) needs a

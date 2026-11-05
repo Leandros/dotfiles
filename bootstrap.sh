@@ -958,24 +958,27 @@ install_xorg_packages() {
             $SUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
                 -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold \
                 xorg xinit x11-xserver-utils xbindkeys \
-                i3 i3status suckless-tools i3lock xss-lock xautolock blueman \
+                i3 i3status suckless-tools i3lock xss-lock xautolock blueman arandr autorandr \
                 alsa-utils brightnessctl xclip \
                 kbd console-data console-setup
             ;;
         fedora)
             # gobject-introspection has the xlib typelib blueman-applet
-            # imports; the blueman package does not depend on it.
+            # imports; the blueman package does not depend on it. arandr
+            # imports GTK 3 but does not depend on gtk3 either.
             $SUDO dnf install -y -q \
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap xbindkeys xrandr \
                 i3 i3status dmenu i3lock xss-lock xautolock blueman gobject-introspection copyq \
+                arandr autorandr gtk3 \
                 alsa-utils brightnessctl xclip kbd terminus-fonts-console
             ;;
         rhel)
             $SUDO dnf install -y -q epel-release
             $SUDO dnf config-manager --set-enabled crb
-            # xbindkeys, xss-lock, xautolock and blueman are not packaged for
-            # EL9; .xprofile tolerates their absence. Without them there is no
-            # lock or suspend on idle and no Bluetooth GUI; ~/bin/pwr still locks.
+            # xbindkeys, xss-lock, xautolock, blueman, arandr and autorandr are
+            # not packaged for EL9; .xprofile tolerates their absence. Without
+            # them there is no lock or suspend on idle, no Bluetooth GUI and
+            # no saved monitor layouts; ~/bin/pwr still locks.
             $SUDO dnf install -y -q \
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap \
                 i3 i3status dmenu i3lock copyq \
@@ -1265,6 +1268,15 @@ enable_bluetooth() {
     fi
 }
 
+# autorandr's udev rule starts autorandr.service when a monitor is plugged in
+# or out, whether enabled or not. Enabled, it also runs after resume, when the
+# monitors may have changed. Fedora ships it disabled, Debian enabled.
+enable_autorandr() {
+    have autorandr || return 0
+    have systemctl || return 0
+    $SUDO systemctl enable -q autorandr.service
+}
+
 # Idle timeouts for .xprofile. Settings are static, so check them before
 # minutes of installs.
 readonly IDLE_CONF="$HOME/.config/idle.conf"
@@ -1374,6 +1386,7 @@ setup_xorg() {
     install_xprofile_hook
     install_power_modes
     enable_bluetooth
+    enable_autorandr
     link_xorg_dotfiles
     write_xresources "$DPI_SCALE"
     write_idle_conf

@@ -139,6 +139,9 @@ for_window [instance="^blueman-"] floating enable
 bindsym $mod+c exec --no-startup-id copyq toggle
 for_window [instance="^copyq$"] floating enable, move position mouse
 
+# ARandR (monitor layout) sets only the WM_CLASS instance.
+for_window [instance="^arandr$"] floating enable
+
 # change focus between tiling / floating windows
 bindsym $mod+space focus mode_toggle
 

@@ -3,6 +3,12 @@
 # Xft.dpi and font settings; i3 (pango) and wezterm read them from here.
 [ -f ~/.Xresources ] && xrdb -merge ~/.Xresources
 
+# Monitor layout: the autorandr profile saved for the connected monitors
+# (arrange with arandr, store with `autorandr --save NAME`). Before i3, so
+# i3 starts on the final outputs. Plugging in or out later runs autorandr
+# from its udev rule.
+command -v autorandr >/dev/null && autorandr --change --default default >/dev/null 2>&1
+
 # Disable bell
 xset -b
 
