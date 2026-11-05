@@ -37,7 +37,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `.tmux/custom` | `~/.tmux/custom` |
 | `.zshrc` | `~/.zshrc`, rendered copy (`##NEWHOME##`, `##NEWUSER##`) |
 | `.Xresources` | `~/.Xresources`, rendered copy (`##XFT_DPI##`) |
-| `.wezterm.lua`, `.xinitrc`, `.xprofile`, `.Xmodmap`, `.xbindkeysrc`, `.backlight.sh`, `.config/{i3,i3status,xremap}` | `$HOME`, links, Xorg only |
+| `.wezterm.lua`, `.xinitrc`, `.xprofile`, `.Xmodmap`, `.config/{i3,i3status,xremap}` | `$HOME`, links, Xorg only |
 | `bin/{kb,i3status-kb,pwr}` | `~/bin`, links, Xorg only |
 | `bin/fzf-cache` | `~/bin`, link, always |
 | `xorg-conf/*.conf` | `/etc/X11/xorg.conf.d/` (root copy) |
@@ -95,7 +95,7 @@ New link or system file: install function, `check_link` or `cmp` check in
 
 - Fedora: blueman needs `gobject-introspection` (xlib typelib); arandr needs
   `gtk3`. `/usr/local/sbin` is a link to `/usr/local/bin`.
-- EL9 has no xbindkeys, xss-lock, xautolock, blueman, arandr, autorandr.
+- EL9 has no xss-lock, xautolock, blueman, arandr, autorandr.
   `.xprofile` must work without them. RHEL 10 has no Xorg or i3.
 - CopyQ: Debian/Ubuntu only if the candidate is >= `COPYQ_MIN_VERSION`
   (8.0.0); older versions keep passwords from password managers.
@@ -184,11 +184,11 @@ New link or system file: install function, `check_link` or `cmp` check in
   switches `us de bone2` in X and on the console (kmscon: `localectl` with
   `de(bone)`).
 - Floating windows need `for_window` rules: nmrs (`class`), `blueman-*`,
-  copyq (`move position mouse`), arandr (`instance`).
+  copyq (`move position mouse`), arandr and pavucontrol (`instance`).
 - No `tray_output`: with `primary`, the tray vanishes when no output is
   primary. i3bar shows the tray on one output only.
 - `i3-msg` exec needs one string: `i3-msg -q "exec --no-startup-id nmrs-gui"`.
-- `status_command` is `~/bin/i3status-kb`: adds `KB:` and `PWR:` blocks and
+- `status_command` is `~/bin/i3status-kb`: adds `KB:`, `PWR:` and `☀:` (backlight, `I3STATUS_KB_SYSFS` for tests) blocks and
   click handling around i3status.
 - lightdm on Fedora/EL does not source `~/.xprofile`; the xinitrc.d hook does.
 - Key repeat is set in `xorg-conf/50-keyboard-repeat.conf`; `xset r rate` does

@@ -1020,8 +1020,8 @@ link_dotfiles() {
 # =============================================================================
 # Xorg / i3 desktop (opt-in)
 # =============================================================================
-# Fedora has everything. RHEL 9 gets i3 and friends from EPEL (xbindkeys is
-# missing there); RHEL 10 ships no Xorg server or i3 at all.
+# Fedora has everything. RHEL 9 gets i3 and friends from EPEL; RHEL 10
+# ships no Xorg server or i3 at all.
 readonly XORG_DISTROS=" debian ubuntu fedora rhel "
 readonly RHEL_XORG_MAX_MAJOR=9
 
@@ -1036,16 +1036,16 @@ xorg_supported() {
     fi
 }
 
-# Tools referenced by .xprofile, .xbindkeysrc and the i3 config. Versions
+# Tools referenced by .xprofile and the i3 config. Versions
 # matter little here, so the distro repositories are fine.
 install_xorg_packages() {
     case "$DISTRO" in
         debian|ubuntu)
             $SUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
                 -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold \
-                xorg xinit x11-xserver-utils xbindkeys \
+                xorg xinit x11-xserver-utils \
                 i3 i3status suckless-tools i3lock xss-lock xautolock blueman arandr autorandr \
-                alsa-utils brightnessctl xclip \
+                alsa-utils pavucontrol brightnessctl xclip \
                 kbd console-data console-setup
             ;;
         fedora)
@@ -1053,22 +1053,22 @@ install_xorg_packages() {
             # imports; the blueman package does not depend on it. arandr
             # imports GTK 3 but does not depend on gtk3 either.
             $SUDO dnf install -y -q \
-                xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap xbindkeys xrandr \
+                xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap xrandr \
                 i3 i3status dmenu i3lock xss-lock xautolock blueman gobject-introspection copyq \
                 arandr autorandr gtk3 \
-                alsa-utils brightnessctl xclip kbd terminus-fonts-console
+                alsa-utils pavucontrol brightnessctl xclip kbd terminus-fonts-console
             ;;
         rhel)
             $SUDO dnf install -y -q epel-release
             $SUDO dnf config-manager --set-enabled crb
-            # xbindkeys, xss-lock, xautolock, blueman, arandr and autorandr are
+            # xss-lock, xautolock, blueman, arandr and autorandr are
             # not packaged for EL9; .xprofile tolerates their absence. Without
             # them there is no lock or suspend on idle, no Bluetooth GUI and
             # no saved monitor layouts; ~/bin/pwr still locks.
             $SUDO dnf install -y -q \
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap \
                 i3 i3status dmenu i3lock copyq \
-                alsa-utils brightnessctl xclip kbd terminus-fonts-console
+                alsa-utils pavucontrol brightnessctl xclip kbd terminus-fonts-console
             ;;
     esac
     install_copyq_deb
@@ -1447,8 +1447,6 @@ link_xorg_dotfiles() {
     link "$d/.xinitrc" "$HOME/.xinitrc"
     link "$d/.xprofile" "$HOME/.xprofile"
     link "$d/.Xmodmap" "$HOME/.Xmodmap"
-    link "$d/.xbindkeysrc" "$HOME/.xbindkeysrc"
-    link "$d/.backlight.sh" "$HOME/.backlight.sh"
     link "$d/.config/i3" "$HOME/.config/i3"
     link "$d/.config/xremap" "$HOME/.config/xremap"
     link "$d/.config/i3status" "$HOME/.config/i3status"

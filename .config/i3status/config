@@ -14,6 +14,7 @@ order += "ethernet _first_"
 order += "battery _first_"
 order += "volume master"
 order += "cpu_usage"
+order += "memory"
 order += "time"
 
 wireless _first_ {
@@ -36,6 +37,17 @@ volume master {
     device      = "default"
     mixer       = "Master"
     mixer_idx   = 0
+}
+
+# CPU and RAM read as one block: "C: 12% R: 40%".
+cpu_usage {
+    format                  = "C: %usage"
+    separator               = false
+    separator_block_width   = 6
+}
+
+memory {
+    format  = "R: %percentage_used"
 }
 
 time {

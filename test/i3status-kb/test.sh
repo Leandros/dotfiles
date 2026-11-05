@@ -71,7 +71,7 @@ status_line() {
         printf '#!/bin/sh\nexit 1\n' > "$TMP/home/bin/pwr"
     fi
     chmod +x "$TMP/home/bin/pwr"
-    HOME="$TMP/home" PATH="$TMP/stubs:$PATH" timeout 3 "$SCRIPT" < /dev/null 2>/dev/null | sed -n 3p || true
+    I3STATUS_KB_SYSFS="$TMP/sys" HOME="$TMP/home" PATH="$TMP/stubs:$PATH" timeout 3 "$SCRIPT" < /dev/null 2>/dev/null | sed -n 3p || true
 }
 
 # Runs i3status-kb with the given click lines on stdin; prints the calls
@@ -98,6 +98,9 @@ main() {
     expect "left click on ethernet opens nmrs-gui" "$nmrs" "$(run_clicks "$(click ethernet _first_ 1)")"
     expect "right click on wireless does nothing" "" "$(run_clicks "$(click wireless _first_ 3)")"
     expect "click on another block does nothing" "" "$(run_clicks "$(click battery _first_ 1)")"
+    expect "left click on volume opens pavucontrol" "i3-msg|-q|exec --no-startup-id pavucontrol" \
+        "$(run_clicks "$(click volume default.Master.0 1)")"
+    expect "right click on volume does nothing" "" "$(run_clicks "$(click volume default.Master.0 3)")"
     expect "left click on kb still cycles the layout" "kb next" "$(run_clicks "$(click kb "" 1)")"
     expect "right click on kb still goes back" "kb prev" "$(run_clicks "$(click kb "" 3)")"
 

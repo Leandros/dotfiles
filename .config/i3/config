@@ -75,7 +75,11 @@ bindsym XF86MonBrightnessDown exec brightnessctl set 5%- && pkill -USR1 -x i3sta
 # Volume control
 bindsym XF86AudioLowerVolume exec amixer set Master 5%-
 bindsym XF86AudioRaiseVolume exec amixer set Master 5%+
-bindsym XF86AudioMute exec amixer set Master 0%
+bindsym XF86AudioMute exec amixer set Master toggle
+# Mute the selected microphone (Capture is the default source via PipeWire)
+bindsym XF86AudioMicMute exec amixer set Capture toggle
+# Monitor layout
+bindsym XF86Display exec --no-startup-id arandr
 
 # kill focused window
 bindsym $mod+Shift+j kill
@@ -141,6 +145,9 @@ for_window [instance="^copyq$"] floating enable, move position mouse
 
 # ARandR (monitor layout) sets only the WM_CLASS instance.
 for_window [instance="^arandr$"] floating enable
+
+# Audio devices and per-app streams; opened from the bar's volume block.
+for_window [instance="^pavucontrol$"] floating enable
 
 # change focus between tiling / floating windows
 bindsym $mod+space focus mode_toggle

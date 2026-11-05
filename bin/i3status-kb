@@ -5,7 +5,9 @@
 # Runs i3status, adds a "KB: <layout>" block to every status line and cycles
 # the layout with `kb` when the block is clicked (left: next, right: prev).
 # A "PWR: <mode>" block after it shows the power mode from `pwr mode`.
-# A left click on the wireless or ethernet block opens nmrs-gui.
+# A "☀: <percent>" block after that shows the screen brightness.
+# A left click on the wireless or ethernet block opens nmrs-gui, on the
+# volume block pavucontrol.
 # Use as `status_command` in the i3 bar.
 #
 set -euo pipefail
@@ -15,8 +17,11 @@ readonly BLOCK_NAME="kb"
 readonly BUTTON_LEFT=1
 readonly BUTTON_RIGHT=3
 readonly NETWORK_GUI="nmrs-gui"
+readonly AUDIO_GUI="pavucontrol"
 readonly PWR="$HOME/bin/pwr"
 readonly MODE_BLOCK_NAME="power_mode"
+readonly BACKLIGHT_BLOCK_NAME="backlight"
+readonly SYSFS="${I3STATUS_KB_SYSFS:-/sys}"
 # i3status cannot request clicks itself; i3bar only sends them when the
 # header asks for them.
 readonly HEADER='{"version":1,"click_events":true}'
@@ -34,13 +39,28 @@ mode_block() {
     printf ',{"name":"%s","full_text":"PWR: %s"}' "$MODE_BLOCK_NAME" "$mode"
 }
 
+# First backlight device, as brightnessctl picks it. Empty without one
+# (desktop monitors).
+backlight_block() {
+    local dev cur max
+    for dev in "$SYSFS"/class/backlight/*; do
+        [[ -r "$dev/brightness" && -r "$dev/max_brightness" ]] || continue
+        read -r cur < "$dev/brightness"
+        read -r max < "$dev/max_brightness"
+        [[ "$max" -gt 0 ]] || continue
+        printf ',{"name":"%s","full_text":"☀: %d%%"}' "$BACKLIGHT_BLOCK_NAME" $(((cur * 100 + max / 2) / max))
+        return 0
+    done
+}
+
 # i3bar writes one click event per line on stdin, after a leading "[".
 handle_clicks() {
     local line
     while read -r line; do
         case "$line" in
             *"\"name\":\"$BLOCK_NAME\""*) layout_click "$line" ;;
-            *'"name":"wireless"'*|*'"name":"ethernet"'*) network_click "$line" ;;
+            *'"name":"wireless"'*|*'"name":"ethernet"'*) gui_click "$line" "$NETWORK_GUI" ;;
+            *'"name":"volume"'*) gui_click "$line" "$AUDIO_GUI" ;;
         esac
     done
 }
@@ -66,9 +86,9 @@ layout_click() {
 # i3 starts the GUI, so it is not in this script's process group, which
 # cleanup kills when the bar restarts. The i3 command is one argument;
 # i3-msg would read --no-startup-id as its own option.
-network_click() {
+gui_click() {
     is_button "$1" "$BUTTON_LEFT" || return 0
-    i3-msg -q "exec --no-startup-id $NETWORK_GUI" || true
+    i3-msg -q "exec --no-startup-id $2" || true
 }
 
 # Insert the blocks at the front of the status array. The line is either
@@ -77,7 +97,7 @@ with_block() {
     local line="$1" prefix rest blocks
     prefix="${line%%\[*}"
     rest="${line#*\[}"
-    blocks="$(layout_block)$(mode_block)"
+    blocks="$(layout_block)$(mode_block)$(backlight_block)"
     if [[ "$rest" == "]" ]]; then
         echo "${prefix}[${blocks}]"
     else
