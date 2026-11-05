@@ -10,6 +10,8 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 - Red/green: write or extend a test, see it fail, then change the code.
 - Keep `README.md` in sync. It documents every desktop feature and every test
   command.
+- Keep `CHEATSHEET.md` in sync with key bindings in the i3, tmux and nvim
+  configs.
 - `bootstrap.sh` is fetched from GitHub `master`. Changes reach a machine only
   after the user pushes. Tests use the local working tree.
 - Bash: `set -euo pipefail`, shellcheck clean. POSIX sh files (`.xprofile`)
@@ -158,6 +160,9 @@ New link or system file: install function, `check_link` or `cmp` check in
 - Neogit is installed. Diffview is a Neogit dependency only; upstream has no
   commits since 2024-06-13.
 - Headless tests: `nvim --headless +"luafile t.lua"` loads the full config.
+  `+` commands run before VimEnter, so which-key maps (`wk.add` with rhs) and
+  VeryLazy plugins are missing. For those use
+  `--cmd 'autocmd VimEnter * ++once lua vim.defer_fn(function() dofile("t.lua") end, 2000)'`.
   Use throwaway repos in `/tmp`. Wait with `vim.wait`; gitsigns buffer maps
   appear after `b:gitsigns_status_dict`. Call maps through
   `vim.fn.maparg(lhs, "n", false, true).callback()`; `feedkeys` is unreliable
