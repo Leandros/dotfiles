@@ -31,6 +31,11 @@ readonly PPD_PATH="/org/freedesktop/UPower/PowerProfiles"
 readonly PPD_PROPERTY="ActiveProfile"
 # The i3 bar asks every few seconds; it must not block on a stuck daemon.
 readonly PPD_TIMEOUT_S=2
+# The lock screen always takes the password in this layout (see kb).
+readonly LOCK_LAYOUT="bone2"
+# kb lives next to this script; xss-lock may not have ~/bin on its PATH.
+KB="$(dirname "$(readlink -f "$0")")/kb"
+readonly KB
 
 usage() {
     echo "$USAGE" >&2
@@ -41,9 +46,50 @@ xss_lock_running() {
     pgrep -u "$(id -u)" -x xss-lock >/dev/null
 }
 
+# Switch to the lock layout and print the layout to restore after unlocking,
+# or nothing when no switch was needed. A failed switch never stops the lock.
+lock_layout_enter() {
+    local current
+    current="$("$KB" show 2>/dev/null)" || current=""
+    [[ "$current" != "$LOCK_LAYOUT" ]] || return 0
+    "$KB" "$LOCK_LAYOUT" >/dev/null 2>&1 || return 0
+    [[ "$current" != "?" ]] && echo "$current"
+    return 0
+}
+
+lock_layout_restore() {
+    [[ -n "$1" ]] || return 0
+    "$KB" "$1" >/dev/null 2>&1 || true
+}
+
+# i3lock forks once it holds the keyboard. Callers rely on that to suspend
+# only after the screen is locked, so the layout is restored in the
+# background once the forked i3lock exits.
+lock_forking() {
+    local previous pid status=0
+    previous="$(lock_layout_enter)"
+    i3lock --color "$COLOR" || status=$?
+    if [[ -n "$previous" ]]; then
+        if pid="$(pgrep -n -u "$(id -u)" -x i3lock)"; then
+            (tail --pid="$pid" -f /dev/null; lock_layout_restore "$previous") \
+                </dev/null >/dev/null 2>&1 &
+            disown
+        else
+            lock_layout_restore "$previous"
+        fi
+    fi
+    return "$status"
+}
+
 lock() {
+    local previous status=0
     case "${1:-}" in
-        --nofork) exec i3lock --nofork --color "$COLOR" ;;
+        --nofork)
+            previous="$(lock_layout_enter)"
+            i3lock --nofork --color "$COLOR" || status=$?
+            lock_layout_restore "$previous"
+            exit "$status"
+            ;;
         "") ;;
         *) usage ;;
     esac
@@ -51,7 +97,7 @@ lock() {
     if xss_lock_running; then
         exec loginctl lock-session
     fi
-    exec i3lock --color "$COLOR"
+    lock_forking
 }
 
 # xss-lock locks on logind's PrepareForSleep signal. Without it the screen
@@ -60,7 +106,7 @@ lock() {
 enter() {
     local action="$1"
     if [[ -n "${DISPLAY:-}" ]] && ! xss_lock_running; then
-        i3lock --color "$COLOR"
+        lock_forking
     fi
     exec systemctl "$action"
 }
