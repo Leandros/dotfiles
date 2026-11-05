@@ -613,8 +613,8 @@ vim.api.nvim_create_user_command("DoWindowSwap", function()
   vim.cmd("hide buf" .. markedbuf)
 end, { bang = true })
 
-nnoremap("<Leader>m", ":MarkWindowSwap()<CR>", { silent = true })
-nnoremap("<Leader>u", ":DoWindowSwap()<CR>", { silent = true })
+nnoremap("<Leader>m", ":MarkWindowSwap<CR>", { silent = true })
+nnoremap("<Leader>u", ":DoWindowSwap<CR>", { silent = true })
 
 -- Zoom the current window like tmux prefix+z: maximise it, and restore the
 -- previous layout on the next press. The layout is kept per tab page and is
@@ -2937,33 +2937,20 @@ local spec = {
   {
     "folke/trouble.nvim",
     opts = {
-      action_keys = { -- key mappings for actions in the trouble list
-        -- map to {} to remove a mapping, for example:
-        -- close = {},
-        close = "q", -- close the list
-        cancel = "<esc>", -- cancel the preview and get back to your last window / buffer / cursor
-        refresh = "A", -- manually refresh
-        jump = { "<cr>", "<tab>" }, -- jump to the diagnostic or open / close folds
-        open_split = { "<c-i>" }, -- open buffer in new split
-        open_vsplit = { "<c-t>" }, -- open buffer in new vsplit
-        open_tab = { "<c-t>" }, -- open buffer in new tab
-        jump_close = { "o" }, -- jump to the diagnostic and close the list
-        toggle_mode = "m", -- toggle between "workspace" and "document" diagnostics mode
-        switch_severity = "s", -- switch "diagnostics" severity filter level to HINT / INFO / WARN / ERROR
-        toggle_preview = "P", -- toggle auto_preview
-        hover = "K", -- opens a small popup with the full multiline message
-        preview = "p", -- preview the diagnostic location
-        close_folds = { "zM", "zm" }, -- close all folds
-        open_folds = { "zR", "zr" }, -- open all folds
-        toggle_fold = { "zA", "za" }, -- toggle fold of current file
-        previous = "r", -- previous item
-        next = "n", -- next item
+      -- n and r are down and up in Bone 2, so refresh moves from r to A.
+      -- <C-i> and <C-t> split as they do for normal windows.
+      keys = {
+        n = "next",
+        r = "prev",
+        A = "refresh",
+        ["<c-i>"] = "jump_vsplit",
+        ["<c-t>"] = "jump_split",
       },
     },
     config = function(_, opts)
       require("trouble").setup(opts)
 
-      nnoremap("<Leader>xd", "<cmd>TroubleToggle workspace_diagnostics<CR>")
+      nnoremap("<Leader>xd", "<cmd>Trouble diagnostics toggle<CR>")
     end,
   }, -- end trouble
 
@@ -3346,7 +3333,7 @@ local spec = {
     config = function()
       require("neogit").setup({
         mappings = {
-          rebase_editior = {
+          rebase_editor = {
             ["r"] = "Reword",
             ["gr"] = "MoveUp",
             ["gn"] = "MoveDown",
@@ -4274,7 +4261,8 @@ local spec = {
       update_mode = "auto",
     },
     keys = {
-      { "f", ":DocsViewToggle<CR>", mode = "n", desc = "toggle docs-view" },
+      -- flash.nvim maps f as its character motion.
+      { "<leader>dv", ":DocsViewToggle<CR>", mode = "n", desc = "toggle docs-view" },
     },
   }, -- end docs-view
 
@@ -4655,7 +4643,7 @@ nnoremap(">", ":resize -5<CR>")
 nnoremap("<C-y>w", "<C-W>=")
 nnoremap("<C-y>m", "<C-W>_")
 nnoremap("<C-y>t", "<C-W>T")
-nnoremap("<C-y>l", ":ZoomWin<CR>")
+nnoremap("<C-y>l", toggle_zoom, { silent = true, desc = "Zoom window (toggle)" })
 
 -- Split Creating
 nnoremap("<C-i>", ":vsplit<CR>")
@@ -4702,7 +4690,7 @@ nnoremap("<Leader>9", "9gt")
 vim.cmd("cabbrev tabv tab sview +setlocal nomodifiable")
 
 -- Profiling
-nnoremap("<leader>sP", ":TSHighlightCapturesUnderCursor<CR>")
+nnoremap("<leader>sP", ":Inspect<CR>")
 
 -- Folding
 nnoremap("z(", "zj")
