@@ -138,7 +138,6 @@ if [[ "$SKIPCOPY" -eq 0 ]]; then
     # Do not "backup" .vim directory either, or all plugins have to re-installed
     # mv_if_exists "$NEWHOME/.vim" "$NEWHOME/.dotbackup/"
     mv_if_exists "$NEWHOME/.vimrc" "$NEWHOME/.dotbackup/"
-    mv_if_exists "$NEWHOME/.xbindkeysrc" "$NEWHOME/.dotbackup/"
     mv_if_exists "$NEWHOME/.Xdefaults" "$NEWHOME/.dotbackup/"
     mv_if_exists "$NEWHOME/.xinitrc" "$NEWHOME/.dotbackup/"
     mv_if_exists "$NEWHOME/.Xmodmap" "$NEWHOME/.dotbackup/"
@@ -165,7 +164,6 @@ if [[ "$SKIPCOPY" -eq 0 ]]; then
     cp .tmux.conf "$NEWHOME/"
     cp -r .vim "$NEWHOME/"
     cp .vimrc "$NEWHOME/"
-    cp .xbindkeysrc "$NEWHOME/"
     cp .Xdefaults "$NEWHOME/"
     cp .xinitrc "$NEWHOME/"
     cp .Xmodmap "$NEWHOME/"

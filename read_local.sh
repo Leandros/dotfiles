@@ -46,7 +46,6 @@ cpix $HOME/.tmux/ .
 cpix $HOME/.tmux.conf .
 cpix $HOME/.uncrustify/ .
 cpix $HOME/.vim/ .
-cpix $HOME/.xbindkeysrc .
 cpix $HOME/.Xdefaults .
 cpix $HOME/.xinitrc .
 cpix $HOME/.Xmodmap .

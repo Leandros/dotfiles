@@ -53,8 +53,17 @@ click() {
 
 # The first status array the script prints. MODE is what `pwr mode` prints;
 # empty makes it fail like a system without a power profile daemon.
+# BACKLIGHT is "<brightness> <max_brightness>" for a fake backlight device;
+# empty means none.
 status_line() {
-    local mode="$1"
+    local mode="$1" backlight="${2:-}"
+    rm -rf "$TMP/sys"
+    mkdir -p "$TMP/sys/class/backlight"
+    if [[ -n "$backlight" ]]; then
+        mkdir -p "$TMP/sys/class/backlight/intel_backlight"
+        echo "${backlight% *}" > "$TMP/sys/class/backlight/intel_backlight/brightness"
+        echo "${backlight#* }" > "$TMP/sys/class/backlight/intel_backlight/max_brightness"
+    fi
     if [[ -n "$mode" ]]; then
         # shellcheck disable=SC2016 # $1 belongs to the stub.
         printf '#!/bin/sh\n[ "$1" = mode ] && echo %s\n' "$mode" > "$TMP/home/bin/pwr"
@@ -99,6 +108,9 @@ main() {
     expect "no power mode block without a daemon" \
         "[{\"name\":\"kb\",\"full_text\":\"KB: us\"},$wireless]" \
         "$(status_line "")"
+    expect "the screen brightness follows the power mode, rounded" \
+        "[{\"name\":\"kb\",\"full_text\":\"KB: us\"},{\"name\":\"power_mode\",\"full_text\":\"PWR: battery\"},{\"name\":\"backlight\",\"full_text\":\"☀: 80%\"},$wireless]" \
+        "$(status_line battery "31024 38787")"
 
     exit "$FAILED"
 }

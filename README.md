@@ -29,11 +29,13 @@ Installs pinned tool versions to `/usr/local`, clones this repository to
 at the top of `bootstrap.sh`.
 
 For an Xorg/i3 desktop (Debian, Ubuntu, Fedora, RHEL 9) run with `BOOTSTRAP_XORG=1`;
-this installs i3, i3status, dmenu, xbindkeys, the wezterm nightly and the X utilities
-and links `.xinitrc`, `.xprofile`, `.Xresources`, `.Xmodmap`, `.xbindkeysrc`,
+this installs i3, i3status, dmenu, the wezterm nightly and the X utilities
+and links `.xinitrc`, `.xprofile`, `.Xresources`, `.Xmodmap`,
 `.wezterm.lua`, `.config/i3` and `.config/i3status`, plus `~/bin/kb` to switch
 the keyboard layout (`us`, `de`, `bone2`) in X and on the Linux console; the
-i3 bar shows the layout and cycles it on click (left: next, right: previous). The
+i3 bar shows the layout and cycles it on click (left: next, right: previous), the
+screen brightness (`☀: 65%`) and CPU and RAM use (`C: 12% R: 40%`); a click on
+the volume block opens pavucontrol to pick the audio input and output. The
 console bone2 keymap is `console/bone2.map`, generated from `.Xmodmap` with
 `console/xmodmap-to-console.py`; regenerate it when `.Xmodmap` changes. On a
 kmscon console (Fedora 45+) `kb` sets the layout through `localectl` instead,
@@ -48,6 +50,7 @@ the same scale picks the console font at boot (Terminus 16/24/28/32 px via
 `/etc/kmscon/kmscon.conf`). Set `BOOTSTRAP_DPI_SCALE` to skip the prompt. Start with `startx`.
 
 Test in Docker: `test/bootstrap/run.sh [debian12|ubuntu2204|fedora44|rocky9|al2|al2023]`.
+Media keys (volume, mute, screen brightness) are bound in i3 only; check with `test/media-keys/test.sh`.
 
 
 ### Quick Init on ephemeral Linux machines (bash + vim only)

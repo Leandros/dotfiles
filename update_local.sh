@@ -63,7 +63,6 @@ backup $HOME/.tmux/
 backup $HOME/.tmux.conf
 backup $HOME/.uncrustify/
 backup $HOME/.vim/
-backup $HOME/.xbindkeysrc
 backup $HOME/.Xdefaults
 backup $HOME/.xinitrc
 backup $HOME/.Xmodmap
@@ -95,7 +94,6 @@ cpix .tmux.conf $HOME
 cpix .uncrustify/ $HOME
 cpix .vim/ $HOME
 cpix .vimrc $HOME
-cpix .xbindkeysrc $HOME
 cpix .Xdefaults $HOME
 cpix .xinitrc $HOME
 cpix .Xmodmap $HOME

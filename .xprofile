@@ -12,9 +12,6 @@ command -v autorandr >/dev/null && autorandr --change --default default >/dev/nu
 # Disable bell
 xset -b
 
-# Custom Media keys
-xbindkeys -p
-
 # Key repeat is set server-wide in /etc/X11/xorg.conf.d/50-keyboard-repeat.conf
 # (from the dotfiles xorg-conf/); `xset r rate` here would not reach the
 # xremap device created below.

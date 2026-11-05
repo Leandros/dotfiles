@@ -280,7 +280,6 @@ if [[ $xorg_expected -eq 1 ]]; then
         fi
     done
     check_link "$HOME/.Xmodmap" "$D/.Xmodmap"
-    check_link "$HOME/.xbindkeysrc" "$D/.xbindkeysrc"
     check_link "$HOME/.config/i3" "$D/.config/i3"
     check_link "$HOME/.config/i3status" "$D/.config/i3status"
     check_link "$HOME/.wezterm.lua" "$D/.wezterm.lua"
@@ -297,12 +296,12 @@ if [[ $xorg_expected -eq 1 ]]; then
     else
         fail "nmrs.desktop missing in /usr/local/share/applications"
     fi
-    for bin in i3 i3status dmenu xsetroot xset setxkbmap xmodmap amixer brightnessctl startx xclip i3lock; do
+    for bin in i3 i3status dmenu xsetroot xset setxkbmap xmodmap amixer pavucontrol brightnessctl startx xclip i3lock; do
         if command -v "$bin" >/dev/null; then ok "xorg bin $bin"; else fail "xorg bin missing: $bin"; fi
     done
     # Not packaged for EL9.
     if grep -qE '^ID=(debian|ubuntu|fedora)$' /etc/os-release; then
-        for bin in xbindkeys xss-lock xautolock blueman-applet blueman-manager; do
+        for bin in xss-lock xautolock blueman-applet blueman-manager; do
             if command -v "$bin" >/dev/null; then ok "xorg bin $bin"; else fail "xorg bin missing: $bin"; fi
         done
         # Imports all its GObject libraries; Fedora's package misses one.

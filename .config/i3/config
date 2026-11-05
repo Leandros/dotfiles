@@ -69,9 +69,9 @@ floating_modifier $mod
 bindsym $mod+Return exec wezterm
 
 # Increase screen brightness
-bindsym XF86MonBrightnessUp exec brightnessctl set +5%
+bindsym XF86MonBrightnessUp exec brightnessctl set +5% && pkill -USR1 -x i3status
 # Decrease screen brightness
-bindsym XF86MonBrightnessDown exec brightnessctl set 5%-
+bindsym XF86MonBrightnessDown exec brightnessctl set 5%- && pkill -USR1 -x i3status
 # Volume control
 bindsym XF86AudioLowerVolume exec amixer set Master 5%-
 bindsym XF86AudioRaiseVolume exec amixer set Master 5%+

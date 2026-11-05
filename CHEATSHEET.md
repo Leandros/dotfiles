@@ -89,6 +89,7 @@ In X, xremap swaps the left Alt and Ctrl keys. Right modifiers do not change.
 | `Mod+right drag` | Resize floating window |
 | Bar `KB:` left / right click | Next / previous keyboard layout |
 | Bar network block, left click | Network settings (nmrs) |
+| Bar `♪` block, left click | Audio devices and app streams (pavucontrol) |
 | Bar tray | Bluetooth (blueman), clipboard (CopyQ) |
 
 ### Hardware keys
@@ -97,6 +98,8 @@ In X, xremap swaps the left Alt and Ctrl keys. Right modifiers do not change.
 |---|---|
 | Volume up / down | +5% / -5% |
 | Mute | Mute on/off |
+| Mic mute | Selected microphone mute on/off |
+| Display | Monitor layout (arandr) |
 | Brightness up / down | Screen brightness |
 | Keyboard light up / down | Keyboard backlight |
 
