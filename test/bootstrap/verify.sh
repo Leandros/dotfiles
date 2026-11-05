@@ -141,6 +141,12 @@ if [[ $xorg_expected -eq 1 ]]; then
     # Power modes: tuned with its power-profiles-daemon API on Fedora and EL.
     case "$os_id" in
         fedora|rocky|almalinux|centos|rhel)
+            if cmp -s "$D/xinitrc-d/90-xprofile.sh" /etc/X11/xinit/xinitrc.d/90-xprofile.sh \
+                && [[ -x /etc/X11/xinit/xinitrc.d/90-xprofile.sh ]]; then
+                ok "xinitrc.d sources ~/.xprofile"
+            else
+                fail "xinitrc.d/90-xprofile.sh missing, differs or not executable"
+            fi
             if rpm -q tuned tuned-ppd >/dev/null; then ok "tuned and tuned-ppd installed"; else fail "tuned or tuned-ppd missing"; fi
             enabled="$(systemctl is-enabled tuned.service tuned-ppd.service power-mode-auto.service 2>&1 | tr '\n' ' ' || true)"
             if [[ "$enabled" == "enabled enabled enabled " ]]; then

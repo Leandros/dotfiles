@@ -1179,6 +1179,23 @@ install_sleep_hook() {
     log "installed $dst"
 }
 
+# lightdm on Fedora and EL runs the session through /etc/X11/xinit/Xsession,
+# which sources xinitrc.d but not ~/.xprofile, so the idle lock, xremap and
+# the rest of .xprofile never start. This drop-in sources it.
+readonly XPROFILE_HOOK_NAME="90-xprofile.sh"
+readonly XPROFILE_HOOK_DIR="/etc/X11/xinit/xinitrc.d"
+
+install_xprofile_hook() {
+    [[ "$DISTRO" == "fedora" || "$DISTRO" == "rhel" ]] || return 0
+    local src="$DOTFILES_DIR/xinitrc-d/$XPROFILE_HOOK_NAME" dst="$XPROFILE_HOOK_DIR/$XPROFILE_HOOK_NAME"
+    cmp -s "$src" "$dst" 2>/dev/null && return
+    $SUDO install -D -m 0755 "$src" "$dst"
+    if have restorecon; then
+        $SUDO restorecon "$dst"
+    fi
+    log "installed $dst; applies at the next login"
+}
+
 # Power modes for `pwr performance|balanced|battery` and the i3 bar: tuned
 # with its power-profiles-daemon API (tuned-ppd), Fedora's default since 41.
 # power-mode-auto picks performance on AC and battery mode on battery. It
@@ -1336,6 +1353,7 @@ setup_xorg() {
     install_xorg_conf
     install_logind_conf
     install_sleep_hook
+    install_xprofile_hook
     install_power_modes
     enable_bluetooth
     link_xorg_dotfiles
