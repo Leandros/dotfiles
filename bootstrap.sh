@@ -967,7 +967,7 @@ install_xorg_packages() {
             # imports; the blueman package does not depend on it.
             $SUDO dnf install -y -q \
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap xbindkeys xrandr \
-                i3 i3status dmenu i3lock xss-lock xautolock blueman gobject-introspection \
+                i3 i3status dmenu i3lock xss-lock xautolock blueman gobject-introspection copyq \
                 alsa-utils brightnessctl xclip kbd terminus-fonts-console
             ;;
         rhel)
@@ -978,10 +978,28 @@ install_xorg_packages() {
             # lock or suspend on idle and no Bluetooth GUI; ~/bin/pwr still locks.
             $SUDO dnf install -y -q \
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap \
-                i3 i3status dmenu i3lock \
+                i3 i3status dmenu i3lock copyq \
                 alsa-utils brightnessctl xclip kbd terminus-fonts-console
             ;;
     esac
+    install_copyq_deb
+}
+
+# CopyQ ignores clipboard data marked secret by password managers
+# (x-kde-passwordManagerHint, KeePassXC) only since 8.0.0. Older releases
+# (Debian 12, Ubuntu 22.04) would keep passwords in their history.
+readonly COPYQ_MIN_VERSION="8.0.0"
+
+install_copyq_deb() {
+    [[ "$DISTRO" == "debian" || "$DISTRO" == "ubuntu" ]] || return 0
+    local version
+    version="$(apt-cache policy copyq | sed -n 's/^ *Candidate: \([0-9.]*\).*/\1/p')"
+    if [[ -z "$version" ]] || ! version_ge "$version" "$COPYQ_MIN_VERSION"; then
+        warn "copyq: ${version:-no} package older than $COPYQ_MIN_VERSION, skipping (it would store passwords)"
+        return
+    fi
+    $SUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
+        -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold copyq
 }
 
 # One nightly .deb serves Debian 12 and Ubuntu 22.04 and newer releases of

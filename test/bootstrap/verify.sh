@@ -273,6 +273,24 @@ if [[ $xorg_expected -eq 1 ]]; then
         # .xprofile makes an output primary so i3bar shows the tray.
         if command -v xrandr >/dev/null; then ok "xorg bin xrandr"; else fail "xorg bin missing: xrandr"; fi
     fi
+    # CopyQ keeps password-manager copies out of its history only since 8.0.0;
+    # bootstrap skips older Debian/Ubuntu packages. CopyQ 8 (EL9) needs a
+    # Qt platform even for --version.
+    copyq_version="$(QT_QPA_PLATFORM=offscreen copyq --version 2>/dev/null | sed -n 's/^CopyQ Clipboard Manager v\{0,1\}\([0-9.]*\).*/\1/p' | head -n 1 || true)"
+    case "$os_id" in
+        fedora|rocky|almalinux|centos|rhel)
+            if [[ -n "$copyq_version" ]]; then ok "copyq $copyq_version"; else fail "copyq missing"; fi ;;
+        *)
+            if [[ -z "$copyq_version" ]]; then ok "copyq skipped (distro package too old)"; else ok "copyq $copyq_version"; fi ;;
+    esac
+    if [[ -n "$copyq_version" ]] && [[ "$(printf '%s\n8.0.0\n' "$copyq_version" | sort -V | head -n 1)" != "8.0.0" ]]; then
+        fail "copyq $copyq_version is older than 8.0.0"
+    fi
+    if grep -qE '^\s*tray_output' "$HOME/.config/i3/config"; then
+        fail "i3 bar sets tray_output; the tray vanishes without a primary output"
+    else
+        ok "i3 bar shows the tray on the first active output"
+    fi
     # i3 validates its config without a display.
     if i3 -C -c "$HOME/.config/i3/config" >/tmp/i3.log 2>&1; then
         ok "i3 config valid"

@@ -133,6 +133,12 @@ for_window [class="^nmrs$"] floating enable
 # blueman (Bluetooth) sets only the WM_CLASS instance; its class is empty.
 for_window [instance="^blueman-"] floating enable
 
+# CopyQ clipboard history. CopyQ reopens at its saved position, often on
+# another output; i3 moves it to the pointer, which focus changes between
+# outputs warp to the focused output.
+bindsym $mod+c exec --no-startup-id copyq toggle
+for_window [instance="^copyq$"] floating enable, move position mouse
+
 # change focus between tiling / floating windows
 bindsym $mod+space focus mode_toggle
 
@@ -207,7 +213,11 @@ bindsym $mod+a mode "resize"
 # finds out, if available)
 bar {
     position            top
-    tray_output         primary
+    # No tray_output: i3bar puts the tray on the first active output. With
+    # "primary" the tray disappears when no output is primary, which X does
+    # not set by default. i3bar shows the tray on one output only.
+    # Enable again, if blueman or CopyQ do not appear.
+    # tray_output         primary
     font pango:Menlo 10
     # i3status plus a clickable keyboard layout block.
     status_command      ~/bin/i3status-kb

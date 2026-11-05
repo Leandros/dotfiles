@@ -39,12 +39,8 @@ xss-lock --transfer-sleep-lock -- ~/bin/pwr lock --nofork >/dev/null 2>&1 &
     -locker "systemctl suspend" -detectsleep >/dev/null 2>&1 &
 
 # Bluetooth: tray icon in the i3 bar and the pairing agent (PIN prompts).
-# EL9 has no blueman. i3bar shows the tray only on the primary output
-# (tray_output primary), and X sets none, so the first active output
-# becomes primary when none is.
-if command -v xrandr >/dev/null && ! xrandr | grep -q ' connected primary'; then
-    tray_output="$(xrandr | awk '/ connected [0-9]+x[0-9]+\+/ {print $1; exit}')"
-    [ -n "$tray_output" ] && xrandr --output "$tray_output" --primary
-    unset tray_output
-fi
+# EL9 has no blueman.
 command -v blueman-applet >/dev/null && blueman-applet >/dev/null 2>&1 &
+
+# Clipboard history: tray icon, and $mod+c in i3 opens it.
+command -v copyq >/dev/null && copyq >/dev/null 2>&1 &
