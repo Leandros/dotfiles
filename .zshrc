@@ -19,7 +19,7 @@ export VISUAL=nvim
 export CC=gcc
 export CXX=g++
 export DEFAULT_USER=##NEWUSER##
-export LANG="en_us.UTF-8"
+export LANG="en_US.UTF-8"
 export LC_ALL="en_US.UTF-8"
 export LC_CTYPE="en_US.UTF-8"
 export HOMEBREW_NO_AUTO_UPDATE=1
@@ -368,7 +368,10 @@ if [[ -f $DIRSTACKFILE ]] && [[ $#dirstack -eq 0 ]]; then
   dirstack=( ${(f)"$(< $DIRSTACKFILE)"} )
   [[ -d $dirstack[1] ]] && cd $dirstack[1] && cd $OLDPWD
 fi
+# Tools that copy functions from this shell but not its variables (Claude
+# Code's shell snapshot) call chpwd without DIRSTACKFILE.
 chpwd() {
+  [[ -n $DIRSTACKFILE ]] || return 0
   print -l $PWD ${(u)dirstack} >$DIRSTACKFILE
 }
 
