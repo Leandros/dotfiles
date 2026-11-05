@@ -26,6 +26,9 @@ config.hyperlink_rules = wezterm.default_hyperlink_rules()
 
 -- Tabbar:
 config.enable_tab_bar = true
+-- Linux runs i3, which manages windows, so show the tab bar there only for
+-- a second tab.
+config.hide_tab_bar_if_only_one_tab = wezterm.target_triple:find('linux') ~= nil
 config.use_fancy_tab_bar = true
 config.window_frame = {
     font = wezterm.font_with_fallback {
