@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+#
+# touchpad - switch the touchpads between tap-to-click and press-to-click.
+#
+# xorg-conf/40-touchpad.conf starts every session with press-to-click (as on
+# macOS); this changes it until the next login. It sets every device with a
+# libinput tapping property, so the TrackPoint and mice are left alone.
+#
+# Usage: touchpad tap      tap to click
+#        touchpad click    press to click
+#        touchpad toggle   switch to the other one
+#        touchpad show     print tap or click
+#
+set -euo pipefail
+
+readonly PROP="libinput Tapping Enabled"
+readonly USAGE="usage: touchpad tap | click | toggle | show"
+
+die() { printf 'touchpad: %s\n' "$*" >&2; exit 1; }
+
+# Ids of the devices that support tapping.
+touchpads() {
+    local id
+    for id in $(xinput list --id-only); do
+        if xinput list-props "$id" 2>/dev/null | grep -F "	$PROP (" >/dev/null; then
+            echo "$id"
+        fi
+    done
+}
+
+set_tapping() {
+    local value="$1" id found=""
+    for id in $(touchpads); do
+        xinput set-prop "$id" "$PROP" "$value"
+        found=1
+    done
+    [[ -n "$found" ]] || die "no touchpad found"
+}
+
+# State of the first touchpad.
+show() {
+    local id
+    # No `| head -n 1`: with two touchpads pipefail would report SIGPIPE.
+    id="$(touchpads)"
+    id="${id%%$'\n'*}"
+    [[ -n "$id" ]] || die "no touchpad found"
+    # No grep -q: an early exit would make pipefail report xinput's SIGPIPE.
+    if xinput list-props "$id" | grep -F "	$PROP (" | grep ':[[:space:]]*1$' >/dev/null; then
+        echo tap
+    else
+        echo click
+    fi
+}
+
+main() {
+    [[ -n "${DISPLAY:-}" ]] || die "needs X (DISPLAY is not set)"
+    case "${1:-}" in
+        tap)    set_tapping 1; echo "touchpad: tap to click" ;;
+        click)  set_tapping 0; echo "touchpad: press to click" ;;
+        toggle) if [[ "$(show)" == tap ]]; then main click; else main tap; fi ;;
+        show)   show ;;
+        *)      die "$USAGE" ;;
+    esac
+}
+
+main "$@"

@@ -39,7 +39,10 @@ the volume block opens pavucontrol to pick the audio input and output.
 `~/bin/theme dark|light|toggle` switches i3 between Solarized dark and light and
 sets the desktop color-scheme that Firefox follows and the GTK 3/4 dark preference
 (dark by default; GTK apps pick it up when they start). `~/bin/flightmode on`
-blocks all radios with rfkill and selects the battery power mode; `off` undoes both. The
+blocks all radios with rfkill and selects the battery power mode; `off` undoes both.
+Touchpads work as on macOS (`xorg-conf/40-touchpad.conf`): press to click, two-finger
+click for right click, and a macOS-like acceleration curve; `~/bin/touchpad tap|click`
+switches tap-to-click until logout. The
 console bone2 keymap is `console/bone2.map`, generated from `.Xmodmap` with
 `console/xmodmap-to-console.py`; regenerate it when `.Xmodmap` changes. On a
 kmscon console (Fedora 45+) `kb` sets the layout through `localectl` instead,

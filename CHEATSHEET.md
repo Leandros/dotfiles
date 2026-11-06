@@ -111,6 +111,7 @@ In X, xremap swaps the left Alt and Ctrl keys. Right modifiers do not change.
 | `pwr lock` / `sleep` / `hibernate` | Lock / suspend / hibernate now |
 | `pwr performance` / `balanced` / `battery` | Power mode (Fedora/EL) |
 | `kb us` / `de` / `bone2` | Keyboard layout |
+| `touchpad tap` / `click` / `toggle` | Tap to click / press to click (until logout) |
 | `flightmode on` / `off` / `toggle` | All radios off and battery power mode / back |
 | `theme dark` / `light` / `toggle` | Solarized dark or light: i3 colors, Firefox, GTK apps (on next start) |
 | `arandr`, `autorandr --save NAME` | Arrange and save monitor layouts |
