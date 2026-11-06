@@ -104,6 +104,10 @@ New link or system file: install function, `check_link` or `cmp` check in
 - nmrs-gui: built with `cargo install` (needs the pinned Rust); desktop file in
   `/usr/local/share/applications/nmrs.desktop`.
 - tree-sitter CLI: built with cargo; release binaries need glibc 2.39.
+- rust-analyzer and rust-src: rustup components of the pinned toolchain. Their
+  builds need glibc 2.17 at most and run on AL2 (tested: analysis-stats in the
+  AL2 image). A toolchain binary copied out of its toolchain fails: it loads
+  `librustc_driver` from the toolchain.
 - AL2 aarch64: node 16 (`NODE_VERSION_AL2_AARCH64`).
 - lazy.nvim before v11.17.5 misreads `"lua==5.1"` in rustaceanvim's rockspec
   and then needs luarocks, which Fedora does not ship. `pin_lazy_nvim` checks

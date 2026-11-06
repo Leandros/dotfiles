@@ -68,6 +68,12 @@ check_version bat     "bat $BAT_VERSION" bat --version
 check_version mise    "$MISE_VERSION" mise --version
 check_version direnv  "$DIRENV_VERSION" direnv version
 check_version rustc   "rustc $RUST_TOOLCHAIN" "$HOME/.cargo/bin/rustc" --version
+check_version rust-analyzer "rust-analyzer $RUST_TOOLCHAIN" "$HOME/.cargo/bin/rust-analyzer" --version
+if [[ -d "$("$HOME/.cargo/bin/rustc" --print sysroot 2>/dev/null)/lib/rustlib/src/rust/library/std" ]]; then
+    ok "rust-src (std sources for rust-analyzer)"
+else
+    fail "rust-src missing"
+fi
 check_version tree-sitter "tree-sitter $TREE_SITTER_VERSION" tree-sitter --version
 check_version node    "v$node_want" node --version
 check_version python  "Python $PYTHON_VERSION" "/usr/local/bin/python$PYTHON_VERSION" --version
