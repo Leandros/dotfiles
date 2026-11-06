@@ -189,6 +189,9 @@ New link or system file: install function, `check_link` or `cmp` check in
 - Neogit is installed. Diffview is a Neogit dependency only; upstream has no
   commits since 2024-06-13.
 - Headless tests: `nvim --headless +"luafile t.lua"` loads the full config.
+  After bootstrap, `~/.config/nvim/init.lua` links to the `~/.dotfiles`
+  clone, not the working repo; test working-repo edits with
+  `nvim -u <repo>/.vim.init.lua`.
   `+` commands run before VimEnter, so which-key maps (`wk.add` with rhs) and
   VeryLazy plugins are missing. For those use
   `--cmd 'autocmd VimEnter * ++once lua vim.defer_fn(function() dofile("t.lua") end, 2000)'`.

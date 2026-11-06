@@ -2271,6 +2271,12 @@ local spec = {
             "<cmd>lua rust_code_action_live()<CR>",
             { silent = true, buffer = bufnr, desc = "LSP: Code Action" }
           )
+          -- Refresh rust-analyzer after Cargo.toml or proc-macro changes.
+          -- Buffer-local like :RustLsp, which it calls.
+          vim.api.nvim_buf_create_user_command(bufnr, "RebuildRustWorkspace", function()
+            vim.cmd.RustLsp("reloadWorkspace")
+            vim.cmd.RustLsp("rebuildProcMacros")
+          end, { desc = "Reload the Cargo workspace and rebuild proc macros" })
 
           -- Make sure to call the global/default on_attach!
           on_attach(client, bufnr)

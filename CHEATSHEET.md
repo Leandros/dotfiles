@@ -578,5 +578,6 @@ Navbuddy (`Space t`):
 | `:CloseAllFloatingWindows` | Close popups |
 | `:RefreshLSP` / `:LspStopAll` | Restart / stop all language servers |
 | `:CargoReload` | Reload the Cargo workspace (rust-analyzer) |
+| `:RebuildRustWorkspace` | Reload the Cargo workspace and rebuild proc macros (Rust buffers) |
 | `:NvimTreeKeepLayoutToggle` | Keep the split sizes around the tree on/off |
 | `:Lazy` | Plugins; `gr` resets a plugin to the lock file |
