@@ -114,6 +114,11 @@ New link or system file: install function, `check_link` or `cmp` check in
   AL2 image). A toolchain binary copied out of its toolchain fails: it loads
   `librustc_driver` from the toolchain.
 - AL2 aarch64: node 16 (`NODE_VERSION_AL2_AARCH64`).
+- sudo resets PATH to `secure_path` (`/sbin:/bin:/usr/sbin:/usr/bin` on AL2,
+  no `/usr/local/bin`, no `~/bin`). Build as the user; run only the install
+  as root (`cmake --install`), never `sudo make install`: make runs again
+  and can select other tools. nvim builds from source where glibc < 2.34
+  (AL2); its Makefile selects Ninja when `ninja` is in PATH.
 - lazy.nvim before v11.17.5 misreads `"lua==5.1"` in rustaceanvim's rockspec
   and then needs luarocks, which Fedora does not ship. `pin_lazy_nvim` checks
   out the lockfile's lazy.nvim before `Lazy! restore`, because nvim rewrites

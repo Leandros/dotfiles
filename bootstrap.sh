@@ -618,13 +618,18 @@ unpack_nvim() {
 }
 
 build_nvim() {
-    local dir
+    local dir cmake
     dir="$(fetch_unpack "$GITHUB/neovim/neovim/archive/refs/tags/v$NVIM_VERSION.tar.gz")"
+    # Same choice as the neovim Makefile: cmake3 (EL, AL2) before cmake.
+    cmake="$(command -v cmake3 || command -v cmake)" || die "nvim: cmake not found"
     (
         cd "$(unpacked_root "$dir")"
-        quiet make -j "$(nproc_safe)" CMAKE_BUILD_TYPE=Release CMAKE_INSTALL_PREFIX="$NVIM_HOME"
+        quiet make -j "$(nproc_safe)" CMAKE="$cmake" CMAKE_BUILD_TYPE=Release CMAKE_INSTALL_PREFIX="$NVIM_HOME"
         $SUDO rm -rf "$NVIM_HOME"
-        quiet $SUDO make install
+        # Not `sudo make install`: sudo resets PATH, so make can select a
+        # different CMake generator (no ninja in secure_path) and configure
+        # the build tree again, which fails. Root only copies the files.
+        quiet $SUDO "$cmake" --install build
     )
 }
 
