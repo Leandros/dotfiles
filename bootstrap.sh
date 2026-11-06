@@ -90,6 +90,8 @@ readonly WEZTERM_COPR="wezfurlong/wezterm-nightly"
 readonly XREMAP_VERSION="0.15.15"
 # https://crates.io/crates/nmrs-gui (Xorg desktop only; needs Rust 1.95+)
 readonly NMRS_GUI_VERSION="2.1.0"
+# https://crates.io/crates/wmfocus (Xorg desktop only)
+readonly WMFOCUS_VERSION="1.5.0"
 # https://github.com/rust-lang/rust/releases
 readonly RUST_TOOLCHAIN="1.99.0"
 # https://github.com/tree-sitter/tree-sitter/releases
@@ -1201,6 +1203,34 @@ install_nmrs_gui() {
     mark_current nmrs-gui "$NMRS_GUI_VERSION"
 }
 
+# Window hints for $mod+j in i3. No distro packages it, so cargo builds it.
+# cairo-rs links cairo-gobject. With the expat and freetype headers, the font
+# crates do not build their own copies with cmake.
+install_wmfocus_deps() {
+    case "$DISTRO" in
+        debian|ubuntu)
+            $SUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
+                -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold \
+                libcairo2-dev libfontconfig-dev libfreetype-dev libexpat1-dev
+            ;;
+        fedora|rhel)
+            $SUDO dnf install -y -q \
+                cairo-gobject-devel fontconfig-devel freetype-devel expat-devel
+            ;;
+    esac
+}
+
+install_wmfocus() {
+    is_current wmfocus "$WMFOCUS_VERSION" "$PREFIX/bin/wmfocus" && return
+
+    install_wmfocus_deps
+    export CARGO_HOME="$CARGO_HOME_DIR" RUSTUP_HOME="$RUSTUP_HOME_DIR"
+    quiet "$CARGO_HOME_DIR/bin/cargo" "+$RUST_TOOLCHAIN" install -q --locked --features i3 \
+        --root "$WORK_DIR/wmfocus" "wmfocus@$WMFOCUS_VERSION"
+    install_bin "$WORK_DIR/wmfocus/bin/wmfocus" wmfocus
+    mark_current wmfocus "$WMFOCUS_VERSION"
+}
+
 # Console font matching the display scale, applied at boot. The Terminus
 # console fonts come in the four sizes the scales need.
 readonly CONSOLE_FONT_BASE_PX=16
@@ -1466,6 +1496,7 @@ setup_xorg() {
     install_wezterm
     install_xremap
     install_nmrs_gui
+    install_wmfocus
     install_xorg_conf
     install_logind_conf
     install_sleep_hook
@@ -1613,6 +1644,7 @@ report() {
     if xorg_requested && xorg_supported; then
         print_version wezterm wezterm --version
         print_version nmrs-gui nmrs-gui --version
+        print_version wmfocus wmfocus --version
     fi
     if [[ -d "$BACKUP_DIR" ]]; then
         log "backups in $BACKUP_DIR"

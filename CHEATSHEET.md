@@ -34,6 +34,7 @@ In X, xremap swaps the left Alt and Ctrl keys. Right modifiers do not change.
 | `Mod+arrow`, `Mod+Shift+arrow` | Same with arrow keys |
 | `Mod+h` / `Mod+l` | Focus parent / child container |
 | `Mod+space` | Focus between tiling and floating windows |
+| `Mod+j` | Label every window; type a label (`n r s g b e i t c o`) to focus it, `Escape` cancels |
 
 ### Layout
 

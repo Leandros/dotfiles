@@ -305,6 +305,7 @@ if [[ $xorg_expected -eq 1 ]]; then
         fail "wezterm stamp not a nightly build: '$wezterm_stamp'"
     fi
     check_version nmrs-gui "nmrs-gui $NMRS_GUI_VERSION" nmrs-gui --version
+    check_version wmfocus "wmfocus $WMFOCUS_VERSION" wmfocus --version
     if grep -qx 'Exec=nmrs-gui' /usr/local/share/applications/nmrs.desktop 2>/dev/null; then
         ok "nmrs.desktop installed"
     else

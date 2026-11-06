@@ -103,6 +103,11 @@ New link or system file: install function, `check_link` or `cmp` check in
   Skip if `tlp` is installed.
 - nmrs-gui: built with `cargo install` (needs the pinned Rust); desktop file in
   `/usr/local/share/applications/nmrs.desktop`.
+- wmfocus (`$mod+j`): `cargo install --features i3`. Build needs the
+  cairo-gobject, fontconfig, freetype and expat headers; without the last two
+  its crates build them with cmake. Escape is hard-coded as exit; with
+  `--exit-keys` set, a wrong key no longer closes it. Missing font family:
+  falls back to the first monospace font.
 - tree-sitter CLI: built with cargo; release binaries need glibc 2.39.
 - rust-analyzer and rust-src: rustup components of the pinned toolchain. Their
   builds need glibc 2.17 at most and run on AL2 (tested: analysis-stats in the
@@ -130,7 +135,12 @@ New link or system file: install function, `check_link` or `cmp` check in
 - Unit tests with stubs and fake sysfs: `test/fzf-cache/test.sh`,
   `test/i3status-kb/test.sh`, `test/power-mode/test.sh`,
   `test/system-sleep/power-button-wake.sh`. Add new tests in this style.
-- X programs: Xorg dummy driver in a container.
+- X programs: Xorg dummy driver in a container. i3 bindings: Xvfb + i3 with
+  the repo config in a Fedora image, `xdotool key super+j`, then read the
+  started program's `/proc/<pid>/cmdline`. `bin/theme light` switches the
+  colors there too (gsettings fails, xrdb and the i3 reload work).
+- Put no dependent tool calls in one block: an edit and the command that
+  needs it run in parallel, and the command sees the old file.
 - Docker pitfalls: `pkill -f` kills its own `bash -c`, use `pkill -x`. Root
   that reads another user's `/proc/*/environ` needs `--cap-add SYS_PTRACE`.
   A `-v` bind of a missing host path creates a root-owned directory there.

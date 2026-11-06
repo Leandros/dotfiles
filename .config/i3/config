@@ -101,6 +101,14 @@ bindsym $mod+Down focus down
 bindsym $mod+Up focus up
 bindsym $mod+Right focus right
 
+# Focus a window by its label, like tmux prefix q. The hint colors are the
+# window title colors; `theme` reloads i3, so they follow dark and light.
+# Escape exits; other keys do not.
+bindsym $mod+j exec --no-startup-id wmfocus --chars nrsgbeitco --font 'PragmataPro Mono:72' \
+    --exit-keys Escape \
+    --bgcolor '$baseA2' --textcolor '$baseB1' --textcoloralt '$baseA1' \
+    --bgcolorcurrent '$green' --textcolorcurrent '$baseB3' --textcolorcurrentalt '$baseA3'
+
 # move focused window
 bindsym $mod+Shift+b move left
 bindsym $mod+Shift+n move down
