@@ -15,6 +15,7 @@ case $status_style_current in
         echo "enable dark mode"
         tmux set -g status-style "$status_style_dark"
         tmux set -g window-status-current-format "$window_status_dark"
+        tmux set -g pane-active-border-style fg=green
         ;;
 
     "$status_style_dark")
@@ -22,6 +23,7 @@ case $status_style_current in
         echo "enable light mode"
         tmux set -g status-style "$status_style_light"
         tmux set -g window-status-current-format "$window_status_light"
+        tmux set -g pane-active-border-style fg=red
         ;;
 
     *)
@@ -29,6 +31,7 @@ case $status_style_current in
         # can run successfully next time.
         echo "error: unknown style: $status_style_current"
         tmux set -g status-style "$status_style_dark"
+        tmux set -g pane-active-border-style fg=red
         exit 1
         ;;
 esac
