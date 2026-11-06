@@ -31,6 +31,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | Source | Target |
 |---|---|
 | `.vim.init.lua` | `~/.config/nvim/init.lua` (link) |
+| `.vsnip` | `~/.vsnip` (link); public snippets only. Internal ones go in `~/.vsnip-internal` (0700, outside the repo; `:VsnipOpen` writes there) |
 | `lazy-lock.json` | `~/.config/nvim/lazy-lock.json` (link) |
 | `.config/nvim/` | legacy vim files, not used by nvim |
 | `tmux/tmux_linux_<TMUX_VERSION_LINUX>/.tmux.conf`, `tmux/tmux_macOS_<ver>/` | `~/.tmux.conf`; one directory per tmux version |

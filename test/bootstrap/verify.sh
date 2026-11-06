@@ -102,6 +102,13 @@ check_link "$HOME/.tmux/custom" "$D/.tmux/custom"
 check_link "$HOME/.config/yazi" "$D/.config/yazi"
 check_link "$HOME/.config/lazygit/config.yml" "$D/AppData/Roaming/lazygit/config.yml"
 check_link "$HOME/bin/fzf-cache" "$D/bin/fzf-cache"
+check_link "$HOME/.vsnip" "$D/.vsnip"
+vsnip_internal="$HOME/.vsnip-internal"
+if [[ -d "$vsnip_internal" && ! -L "$vsnip_internal" && "$(stat -c %a "$vsnip_internal")" == "700" ]]; then
+    ok "internal snippet directory $vsnip_internal"
+else
+    fail "internal snippet directory missing, a link or not owner-only: $vsnip_internal"
+fi
 
 # lspmux: owner-only Unix socket, no TCP port, user service enabled.
 lspmux_dir="$HOME/.local/state/lspmux"

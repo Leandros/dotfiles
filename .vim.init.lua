@@ -1723,9 +1723,16 @@ local spec = {
   -- the snippet.
   --
   -- Add a new snippet with :VsnipOpen when in a file of the correct file type.
+  -- It opens ~/.vsnip-internal, which is not in the public dotfiles repo. Put
+  -- a snippet in the repo's .vsnip only when it has no internal code.
   {
     "hrsh7th/vim-vsnip",
     init = function()
+      -- :VsnipOpen and :VsnipYank write to vsnip_snippet_dir, so new
+      -- snippets stay private by default. ~/.vsnip links to the repo.
+      vim.g.vsnip_snippet_dir = vim.fs.joinpath(vim.env.HOME, ".vsnip-internal")
+      vim.g.vsnip_snippet_dirs = { vim.fs.joinpath(vim.env.HOME, ".vsnip") }
+
       -- Expand
       imap("<C-n>", "vsnip#expandable()  ? '<Plug>(vsnip-expand)'         : '<C-n>'", { expr = true })
       smap("<C-n>", "vsnip#expandable()  ? '<Plug>(vsnip-expand)'         : '<C-n>'", { expr = true })

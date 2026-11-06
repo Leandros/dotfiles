@@ -1002,6 +1002,8 @@ tmux_conf_dir() {
     fi
 }
 
+readonly VSNIP_INTERNAL_DIR="$HOME/.vsnip-internal"
+
 link_dotfiles() {
     local d="$DOTFILES_DIR"
 
@@ -1014,6 +1016,10 @@ link_dotfiles() {
     link "$d/.vim.init.lua" "$HOME/.config/nvim/init.lua"
     link "$d/lazy-lock.json" "$HOME/.config/nvim/lazy-lock.json"
     link "$d/.vsnip" "$HOME/.vsnip"
+    # Snippets with internal code go here, outside the public repo. nvim
+    # reads both directories; :VsnipOpen writes here.
+    mkdir -p "$VSNIP_INTERNAL_DIR"
+    chmod 0700 "$VSNIP_INTERNAL_DIR"
 
     link "$(tmux_conf_dir)/.tmux.conf" "$HOME/.tmux.conf"
     link "$d/.tmux/custom" "$HOME/.tmux/custom"
