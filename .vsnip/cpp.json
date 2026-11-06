@@ -1,0 +1,97 @@
+{
+  "include_guard": {
+    "prefix": ["#guard", "#ig"],
+    "body": [
+      "#ifndef ${1:prefix}${TM_DIRECTORY/(.*)/${1:/upcase}/}_${TM_FILENAME_BASE/(.*)/${1:/upcase}/}_H_",
+      "#define ${1:prefix}${TM_DIRECTORY/(.*)/${1:/upcase}/}_${TM_FILENAME_BASE/(.*)/${1:/upcase}/}_H_",
+      "#pragma once",
+      "",
+      "$0",
+      "",
+      "#endif // ${1:prefix}${TM_DIRECTORY/(.*)/${1:/upcase}/}_${TM_FILENAME_BASE/(.*)/${1:/upcase}/}_H_"
+    ],
+    "description": "header guard. format :\n\tINCLUDE_<dirname>_<filename>_<extension>_"
+  },
+  "region/endregion": {
+    "prefix": "reg",
+    "body": [
+      "#pragma region \"${1:Description}\"\n${TM_SELECTED_TEXT}$0\n#pragma endregion // ${1:Description}"
+    ],
+    "description": "Code snippet for #pragma region/endregion"
+  },
+  "supress clang-format": {
+    "prefix": "clang-off",
+    "body": ["// clang-format off\n${TM_SELECTED_TEXT}$0\n// clang-format on"],
+    "description": "Disable code formatting (clang-format)"
+  },
+  "#pragma_pack": {
+    "prefix": "pack",
+    "body": [
+      "#pragma pack(push, ${1:1})\n${TM_SELECTED_TEXT}$0\n#pragma pack(pop)"
+    ],
+    "description": "Packing alignment for structure, union, and class members"
+  },
+  "class": {
+    "prefix": ["cls", "class"],
+    "body": [
+      "class ${1:ClassName} {",
+      "public:",
+      "    inline explicit ${1:ClassName}() noexcept {",
+      "        $0",
+      "    }",
+      "private:",
+      "}; // ${1:ClassName}"
+    ],
+    "description": "Simple C++ class, with no destructor with rule of zero applied"
+  },
+  "class_rule_of_five": {
+    "prefix": ["cls5", "class5"],
+    "body": [
+      "class ${1:ClassName} {",
+      "public:",
+      "    inline explicit ${1:ClassName}() noexcept {",
+      "        $0",
+      "    }",
+      "    inline ~${1:ClassName}() noexcept {}",
+      "    ",
+      "    inline ${1:ClassName}(${1:ClassName} const& other) noexcept {}",
+      "    ",
+      "    inline ${1:ClassName}(${1:ClassName}&& other) noexcept {}",
+      "    ",
+      "    inline ${1:ClassName}& operator=(${1:ClassName} const& other) noexcept {",
+      "        return *this;",
+      "    }",
+      "    ",
+      "    inline ${1:ClassName}& operator=(${1:ClassName}&& other) noexcept {",
+      "        return *this;",
+      "    }",
+      "    ",
+      "private:",
+      "}; // ${1:ClassName}"
+    ],
+    "description": "Simple C++ class, with no destructor with rule of zero applied"
+  },
+  "class_rule_of_five_deleted": {
+    "prefix": ["cls5del", "class5del"],
+    "body": [
+      "class ${1:ClassName} {",
+      "public:",
+      "    inline explicit ${1:ClassName}() noexcept {",
+      "        $0",
+      "    }",
+      "    inline ~${1:ClassName}() noexcept = delete;",
+      "    ",
+      "    inline ${1:ClassName}(${1:ClassName} const& other) noexcept = delete;",
+      "    ",
+      "    inline ${1:ClassName}(${1:ClassName}&& other) noexcept = delete;",
+      "    ",
+      "    inline ${1:ClassName}& operator=(${1:ClassName} const& other) noexcept = delete;",
+      "    ",
+      "    inline ${1:ClassName}& operator=(${1:ClassName}&& other) noexcept = delete;",
+      "    ",
+      "private:",
+      "}; // ${1:ClassName}"
+    ],
+    "description": "Simple C++ class, with no destructor with rule of zero applied"
+  }
+}
