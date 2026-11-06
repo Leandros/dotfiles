@@ -2084,7 +2084,8 @@ local spec = {
           cmd = { "xcrun", "--toolchain", "swift", "sourcekit-lsp" },
         })
       )
-      vim.lsp.enable("sourcekit")
+      -- xcrun exists only on macOS; elsewhere every Swift buffer logs an error.
+      if vim.fn.executable("xcrun") == 1 then vim.lsp.enable("sourcekit") end
 
       -- ━━ Basedpyright ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       local prev_pyright = vim.lsp.config["basedpyright"]
@@ -2203,7 +2204,9 @@ local spec = {
         capabilities = lsp_defaults.capabilities,
         on_attach = on_attach,
         on_init = on_init,
-        cmd = { "clangd", "--clang-tidy", "--background-index", "--enable-config" },
+        -- Neovim logs all server stderr as errors; clangd's default info
+        -- level filled lsp.log with request traces and compile commands.
+        cmd = { "clangd", "--clang-tidy", "--background-index", "--enable-config", "--log=error" },
         settings = {
           -- must exist, otherwise it won't work.
           clangd = {},
@@ -2325,15 +2328,23 @@ local spec = {
           },
         },
       })
-      vim.lsp.enable("rust-analyzer")
+      -- Removed. Enabled via rustaceanvim.
+      -- vim.lsp.enable("rust-analyzer")
 
       -- ━━ Mason LSP ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       local mason_servers = require("mason-lspconfig").get_installed_servers()
       for _, server in ipairs(mason_servers) do
-        if not (server == "rust_analyzer" or server == "bacon_ls" or server == "rust-analyzer") then
+        if not (server == "rust_analyzer" or server == "bacon_ls" or server == "rust-analyzer" or server == "elixirls") then
           -- only enable servers which are not otherwise enabled.
           vim.lsp.enable(server)
         end
+      end
+
+      -- lspconfig sets no cmd for elixirls, and elixir-ls also needs Elixir.
+      local elixir_ls = vim.fn.exepath("elixir-ls")
+      if elixir_ls ~= "" and vim.fn.executable("elixir") == 1 then
+        vim.lsp.config("elixirls", { cmd = { elixir_ls } })
+        vim.lsp.enable("elixirls")
       end
 
       -- ━━ Custom CargoReload ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
