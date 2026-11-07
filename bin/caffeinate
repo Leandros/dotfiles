@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+#
+# caffeinate - keep the machine awake while this runs, like macOS caffeinate.
+#
+# Runs in the foreground until Ctrl-C. Idle suspend comes from xautolock
+# (~/.xprofile); this disables it and enables it again on exit. A logind
+# inhibitor would not help: logind lets a user's own `systemctl suspend`
+# pass that user's inhibitors.
+#
+# With `display` the screen also stays on and unlocked: the X screensaver
+# timer, which xss-lock locks on and DPMS blanks on, is reset every minute.
+# Nothing is switched off for that, so a killed caffeinate leaves no trace.
+# Only `kill -9` would keep idle suspend disabled (`xautolock -enable`).
+#
+# Closing the lid and `pwr sleep` still suspend.
+#
+# Usage: caffeinate           no idle suspend
+#        caffeinate display   no idle suspend, lock or screen blanking
+#
+set -euo pipefail
+
+# Well below the 5 minute lock (IDLE_LOCK_MINUTES in bootstrap.sh).
+readonly INTERVAL_S="${CAFFEINATE_INTERVAL_S:-60}"
+readonly USAGE="usage: caffeinate [display]"
+SLEEP_PID=""
+
+die() { printf 'caffeinate: %s\n' "$*" >&2; exit 1; }
+
+cleanup() {
+    # A second Ctrl-C (or a signal to the whole process group) must not
+    # stop xautolock -enable; children inherit the ignored signals.
+    trap '' INT TERM HUP
+    # Ctrl-C reaches the whole process group, so sleep is often gone already.
+    if [[ -n "$SLEEP_PID" ]]; then kill "$SLEEP_PID" 2>/dev/null || true; fi
+    xautolock -enable 2>/dev/null || true
+    echo "caffeinate: idle suspend on again"
+}
+
+main() {
+    local display=""
+    case "${1:-}" in
+        "")      ;;
+        display) display=1 ;;
+        *)       die "$USAGE" ;;
+    esac
+    [[ -n "${DISPLAY:-}" ]] || die "needs X (DISPLAY is not set)"
+
+    trap cleanup EXIT
+    # Exit codes as for a signal death: 128 + signal number.
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+    trap 'exit 129' HUP
+
+    xautolock -disable 2>/dev/null || echo "caffeinate: xautolock not running, no idle suspend to stop" >&2
+    if [[ -n "$display" ]]; then
+        echo "caffeinate: no idle suspend, lock or blanking; Ctrl-C to stop"
+    else
+        echo "caffeinate: no idle suspend; Ctrl-C to stop"
+    fi
+
+    while true; do
+        [[ -n "$display" ]] && xset s reset
+        # In the background so a signal ends `wait` at once.
+        sleep "$INTERVAL_S" &
+        SLEEP_PID=$!
+        wait "$SLEEP_PID"
+    done
+}
+
+main "$@"

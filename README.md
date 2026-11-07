@@ -43,7 +43,9 @@ blocks all radios with rfkill and selects the battery power mode; `off` undoes b
 Touchpads work as on macOS (`xorg-conf/40-touchpad.conf`): press to click, two-finger
 click for right click, and a macOS-like acceleration curve; `~/bin/touchpad tap|click`
 switches tap-to-click until logout. `~/bin/charge full` lets the battery charge to
-100% through UPower's charge limit; `charge limit` goes back to 80%. The
+100% through UPower's charge limit; `charge limit` goes back to 80%.
+`~/bin/caffeinate` keeps the machine from suspending on idle until Ctrl-C;
+`caffeinate display` also keeps the screen on and unlocked. The
 console bone2 keymap is `console/bone2.map`, generated from `.Xmodmap` with
 `console/xmodmap-to-console.py`; regenerate it when `.Xmodmap` changes. On a
 kmscon console (Fedora 45+) `kb` sets the layout through `localectl` instead,

@@ -63,6 +63,7 @@ check_version yazi    "Version: $YAZI_VERSION" yazi --version
 check_version lazygit "version=$LAZYGIT_VERSION" lazygit --version
 check_version uv      "uv $UV_VERSION" uv --version
 check_version fd      "fd $FD_VERSION" fd --version
+check_version dua     "dua $DUA_VERSION" dua --version
 check_version rg      "ripgrep $RIPGREP_VERSION" rg --version
 check_version bat     "bat $BAT_VERSION" bat --version
 check_version mise    "$MISE_VERSION" mise --version
@@ -178,6 +179,7 @@ if [[ $xorg_expected -eq 1 ]]; then
     check_link "$HOME/bin/flightmode" "$D/bin/flightmode"
     check_link "$HOME/bin/touchpad" "$D/bin/touchpad"
     check_link "$HOME/bin/charge" "$D/bin/charge"
+    check_link "$HOME/bin/caffeinate" "$D/bin/caffeinate"
     theme_out="$("$HOME/bin/theme" show 2>&1 || true)"
     if [[ "$theme_out" == "dark" ]]; then
         ok "theme defaults to dark"

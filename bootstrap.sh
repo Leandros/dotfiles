@@ -55,6 +55,8 @@ readonly LAZYGIT_VERSION="0.66.1"
 readonly UV_VERSION="0.13.1"
 # https://github.com/sharkdp/fd/releases
 readonly FD_VERSION="10.5.0"
+# https://github.com/Byron/dua-cli/releases (v3 is days old; stay on 2.x)
+readonly DUA_VERSION="2.46.0"
 # https://github.com/BurntSushi/ripgrep/releases
 readonly RIPGREP_VERSION="15.2.0"
 # https://github.com/sharkdp/bat/releases
@@ -701,6 +703,17 @@ install_fd() {
     dir="$(fetch_unpack "$GITHUB/sharkdp/fd/releases/download/v$FD_VERSION/fd-v$FD_VERSION-$target.tar.gz")"
     install_bin_from "$dir" fd
     mark_current fd "$FD_VERSION"
+}
+
+# Interactive disk usage (`dua i`), like WinDirStat in a terminal.
+install_dua() {
+    is_current dua "$DUA_VERSION" "$PREFIX/bin/dua" && return
+    local target="$RUST_TARGET_LINUX_MUSL"
+    [[ "$OS" == "macos" ]] && target="$RUST_TARGET_DARWIN"
+    local dir
+    dir="$(fetch_unpack "$GITHUB/Byron/dua-cli/releases/download/v$DUA_VERSION/dua-v$DUA_VERSION-$target.tar.gz")"
+    install_bin_from "$dir" dua
+    mark_current dua "$DUA_VERSION"
 }
 
 install_ripgrep() {
@@ -1489,6 +1502,7 @@ link_xorg_dotfiles() {
     link "$d/bin/flightmode" "$HOME/bin/flightmode"
     link "$d/bin/touchpad" "$HOME/bin/touchpad"
     link "$d/bin/charge" "$HOME/bin/charge"
+    link "$d/bin/caffeinate" "$HOME/bin/caffeinate"
     link "$d/.xinitrc" "$HOME/.xinitrc"
     link "$d/.xprofile" "$HOME/.xprofile"
     link "$d/.Xmodmap" "$HOME/.Xmodmap"
@@ -1640,6 +1654,7 @@ report() {
     print_version lazygit lazygit --version
     print_version uv uv --version
     print_version fd fd --version
+    print_version dua dua --version
     print_version rg rg --version
     print_version bat bat --version
     print_version mise mise --version
@@ -1681,6 +1696,7 @@ run_all() {
     step lazygit install_lazygit
     step uv install_uv
     step fd install_fd
+    step dua install_dua
     step ripgrep install_ripgrep
     step bat install_bat
     step mise install_mise
