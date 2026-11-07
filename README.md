@@ -42,7 +42,8 @@ sets the desktop color-scheme that Firefox follows and the GTK 3/4 dark preferen
 blocks all radios with rfkill and selects the battery power mode; `off` undoes both.
 Touchpads work as on macOS (`xorg-conf/40-touchpad.conf`): press to click, two-finger
 click for right click, and a macOS-like acceleration curve; `~/bin/touchpad tap|click`
-switches tap-to-click until logout. The
+switches tap-to-click until logout. `~/bin/charge full` lets the battery charge to
+100% through UPower's charge limit; `charge limit` goes back to 80%. The
 console bone2 keymap is `console/bone2.map`, generated from `.Xmodmap` with
 `console/xmodmap-to-console.py`; regenerate it when `.Xmodmap` changes. On a
 kmscon console (Fedora 45+) `kb` sets the layout through `localectl` instead,

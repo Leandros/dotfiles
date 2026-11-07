@@ -112,6 +112,7 @@ In X, xremap swaps the left Alt and Ctrl keys. Right modifiers do not change.
 | `pwr performance` / `balanced` / `battery` | Power mode (Fedora/EL) |
 | `kb us` / `de` / `bone2` | Keyboard layout |
 | `touchpad tap` / `click` / `toggle` | Tap to click / press to click (until logout) |
+| `charge limit` / `full` / `toggle` | Battery charges to 80% / to 100% |
 | `flightmode on` / `off` / `toggle` | All radios off and battery power mode / back |
 | `theme dark` / `light` / `toggle` | Solarized dark or light: i3 colors, Firefox, GTK apps (on next start) |
 | `arandr`, `autorandr --save NAME` | Arrange and save monitor layouts |

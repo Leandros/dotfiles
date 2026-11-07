@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+#
+# charge - charge the battery to 80% (kinder to it) or to 100% when needed.
+#
+# Goes through UPower's charge limit (EnableChargeThreshold, UPower 1.90+);
+# polkit allows it for the active session without a password. With the
+# limit on, the battery charges from 75% to 80%; off, always to 100%. UPower
+# writes the thresholds to the battery and applies the choice again at boot.
+#
+# Usage: charge limit    stop charging at 80%
+#        charge full     charge to 100%
+#        charge toggle   switch to the other one
+#        charge show     print limit or full
+#
+set -euo pipefail
+
+readonly SYSFS="${CHARGE_SYSFS:-/sys}"
+readonly USAGE="usage: charge limit | full | toggle | show"
+
+die() { printf 'charge: %s\n' "$*" >&2; exit 1; }
+
+# First battery with a charge threshold (BAT0 on ThinkPads).
+battery() {
+    local dev
+    for dev in "$SYSFS"/class/power_supply/*; do
+        if [[ -r "$dev/charge_control_end_threshold" ]]; then
+            basename "$dev"
+            return
+        fi
+    done
+    die "no battery with a charge limit"
+}
+
+# The battery's own end threshold, not UPower's flag: the firmware may keep
+# a limit UPower did not set.
+show() {
+    local end
+    end="$(cat "$SYSFS/class/power_supply/$(battery)/charge_control_end_threshold")"
+    if [[ "$end" -lt 100 ]]; then echo limit; else echo full; fi
+}
+
+set_limit() {
+    local enable="$1" bat
+    bat="$(battery)"
+    busctl call org.freedesktop.UPower "/org/freedesktop/UPower/devices/battery_$bat" \
+        org.freedesktop.UPower.Device EnableChargeThreshold b "$enable" \
+        || die "UPower refused the charge limit"
+}
+
+main() {
+    case "${1:-}" in
+        limit)  set_limit true; echo "charge: stops at $(cat "$SYSFS/class/power_supply/$(battery)/charge_control_end_threshold")%" ;;
+        full)   set_limit false; echo "charge: to 100%" ;;
+        toggle) if [[ "$(show)" == limit ]]; then main full; else main limit; fi ;;
+        show)   show ;;
+        *)      die "$USAGE" ;;
+    esac
+}
+
+main "$@"

@@ -1488,6 +1488,7 @@ link_xorg_dotfiles() {
     link "$d/bin/theme" "$HOME/bin/theme"
     link "$d/bin/flightmode" "$HOME/bin/flightmode"
     link "$d/bin/touchpad" "$HOME/bin/touchpad"
+    link "$d/bin/charge" "$HOME/bin/charge"
     link "$d/.xinitrc" "$HOME/.xinitrc"
     link "$d/.xprofile" "$HOME/.xprofile"
     link "$d/.Xmodmap" "$HOME/.Xmodmap"

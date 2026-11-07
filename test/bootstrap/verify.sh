@@ -177,6 +177,7 @@ if [[ $xorg_expected -eq 1 ]]; then
     check_link "$HOME/bin/theme" "$D/bin/theme"
     check_link "$HOME/bin/flightmode" "$D/bin/flightmode"
     check_link "$HOME/bin/touchpad" "$D/bin/touchpad"
+    check_link "$HOME/bin/charge" "$D/bin/charge"
     theme_out="$("$HOME/bin/theme" show 2>&1 || true)"
     if [[ "$theme_out" == "dark" ]]; then
         ok "theme defaults to dark"
