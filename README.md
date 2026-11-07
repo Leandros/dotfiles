@@ -45,7 +45,8 @@ click for right click, and a macOS-like acceleration curve; `~/bin/touchpad tap|
 switches tap-to-click until logout. `~/bin/charge full` lets the battery charge to
 100% through UPower's charge limit; `charge limit` goes back to 80%.
 `~/bin/caffeinate` keeps the machine from suspending on idle until Ctrl-C;
-`caffeinate display` also keeps the screen on and unlocked. The
+`caffeinate display` also keeps the screen on and unlocked. `~/bin/smb` scans the
+local /24 for SMB servers, lists their shares and mounts the chosen one under `~/mnt`. The
 console bone2 keymap is `console/bone2.map`, generated from `.Xmodmap` with
 `console/xmodmap-to-console.py`; regenerate it when `.Xmodmap` changes. On a
 kmscon console (Fedora 45+) `kb` sets the layout through `localectl` instead,

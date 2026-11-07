@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+#
+# smb - find the SMB shares on the local network, pick one, mount it.
+#
+# Scans the /24 of the default route for port 445 (bash /dev/tcp, no nmap),
+# lists each server's disk shares with smbclient (without admin shares such
+# as C$) and mounts the chosen one with mount.cifs at ~/mnt/<host>-<share>,
+# owned by the user. An empty user name means guest access; with a user the
+# password goes to smbclient through PASSWD and to mount.cifs through a
+# credentials file in $XDG_RUNTIME_DIR, never on a command line.
+#
+# Unmount: sudo umount ~/mnt/<host>-<share>
+#
+# Usage: smb
+#
+set -euo pipefail
+
+readonly PORT=445
+readonly PROBE_TIMEOUT_S=0.5
+readonly MOUNT_DIR="$HOME/mnt"
+readonly RUN_DIR="${XDG_RUNTIME_DIR:-/tmp}"
+CRED_FILE=""
+
+die() { printf 'smb: %s\n' "$*" >&2; exit 1; }
+
+cleanup() { [[ -z "$CRED_FILE" ]] || rm -f "$CRED_FILE"; }
+
+# Our address on the default route, e.g. 192.168.188.173.
+own_address() {
+    ip -4 route get 1.1.1.1 | awk '{ for (i = 1; i < NF; i++) if ($i == "src") print $(i + 1) }'
+}
+
+# Addresses in our /24 with the SMB port open, ours excluded, in order.
+scan() {
+    local own="$1" net i out
+    net="${own%.*}"
+    out="$(mktemp)"
+    for i in $(seq 1 254); do
+        [[ "$net.$i" == "$own" ]] && continue
+        # shellcheck disable=SC2016 # $1 is expanded by the inner bash.
+        (timeout "$PROBE_TIMEOUT_S" bash -c 'exec 3<>"/dev/tcp/$1/'"$PORT"'"' _ "$net.$i" 2>/dev/null \
+            && echo "$net.$i" >> "$out") &
+    done
+    wait
+    sort -t . -k 4 -n "$out"
+    rm -f "$out"
+}
+
+# Short DNS name of an address, or the address itself.
+host_name() {
+    local name
+    name="$(getent hosts "$1" 2>/dev/null | awk '{ print $2; exit }')" || true
+    echo "${name:-$1}"
+}
+
+# Disk shares of a host, one per line; fails when the server refuses.
+shares() {
+    local host="$1" out
+    if [[ -n "$SMB_USER" ]]; then
+        out="$(PASSWD="$SMB_PASS" smbclient -g -L "//$host" -U "$SMB_USER" 2>/dev/null)" || return 1
+    else
+        out="$(smbclient -g -L "//$host" -N 2>/dev/null)" || return 1
+    fi
+    awk -F '|' '$1 == "Disk" && $2 !~ /\$$/ { print $2 }' <<< "$out"
+}
+
+mount_share() {
+    local host="$1" share="$2" dir opts
+    dir="$MOUNT_DIR/$(host_name "$host" | cut -d . -f 1)-$share"
+    mkdir -p "$dir"
+    opts="uid=$(id -u),gid=$(id -g)"
+    if [[ -n "$SMB_USER" ]]; then
+        CRED_FILE="$(mktemp "$RUN_DIR/smb-cred.XXXXXX")"
+        chmod 600 "$CRED_FILE"
+        printf 'username=%s\npassword=%s\n' "$SMB_USER" "$SMB_PASS" > "$CRED_FILE"
+        opts="credentials=$CRED_FILE,$opts"
+    else
+        opts="guest,$opts"
+    fi
+    sudo mount -t cifs "//$host/$share" "$dir" -o "$opts"
+    echo "smb: mounted at $dir (unmount: sudo umount $dir)"
+}
+
+main() {
+    [[ $# -eq 0 ]] || die "usage: smb"
+    trap cleanup EXIT
+
+    read -r -p "user (empty for guest): " SMB_USER
+    SMB_PASS=""
+    if [[ -n "$SMB_USER" ]]; then
+        read -r -s -p "password: " SMB_PASS
+        echo
+    fi
+
+    local own
+    own="$(own_address)"
+    [[ -n "$own" ]] || die "no network"
+    echo "smb: scanning ${own%.*}.0/24 for port $PORT ..."
+
+    local hosts=() shares_of=() host share
+    while read -r host; do
+        [[ -n "$host" ]] || continue
+        if ! shares_of=("$(shares "$host")"); then
+            echo "  $(host_name "$host") ($host): needs a login"
+            continue
+        fi
+        while read -r share; do
+            [[ -n "$share" ]] && hosts+=("$host"$'\t'"$share")
+        done <<< "${shares_of[0]}"
+    done < <(scan "$own")
+    [[ ${#hosts[@]} -gt 0 ]] || die "no shares found (servers that need a login: run again with a user)"
+
+    local i
+    for i in "${!hosts[@]}"; do
+        host="${hosts[$i]%%$'\t'*}"
+        printf '  %d) %s (%s)  %s\n' "$((i + 1))" "$(host_name "$host")" "$host" "${hosts[$i]#*$'\t'}"
+    done
+    local reply
+    read -r -p "share [1-${#hosts[@]}]: " reply
+    [[ "$reply" =~ ^[0-9]+$ && "$reply" -ge 1 && "$reply" -le "${#hosts[@]}" ]] || die "invalid choice: $reply"
+
+    host="${hosts[$((reply - 1))]%%$'\t'*}"
+    share="${hosts[$((reply - 1))]#*$'\t'}"
+    mount_share "$host" "$share"
+}
+
+main "$@"

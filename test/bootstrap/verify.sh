@@ -180,6 +180,7 @@ if [[ $xorg_expected -eq 1 ]]; then
     check_link "$HOME/bin/touchpad" "$D/bin/touchpad"
     check_link "$HOME/bin/charge" "$D/bin/charge"
     check_link "$HOME/bin/caffeinate" "$D/bin/caffeinate"
+    check_link "$HOME/bin/smb" "$D/bin/smb"
     theme_out="$("$HOME/bin/theme" show 2>&1 || true)"
     if [[ "$theme_out" == "dark" ]]; then
         ok "theme defaults to dark"
@@ -327,7 +328,7 @@ if [[ $xorg_expected -eq 1 ]]; then
     else
         fail "nmrs.desktop missing in /usr/local/share/applications"
     fi
-    for bin in i3 i3status dmenu xsetroot xset setxkbmap xmodmap amixer pavucontrol brightnessctl rfkill startx xclip i3lock; do
+    for bin in i3 i3status dmenu xsetroot xset setxkbmap xmodmap amixer pavucontrol brightnessctl rfkill smbclient mount.cifs btop startx xclip i3lock; do
         if command -v "$bin" >/dev/null; then ok "xorg bin $bin"; else fail "xorg bin missing: $bin"; fi
     done
     # Not packaged for EL9.

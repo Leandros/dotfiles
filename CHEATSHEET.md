@@ -113,6 +113,8 @@ In X, xremap swaps the left Alt and Ctrl keys. Right modifiers do not change.
 | `kb us` / `de` / `bone2` | Keyboard layout |
 | `touchpad tap` / `click` / `toggle` | Tap to click / press to click (until logout) |
 | `caffeinate` / `caffeinate display` | No idle suspend (and no lock or blanking) until Ctrl-C |
+| `smb` | Find SMB shares on the network, pick one, mount it at `~/mnt/<host>-<share>` |
+| `btop` | CPU, memory, disks, network, temperatures, battery |
 | `dua i` | Disk usage, interactive (like WinDirStat) |
 | `charge limit` / `full` / `toggle` | Battery charges to 80% / to 100% |
 | `flightmode on` / `off` / `toggle` | All radios off and battery power mode / back |
