@@ -114,6 +114,7 @@ In X, xremap swaps the left Alt and Ctrl keys. Right modifiers do not change.
 | `touchpad tap` / `click` / `toggle` | Tap to click / press to click (until logout) |
 | `caffeinate` / `caffeinate display` | No idle suspend (and no lock or blanking) until Ctrl-C |
 | `smb` | Find SMB shares on the network, pick one, mount it at `~/mnt/<host>-<share>` |
+| `remmina` | Remote desktop (RDP, VNC, SSH) with saved connections |
 | `btop` | CPU, memory, disks, network, temperatures, battery |
 | `dua i` | Disk usage, interactive (like WinDirStat) |
 | `charge limit` / `full` / `toggle` | Battery charges to 80% / to 100% |
