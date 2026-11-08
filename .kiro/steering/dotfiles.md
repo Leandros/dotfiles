@@ -38,7 +38,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `.tmux/custom` | `~/.tmux/custom` |
 | `.zshrc` | `~/.zshrc`, rendered copy (`##NEWHOME##`, `##NEWUSER##`) |
 | `.Xresources` | `~/.Xresources`, rendered copy (`##XFT_DPI##`) |
-| `.wezterm.lua`, `.xinitrc`, `.xprofile`, `.Xmodmap`, `.config/{i3,i3status,xremap}` | `$HOME`, links, Xorg only |
+| `.wezterm.lua`, `.xinitrc`, `.xprofile`, `.Xmodmap`, `.config/{i3,i3status,xremap}`, `.config/systemd/user/i3-session.target` | `$HOME`, links, Xorg only |
 | `bin/{kb,i3status-kb,pwr,theme,flightmode,touchpad,charge,caffeinate,smb}` | `~/bin`, links, Xorg only |
 | `bin/fzf-cache` | `~/bin`, link, always |
 | `xorg-conf/*.conf` | `/etc/X11/xorg.conf.d/` (root copy) |
@@ -128,7 +128,7 @@ New link or system file: install function, `check_link` or `cmp` check in
 ## Tests
 
 - `test/bootstrap/run.sh <distro>`: distros `debian12 ubuntu2204 fedora43
-  fedora44 rocky9 al2 al2023`. Snapshots the working tree (uncommitted files
+  fedora44 fedora45 rocky9 al2 al2023`. Snapshots the working tree (uncommitted files
   too) into a git repo mounted at `/src`, runs bootstrap twice with
   `BOOTSTRAP_XORG=1 BOOTSTRAP_DPI_SCALE=1.5`, then `verify.sh`. Log:
   `test/bootstrap/logs/<distro>.log`. Runs take minutes; run in background
@@ -139,7 +139,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   `dotfiles-bootstrap-<distro>` (built by `run.sh`), with the snapshot at
   `/src` and test files mounted at another path.
 - Unit tests with stubs and fake sysfs: `test/fzf-cache/test.sh`,
-  `test/i3status-kb/test.sh`, `test/power-mode/test.sh`,
+  `test/i3status-kb/test.sh`, `test/power-mode/test.sh`, `test/i3-session/test.sh`,
   `test/system-sleep/power-button-wake.sh`. Add new tests in this style.
 - X programs: Xorg dummy driver in a container. i3 bindings: Xvfb + i3 with
   the repo config in a Fedora image, `xdotool key super+j`, then read the
@@ -216,6 +216,10 @@ New link or system file: install function, `check_link` or `cmp` check in
   `tailscale status --json` BackendState) blocks and
   click handling around i3status.
 - lightdm on Fedora/EL does not source `~/.xprofile`; the xinitrc.d hook does.
+- `.xprofile` starts `i3-session.target` (`.config/systemd/user/`, linked);
+  it binds `graphical-session.target`, which xdg-desktop-portal requires since
+  Fedora 45. The i3 exit binding stops it. Without it the portal does not
+  start and Firefox ignores `theme`.
 - Key repeat is set in `xorg-conf/50-keyboard-repeat.conf`; `xset r rate` does
   not reach the xremap device.
 - Idle: `.xprofile` sources `~/.config/idle.conf` (written from the

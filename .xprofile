@@ -3,6 +3,12 @@
 # Xft.dpi and font settings; i3 (pango) and wezterm read them from here.
 [ -f ~/.Xresources ] && xrdb -merge ~/.Xresources
 
+# graphical-session.target for user services that require it, such as
+# xdg-desktop-portal (Fedora 45+). DISPLAY is in the user manager already
+# (xinitrc.d/50-systemd-user.sh runs before this file). The i3 exit binding
+# stops it.
+systemctl --user --no-block start i3-session.target >/dev/null 2>&1
+
 # Solarized dark or light (the saved choice): i3 colors as X resources, and
 # the color-scheme Firefox reads. Before i3, which reads the resources once.
 [ -x ~/bin/theme ] && ~/bin/theme restore >/dev/null 2>&1

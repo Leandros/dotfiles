@@ -1510,6 +1510,7 @@ link_xorg_dotfiles() {
     link "$d/.config/i3" "$HOME/.config/i3"
     link "$d/.config/xremap" "$HOME/.config/xremap"
     link "$d/.config/i3status" "$HOME/.config/i3status"
+    link "$d/.config/systemd/user/i3-session.target" "$HOME/.config/systemd/user/i3-session.target"
 }
 
 setup_xorg() {

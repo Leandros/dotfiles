@@ -5,7 +5,7 @@
 #
 # Usage:
 #   test/bootstrap/run.sh                 all distros
-#   test/bootstrap/run.sh al2 debian12    subset (debian12 ubuntu2204 fedora43 fedora44 rocky9 al2 al2023)
+#   test/bootstrap/run.sh al2 debian12    subset (debian12 ubuntu2204 fedora43 fedora44 fedora45 rocky9 al2 al2023)
 #
 # The working tree (including uncommitted changes) is snapshotted into a
 # temporary git repository that bootstrap.sh clones from, so the test covers
@@ -17,7 +17,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "$HERE/../.." && pwd)"
 readonly HERE REPO
 readonly LOG_DIR="$HERE/logs"
-readonly ALL_DISTROS="debian12 ubuntu2204 fedora43 fedora44 rocky9 al2 al2023"
+readonly ALL_DISTROS="debian12 ubuntu2204 fedora43 fedora44 fedora45 rocky9 al2 al2023"
 readonly IMAGE_PREFIX="dotfiles-bootstrap"
 
 base_image() {
@@ -26,6 +26,7 @@ base_image() {
         ubuntu2204) echo "ubuntu:22.04" ;;
         fedora43)   echo "fedora:43" ;;
         fedora44)   echo "fedora:44" ;;
+        fedora45)   echo "fedora:45" ;;
         rocky9)     echo "rockylinux:9" ;;
         al2)        echo "amazonlinux:2" ;;
         al2023)     echo "amazonlinux:2023" ;;
@@ -38,8 +39,9 @@ pkg_cmd() {
     case "$1" in
         debian12|ubuntu2204) echo "apt-get update -q && apt-get install -y -q --no-install-recommends sudo && rm -rf /var/lib/apt/lists/*" ;;
         al2)                 echo "yum install -y -q sudo shadow-utils && yum clean all" ;;
-        # kmscon stands in for the Fedora 45 default console.
-        fedora43|fedora44) echo "dnf install -y -q sudo shadow-utils kmscon && dnf clean all" ;;
+        # kmscon is the Fedora 45 console; on 43 and 44 it stands in for it.
+        # Container images leave it out either way.
+        fedora43|fedora44|fedora45) echo "dnf install -y -q sudo shadow-utils kmscon && dnf clean all" ;;
         al2023|rocky9) echo "dnf install -y -q sudo shadow-utils && dnf clean all" ;;
     esac
 }

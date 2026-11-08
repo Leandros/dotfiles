@@ -30,7 +30,8 @@ at the top of `bootstrap.sh`.
 
 For an Xorg/i3 desktop (Debian, Ubuntu, Fedora, RHEL 9) run with `BOOTSTRAP_XORG=1`;
 this installs i3, i3status, dmenu, the wezterm nightly and the X utilities
-and links `.xinitrc`, `.xprofile`, `.Xresources`, `.Xmodmap`,
+and links `.xinitrc`, `.xprofile`, `.Xresources`, `.Xmodmap`, `i3-session.target` (systemd
+user target for `graphical-session.target`, which the desktop portal needs),
 `.wezterm.lua`, `.config/i3` and `.config/i3status`, plus `~/bin/kb` to switch
 the keyboard layout (`us`, `de`, `bone2`) in X and on the Linux console; the
 i3 bar shows the layout and cycles it on click (left: next, right: previous), the
@@ -61,7 +62,7 @@ the same scale picks the console font at boot (Terminus 16/24/28/32 px via
 `console-setup` or `/etc/vconsole.conf`, and `font-size` in
 `/etc/kmscon/kmscon.conf`). Set `BOOTSTRAP_DPI_SCALE` to skip the prompt. Start with `startx`.
 
-Test in Docker: `test/bootstrap/run.sh [debian12|ubuntu2204|fedora44|rocky9|al2|al2023]`.
+Test in Docker: `test/bootstrap/run.sh [debian12|ubuntu2204|fedora43|fedora44|fedora45|rocky9|al2|al2023]`.
 Media keys (volume, mute, screen brightness) are bound in i3 only; check with `test/media-keys/test.sh`.
 
 

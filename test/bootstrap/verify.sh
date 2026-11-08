@@ -313,6 +313,7 @@ if [[ $xorg_expected -eq 1 ]]; then
     check_link "$HOME/.Xmodmap" "$D/.Xmodmap"
     check_link "$HOME/.config/i3" "$D/.config/i3"
     check_link "$HOME/.config/i3status" "$D/.config/i3status"
+    check_link "$HOME/.config/systemd/user/i3-session.target" "$D/.config/systemd/user/i3-session.target"
     check_link "$HOME/.wezterm.lua" "$D/.wezterm.lua"
     wezterm_stamp="$(cat /usr/local/share/bootstrap/wezterm 2>/dev/null || true)"
     check_version wezterm "wezterm $wezterm_stamp" wezterm --version
