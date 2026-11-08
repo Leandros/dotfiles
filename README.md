@@ -32,7 +32,8 @@ For an Xorg/i3 desktop (Debian, Ubuntu, Fedora, RHEL 9) run with `BOOTSTRAP_XORG
 this installs i3, i3status, dmenu, the wezterm nightly and the X utilities
 and links `.xinitrc`, `.xprofile`, `.Xresources`, `.Xmodmap`, `i3-session.target` (systemd
 user target for `graphical-session.target`, which the desktop portal needs),
-`.wezterm.lua`, `.config/i3` and `.config/i3status`, plus `~/bin/kb` to switch
+`.wezterm.lua`, `.config/i3`, `.config/i3status` and `.config/picom` (picom with vsync
+for tear-free drawing; no effects; not on EL9), plus `~/bin/kb` to switch
 the keyboard layout (`us`, `de`, `bone2`; `de` at login): inside X only the session's
 keyboard (`kb --console …` also the Linux console), on a tty only the console; the
 i3 bar shows the layout and cycles it on click (left: next, right: previous), the

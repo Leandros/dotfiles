@@ -1075,7 +1075,7 @@ install_xorg_packages() {
                 -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold \
                 xorg xinit x11-xserver-utils \
                 i3 i3status suckless-tools i3lock xss-lock xautolock blueman arandr autorandr \
-                alsa-utils pavucontrol brightnessctl xclip xinput rfkill cifs-utils smbclient btop remmina remmina-plugin-rdp \
+                alsa-utils pavucontrol brightnessctl xclip xinput rfkill cifs-utils smbclient btop remmina remmina-plugin-rdp picom \
                 kbd console-data console-setup
             ;;
         fedora)
@@ -1086,12 +1086,12 @@ install_xorg_packages() {
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap xrandr \
                 i3 i3status dmenu i3lock xss-lock xautolock blueman gobject-introspection copyq \
                 arandr autorandr gtk3 \
-                alsa-utils pavucontrol brightnessctl xclip xinput cifs-utils samba-client btop remmina remmina-plugins-rdp kbd terminus-fonts-console
+                alsa-utils pavucontrol brightnessctl xclip xinput picom cifs-utils samba-client btop remmina remmina-plugins-rdp kbd terminus-fonts-console
             ;;
         rhel)
             $SUDO dnf install -y -q epel-release
             $SUDO dnf config-manager --set-enabled crb
-            # xss-lock, xautolock, blueman, arandr and autorandr are
+            # xss-lock, xautolock, blueman, arandr, autorandr and picom are
             # not packaged for EL9; .xprofile tolerates their absence. Without
             # them there is no lock or suspend on idle, no Bluetooth GUI and
             # no saved monitor layouts; ~/bin/pwr still locks.
@@ -1556,6 +1556,7 @@ link_xorg_dotfiles() {
     link "$d/.config/i3" "$HOME/.config/i3"
     link "$d/.config/xremap" "$HOME/.config/xremap"
     link "$d/.config/i3status" "$HOME/.config/i3status"
+    link "$d/.config/picom" "$HOME/.config/picom"
     link "$d/.config/systemd/user/i3-session.target" "$HOME/.config/systemd/user/i3-session.target"
 }
 

@@ -358,6 +358,7 @@ if [[ $xorg_expected -eq 1 ]]; then
     check_link "$HOME/.Xmodmap" "$D/.Xmodmap"
     check_link "$HOME/.config/i3" "$D/.config/i3"
     check_link "$HOME/.config/i3status" "$D/.config/i3status"
+    check_link "$HOME/.config/picom" "$D/.config/picom"
     check_link "$HOME/.config/systemd/user/i3-session.target" "$D/.config/systemd/user/i3-session.target"
     check_link "$HOME/.wezterm.lua" "$D/.wezterm.lua"
     wezterm_stamp="$(cat /usr/local/share/bootstrap/wezterm 2>/dev/null || true)"
@@ -379,7 +380,7 @@ if [[ $xorg_expected -eq 1 ]]; then
     done
     # Not packaged for EL9.
     if grep -qE '^ID=(debian|ubuntu|fedora)$' /etc/os-release; then
-        for bin in xss-lock xautolock blueman-applet blueman-manager; do
+        for bin in xss-lock xautolock blueman-applet blueman-manager picom; do
             if command -v "$bin" >/dev/null; then ok "xorg bin $bin"; else fail "xorg bin missing: $bin"; fi
         done
         # Imports all its GObject libraries; Fedora's package misses one.

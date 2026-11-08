@@ -38,7 +38,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `.tmux/custom` | `~/.tmux/custom` |
 | `.zshrc` | `~/.zshrc`, rendered copy (`##NEWHOME##`, `##NEWUSER##`) |
 | `.Xresources` | `~/.Xresources`, rendered copy (`##XFT_DPI##`) |
-| `.wezterm.lua`, `.xinitrc`, `.xprofile`, `.Xmodmap`, `.config/{i3,i3status,xremap}`, `.config/systemd/user/i3-session.target` | `$HOME`, links, Xorg only |
+| `.wezterm.lua`, `.xinitrc`, `.xprofile`, `.Xmodmap`, `.config/{i3,i3status,xremap,picom}`, `.config/systemd/user/i3-session.target` | `$HOME`, links, Xorg only |
 | `bin/{kb,i3status-kb,pwr,theme,flightmode,touchpad,charge,caffeinate,smb,input-restore}` | `~/bin`, links, Xorg only |
 | `bin/fzf-cache` | `~/bin`, link, always |
 | `xorg-conf/*.conf` | `/etc/X11/xorg.conf.d/` (root copy) |
@@ -97,7 +97,11 @@ New link or system file: install function, `check_link` or `cmp` check in
 
 - Fedora: blueman needs `gobject-introspection` (xlib typelib); arandr needs
   `gtk3`. `/usr/local/sbin` is a link to `/usr/local/bin`.
-- EL9 has no xss-lock, xautolock, blueman, arandr, autorandr.
+- picom: only for tear-free drawing (`backend = "glx"`, `vsync`; Xorg 21.1
+  modesetting has no TearFree, xf86-video-intel no Arrow Lake). Config keeps
+  to options picom 9 (Debian/Ubuntu) and 13 (Fedora) share; `.xprofile`
+  runs `picom -b`.
+- EL9 has no xss-lock, xautolock, blueman, arandr, autorandr, picom.
   `.xprofile` must work without them. RHEL 10 has no Xorg or i3.
 - CopyQ: Debian/Ubuntu only if the candidate is >= `COPYQ_MIN_VERSION`
   (8.0.0); older versions keep passwords from password managers.

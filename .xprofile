@@ -85,5 +85,10 @@ xss-lock --transfer-sleep-lock -- ~/bin/pwr lock --nofork >/dev/null 2>&1 &
 # EL9 has no blueman.
 command -v blueman-applet >/dev/null && blueman-applet >/dev/null 2>&1 &
 
+# Compositor for tear-free drawing (vsync); ~/.config/picom/picom.conf.
+# EL9 has no picom.
+pkill -x picom 2>/dev/null
+command -v picom >/dev/null && picom -b >/dev/null 2>&1
+
 # Clipboard history: tray icon, and $mod+c in i3 opens it.
 command -v copyq >/dev/null && copyq >/dev/null 2>&1 &
