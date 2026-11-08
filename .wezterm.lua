@@ -288,14 +288,35 @@ end
 -- Set keys:
 config.keys = TableConcat(general_keys, tmux_keys)
 
+-- Adds key entries to a key table; an entry replaces the defaults with the
+-- same key and modifiers, so no key is bound twice.
+local function set_keys(tbl, keys)
+  for _, k in ipairs(keys) do
+    for i = #tbl, 1, -1 do
+      if tbl[i].key == k.key and (tbl[i].mods or 'NONE') == (k.mods or 'NONE') then
+        table.remove(tbl, i)
+      end
+    end
+    table.insert(tbl, k)
+  end
+  return tbl
+end
+
 local copy_mode = nil
 if wezterm.gui then
-  copy_mode = wezterm.gui.default_key_tables().copy_mode
-  TableConcat(copy_mode, {
+  copy_mode = set_keys(wezterm.gui.default_key_tables().copy_mode, {
+    -- Bone 2 movement, as in nvim: b r n s, Shift+b / Shift+s by word.
     { key = 'b', mods = 'NONE', action = act.CopyMode 'MoveLeft' },
     { key = 'n', mods = 'NONE', action = act.CopyMode 'MoveDown' },
     { key = 'r', mods = 'NONE', action = act.CopyMode 'MoveUp' },
     { key = 's', mods = 'NONE', action = act.CopyMode 'MoveRight' },
+    { key = 'B', mods = 'SHIFT', action = act.CopyMode 'MoveBackwardWord' },
+    { key = 'S', mods = 'SHIFT', action = act.CopyMode 'MoveForwardWord' },
+    -- Copy and stay in copy mode, as tmux does; the default also closes it.
+    { key = 'y', mods = 'NONE', action = act.Multiple {
+      act.CopyTo 'ClipboardAndPrimarySelection',
+      act.CopyMode 'ClearSelectionMode',
+    } },
   })
 end
 config.key_tables = {
