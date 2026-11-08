@@ -121,6 +121,12 @@ bindsym $mod+Shift+Down move down
 bindsym $mod+Shift+Up move up
 bindsym $mod+Shift+Right move right
 
+# swap two windows: mark one ($mod+m again unmarks; the title shows
+# [swap], which i3 hides for marks starting with "_"), focus the other,
+# then swap them
+bindsym $mod+m mark --toggle swap
+bindsym $mod+Shift+m swap container with mark swap; unmark swap
+
 # split in horizontal orientation
 bindsym $mod+v split h
 

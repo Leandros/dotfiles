@@ -169,7 +169,7 @@ fetch() {
     local url="$1" out="$2"
     # Retries ride out short GitHub 5xx outages (a debian12 test run failed
     # on 502/503 with 3 retries 2 s apart).
-    curl -fsSL --retry 5 --retry-delay 5 -o "$out" "$url"
+    curl -fsSL --retry 5 --retry-delay 5 -o "$out" "$url" || die "download failed: $url"
 }
 
 # Download and unpack an archive into a fresh directory, print the directory.
@@ -180,17 +180,17 @@ fetch_unpack() {
     dir="$(mktemp -d "$WORK_DIR/unpack.XXXXXX")" || die "mktemp failed"
     case "$url" in
         *.zip)
-            fetch "$url" "$dir/archive.zip" || die "download failed: $url"
+            fetch "$url" "$dir/archive.zip"
             unzip -q "$dir/archive.zip" -d "$dir" || die "unpack failed: $url"
             rm -f "$dir/archive.zip"
             ;;
         *.tar.xz|*.txz)
-            fetch "$url" "$dir/archive.tar.xz" || die "download failed: $url"
+            fetch "$url" "$dir/archive.tar.xz"
             tar -xJf "$dir/archive.tar.xz" -C "$dir" || die "unpack failed: $url"
             rm -f "$dir/archive.tar.xz"
             ;;
         *)
-            fetch "$url" "$dir/archive.tar.gz" || die "download failed: $url"
+            fetch "$url" "$dir/archive.tar.gz"
             tar -xzf "$dir/archive.tar.gz" -C "$dir" || die "unpack failed: $url"
             rm -f "$dir/archive.tar.gz"
             ;;

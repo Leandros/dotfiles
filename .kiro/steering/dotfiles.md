@@ -147,7 +147,8 @@ New link or system file: install function, `check_link` or `cmp` check in
   `test/system-sleep/power-button-wake.sh`. Add new tests in this style.
 - X programs: Xorg dummy driver in a container. i3 bindings: Xvfb + i3 with
   the repo config in a Fedora image, `xdotool key super+j`, then read the
-  started program's `/proc/<pid>/cmdline`. `bin/theme light` switches the
+  started program's `/proc/<pid>/cmdline`. `test/i3-swap/test.sh` does this for the
+  window swap (`$mod+m` mark `swap`, shown in the title; `_` marks are hidden; `$mod+Shift+m` swap) with `docker cp` (SELinux). `bin/theme light` switches the
   colors there too (gsettings fails, xrdb and the i3 reload work).
 - Put no dependent tool calls in one block: an edit and the command that
   needs it run in parallel, and the command sees the old file.

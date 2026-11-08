@@ -48,4 +48,17 @@ if [[ "$out" == *"continued after a failed download"* ]]; then fail "caller went
 if [[ "$out" == *"download failed: https://example.invalid/x-1.0.tar.gz"* ]]; then ok "error names the URL"; else fail "error: $out"; fi
 if [[ "$out" == *"Cannot open"* || "$out" == *"tar (child)"* ]]; then fail "tar ran on the missing file: $out"; else ok "tar does not run"; fi
 
+# A direct fetch (wezterm .deb, mise, direnv, codelldb) names its URL too.
+out="$(PATH="$STUBS:$PATH" bash -c "
+    set -euo pipefail
+    source '$FUNCS'
+    fetch https://example.invalid/tool.deb '$TMP/work/tool.deb'
+    echo 'continued after a failed download'
+" 2>&1)" && rc=0 || rc=$?
+if [[ $rc -ne 0 && "$out" == *"download failed: https://example.invalid/tool.deb"* && "$out" != *continued* ]]; then
+    ok "a direct fetch stops with the URL"
+else
+    fail "direct fetch (rc $rc): $out"
+fi
+
 exit "$FAILED"
