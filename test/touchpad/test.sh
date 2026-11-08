@@ -74,7 +74,7 @@ main() {
 
     # macOS defaults for every touchpad.
     local option
-    for option in '"ClickMethod" "clickfinger"' '"Tapping" "off"' '"AccelProfile" "custom"'; do
+    for option in '"ClickMethod" "clickfinger"' '"Tapping" "off"' '"TappingDrag" "off"' '"AccelProfile" "custom"'; do
         if grep -q "Option $option" "$CONF"; then ok "xorg-conf $option"; else fail "xorg-conf misses $option"; fi
     done
 

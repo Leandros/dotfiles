@@ -46,7 +46,8 @@ as `LC_COLOR_SCHEME`, so tmux and nvim on a server follow too (bootstrap adds
 blocks all radios with rfkill and selects the battery power mode; `off` undoes both.
 Touchpads work as on macOS (`xorg-conf/40-touchpad.conf`): press to click, two-finger
 click for right click, and a macOS-like acceleration curve; `~/bin/touchpad tap|click`
-switches tap-to-click until logout. `~/bin/charge full` lets the battery charge to
+switches tap-to-click until logout (without tap-and-drag, so a touch right after a tap
+does not drag). `~/bin/charge full` lets the battery charge to
 100% through UPower's charge limit; `charge limit` goes back to 80%.
 `~/bin/caffeinate` keeps the machine from suspending on idle until Ctrl-C;
 `caffeinate display` also keeps the screen on and unlocked. `~/bin/smb` scans the
