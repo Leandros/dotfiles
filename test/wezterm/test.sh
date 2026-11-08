@@ -64,6 +64,7 @@ if appearance ~= "none" then
           { key = "b", mods = "NONE", action = act.CopyMode "MoveBackwardWord" },
           { key = "w", mods = "NONE", action = act.CopyMode "MoveForwardWord" },
           { key = "Escape", mods = "NONE", action = act.CopyMode "Close" },
+          { key = "f", mods = "NONE", action = act.CopyMode { JumpForward = { prev_char = false } } },
         },
         search_mode = {},
       }
@@ -87,7 +88,7 @@ end
 
 local config = dofile(config_path)
 
--- "copy": the copy mode entries for y, b, B and S, "key[mods]=actions;".
+-- "copy": copy mode entries of the keys below, "key[mods]=actions;".
 if what == "copy" then
   local function describe(a)
     if type(a) ~= "table" then return tostring(a) end
@@ -101,7 +102,9 @@ if what == "copy" then
   end
   local out = {}
   for _, k in ipairs(config.key_tables.copy_mode) do
-    if k.key == "y" or k.key == "b" or k.key == "B" or k.key == "S" then
+    local keys = { y = 1, b = 1, B = 1, S = 1, N = 1, R = 1, ["("] = 1, [")"] = 1,
+      Y = 1, ["/"] = 1, ["?"] = 1, ["-"] = 1, Escape = 1, f = 1 }
+    if keys[k.key] then
       out[#out + 1] = k.key .. "[" .. (k.mods or "") .. "]=" .. describe(k.action)
     end
   end
@@ -122,7 +125,17 @@ handlers["toggle-dark-mode"](window)
 io.write(config.color_scheme, "|", overrides.color_scheme, "\n")
 LUA
 
-run() { nvim -l "$HARNESS" "$CONFIG" "$1" "$2" "${3:-}" 2>&1; }
+# gsettings prints the desktop color-scheme from GS ("'prefer-dark'" ...);
+# unset GS: it fails, as without the schema.
+mkdir -p "$TMP/stubs"
+cat > "$TMP/stubs/gsettings" <<'EOF'
+#!/bin/sh
+[ -n "${GS:-}" ] || exit 1
+echo "$GS"
+EOF
+chmod +x "$TMP/stubs/gsettings"
+
+run() { PATH="$TMP/stubs:$PATH" nvim -l "$HARNESS" "$CONFIG" "$1" "$2" "${3:-}" 2>&1; }
 
 main() {
     command -v nvim >/dev/null || { echo "SKIP: nvim not installed"; exit 0; }
@@ -134,11 +147,41 @@ main() {
     expect "Linux mux server (no GUI) stays dark" "Solarized Dark|Solarized Light" "$(run "$linux" none)"
     expect "macOS ignores the appearance" "Solarized Dark|Solarized Light" "$(run "$mac" Light)"
 
-    # Copy mode: y copies and stays (clears the selection, as tmux does);
-    # Shift+b / Shift+s move by word; each key appears once.
-    expect "copy mode keys" \
-        "B[SHIFT]=CopyMode(MoveBackwardWord);S[SHIFT]=CopyMode(MoveForwardWord);b[NONE]=CopyMode(MoveLeft);y[NONE]=CopyTo(ClipboardAndPrimarySelection),CopyMode(ClearSelectionMode)" \
-        "$(run "$linux" Dark copy)"
+    # The desktop setting from gsettings wins over wezterm's appearance,
+    # which reported Light in half the evaluations of a dark desktop.
+    expect "gsettings dark, wezterm says Light: dark" "Solarized Dark|Solarized Light" "$(GS="'prefer-dark'" run "$linux" Light)"
+    expect "gsettings light, wezterm says Dark: light" "Solarized Light|Solarized Dark" "$(GS="'prefer-light'" run "$linux" Dark)"
+    expect "gsettings no preference: dark" "Solarized Dark|Solarized Light" "$(GS="'default'" run "$linux" Light)"
+
+    # Copy mode, as in tmux: y copies and stays (clears the selection), Y
+    # copies and leaves; Shift+b / Shift+s by word; N / R one line, ( / )
+    # one page; / searches up, ? / - next / previous match in that
+    # direction; Escape leaves the search prompt (only AcceptPattern ends
+    # pattern editing) and clears the selection; f keeps wezterm's jump to a
+    # character. Each key appears once.
+    local want=(
+        "(\[NONE\]=CopyMode(PageDown)"
+        ")\[NONE\]=CopyMode(PageUp)"
+        "-\[NONE\]=CopyMode(NextMatch)"
+        "/\[NONE\]=CopyMode(EditPattern)"
+        "?\[NONE\]=CopyMode(PriorMatch)"
+        "B\[SHIFT\]=CopyMode(MoveBackwardWord)"
+        "Escape\[NONE\]=CopyMode(AcceptPattern),CopyMode(ClearSelectionMode)"
+        "N\[SHIFT\]=ScrollByLine(1)"
+        "R\[SHIFT\]=ScrollByLine(-1)"
+        "S\[SHIFT\]=CopyMode(MoveForwardWord)"
+        "Y\[SHIFT\]=CopyTo(ClipboardAndPrimarySelection),ScrollToBottom,CopyMode(Close)"
+        "b\[NONE\]=CopyMode(MoveLeft)"
+        "f\[NONE\]=CopyMode(table)"
+        "y\[NONE\]=CopyTo(ClipboardAndPrimarySelection),CopyMode(ClearSelectionMode)"
+    )
+    local got
+    got="$(run "$linux" Dark copy | tr ';' '\n' | sed 's/table: 0x[0-9a-f]*/table/')"
+    local line
+    for line in "${want[@]}"; do
+        if grep -qx -- "$line" <<< "$got"; then ok "copy mode: ${line//\\/}"; else fail "copy mode: missing ${line//\\/}"; fi
+    done
+    expect "copy mode: each key once" "${#want[@]}" "$(grep -c . <<< "$got")"
 
     exit "$FAILED"
 }

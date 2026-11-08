@@ -312,9 +312,33 @@ if wezterm.gui then
     { key = 's', mods = 'NONE', action = act.CopyMode 'MoveRight' },
     { key = 'B', mods = 'SHIFT', action = act.CopyMode 'MoveBackwardWord' },
     { key = 'S', mods = 'SHIFT', action = act.CopyMode 'MoveForwardWord' },
+    -- One line (N / R) and one page (( / )) down / up, as in tmux.
+    { key = 'N', mods = 'SHIFT', action = act.ScrollByLine(1) },
+    { key = 'R', mods = 'SHIFT', action = act.ScrollByLine(-1) },
+    { key = '(', mods = 'NONE', action = act.CopyMode 'PageDown' },
+    { key = ')', mods = 'NONE', action = act.CopyMode 'PageUp' },
     -- Copy and stay in copy mode, as tmux does; the default also closes it.
     { key = 'y', mods = 'NONE', action = act.Multiple {
       act.CopyTo 'ClipboardAndPrimarySelection',
+      act.CopyMode 'ClearSelectionMode',
+    } },
+    -- Copy and leave copy mode.
+    { key = 'Y', mods = 'SHIFT', action = act.Multiple {
+      act.CopyTo 'ClipboardAndPrimarySelection',
+      act.ScrollToBottom,
+      act.CopyMode 'Close',
+    } },
+    -- Search: / opens the prompt (Enter searches up); ? repeats in that
+    -- direction, - goes the other way, as tmux's search-again and
+    -- search-reverse. f keeps wezterm's jump to a character.
+    { key = '/', mods = 'NONE', action = act.CopyMode 'EditPattern' },
+    { key = '?', mods = 'NONE', action = act.CopyMode 'PriorMatch' },
+    { key = '-', mods = 'NONE', action = act.CopyMode 'NextMatch' },
+    -- Escape leaves the search prompt (only AcceptPattern ends pattern
+    -- editing; the pattern stays for ? and -) and clears the selection;
+    -- it stays in copy mode. q leaves.
+    { key = 'Escape', mods = 'NONE', action = act.Multiple {
+      act.CopyMode 'AcceptPattern',
       act.CopyMode 'ClearSelectionMode',
     } },
   })
@@ -451,11 +475,24 @@ config.color_schemes = {
     ['Solarized Light'] = light_scheme,
 }
 config.color_scheme = 'Solarized Dark'
--- Linux: follow the desktop's light or dark setting, which ~/bin/theme sets.
--- wezterm reads it from xdg-desktop-portal and reloads this file when it
--- changes. The mux server has no GUI and stays dark.
-if wezterm.target_triple:find('linux') and wezterm.gui
-    and wezterm.gui.get_appearance():find('Light') then
+-- Linux: follow the desktop's light or dark setting, which ~/bin/theme sets
+-- (gsettings color-scheme), read directly as tmux and nvim do. wezterm's
+-- own get_appearance() returned Light in every other evaluation of this
+-- file at startup on a dark desktop (nightly 20261108), so a new window
+-- could come up light. wezterm still reloads this file when the portal
+-- setting changes. Without gsettings, wezterm's appearance decides. The mux
+-- server has no GUI and stays dark.
+local function desktop_is_light()
+  local p = io.popen('gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null')
+  local out = p and p:read('*a') or ''
+  if p then p:close() end
+  if out ~= '' then
+    return out:find('prefer%-light') ~= nil
+  end
+  return wezterm.gui.get_appearance():find('Light') ~= nil
+end
+
+if wezterm.target_triple:find('linux') and wezterm.gui and desktop_is_light() then
   config.color_scheme = 'Solarized Light'
 end
 

@@ -272,8 +272,11 @@ New link or system file: install function, `check_link` or `cmp` check in
   install only warns (`prefix I` in tmux).
 - wezterm: Xorg only, rolling nightly (GitHub `.deb` on Debian/Ubuntu, COPR on
   Fedora/EL). It reads the DPI from `~/.Xresources`. On Linux its scheme
-  follows `wezterm.gui.get_appearance()` (portal color-scheme, set by `theme`)
-  and wezterm reloads on change. `test/wezterm/test.sh` loads `.wezterm.lua`
+  follows `gsettings get ... color-scheme` (set by `theme`), read in the
+  config; `wezterm.gui.get_appearance()` only without gsettings: it returned
+  Light in every other config evaluation on a dark desktop (nightly
+  20261108). wezterm still reloads the config when the portal setting
+  changes. `test/wezterm/test.sh` loads `.wezterm.lua`
   with a fake `wezterm` module in `nvim -l`.
 - nvim, tmux and wezterm all use Solarized dark and light. Keep their colors
   the same. nvim has `EnableDarkMode()` and `EnableLightMode()`.
