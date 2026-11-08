@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+#
+# input-restore - re-apply the keyboard layout and tap-to-click when X
+# re-adds input devices.
+#
+# X gives a keyboard or touchpad it adds the server defaults
+# (xorg.conf.d), not what `kb` and `touchpad` set. That happens when
+# `udevadm trigger` replays device events (installers run it), when xremap
+# restarts, and when a keyboard is plugged in. This watches udev's input
+# events, waits until they settle, then runs `kb <current layout>` and
+# `touchpad restore` once. ~/.xprofile starts it; it ends with the X
+# session (checked every minute).
+#
+set -euo pipefail
+
+readonly KB="$HOME/bin/kb"
+readonly TOUCHPAD="$HOME/bin/touchpad"
+# Quiet time after the last event; X adds the devices meanwhile.
+readonly SETTLE_S="${INPUT_RESTORE_SETTLE_S:-1}"
+readonly CHECK_S="${INPUT_RESTORE_CHECK_S:-60}"
+MONITOR_PID=""
+
+cleanup() { [[ -z "$MONITOR_PID" ]] || kill "$MONITOR_PID" 2>/dev/null || true; }
+
+restore() {
+    local layout
+    layout="$("$KB" show 2>/dev/null)" || layout=""
+    if [[ -n "$layout" && "$layout" != "?" ]]; then
+        "$KB" "$layout" > /dev/null 2>&1 || true
+    fi
+    "$TOUCHPAD" restore > /dev/null 2>&1 || true
+}
+
+x_alive() { xset q > /dev/null 2>&1; }
+
+main() {
+    trap cleanup EXIT
+    exec 3< <(udevadm monitor --udev --subsystem-match=input 2>/dev/null)
+    MONITOR_PID=$!
+
+    local line rc pending="" idle=0
+    while true; do
+        if IFS= read -r -t "$SETTLE_S" line <&3; then
+            # "UDEV  [123.4] change   /devices/.../input3 (input)"
+            case "$line" in
+                *" add "*"(input)"|*" change "*"(input)") pending=1 ;;
+            esac
+            continue
+        else
+            rc=$?
+        fi
+        # Above 128: timeout. Otherwise udevadm ended.
+        [[ $rc -gt 128 ]] || exit 0
+        if [[ -n "$pending" ]]; then
+            restore
+            pending=""
+        fi
+        idle=$(awk -v i="$idle" -v s="$SETTLE_S" 'BEGIN { print i + s }')
+        if awk -v i="$idle" -v c="$CHECK_S" 'BEGIN { exit !(i >= c) }'; then
+            idle=0
+            x_alive || exit 0
+        fi
+    done
+}
+
+main "$@"

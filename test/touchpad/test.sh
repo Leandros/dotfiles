@@ -49,7 +49,7 @@ EOF
 
 run() {
     : > "$CALLS"
-    DISPLAY=:99 PATH="$STUBS:$PATH" "$SCRIPT" "$@"
+    DISPLAY=:99 XDG_RUNTIME_DIR="$TMP/run" PATH="$STUBS:$PATH" "$SCRIPT" "$@"
 }
 
 main() {
@@ -69,6 +69,20 @@ main() {
     expect "toggle from click is tap" "1" "$(cat "$TAP")"
     run toggle > /dev/null
     expect "toggle from tap is click" "0" "$(cat "$TAP")"
+
+    # restore (input-restore, after X re-adds the touchpad): the last choice.
+    run tap > /dev/null
+    echo 0 > "$TAP"
+    run restore > /dev/null
+    expect "restore re-applies tap" "1" "$(cat "$TAP")"
+    run click > /dev/null
+    echo 1 > "$TAP"
+    run restore > /dev/null
+    expect "restore re-applies click" "0" "$(cat "$TAP")"
+    rm -rf "$TMP/run"
+    echo 1 > "$TAP"
+    run restore > /dev/null
+    expect "restore without a choice keeps the device as is" "1" "$(cat "$TAP")"
 
     if run bogus > /dev/null 2>&1; then fail "unknown command accepted"; else ok "unknown command rejected"; fi
 

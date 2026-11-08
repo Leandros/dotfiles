@@ -39,7 +39,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `.zshrc` | `~/.zshrc`, rendered copy (`##NEWHOME##`, `##NEWUSER##`) |
 | `.Xresources` | `~/.Xresources`, rendered copy (`##XFT_DPI##`) |
 | `.wezterm.lua`, `.xinitrc`, `.xprofile`, `.Xmodmap`, `.config/{i3,i3status,xremap}`, `.config/systemd/user/i3-session.target` | `$HOME`, links, Xorg only |
-| `bin/{kb,i3status-kb,pwr,theme,flightmode,touchpad,charge,caffeinate,smb}` | `~/bin`, links, Xorg only |
+| `bin/{kb,i3status-kb,pwr,theme,flightmode,touchpad,charge,caffeinate,smb,input-restore}` | `~/bin`, links, Xorg only |
 | `bin/fzf-cache` | `~/bin`, link, always |
 | `xorg-conf/*.conf` | `/etc/X11/xorg.conf.d/` (root copy) |
 | `sshd-conf/50-color-scheme.conf` | `/etc/ssh/sshd_config.d/` (root copy, Linux, where sshd_config includes the directory; not AL2) |
@@ -142,6 +142,7 @@ New link or system file: install function, `check_link` or `cmp` check in
 - Unit tests with stubs and fake sysfs: `test/fzf-cache/test.sh`,
   `test/i3status-kb/test.sh`, `test/power-mode/test.sh`, `test/i3-session/test.sh`,
   `test/xprofile/test.sh` (runs `.xprofile` with only stubs on PATH),
+  `test/input-restore/test.sh`,
   `test/fetch/test.sh` (`fetch_unpack` must die on a failed download: it runs
   in `$(...)`, where `set -e` does not apply),
   `test/system-sleep/power-button-wake.sh`. Add new tests in this style.
@@ -214,6 +215,10 @@ New link or system file: install function, `check_link` or `cmp` check in
   3 s) for its virtual keyboard in `xinput`, then runs `kb de`. A keyboard
   added later gets the server default from `00-keyboard.conf` (which `kb`
   rewrites through localectl), not kb's layout, and the bar would be wrong.
+  `bin/input-restore` (started by `.xprofile`, stopped with `pkill -f`: it runs
+  as `bash`) watches `udevadm monitor` input add/change events and, once they
+  settle, runs `kb <kb show>` and `touchpad restore` (the session's last
+  choice). Installers that run `udevadm trigger` re-add every input device.
 - Floating windows need `for_window` rules: nmrs (`class`), `blueman-*`,
   copyq (`move position mouse`), arandr and pavucontrol (`instance`).
 - No `tray_output`: with `primary`, the tray vanishes when no output is
@@ -235,7 +240,9 @@ New link or system file: install function, `check_link` or `cmp` check in
   (`-detectsleep`) for suspend. autorandr runs before i3.
 - `pwr lock|sleep|hibernate|performance|balanced|battery|mode`. Modes use
   busctl `org.freedesktop.UPower.PowerProfiles` (tuned-ppd).
-  `power-mode-auto` selects performance on AC and battery on battery.
+  `power-mode-auto` selects performance on AC and battery on battery, only
+  when the AC state changed since its last run (`/run/power-mode-auto/ac`), so
+  a replayed udev event keeps a mode set with `pwr`.
 - Sleep hook: only LNXPWRBN, PNP0C0C, intel-hid and intel-vbtn may wake.
   Fedora hibernation: zram swap only, and Secure Boot lockdown blocks it.
 

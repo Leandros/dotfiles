@@ -47,7 +47,9 @@ blocks all radios with rfkill and selects the battery power mode; `off` undoes b
 Touchpads work as on macOS (`xorg-conf/40-touchpad.conf`): press to click, two-finger
 click for right click, and a macOS-like acceleration curve; `~/bin/touchpad tap|click`
 switches tap-to-click until logout (without tap-and-drag, so a touch right after a tap
-does not drag). `~/bin/charge full` lets the battery charge to
+does not drag). `~/bin/input-restore` re-applies the keyboard layout and tap-to-click
+when X re-adds input devices with its defaults (installers that run `udevadm trigger`,
+an xremap restart, a new keyboard). `~/bin/charge full` lets the battery charge to
 100% through UPower's charge limit; `charge limit` goes back to 80%.
 `~/bin/caffeinate` keeps the machine from suspending on idle until Ctrl-C;
 `caffeinate display` also keeps the screen on and unlocked. `~/bin/smb` scans the

@@ -5,12 +5,16 @@
 # Runs as root from power-mode-auto.service: at boot, and from
 # 90-power-mode-auto.rules when the AC adapter is plugged in or out.
 # Machines without an AC adapter (desktops) keep their mode.
+# It acts only when the AC state differs from the last run (kept in /run,
+# so boot always acts): `udevadm trigger`, which installers run, replays
+# the event without a change and must not undo a mode set with `pwr`.
 # Installed to /usr/local/libexec/ by bootstrap.sh.
 #
 set -euo pipefail
 
 # Overridable for test/power-mode/test.sh.
 readonly SYSFS="${POWER_MODE_SYSFS:-/sys}"
+readonly STATE_FILE="${POWER_MODE_STATE:-/run/power-mode-auto/ac}"
 readonly PPD_NAME="org.freedesktop.UPower.PowerProfiles"
 readonly PPD_PATH="/org/freedesktop/UPower/PowerProfiles"
 readonly PPD_TIMEOUT_S=10
@@ -31,8 +35,11 @@ ac_state() {
 }
 
 main() {
-    local profile
-    case "$(ac_state)" in
+    local profile ac last=""
+    ac="$(ac_state)"
+    last="$(cat "$STATE_FILE" 2>/dev/null)" || true
+    [[ "$ac" != "$last" ]] || exit 0
+    case "$ac" in
         online) profile=performance ;;
         offline) profile=power-saver ;;
         *) exit 0 ;;
@@ -40,6 +47,8 @@ main() {
 
     busctl --timeout="$PPD_TIMEOUT_S" set-property \
         "$PPD_NAME" "$PPD_PATH" "$PPD_NAME" ActiveProfile s "$profile"
+    mkdir -p "$(dirname "$STATE_FILE")"
+    echo "$ac" > "$STATE_FILE"
     echo "power-mode-auto: $profile"
 }
 

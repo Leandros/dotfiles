@@ -39,7 +39,7 @@ write_stubs() {
     for cmd in xrdb systemctl autorandr xset setxkbmap xmodmap pkill xss-lock xautolock blueman-applet copyq; do
         printf '#!/bin/sh\necho "%s $*" >> "%s"\n' "$cmd" "$CALLS" > "$STUBS/$cmd"
     done
-    for cmd in kb theme; do
+    for cmd in kb theme input-restore; do
         printf '#!/bin/sh\necho "%s $*" >> "%s"\n' "$cmd" "$CALLS" > "$TMP/home/bin/$cmd"
     done
     printf '#!/bin/sh\nexec /usr/bin/sleep "$@"\n' > "$STUBS/sleep"
@@ -85,6 +85,21 @@ main() {
         ok "layout set after the xremap keyboard exists"
     else
         fail "order: device line $ready, layout line $layout: $(tr '\n' ';' < "$CALLS")"
+    fi
+
+    # input-restore keeps the layout and tap-to-click when X re-adds devices.
+    local watcher
+    watcher="$(line_of '^input-restore')"
+    if [[ "$watcher" -gt 0 && "$watcher" -gt "$layout" ]]; then
+        ok "input-restore starts after the layout is set"
+    else
+        fail "input-restore line $watcher, layout line $layout"
+    fi
+    # A re-login replaces the old watcher; it runs as "bash", so not pkill -x.
+    if grep -qF 'pkill -f /bin/input-restore$' "$CALLS"; then
+        ok "the old watcher is stopped by command line"
+    else
+        fail "no pkill -f for input-restore: $(grep pkill "$CALLS" | tr '\n' ';')"
     fi
 
     # Without xremap (no input group) the layout is still set, and soon.

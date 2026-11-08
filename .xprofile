@@ -48,6 +48,13 @@ while [ "$i" -lt 30 ] && kill -0 "$xremap_pid" 2>/dev/null &&
 done
 ~/bin/kb de </dev/null 2>/dev/null || setxkbmap -layout de -option terminate:ctrl_alt_bksp
 
+# Re-apply the layout and tap-to-click when X re-adds input devices with its
+# defaults (`udevadm trigger` from installers, an xremap restart, a new
+# keyboard). Ends with the X session.
+# By command line: the script runs as "bash", so pkill -x would not match.
+pkill -f '/bin/input-restore$' 2>/dev/null
+[ -x ~/bin/input-restore ] && ~/bin/input-restore >/dev/null 2>&1 &
+
 # Idle timeouts in minutes, from the IDLE_* settings in bootstrap.sh.
 # shellcheck source=/dev/null
 [ -f ~/.config/idle.conf ] && . ~/.config/idle.conf

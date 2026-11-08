@@ -47,7 +47,7 @@ EOF
 }
 
 pwr() { PATH="$STUBS:$PATH" "$PWR" "$@" || fail "pwr $* exited $?"; }
-auto() { POWER_MODE_SYSFS="$SYSFS" PATH="$STUBS:$PATH" "$AUTO" || fail "power-mode-auto exited $?"; }
+auto() { POWER_MODE_SYSFS="$SYSFS" POWER_MODE_STATE="$TMP/last-ac" PATH="$STUBS:$PATH" "$AUTO" || fail "power-mode-auto exited $?"; }
 
 # add_supply NAME TYPE ONLINE
 add_supply() {
@@ -116,6 +116,19 @@ test_auto() {
     add_supply ucsi-source-psy-USBC000:001 USB 1
     auto
     expect "a USB supply does not count as AC" "power-saver" "$(cat "$STATE")"
+
+    # A replayed event (`udevadm trigger`, e.g. from an installer) with the
+    # same AC state keeps a mode chosen by hand.
+    echo balanced > "$STATE"
+    auto
+    expect "same AC state again: the manual choice stays" "balanced" "$(cat "$STATE")"
+    echo 1 > "$SYSFS/class/power_supply/AC/online"
+    auto
+    expect "plugged in: performance" "performance" "$(cat "$STATE")"
+    echo balanced > "$STATE"
+    rm -f "$TMP/last-ac"
+    auto
+    expect "boot (no state yet): sets the mode" "performance" "$(cat "$STATE")"
 
     rm -rf "$SYSFS"
     add_supply BAT0 Battery 1

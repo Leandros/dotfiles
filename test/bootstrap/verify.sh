@@ -208,6 +208,7 @@ if [[ $xorg_expected -eq 1 ]]; then
     check_link "$HOME/bin/charge" "$D/bin/charge"
     check_link "$HOME/bin/caffeinate" "$D/bin/caffeinate"
     check_link "$HOME/bin/smb" "$D/bin/smb"
+    check_link "$HOME/bin/input-restore" "$D/bin/input-restore"
     theme_out="$("$HOME/bin/theme" show 2>&1 || true)"
     if [[ "$theme_out" == "dark" ]]; then
         ok "theme defaults to dark"

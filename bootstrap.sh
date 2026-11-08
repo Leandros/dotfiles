@@ -1535,6 +1535,7 @@ link_xorg_dotfiles() {
     link "$d/bin/charge" "$HOME/bin/charge"
     link "$d/bin/caffeinate" "$HOME/bin/caffeinate"
     link "$d/bin/smb" "$HOME/bin/smb"
+    link "$d/bin/input-restore" "$HOME/bin/input-restore"
     link "$d/.xinitrc" "$HOME/.xinitrc"
     link "$d/.xprofile" "$HOME/.xprofile"
     link "$d/.Xmodmap" "$HOME/.Xmodmap"

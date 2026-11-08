@@ -4,17 +4,21 @@
 #
 # xorg-conf/40-touchpad.conf starts every session with press-to-click (as on
 # macOS); this changes it until the next login. It sets every device with a
-# libinput tapping property, so the TrackPoint and mice are left alone.
+# libinput tapping property, so the TrackPoint and mice are left alone. The
+# choice is kept per session, and `restore` applies it again after X re-adds
+# the touchpad (bin/input-restore).
 #
 # Usage: touchpad tap      tap to click
 #        touchpad click    press to click
 #        touchpad toggle   switch to the other one
 #        touchpad show     print tap or click
+#        touchpad restore  apply the last choice of this session, if any
 #
 set -euo pipefail
 
 readonly PROP="libinput Tapping Enabled"
-readonly USAGE="usage: touchpad tap | click | toggle | show"
+readonly USAGE="usage: touchpad tap | click | toggle | show | restore"
+readonly STATE_FILE="${XDG_RUNTIME_DIR:-$HOME/.cache}/touchpad-tap"
 
 die() { printf 'touchpad: %s\n' "$*" >&2; exit 1; }
 
@@ -52,11 +56,24 @@ show() {
     fi
 }
 
+remember() {
+    mkdir -p "$(dirname "$STATE_FILE")"
+    echo "$1" > "$STATE_FILE"
+}
+
 main() {
     [[ -n "${DISPLAY:-}" ]] || die "needs X (DISPLAY is not set)"
     case "${1:-}" in
-        tap)    set_tapping 1; echo "touchpad: tap to click" ;;
-        click)  set_tapping 0; echo "touchpad: press to click" ;;
+        tap)    set_tapping 1; remember tap; echo "touchpad: tap to click" ;;
+        click)  set_tapping 0; remember click; echo "touchpad: press to click" ;;
+        restore)
+            local choice
+            choice="$(cat "$STATE_FILE" 2>/dev/null)" || exit 0
+            case "$choice" in
+                tap)   set_tapping 1 ;;
+                click) set_tapping 0 ;;
+            esac
+            ;;
         toggle) if [[ "$(show)" == tap ]]; then main click; else main tap; fi ;;
         show)   show ;;
         *)      die "$USAGE" ;;
