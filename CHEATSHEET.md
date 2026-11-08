@@ -44,7 +44,6 @@ In X, xremap swaps the left Alt and Ctrl keys. Right modifiers do not change.
 | `Mod+v` | Next window opens to the right |
 | `Mod+f` | Next window opens below |
 | `Mod+e` | Fullscreen on/off |
-| `Mod+t` | Stacked layout |
 | `Mod+d` | Tabbed layout |
 | `Mod+u` | Split layout, toggle direction |
 | `Mod+Shift+space` | Floating on/off |
