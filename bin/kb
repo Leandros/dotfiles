@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
 #
-# kb - switch the keyboard layout in X and on the virtual consoles.
+# kb - switch the keyboard layout of the X session or the virtual consoles.
 #
-# Consoles run by kmscon (Fedora 45+) take their layout from localectl's X11
-# settings; fbcon consoles are switched with loadkeys.
+# Inside X (DISPLAY set) it changes only the session's X keyboard; with
+# --console also the consoles. On a tty it changes only the consoles.
+# The console layout is system-wide: consoles run by kmscon (Fedora 45+)
+# follow localectl's X11 settings, which are also the X server default (the
+# login screen, keyboards X adds), and fbcon consoles share the kernel
+# keymap (loadkeys). So X must not change it by itself.
 #
-# Usage: kb            interactive menu
-#        kb us|de|bone2
-#        kb next|prev  cycle through the layouts
-#        kb show       print the current layout
+# Usage: kb [--console]            interactive menu
+#        kb [--console] us|de|bone2
+#        kb [--console] next|prev  cycle through the layouts
+#        kb show                   print the session's X layout
 #
 set -euo pipefail
 
@@ -114,19 +118,33 @@ apply_console() {
     fi
 }
 
-apply() {
-    [[ " ${LAYOUTS[*]} " == *" $1 "* ]] || die "unknown layout: $1 (one of: ${LAYOUTS[*]})"
-    if [[ -n "${DISPLAY:-}" ]]; then
-        apply_x "$1"
-    fi
+apply_console_checked() {
     if command -v loadkeys >/dev/null || command -v kmscon >/dev/null; then
         apply_console "$1"
     else
         echo "kb: neither loadkeys nor kmscon found, console layout unchanged" >&2
     fi
+}
+
+# Inside X: the session's X keyboard, plus the consoles with --console. On a
+# tty: the consoles only; the state file records the X session's layout for
+# the bar, so it stays.
+apply() {
+    [[ " ${LAYOUTS[*]} " == *" $1 "* ]] || die "unknown layout: $1 (one of: ${LAYOUTS[*]})"
+    if [[ -z "${DISPLAY:-}" ]]; then
+        apply_console_checked "$1"
+        echo "console keyboard layout: $1"
+        return
+    fi
+    apply_x "$1"
     mkdir -p "$(dirname "$STATE_FILE")"
     echo "$1" > "$STATE_FILE"
-    echo "keyboard layout: $1"
+    if [[ -n "$CONSOLE" ]]; then
+        apply_console_checked "$1"
+        echo "keyboard layout: $1 (X and console)"
+    else
+        echo "keyboard layout: $1"
+    fi
 }
 
 # Without a state file (first call after login) read the X server: bone2 puts
@@ -178,13 +196,24 @@ choose() {
     echo "${LAYOUTS[$((reply - 1))]}"
 }
 
+# Set by --console.
+CONSOLE=""
+
 main() {
-    case "${1:-}" in
+    local args=() arg
+    for arg in "$@"; do
+        case "$arg" in
+            --console) CONSOLE=1 ;;
+            -*) die "unknown option: $arg (usage: kb [--console] [us|de|bone2|next|prev|show])" ;;
+            *) args+=("$arg") ;;
+        esac
+    done
+    case "${args[0]:-}" in
         "")   apply "$(choose)" ;;
         show) show ;;
         next) apply "$(cycle 1)" ;;
         prev) apply "$(cycle -1)" ;;
-        *)    apply "$1" ;;
+        *)    apply "${args[0]}" ;;
     esac
 }
 

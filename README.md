@@ -33,7 +33,8 @@ this installs i3, i3status, dmenu, the wezterm nightly and the X utilities
 and links `.xinitrc`, `.xprofile`, `.Xresources`, `.Xmodmap`, `i3-session.target` (systemd
 user target for `graphical-session.target`, which the desktop portal needs),
 `.wezterm.lua`, `.config/i3` and `.config/i3status`, plus `~/bin/kb` to switch
-the keyboard layout (`us`, `de`, `bone2`; `de` at login) in X and on the Linux console; the
+the keyboard layout (`us`, `de`, `bone2`; `de` at login): inside X only the session's
+keyboard (`kb --console …` also the Linux console), on a tty only the console; the
 i3 bar shows the layout and cycles it on click (left: next, right: previous), the
 screen brightness (`☀: 65%`), the active VPN and Tailscale (`VPN: <connection>` or `VPN: off`)
 and CPU and RAM use (`C: 12% R: 40%`); a click on
@@ -57,7 +58,9 @@ local /24 for SMB servers, lists their shares and mounts the chosen one under `~
 console bone2 keymap is `console/bone2.map`, generated from `.Xmodmap` with
 `console/xmodmap-to-console.py`; regenerate it when `.Xmodmap` changes. On a
 kmscon console (Fedora 45+) `kb` sets the layout through `localectl` instead,
-with the stock `de(bone)` variant standing in for bone2. In X,
+with the stock `de(bone)` variant standing in for bone2. That setting is also the X
+server default (login screen, newly added keyboards), which is why X alone never
+changes it. In X,
 `xremap` (started from `.xprofile`, config `.config/xremap/config.yml`) swaps the
 left Alt and Ctrl keys for every layout: Alt acts as Ctrl, Ctrl as Alt, and
 Alt+digit still switches the i3 workspace; i3 itself is driven with the Win key.

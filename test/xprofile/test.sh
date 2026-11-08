@@ -81,7 +81,9 @@ EOF
 run() {
     : > "$CALLS"
     rm -f "$DEVICE"
-    HOME="$TMP/home" PATH="$STUBS" DISPLAY=:99 XFT_DPI="${XFT_DPI:-}" /bin/sh "$XPROFILE"
+    # Without the Qt variables of the session running the test.
+    env -u QT_SCALE_FACTOR -u QT_FONT_DPI \
+        HOME="$TMP/home" PATH="$STUBS" DISPLAY=:99 XFT_DPI="${XFT_DPI:-}" /bin/sh "$XPROFILE"
     wait 2>/dev/null || true
 }
 

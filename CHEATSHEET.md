@@ -110,7 +110,8 @@ In X, xremap swaps the left Alt and Ctrl keys. Right modifiers do not change.
 |---|---|
 | `pwr lock` / `sleep` / `hibernate` | Lock / suspend / hibernate now |
 | `pwr performance` / `balanced` / `battery` | Power mode (Fedora/EL) |
-| `kb us` / `de` / `bone2` | Keyboard layout |
+| `kb us` / `de` / `bone2` | Keyboard layout of the X session (on a tty: the console) |
+| `kb --console us` / `de` / `bone2` | In X: the session and the console |
 | `touchpad tap` / `click` / `toggle` | Tap to click / press to click (until logout) |
 | `caffeinate` / `caffeinate display` | No idle suspend (and no lock or blanking) until Ctrl-C |
 | `smb` | Find SMB shares on the network, pick one, mount it at `~/mnt/<host>-<share>` |

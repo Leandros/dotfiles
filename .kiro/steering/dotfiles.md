@@ -210,11 +210,16 @@ New link or system file: install function, `check_link` or `cmp` check in
 ## i3 and X
 
 - `$mod` is Mod4. xremap swaps left Alt and Ctrl for all layouts. `kb`
-  switches `us de bone2` in X and on the console (kmscon: `localectl` with
-  `de(bone)`). Login layout is `de`: `.xprofile` starts xremap, waits (max
+  switches `us de bone2`: inside X only the session's X keyboard, with
+  `--console` also the console; on a tty (no DISPLAY) only the console
+  (kmscon: `localectl` with `de(bone)`, which is also the X server default:
+  login screen, added keyboards; fbcon: `loadkeys`). Some of the user's
+  keyboards make bone2 in firmware: never use XKB groups. Test:
+  `test/kb/test.sh`. Login layout is `de`: `.xprofile` starts xremap, waits (max
   3 s) for its virtual keyboard in `xinput`, then runs `kb de`. A keyboard
-  added later gets the server default from `00-keyboard.conf` (which `kb`
-  rewrites through localectl), not kb's layout, and the bar would be wrong.
+  added later gets the server default from `00-keyboard.conf` (`kb` changes
+  it only with `--console` or on a tty), not kb's layout, and the bar would
+  be wrong.
   `bin/input-restore` (started by `.xprofile`, stopped with `pkill -f`: it runs
   as `bash`) watches `udevadm monitor` input add/change events and, once they
   settle, runs `kb <kb show>` and `touchpad restore` (the session's last
