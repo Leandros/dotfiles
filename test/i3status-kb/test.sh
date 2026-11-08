@@ -12,7 +12,7 @@ readonly SCRIPT="$HERE/../../bin/i3status-kb"
 TMP="$(mktemp -d)"
 readonly TMP
 trap 'rm -rf "$TMP"' EXIT
-readonly CALLS="$TMP/calls"
+readonly CALLS="$TMP/calls" ACTIVE="$TMP/active" TAILSCALE="$TMP/tailscale"
 readonly SETTLE_S=0.5
 FAILED=0
 
@@ -44,7 +44,24 @@ EOF
 #!/bin/sh
 { printf 'i3-msg'; printf '|%s' "\$@"; echo; } >> "$CALLS"
 EOF
-    chmod +x "$TMP/stubs/i3status" "$TMP/home/bin/kb" "$TMP/stubs/i3-msg"
+    # nmcli prints the active connections from ACTIVE (`nmcli -t` format);
+    # "fail" makes it fail like a system without NetworkManager.
+    cat > "$TMP/stubs/nmcli" <<EOF
+#!/bin/sh
+[ "\$(cat "$ACTIVE")" = fail ] && exit 1
+cat "$ACTIVE"
+EOF
+    printf 'Wired:802-3-ethernet\npvpn-killswitch-ipv6:dummy\n' > "$ACTIVE"
+    # tailscale prints its BackendState from TAILSCALE; "none" makes it fail
+    # like a stopped or missing tailscaled.
+    cat > "$TMP/stubs/tailscale" <<EOF
+#!/bin/sh
+state="\$(cat "$TAILSCALE")"
+[ "\$state" = none ] && exit 1
+printf '{\n  "Version": "1.90.0",\n  "BackendState": "%s",\n  "Peer": {}\n}\n' "\$state"
+EOF
+    echo none > "$TAILSCALE"
+    chmod +x "$TMP/stubs/i3status" "$TMP/home/bin/kb" "$TMP/stubs/i3-msg" "$TMP/stubs/nmcli" "$TMP/stubs/tailscale"
 }
 
 click() {
@@ -105,15 +122,43 @@ main() {
     expect "right click on kb still goes back" "kb prev" "$(run_clicks "$(click kb "" 3)")"
 
     local wireless='{"name":"wireless","instance":"_first_","full_text":"W: up"}'
+    local vpn_off='{"name":"vpn","full_text":"VPN: off"}'
+    local kb='{"name":"kb","full_text":"KB: us"}'
     expect "the power mode follows the layout block" \
-        "[{\"name\":\"kb\",\"full_text\":\"KB: us\"},{\"name\":\"power_mode\",\"full_text\":\"PWR: battery\"},$wireless]" \
+        "[{\"name\":\"kb\",\"full_text\":\"KB: us\"},{\"name\":\"power_mode\",\"full_text\":\"PWR: battery\"},$vpn_off,$wireless]" \
         "$(status_line battery)"
     expect "no power mode block without a daemon" \
-        "[{\"name\":\"kb\",\"full_text\":\"KB: us\"},$wireless]" \
+        "[{\"name\":\"kb\",\"full_text\":\"KB: us\"},$vpn_off,$wireless]" \
         "$(status_line "")"
     expect "the screen brightness follows the power mode, rounded" \
-        "[{\"name\":\"kb\",\"full_text\":\"KB: us\"},{\"name\":\"power_mode\",\"full_text\":\"PWR: battery\"},{\"name\":\"backlight\",\"full_text\":\"☀: 80%\"},$wireless]" \
+        "[{\"name\":\"kb\",\"full_text\":\"KB: us\"},{\"name\":\"power_mode\",\"full_text\":\"PWR: battery\"},{\"name\":\"backlight\",\"full_text\":\"☀: 80%\"},$vpn_off,$wireless]" \
         "$(status_line battery "31024 38787")"
+
+    printf 'Wired:802-3-ethernet\nProtonVPN DE#853:wireguard\npvpn-killswitch-ipv6:dummy\n' > "$ACTIVE"
+    expect "an active WireGuard connection is the VPN, in green" \
+        "[$kb,{\"name\":\"vpn\",\"full_text\":\"VPN: ProtonVPN DE#853\",\"color\":\"#859900\"},$wireless]" \
+        "$(status_line "")"
+    printf 'Work\\:"office":vpn\n' > "$ACTIVE"
+    expect "an OpenVPN connection; colon and quotes kept" \
+        "[$kb,{\"name\":\"vpn\",\"full_text\":\"VPN: Work:\\\"office\\\"\",\"color\":\"#859900\"},$wireless]" \
+        "$(status_line "")"
+    echo Running > "$TAILSCALE"
+    printf 'Wired:802-3-ethernet\nProtonVPN DE#853:wireguard\n' > "$ACTIVE"
+    expect "Tailscale next to another VPN" \
+        "[$kb,{\"name\":\"vpn\",\"full_text\":\"VPN: ProtonVPN DE#853, Tailscale\",\"color\":\"#859900\"},$wireless]" \
+        "$(status_line "")"
+    printf 'Wired:802-3-ethernet\n' > "$ACTIVE"
+    expect "Tailscale alone" \
+        "[$kb,{\"name\":\"vpn\",\"full_text\":\"VPN: Tailscale\",\"color\":\"#859900\"},$wireless]" \
+        "$(status_line "")"
+    echo Stopped > "$TAILSCALE"
+    expect "stopped Tailscale is off" "[$kb,$vpn_off,$wireless]" "$(status_line "")"
+    echo none > "$TAILSCALE"
+
+    echo fail > "$ACTIVE"
+    mv "$TMP/stubs/tailscale" "$TMP/tailscale.off"
+    expect "no VPN block without NetworkManager and Tailscale" "[$kb,$wireless]" "$(status_line "")"
+    mv "$TMP/tailscale.off" "$TMP/stubs/tailscale"
 
     exit "$FAILED"
 }

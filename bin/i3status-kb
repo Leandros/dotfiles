@@ -5,7 +5,9 @@
 # Runs i3status, adds a "KB: <layout>" block to every status line and cycles
 # the layout with `kb` when the block is clicked (left: next, right: prev).
 # A "PWR: <mode>" block after it shows the power mode from `pwr mode`.
-# A "☀: <percent>" block after that shows the screen brightness.
+# A "☀: <percent>" block after that shows the screen brightness, and a
+# "VPN: <connection>" block the active NetworkManager VPN or WireGuard
+# connection and Tailscale (green), or "VPN: off".
 # A left click on the wireless or ethernet block opens nmrs-gui, on the
 # volume block pavucontrol.
 # Use as `status_command` in the i3 bar.
@@ -21,6 +23,12 @@ readonly AUDIO_GUI="pavucontrol"
 readonly PWR="$HOME/bin/pwr"
 readonly MODE_BLOCK_NAME="power_mode"
 readonly BACKLIGHT_BLOCK_NAME="backlight"
+readonly VPN_BLOCK_NAME="vpn"
+# i3status color_good (~/.config/i3status/config).
+readonly COLOR_GOOD="#859900"
+# The bar asks every few seconds; it must not block on a stuck daemon
+# (NetworkManager, tailscaled).
+readonly NMCLI_TIMEOUT_S=2
 readonly SYSFS="${I3STATUS_KB_SYSFS:-/sys}"
 # i3status cannot request clicks itself; i3bar only sends them when the
 # header asks for them.
@@ -51,6 +59,48 @@ backlight_block() {
         printf ',{"name":"%s","full_text":"☀: %d%%"}' "$BACKLIGHT_BLOCK_NAME" $(((cur * 100 + max / 2) / max))
         return 0
     done
+}
+
+# JSON string content: backslash and double quote escaped.
+json_escape() {
+    local s="${1//\\/\\\\}"
+    echo "${s//\"/\\\"}"
+}
+
+# First active NetworkManager connection of type vpn (OpenVPN and other
+# plugins) or wireguard, and Tailscale when its backend runs. `nmcli -t`
+# escapes ":" and "\" in names with a backslash. Empty without either.
+vpn_block() {
+    local names=() sources=0 active line name status joined="" n
+    if active="$(timeout "$NMCLI_TIMEOUT_S" nmcli -t -f NAME,TYPE connection show --active 2>/dev/null)"; then
+        sources=1
+        while IFS= read -r line; do
+            case "${line##*:}" in
+                vpn|wireguard)
+                    name="${line%:*}"
+                    name="${name//\\:/:}"
+                    names+=("${name//\\\\/\\}")
+                    break
+                    ;;
+            esac
+        done <<< "$active"
+    fi
+    # Tailscale runs outside NetworkManager. No `| grep -q`: an early exit
+    # would make pipefail report tailscale's SIGPIPE.
+    if command -v tailscale >/dev/null; then
+        sources=1
+        status="$(timeout "$NMCLI_TIMEOUT_S" tailscale status --json 2>/dev/null)" || true
+        [[ "$status" =~ \"BackendState\":\ *\"Running\" ]] && names+=("Tailscale")
+    fi
+    [[ "$sources" -eq 1 ]] || return 0
+    if [[ ${#names[@]} -eq 0 ]]; then
+        printf ',{"name":"%s","full_text":"VPN: off"}' "$VPN_BLOCK_NAME"
+        return
+    fi
+    for n in "${names[@]}"; do
+        joined+="${joined:+, }$(json_escape "$n")"
+    done
+    printf ',{"name":"%s","full_text":"VPN: %s","color":"%s"}' "$VPN_BLOCK_NAME" "$joined" "$COLOR_GOOD"
 }
 
 # i3bar writes one click event per line on stdin, after a leading "[".
@@ -97,7 +147,7 @@ with_block() {
     local line="$1" prefix rest blocks
     prefix="${line%%\[*}"
     rest="${line#*\[}"
-    blocks="$(layout_block)$(mode_block)$(backlight_block)"
+    blocks="$(layout_block)$(mode_block)$(backlight_block)$(vpn_block)"
     if [[ "$rest" == "]" ]]; then
         echo "${prefix}[${blocks}]"
     else

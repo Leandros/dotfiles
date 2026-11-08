@@ -211,7 +211,9 @@ New link or system file: install function, `check_link` or `cmp` check in
 - No `tray_output`: with `primary`, the tray vanishes when no output is
   primary. i3bar shows the tray on one output only.
 - `i3-msg` exec needs one string: `i3-msg -q "exec --no-startup-id nmrs-gui"`.
-- `status_command` is `~/bin/i3status-kb`: adds `KB:`, `PWR:` and `☀:` (backlight, `I3STATUS_KB_SYSFS` for tests) blocks and
+- `status_command` is `~/bin/i3status-kb`: adds `KB:`, `PWR:`, `☀:` (backlight, `I3STATUS_KB_SYSFS` for tests) and `VPN:`
+  (NetworkManager `vpn`/`wireguard` connections via `nmcli`, Tailscale via
+  `tailscale status --json` BackendState) blocks and
   click handling around i3status.
 - lightdm on Fedora/EL does not source `~/.xprofile`; the xinitrc.d hook does.
 - Key repeat is set in `xorg-conf/50-keyboard-repeat.conf`; `xset r rate` does

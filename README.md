@@ -34,7 +34,8 @@ and links `.xinitrc`, `.xprofile`, `.Xresources`, `.Xmodmap`,
 `.wezterm.lua`, `.config/i3` and `.config/i3status`, plus `~/bin/kb` to switch
 the keyboard layout (`us`, `de`, `bone2`) in X and on the Linux console; the
 i3 bar shows the layout and cycles it on click (left: next, right: previous), the
-screen brightness (`☀: 65%`) and CPU and RAM use (`C: 12% R: 40%`); a click on
+screen brightness (`☀: 65%`), the active VPN and Tailscale (`VPN: <connection>` or `VPN: off`)
+and CPU and RAM use (`C: 12% R: 40%`); a click on
 the volume block opens pavucontrol to pick the audio input and output.
 `~/bin/theme dark|light|toggle` switches i3 between Solarized dark and light and
 sets the desktop color-scheme that Firefox follows and the GTK 3/4 dark preference
