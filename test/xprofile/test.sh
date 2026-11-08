@@ -36,14 +36,30 @@ expect() {
 write_stubs() {
     mkdir -p "$STUBS" "$TMP/home/bin" "$TMP/home/.config"
     local cmd
-    for cmd in xrdb systemctl autorandr xset setxkbmap xmodmap pkill xss-lock xautolock blueman-applet copyq; do
+    for cmd in systemctl autorandr xset setxkbmap xmodmap pkill xss-lock xautolock blueman-applet copyq; do
         printf '#!/bin/sh\necho "%s $*" >> "%s"\n' "$cmd" "$CALLS" > "$STUBS/$cmd"
     done
-    for cmd in kb theme input-restore; do
+    # xrdb -query prints the Xft.dpi of XFT_DPI (unset: none), like the
+    # rendered ~/.Xresources.
+    cat > "$STUBS/xrdb" <<EOF
+#!/bin/sh
+echo "xrdb \$*" >> "$CALLS"
+[ "\$1" = -query ] && [ -n "\${XFT_DPI:-}" ] && printf 'Xft.dpi:\t%s\n' "\$XFT_DPI"
+exit 0
+EOF
+    # theme records the Qt scaling it inherits: programs started after it see
+    # the same environment.
+    cat > "$TMP/home/bin/theme" <<EOF
+#!/bin/sh
+echo "theme \$*" >> "$CALLS"
+echo "qt \${QT_SCALE_FACTOR:-unset} \${QT_FONT_DPI:-unset}" >> "$CALLS"
+EOF
+    for cmd in kb input-restore; do
         printf '#!/bin/sh\necho "%s $*" >> "%s"\n' "$cmd" "$CALLS" > "$TMP/home/bin/$cmd"
     done
     printf '#!/bin/sh\nexec /usr/bin/sleep "$@"\n' > "$STUBS/sleep"
     printf '#!/bin/sh\nexec /usr/bin/grep "$@"\n' > "$STUBS/grep"
+    printf '#!/bin/sh\nexec /usr/bin/awk "$@"\n' > "$STUBS/awk"
     # xremap: the virtual keyboard appears after a delay, unless XREMAP_FAILS.
     cat > "$STUBS/xremap" <<EOF
 #!/bin/sh
@@ -65,7 +81,7 @@ EOF
 run() {
     : > "$CALLS"
     rm -f "$DEVICE"
-    HOME="$TMP/home" PATH="$STUBS" DISPLAY=:99 /bin/sh "$XPROFILE"
+    HOME="$TMP/home" PATH="$STUBS" DISPLAY=:99 XFT_DPI="${XFT_DPI:-}" /bin/sh "$XPROFILE"
     wait 2>/dev/null || true
 }
 
@@ -101,6 +117,13 @@ main() {
     else
         fail "no pkill -f for input-restore: $(grep pkill "$CALLS" | tr '\n' ';')"
     fi
+
+    # Qt scaling from Xft.dpi (bootstrap's scale): QT_SCALE_FACTOR plus
+    # QT_FONT_DPI=96, or Qt 6 (already scaled by Xft.dpi) doubles and Qt 5
+    # scales its fonts twice.
+    expect "Qt scaling at 1.5x (144 dpi)" "qt 1.5 96" "$(XFT_DPI=144 run; grep '^qt ' "$CALLS")"
+    expect "Qt scaling at 1.75x (168 dpi)" "qt 1.75 96" "$(XFT_DPI=168 run; grep '^qt ' "$CALLS")"
+    expect "no Xft.dpi: Qt left alone" "qt unset unset" "$(run; grep '^qt ' "$CALLS")"
 
     # Without xremap (no input group) the layout is still set, and soon.
     local start elapsed

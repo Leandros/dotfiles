@@ -229,6 +229,10 @@ New link or system file: install function, `check_link` or `cmp` check in
   `tailscale status --json` BackendState) blocks and
   click handling around i3status.
 - lightdm on Fedora/EL does not source `~/.xprofile`; the xinitrc.d hook does.
+- Qt scaling: `.xprofile` exports `QT_SCALE_FACTOR=Xft.dpi/96` and
+  `QT_FONT_DPI=96`. Qt 6 already scales by `Xft.dpi` (alone, QT_SCALE_FACTOR
+  doubles it to 2.25); Qt 5 (Resolve bundles 5.15) scales only fonts by it.
+  Measured with PyQt5/PyQt6 `devicePixelRatio`/`logicalDotsPerInch`.
 - `.xprofile` starts `i3-session.target` (`.config/systemd/user/`, linked);
   it binds `graphical-session.target`, which xdg-desktop-portal requires since
   Fedora 45. The i3 exit binding stops it. Without it the portal does not

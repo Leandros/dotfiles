@@ -3,6 +3,18 @@
 # Xft.dpi and font settings; i3 (pango) and wezterm read them from here.
 [ -f ~/.Xresources ] && xrdb -merge ~/.Xresources
 
+# Qt scaling from Xft.dpi, which bootstrap.sh renders from the display scale
+# it asks for (144 = 1.5 x 96). Qt 5 reads Xft.dpi for fonts only, so its
+# widgets stay small (DaVinci Resolve bundles Qt 5). QT_FONT_DPI=96 is
+# needed with it: Qt 6 already scales by Xft.dpi and would double (2.25x),
+# and Qt 5 would scale its fonts twice. Measured with PyQt 5.15 and 6.
+qt_dpi=$(xrdb -query 2>/dev/null | awk '/^Xft\.dpi:/ { print $2; exit }')
+if [ -n "$qt_dpi" ]; then
+    QT_SCALE_FACTOR=$(awk -v d="$qt_dpi" 'BEGIN { print d / 96 }')
+    QT_FONT_DPI=96
+    export QT_SCALE_FACTOR QT_FONT_DPI
+fi
+
 # graphical-session.target for user services that require it, such as
 # xdg-desktop-portal (Fedora 45+). DISPLAY is in the user manager already
 # (xinitrc.d/50-systemd-user.sh runs before this file). The i3 exit binding

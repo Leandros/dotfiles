@@ -62,7 +62,8 @@ with the stock `de(bone)` variant standing in for bone2. In X,
 left Alt and Ctrl keys for every layout: Alt acts as Ctrl, Ctrl as Alt, and
 Alt+digit still switches the i3 workspace; i3 itself is driven with the Win key.
 The bootstrap adds the user to the `input` group, which needs a new login. The script asks for a display scale
-(1x, 1.5x, 1.75x, 2x) and renders `~/.Xresources` with the matching `Xft.dpi`;
+(1x, 1.5x, 1.75x, 2x) and renders `~/.Xresources` with the matching `Xft.dpi` (`.xprofile` derives
+`QT_SCALE_FACTOR` from it, with `QT_FONT_DPI=96`, so Qt 5 apps scale too);
 the same scale picks the console font at boot (Terminus 16/24/28/32 px via
 `console-setup` or `/etc/vconsole.conf`, and `font-size` in
 `/etc/kmscon/kmscon.conf`). Set `BOOTSTRAP_DPI_SCALE` to skip the prompt. Start with `startx`.
