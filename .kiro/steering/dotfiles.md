@@ -42,6 +42,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `bin/{kb,i3status-kb,pwr,theme,flightmode,touchpad,charge,caffeinate,smb}` | `~/bin`, links, Xorg only |
 | `bin/fzf-cache` | `~/bin`, link, always |
 | `xorg-conf/*.conf` | `/etc/X11/xorg.conf.d/` (root copy) |
+| `sshd-conf/50-color-scheme.conf` | `/etc/ssh/sshd_config.d/` (root copy, Linux, where sshd_config includes the directory; not AL2) |
 | `logind-conf/50-lid-suspend.conf` | `/etc/systemd/logind.conf.d/` (root copy, applies after reboot) |
 | `system-sleep/power-button-wake` | `/usr/lib/systemd/system-sleep/` (root copy) |
 | `xinitrc-d/90-xprofile.sh` | `/etc/X11/xinit/xinitrc.d/` (root copy, Fedora/EL) |
@@ -141,6 +142,8 @@ New link or system file: install function, `check_link` or `cmp` check in
 - Unit tests with stubs and fake sysfs: `test/fzf-cache/test.sh`,
   `test/i3status-kb/test.sh`, `test/power-mode/test.sh`, `test/i3-session/test.sh`,
   `test/xprofile/test.sh` (runs `.xprofile` with only stubs on PATH),
+  `test/fetch/test.sh` (`fetch_unpack` must die on a failed download: it runs
+  in `$(...)`, where `set -e` does not apply),
   `test/system-sleep/power-button-wake.sh`. Add new tests in this style.
 - X programs: Xorg dummy driver in a container. i3 bindings: Xvfb + i3 with
   the repo config in a Fedora image, `xdotool key super+j`, then read the
@@ -248,6 +251,20 @@ New link or system file: install function, `check_link` or `cmp` check in
   with a fake `wezterm` module in `nvim -l`.
 - nvim, tmux and wezterm all use Solarized dark and light. Keep their colors
   the same. nvim has `EnableDarkMode()` and `EnableLightMode()`.
+- On Linux all three follow `theme` by reading the desktop, never by `theme`
+  writing their configs. tmux: `.tmux.conf` runs `.tmux/custom/follow-system-theme`
+  (`gsettings monitor` color-scheme, then `toggle-dark-mode dark|light`; one
+  per server via `@theme_watcher`, ends with the server; checked every 60 s).
+  nvim: `desktop_color_mode()` (`gsettings get`) sets `background` before the
+  colorscheme loads; a `gsettings monitor` job started at VimEnter calls
+  `set_color_mode`. Tests: `test/tmux-theme/test.sh`, `test/nvim-theme/test.sh`
+  (headless, needs the plugins installed).
+- Over ssh: the zsh `ssh` function sends `LC_COLOR_SCHEME` (`theme show`, else
+  the received value) with `-o SendEnv`. sshd needs `AcceptEnv` (Fedora/EL
+  accept only listed `LC_*` names): bootstrap step `sshd` installs the drop-in.
+  Without a desktop preference, tmux and nvim use `LC_COLOR_SCHEME`; tmux adds
+  it to `update-environment` and a `client-attached` hook runs
+  `follow-system-theme apply <session>`. Test: `test/ssh-theme/test.sh`.
 - `theme dark|light|toggle|show|restore`: i3 base colors are
   `set_from_resource $<name> i3wm.<name> <dark fallback>`, merged with xrdb,
   then `i3-msg reload`. The choice lives in gsettings

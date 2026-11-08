@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+#
+# follow-system-theme - keep the tmux colors in step with the light or dark
+# setting: the desktop's (gsettings color-scheme, which ~/bin/theme sets),
+# or on a server reached over ssh LC_COLOR_SCHEME, which the ssh wrapper in
+# .zshrc sends along. The desktop setting wins; without either it is dark.
+#
+# .tmux.conf starts it in the background on Linux. It applies the setting,
+# then every desktop change. One runs per tmux server: a config reload
+# starts it again and the second one exits. It checks every minute that the
+# server still runs and ends with it. Without gsettings it applies
+# LC_COLOR_SCHEME once and exits.
+#
+# `follow-system-theme apply <session>` (client-attached hook) applies the
+# setting once, with LC_COLOR_SCHEME from that session's environment, which
+# update-environment refreshes from the attaching client.
+#
+set -euo pipefail
+
+readonly SCHEMA="org.gnome.desktop.interface"
+readonly KEY="color-scheme"
+readonly CHECK_S="${FOLLOW_THEME_CHECK_S:-60}"
+MONITOR_PID=""
+TOGGLE="$(dirname "$(readlink -f "$0")")/toggle-dark-mode"
+readonly TOGGLE
+
+# light or dark from the desktop; empty without a desktop preference.
+desktop_mode() {
+    command -v gsettings >/dev/null || return 0
+    case "$(gsettings get "$SCHEMA" "$KEY" 2>/dev/null)" in
+        *prefer-light*) echo light ;;
+        *prefer-dark*) echo dark ;;
+    esac
+}
+
+# The mode to show: desktop, else the LC_COLOR_SCHEME given, else dark.
+mode() {
+    local desktop
+    desktop="$(desktop_mode)"
+    if [[ -n "$desktop" ]]; then
+        echo "$desktop"
+    elif [[ "${1:-}" == light ]]; then
+        echo light
+    else
+        echo dark
+    fi
+}
+
+cleanup() { [[ -z "$MONITOR_PID" ]] || kill "$MONITOR_PID" 2>/dev/null || true; }
+
+# The session's LC_COLOR_SCHEME; tmux prints "NAME=value" or "-NAME".
+session_scheme() {
+    local line
+    line="$(tmux show-environment -t "$1" LC_COLOR_SCHEME 2>/dev/null)" || return 0
+    [[ "$line" == LC_COLOR_SCHEME=* ]] && echo "${line#*=}"
+    return 0
+}
+
+watch() {
+    if ! command -v gsettings >/dev/null; then
+        [[ -z "${LC_COLOR_SCHEME:-}" ]] || "$TOGGLE" "$(mode "$LC_COLOR_SCHEME")"
+        exit 0
+    fi
+
+    local pid
+    pid="$(tmux show -gqv @theme_watcher 2>/dev/null)" || exit 0
+    if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+        exit 0
+    fi
+    tmux set -g @theme_watcher "$$"
+
+    trap cleanup EXIT
+    "$TOGGLE" "$(mode "${LC_COLOR_SCHEME:-}")"
+
+    local line rc
+    exec 3< <(gsettings monitor "$SCHEMA" "$KEY" 2>/dev/null)
+    MONITOR_PID=$!
+    while true; do
+        if read -r -t "$CHECK_S" line <&3; then
+            case "$line" in
+                *prefer-light*) "$TOGGLE" light 2>/dev/null || exit 0 ;;
+                *) "$TOGGLE" dark 2>/dev/null || exit 0 ;;
+            esac
+        else
+            rc=$?
+            # Above 128: timeout, no change. Otherwise gsettings ended.
+            [[ $rc -gt 128 ]] || exit 0
+            tmux has-session 2>/dev/null || exit 0
+        fi
+    done
+}
+
+main() {
+    case "${1:-}" in
+        "")    watch ;;
+        apply) "$TOGGLE" "$(mode "$(session_scheme "${2:?usage: follow-system-theme apply <session>}")")" ;;
+        *)     echo "usage: follow-system-theme [apply <session>]" >&2; exit 1 ;;
+    esac
+}
+
+main "$@"

@@ -111,6 +111,26 @@ else
     fail "internal snippet directory missing, a link or not owner-only: $vsnip_internal"
 fi
 
+# sshd accepts LC_COLOR_SCHEME (light/dark from the ssh wrapper in .zshrc)
+# where it reads sshd_config.d. AL2's sshd has no Include.
+if [[ -d /etc/ssh/sshd_config.d ]] && grep -qE '^Include .*sshd_config\.d' /etc/ssh/sshd_config 2>/dev/null; then
+    if cmp -s "$D/sshd-conf/50-color-scheme.conf" /etc/ssh/sshd_config.d/50-color-scheme.conf; then
+        ok "sshd accepts LC_COLOR_SCHEME"
+    else
+        fail "sshd_config.d/50-color-scheme.conf missing or differs"
+    fi
+    # sshd -T needs a host key; a throwaway one keeps the system unchanged.
+    sshd_bin="$(command -v sshd || echo /usr/sbin/sshd)"
+    key_dir="$(mktemp -d)"
+    ssh-keygen -q -t ed25519 -N '' -f "$key_dir/key"
+    if sudo -n "$sshd_bin" -T -h "$key_dir/key" -C user=root,host=x,addr=127.0.0.1 2>/dev/null | grep -qi '^acceptenv.*lc_color_scheme'; then
+        ok "sshd -T shows AcceptEnv LC_COLOR_SCHEME"
+    else
+        fail "sshd -T: no AcceptEnv LC_COLOR_SCHEME"
+    fi
+    rm -rf "$key_dir"
+fi
+
 # lspmux: owner-only Unix socket, no TCP port, user service enabled.
 lspmux_dir="$HOME/.local/state/lspmux"
 lspmux_sock="$lspmux_dir/lspmux.sock"

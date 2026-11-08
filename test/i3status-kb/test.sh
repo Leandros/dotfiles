@@ -88,7 +88,7 @@ status_line() {
         printf '#!/bin/sh\nexit 1\n' > "$TMP/home/bin/pwr"
     fi
     chmod +x "$TMP/home/bin/pwr"
-    I3STATUS_KB_SYSFS="$TMP/sys" HOME="$TMP/home" PATH="$TMP/stubs:$PATH" timeout 3 "$SCRIPT" < /dev/null 2>/dev/null | sed -n 3p || true
+    I3STATUS_KB_SYSFS="$TMP/sys" HOME="$TMP/home" PATH="$TMP/stubs:${SYSTEM_PATH:-$PATH}" timeout 3 "$SCRIPT" < /dev/null 2>/dev/null | sed -n 3p || true
 }
 
 # Runs i3status-kb with the given click lines on stdin; prints the calls
@@ -156,8 +156,12 @@ main() {
     echo none > "$TAILSCALE"
 
     echo fail > "$ACTIVE"
+    # Only the stubs and basic tools on PATH: a real tailscale must not count.
     mv "$TMP/stubs/tailscale" "$TMP/tailscale.off"
-    expect "no VPN block without NetworkManager and Tailscale" "[$kb,$wireless]" "$(status_line "")"
+    mkdir -p "$TMP/sysbin"
+    local tool
+    for tool in env bash timeout grep mkfifo mktemp rm sleep cat; do ln -sf "$(command -v "$tool")" "$TMP/sysbin/$tool"; done
+    expect "no VPN block without NetworkManager and Tailscale" "[$kb,$wireless]" "$(SYSTEM_PATH="$TMP/sysbin" status_line "")"
     mv "$TMP/tailscale.off" "$TMP/stubs/tailscale"
 
     exit "$FAILED"

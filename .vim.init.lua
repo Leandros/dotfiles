@@ -966,6 +966,29 @@ vim.api.nvim_create_autocmd({ "ColorScheme" }, {
 -- Toggling between dark and light mode.
 vim.g["custom#isdarkmode"] = 1
 
+-- Linux: the desktop light/dark setting, which ~/bin/theme sets (gsettings
+-- color-scheme). Read at startup; `gsettings monitor` reports changes.
+-- Without a desktop preference (a server reached over ssh), LC_COLOR_SCHEME
+-- decides, which the ssh wrapper in .zshrc sends along.
+local DESKTOP_SCHEMA, DESKTOP_KEY = "org.gnome.desktop.interface", "color-scheme"
+
+local function follows_desktop() return vim.fn.has("linux") == 1 and vim.fn.executable("gsettings") == 1 end
+
+---@param value string gsettings output, e.g. "'prefer-light'"
+---@return "dark"|"light"
+local function desktop_mode_of(value) return value:find("prefer%-light") and "light" or "dark" end
+
+---@return "dark"|"light"
+local function desktop_color_mode()
+  if follows_desktop() then
+    local res = vim.system({ "gsettings", "get", DESKTOP_SCHEMA, DESKTOP_KEY }, { text = true }):wait(1000)
+    local out = res.code == 0 and res.stdout or ""
+    if out:find("prefer%-light") then return "light" end
+    if out:find("prefer%-dark") then return "dark" end
+  end
+  return os.getenv("LC_COLOR_SCHEME") == "light" and "light" or "dark"
+end
+
 ---@param mode "dark"|"light"
 local function set_color_mode(mode)
   local is_dark = mode == "dark"
@@ -995,6 +1018,25 @@ function EnableLightMode() set_color_mode("light") end
 
 vim.api.nvim_create_user_command("EnableLightMode", EnableLightMode, {})
 vim.api.nvim_create_user_command("EnableDarkMode", EnableDarkMode, {})
+
+-- Follow desktop changes. After VimEnter, when the colorscheme is loaded.
+if follows_desktop() then
+  vim.api.nvim_create_autocmd("VimEnter", {
+    once = true,
+    callback = function()
+      vim.fn.jobstart({ "gsettings", "monitor", DESKTOP_SCHEMA, DESKTOP_KEY }, {
+        on_stdout = function(_, lines)
+          for _, line in ipairs(lines) do
+            if line:find(DESKTOP_KEY, 1, true) then
+              local mode = desktop_mode_of(line)
+              if mode ~= vim.o.background then vim.schedule(function() set_color_mode(mode) end) end
+            end
+          end
+        end,
+      })
+    end,
+  })
+end
 
 -- ============================================================================
 --                       ____  _             _
@@ -1414,14 +1456,15 @@ local spec = {
     priority = 1000,
     config = function()
       vim.o.termguicolors = true
-      vim.o.background = "dark"
+      vim.o.background = desktop_color_mode()
+      vim.g["custom#isdarkmode"] = vim.o.background == "dark" and 1 or 0
       vim.cmd([[
         let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
         let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
       ]])
       init_solarized_scheme()
+      -- The ColorScheme autocmd sets ColorColumn for dark and light.
       vim.cmd("colorscheme solarized")
-      vim.cmd("highlight ColorColumn guibg=#004653")
     end,
   },
   {

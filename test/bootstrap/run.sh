@@ -34,15 +34,16 @@ base_image() {
     esac
 }
 
-# Only what a minimal VM image is expected to have: sudo and user tooling.
+# Only what a minimal VM image is expected to have: sudo, user tooling and
+# sshd.
 pkg_cmd() {
     case "$1" in
-        debian12|ubuntu2204) echo "apt-get update -q && apt-get install -y -q --no-install-recommends sudo && rm -rf /var/lib/apt/lists/*" ;;
-        al2)                 echo "yum install -y -q sudo shadow-utils && yum clean all" ;;
+        debian12|ubuntu2204) echo "apt-get update -q && apt-get install -y -q --no-install-recommends sudo openssh-server && rm -rf /var/lib/apt/lists/*" ;;
+        al2)                 echo "yum install -y -q sudo shadow-utils openssh-server && yum clean all" ;;
         # kmscon is the Fedora 45 console; on 43 and 44 it stands in for it.
         # Container images leave it out either way.
-        fedora43|fedora44|fedora45) echo "dnf install -y -q sudo shadow-utils kmscon && dnf clean all" ;;
-        al2023|rocky9) echo "dnf install -y -q sudo shadow-utils && dnf clean all" ;;
+        fedora43|fedora44|fedora45) echo "dnf install -y -q sudo shadow-utils kmscon openssh-server && dnf clean all" ;;
+        al2023|rocky9) echo "dnf install -y -q sudo shadow-utils openssh-server && dnf clean all" ;;
     esac
 }
 
@@ -74,8 +75,10 @@ run_distro() {
         "$HERE" >/dev/null
 
     echo "== $distro: bootstrap (log: $log)"
+    # z: SELinux hosts (Fedora) relabel the throwaway snapshot so the
+    # container may read it; without it bootstrap.sh is "Permission denied".
     if docker run --rm \
-        -v "$snap:/src:ro" \
+        -v "$snap:/src:ro,z" \
         -e BOOTSTRAP_DOTFILES_REPO=/src \
         -e BOOTSTRAP_DOTFILES_REF=master \
         -e BOOTSTRAP_NONINTERACTIVE=1 \

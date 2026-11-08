@@ -39,8 +39,10 @@ screen brightness (`☀: 65%`), the active VPN and Tailscale (`VPN: <connection>
 and CPU and RAM use (`C: 12% R: 40%`); a click on
 the volume block opens pavucontrol to pick the audio input and output.
 `~/bin/theme dark|light|toggle` switches i3 between Solarized dark and light and
-sets the desktop color-scheme that Firefox and wezterm follow and the GTK 3/4 dark preference
-(dark by default; GTK apps pick it up when they start). `~/bin/flightmode on`
+sets the desktop color-scheme that Firefox, wezterm, tmux and nvim follow and the GTK 3/4 dark preference
+(dark by default; GTK apps pick it up when they start). The `ssh` function in `.zshrc` sends it
+as `LC_COLOR_SCHEME`, so tmux and nvim on a server follow too (bootstrap adds
+`AcceptEnv LC_COLOR_SCHEME` to sshd; fixed per connection, tmux re-reads it on attach). `~/bin/flightmode on`
 blocks all radios with rfkill and selects the battery power mode; `off` undoes both.
 Touchpads work as on macOS (`xorg-conf/40-touchpad.conf`): press to click, two-finger
 click for right click, and a macOS-like acceleration curve; `~/bin/touchpad tap|click`

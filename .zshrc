@@ -375,6 +375,22 @@ chpwd() {
   print -l $PWD ${(u)dirstack} >$DIRSTACKFILE
 }
 
+# >>> ssh theme
+# Send the light/dark setting along, so tmux and nvim on the server follow
+# it: ~/bin/theme on the desktop, else one received over ssh (servers pass it
+# on). The server needs `AcceptEnv LC_COLOR_SCHEME` (bootstrap.sh). Fixed at
+# connect time; tmux applies a newer one on the next attach.
+ssh() {
+  local scheme=${LC_COLOR_SCHEME:-}
+  [[ -x ~/bin/theme ]] && scheme=$(~/bin/theme show 2>/dev/null)
+  if [[ -n $scheme ]]; then
+    LC_COLOR_SCHEME=$scheme command ssh -o SendEnv=LC_COLOR_SCHEME "$@"
+  else
+    command ssh "$@"
+  fi
+}
+# <<< ssh theme
+
 # =============================================================================
 # Vi Mode
 # =============================================================================

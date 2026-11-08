@@ -167,27 +167,31 @@ nproc_safe() {
 
 fetch() {
     local url="$1" out="$2"
-    curl -fsSL --retry 3 --retry-delay 2 -o "$out" "$url"
+    # Retries ride out short GitHub 5xx outages (a debian12 test run failed
+    # on 502/503 with 3 retries 2 s apart).
+    curl -fsSL --retry 5 --retry-delay 5 -o "$out" "$url"
 }
 
 # Download and unpack an archive into a fresh directory, print the directory.
+# Callers run it in $(...), where bash does not apply set -e: every step
+# fails explicitly, or tar and the build would run on a missing download.
 fetch_unpack() {
     local url="$1" dir
-    dir="$(mktemp -d "$WORK_DIR/unpack.XXXXXX")"
+    dir="$(mktemp -d "$WORK_DIR/unpack.XXXXXX")" || die "mktemp failed"
     case "$url" in
         *.zip)
-            fetch "$url" "$dir/archive.zip"
-            unzip -q "$dir/archive.zip" -d "$dir"
+            fetch "$url" "$dir/archive.zip" || die "download failed: $url"
+            unzip -q "$dir/archive.zip" -d "$dir" || die "unpack failed: $url"
             rm -f "$dir/archive.zip"
             ;;
         *.tar.xz|*.txz)
-            fetch "$url" "$dir/archive.tar.xz"
-            tar -xJf "$dir/archive.tar.xz" -C "$dir"
+            fetch "$url" "$dir/archive.tar.xz" || die "download failed: $url"
+            tar -xJf "$dir/archive.tar.xz" -C "$dir" || die "unpack failed: $url"
             rm -f "$dir/archive.tar.xz"
             ;;
         *)
-            fetch "$url" "$dir/archive.tar.gz"
-            tar -xzf "$dir/archive.tar.gz" -C "$dir"
+            fetch "$url" "$dir/archive.tar.gz" || die "download failed: $url"
+            tar -xzf "$dir/archive.tar.gz" -C "$dir" || die "unpack failed: $url"
             rm -f "$dir/archive.tar.gz"
             ;;
     esac
@@ -1317,6 +1321,31 @@ install_xorg_conf() {
 readonly LOGIND_CONF_NAME="50-lid-suspend.conf"
 readonly LOGIND_CONF_DIR="/etc/systemd/logind.conf.d"
 
+# sshd accepts LC_COLOR_SCHEME, the light/dark setting the ssh wrapper in
+# .zshrc sends; tmux and nvim on this machine follow it. Only where sshd
+# reads sshd_config.d (not AL2) and sshd is installed.
+readonly SSHD_CONF_NAME="50-color-scheme.conf"
+readonly SSHD_CONF_DIR="/etc/ssh/sshd_config.d"
+
+install_sshd_conf() {
+    [[ "$OS" == "linux" ]] || return 0
+    if ! grep -qE "^Include .*sshd_config\.d" /etc/ssh/sshd_config 2>/dev/null; then
+        log "sshd: no sshd_config.d; LC_COLOR_SCHEME not accepted"
+        return
+    fi
+    local src="$DOTFILES_DIR/sshd-conf/$SSHD_CONF_NAME" dst="$SSHD_CONF_DIR/$SSHD_CONF_NAME"
+    cmp -s "$src" "$dst" 2>/dev/null && return
+    $SUDO install -D -m 0644 "$src" "$dst"
+    if have restorecon; then
+        $SUDO restorecon "$dst"
+    fi
+    # sshd is sshd.service on Fedora/EL, ssh.service on Debian/Ubuntu.
+    if [[ -d /run/systemd/system ]]; then
+        $SUDO systemctl try-reload-or-restart sshd.service ssh.service 2>/dev/null || true
+    fi
+    log "installed $dst"
+}
+
 install_logind_conf() {
     local src="$DOTFILES_DIR/logind-conf/$LOGIND_CONF_NAME" dst="$LOGIND_CONF_DIR/$LOGIND_CONF_NAME"
     cmp -s "$src" "$dst" 2>/dev/null && return
@@ -1707,6 +1736,7 @@ run_all() {
     step rust-analyzer install_rust_analyzer
     step tree-sitter install_tree_sitter
     step lspmux setup_lspmux
+    step sshd install_sshd_conf
     step node install_node
     step python install_python
     step nnn install_nnn
