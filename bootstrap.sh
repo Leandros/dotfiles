@@ -1329,12 +1329,14 @@ readonly SSHD_CONF_DIR="/etc/ssh/sshd_config.d"
 
 install_sshd_conf() {
     [[ "$OS" == "linux" ]] || return 0
-    if ! grep -qE "^Include .*sshd_config\.d" /etc/ssh/sshd_config 2>/dev/null; then
+    # Root only: Fedora/EL keep sshd_config at mode 600.
+    if ! $SUDO grep -qE "^Include .*sshd_config\.d" /etc/ssh/sshd_config 2>/dev/null; then
         log "sshd: no sshd_config.d; LC_COLOR_SCHEME not accepted"
         return
     fi
     local src="$DOTFILES_DIR/sshd-conf/$SSHD_CONF_NAME" dst="$SSHD_CONF_DIR/$SSHD_CONF_NAME"
-    cmp -s "$src" "$dst" 2>/dev/null && return
+    # sshd_config.d is root-only (0700) on Fedora/EL.
+    $SUDO cmp -s "$src" "$dst" 2>/dev/null && return
     $SUDO install -D -m 0644 "$src" "$dst"
     if have restorecon; then
         $SUDO restorecon "$dst"

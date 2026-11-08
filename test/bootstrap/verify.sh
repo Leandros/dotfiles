@@ -113,17 +113,24 @@ fi
 
 # sshd accepts LC_COLOR_SCHEME (light/dark from the ssh wrapper in .zshrc)
 # where it reads sshd_config.d. AL2's sshd has no Include.
-if [[ -d /etc/ssh/sshd_config.d ]] && grep -qE '^Include .*sshd_config\.d' /etc/ssh/sshd_config 2>/dev/null; then
-    if cmp -s "$D/sshd-conf/50-color-scheme.conf" /etc/ssh/sshd_config.d/50-color-scheme.conf; then
+# sudo: Fedora/EL keep sshd_config at mode 600.
+if [[ -d /etc/ssh/sshd_config.d ]] && sudo -n grep -qE '^Include .*sshd_config\.d' /etc/ssh/sshd_config 2>/dev/null; then
+    if sudo -n cmp -s "$D/sshd-conf/50-color-scheme.conf" /etc/ssh/sshd_config.d/50-color-scheme.conf; then
         ok "sshd accepts LC_COLOR_SCHEME"
     else
         fail "sshd_config.d/50-color-scheme.conf missing or differs"
     fi
     # sshd -T needs a host key; a throwaway one keeps the system unchanged.
+    # Debian/Ubuntu sshd also needs /run/sshd, which ssh.service creates; a
+    # container never started the service.
     sshd_bin="$(command -v sshd || echo /usr/sbin/sshd)"
+    [[ -d /run/sshd ]] || sudo -n mkdir -p /run/sshd
     key_dir="$(mktemp -d)"
     ssh-keygen -q -t ed25519 -N '' -f "$key_dir/key"
-    if sudo -n "$sshd_bin" -T -h "$key_dir/key" -C user=root,host=x,addr=127.0.0.1 2>/dev/null | grep -qi '^acceptenv.*lc_color_scheme'; then
+    # Captured first: `| grep -q` exits early, and pipefail would report
+    # sshd's SIGPIPE as a failure.
+    sshd_config="$(sudo -n "$sshd_bin" -T -h "$key_dir/key" -C user=root,host=x,addr=127.0.0.1 2>/dev/null || true)"
+    if grep -qi '^acceptenv.*lc_color_scheme' <<< "$sshd_config"; then
         ok "sshd -T shows AcceptEnv LC_COLOR_SCHEME"
     else
         fail "sshd -T: no AcceptEnv LC_COLOR_SCHEME"
