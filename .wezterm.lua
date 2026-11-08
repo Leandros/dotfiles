@@ -430,11 +430,20 @@ config.color_schemes = {
     ['Solarized Light'] = light_scheme,
 }
 config.color_scheme = 'Solarized Dark'
+-- Linux: follow the desktop's light or dark setting, which ~/bin/theme sets.
+-- wezterm reads it from xdg-desktop-portal and reloads this file when it
+-- changes. The mux server has no GUI and stays dark.
+if wezterm.target_triple:find('linux') and wezterm.gui
+    and wezterm.gui.get_appearance():find('Light') then
+  config.color_scheme = 'Solarized Light'
+end
 
 -- Custom events
+-- Flips the scheme shown, which on Linux may be light from the desktop. The
+-- override stays until the window closes; desktop changes do not undo it.
 wezterm.on("toggle-dark-mode", function(window)
   local overrides = window:get_config_overrides() or {}
-  if (overrides.color_scheme == 'Solarized Light')
+  if window:effective_config().color_scheme == 'Solarized Light'
   then
     overrides.color_scheme = 'Solarized Dark'
   else

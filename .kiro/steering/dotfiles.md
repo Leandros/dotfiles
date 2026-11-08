@@ -242,7 +242,10 @@ New link or system file: install function, `check_link` or `cmp` check in
   `.tmux/custom/toggle-dark-mode`. tpm is pinned (`TPM_REF`); a failed plugin
   install only warns (`prefix I` in tmux).
 - wezterm: Xorg only, rolling nightly (GitHub `.deb` on Debian/Ubuntu, COPR on
-  Fedora/EL). It reads the DPI from `~/.Xresources`.
+  Fedora/EL). It reads the DPI from `~/.Xresources`. On Linux its scheme
+  follows `wezterm.gui.get_appearance()` (portal color-scheme, set by `theme`)
+  and wezterm reloads on change. `test/wezterm/test.sh` loads `.wezterm.lua`
+  with a fake `wezterm` module in `nvim -l`.
 - nvim, tmux and wezterm all use Solarized dark and light. Keep their colors
   the same. nvim has `EnableDarkMode()` and `EnableLightMode()`.
 - `theme dark|light|toggle|show|restore`: i3 base colors are

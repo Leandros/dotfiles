@@ -39,7 +39,7 @@ screen brightness (`☀: 65%`), the active VPN and Tailscale (`VPN: <connection>
 and CPU and RAM use (`C: 12% R: 40%`); a click on
 the volume block opens pavucontrol to pick the audio input and output.
 `~/bin/theme dark|light|toggle` switches i3 between Solarized dark and light and
-sets the desktop color-scheme that Firefox follows and the GTK 3/4 dark preference
+sets the desktop color-scheme that Firefox and wezterm follow and the GTK 3/4 dark preference
 (dark by default; GTK apps pick it up when they start). `~/bin/flightmode on`
 blocks all radios with rfkill and selects the battery power mode; `off` undoes both.
 Touchpads work as on macOS (`xorg-conf/40-touchpad.conf`): press to click, two-finger
