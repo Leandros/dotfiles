@@ -289,6 +289,23 @@ if [[ $xorg_expected -eq 1 ]]; then
         else
             fail "kmscon.conf: $(cat /etc/kmscon/kmscon.conf 2>&1)"
         fi
+        if grep -qx 'palette=solarized' /etc/kmscon/kmscon.conf 2>/dev/null; then
+            ok "kmscon.conf palette=solarized"
+        else
+            fail "kmscon.conf has no palette=solarized"
+        fi
+        # PragmataPro only where fontconfig finds it (not in the test images).
+        kmscon_font="$(grep '^font-name=' /etc/kmscon/kmscon.conf 2>/dev/null || true)"
+        if [[ -n "$(fc-list ':family=PragmataPro Mono' 2>/dev/null)" ]]; then
+            kmscon_font_want="font-name=PragmataPro Mono"
+        else
+            kmscon_font_want=""
+        fi
+        if [[ "$kmscon_font" == "$kmscon_font_want" ]]; then
+            ok "kmscon.conf font: '${kmscon_font_want:-default}'"
+        else
+            fail "kmscon.conf font: want '$kmscon_font_want', got '$kmscon_font'"
+        fi
     fi
     if cmp -s "$D/xorg-conf/40-touchpad.conf" /etc/X11/xorg.conf.d/40-touchpad.conf; then
         ok "xorg.conf.d touchpad installed"

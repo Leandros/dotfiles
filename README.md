@@ -69,7 +69,8 @@ The bootstrap adds the user to the `input` group, which needs a new login. The s
 `QT_SCALE_FACTOR` from it, with `QT_FONT_DPI=96`, so Qt 5 apps scale too);
 the same scale picks the console font at boot (Terminus 16/24/28/32 px via
 `console-setup` or `/etc/vconsole.conf`, and `font-size` in
-`/etc/kmscon/kmscon.conf`). Set `BOOTSTRAP_DPI_SCALE` to skip the prompt. Start with `startx`.
+`/etc/kmscon/kmscon.conf`, which also gets the Solarized palette and PragmataPro Mono
+where fontconfig finds it). Set `BOOTSTRAP_DPI_SCALE` to skip the prompt. Start with `startx`.
 
 Test in Docker: `test/bootstrap/run.sh [debian12|ubuntu2204|fedora43|fedora44|fedora45|rocky9|al2|al2023]`.
 Media keys (volume, mute, screen brightness) are bound in i3 only; check with `test/media-keys/test.sh`.

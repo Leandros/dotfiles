@@ -110,6 +110,11 @@ New link or system file: install function, `check_link` or `cmp` check in
   its crates build them with cmake. Escape is hard-coded as exit; with
   `--exit-keys` set, a wrong key no longer closes it. Missing font family:
   falls back to the first monospace font.
+- kmscon.conf (`kmscon_conf`): `font-size`, `palette=solarized` (libtsm
+  built-in; also `solarized-black`, `solarized-white`), and
+  `font-name=PragmataPro Mono` only where `fc-list` finds it (commercial font;
+  Mono: the console does no shaping). kmscon reads it at console start and
+  does not follow `theme`. Test: `test/kmscon-conf/test.sh`.
 - tree-sitter CLI: built with cargo; release binaries need glibc 2.39.
 - rust-analyzer and rust-src: rustup components of the pinned toolchain. Their
   builds need glibc 2.17 at most and run on AL2 (tested: analysis-stats in the

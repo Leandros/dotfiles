@@ -1264,6 +1264,19 @@ install_wmfocus() {
 readonly CONSOLE_FONT_BASE_PX=16
 readonly KMSCON_CONF="/etc/kmscon/kmscon.conf"
 readonly KMSCON_CONF_MARKER="# Written by bootstrap.sh; edit the dotfiles instead."
+# kmscon's colors (libtsm's built-in Solarized; solarized-white is light) and
+# font. PragmataPro is commercial: used only where fontconfig finds it. The
+# Mono variant: the console does no shaping, so ligatures cannot render.
+readonly KMSCON_PALETTE="solarized"
+readonly KMSCON_FONT="PragmataPro Mono"
+
+# The managed kmscon.conf for a font size in pixels.
+kmscon_conf() {
+    printf '%s\nfont-size=%s\npalette=%s\n' "$KMSCON_CONF_MARKER" "$1" "$KMSCON_PALETTE"
+    if [[ -n "$(fc-list ":family=$KMSCON_FONT" 2>/dev/null)" ]]; then
+        printf 'font-name=%s\n' "$KMSCON_FONT"
+    fi
+}
 
 # Set KEY=value in a shell-style config file, replacing or appending.
 set_config_var() {
@@ -1293,15 +1306,16 @@ configure_console_font() {
     esac
     log "console font: Terminus ${px}px (${scale}x)"
 
-    # kmscon (Fedora 45+) renders with freetype and takes a pixel size. Only a
-    # file written by this script is replaced.
+    # kmscon (Fedora 45+) renders with freetype and takes a pixel size; it
+    # also gets the palette and font (kmscon_conf). Only a file written by
+    # this script is replaced.
     [[ -d "$(dirname "$KMSCON_CONF")" ]] || return 0
     if [[ -f "$KMSCON_CONF" ]] && ! head -n 1 "$KMSCON_CONF" | grep -qxF "$KMSCON_CONF_MARKER"; then
         warn "kmscon: $KMSCON_CONF exists and is not managed; set font-size=$px yourself"
         return
     fi
-    printf '%s\nfont-size=%s\n' "$KMSCON_CONF_MARKER" "$px" | $SUDO tee "$KMSCON_CONF" >/dev/null
-    log "kmscon font-size=$px"
+    kmscon_conf "$px" | $SUDO tee "$KMSCON_CONF" >/dev/null
+    log "kmscon font-size=$px palette=$KMSCON_PALETTE"
 }
 
 # Server-side input defaults; they also cover devices added after login.
