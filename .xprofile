@@ -29,13 +29,24 @@ xset -b
 # Kill X with Ctrl+Alt+Backspace
 setxkbmap -option terminate:ctrl_alt_bksp
 
-# This will use our custom bone2 layout; kb also records it for the status bar.
-~/bin/kb bone2 </dev/null 2>/dev/null || { setxkbmap de; xmodmap ~/.Xmodmap; }
-
 # Left modifier remap (Alt -> Ctrl, Ctrl -> Alt); needs the input group and
 # the uinput udev rule from bootstrap.sh. --watch follows new keyboards.
 pkill -x xremap 2>/dev/null
 xremap --watch ~/.config/xremap/config.yml >/dev/null 2>&1 &
+xremap_pid=$!
+
+# Keyboard layout de; `kb` switches it and records it for the status bar.
+# All typing goes through xremap's virtual keyboard, and a keyboard added
+# after the layout is set gets the X server default instead (from
+# /etc/X11/xorg.conf.d/00-keyboard.conf). So wait for that keyboard first:
+# at most 3 s, and not at all once xremap has exited.
+i=0
+while [ "$i" -lt 30 ] && kill -0 "$xremap_pid" 2>/dev/null &&
+    ! xinput list --name-only 2>/dev/null | grep -qx xremap; do
+    sleep 0.1
+    i=$((i + 1))
+done
+~/bin/kb de </dev/null 2>/dev/null || setxkbmap -layout de -option terminate:ctrl_alt_bksp
 
 # Idle timeouts in minutes, from the IDLE_* settings in bootstrap.sh.
 # shellcheck source=/dev/null

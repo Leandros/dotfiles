@@ -1071,7 +1071,7 @@ install_xorg_packages() {
                 -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold \
                 xorg xinit x11-xserver-utils \
                 i3 i3status suckless-tools i3lock xss-lock xautolock blueman arandr autorandr \
-                alsa-utils pavucontrol brightnessctl xclip rfkill cifs-utils smbclient btop remmina remmina-plugin-rdp \
+                alsa-utils pavucontrol brightnessctl xclip xinput rfkill cifs-utils smbclient btop remmina remmina-plugin-rdp \
                 kbd console-data console-setup
             ;;
         fedora)
@@ -1082,7 +1082,7 @@ install_xorg_packages() {
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap xrandr \
                 i3 i3status dmenu i3lock xss-lock xautolock blueman gobject-introspection copyq \
                 arandr autorandr gtk3 \
-                alsa-utils pavucontrol brightnessctl xclip cifs-utils samba-client btop remmina remmina-plugins-rdp kbd terminus-fonts-console
+                alsa-utils pavucontrol brightnessctl xclip xinput cifs-utils samba-client btop remmina remmina-plugins-rdp kbd terminus-fonts-console
             ;;
         rhel)
             $SUDO dnf install -y -q epel-release
@@ -1094,7 +1094,7 @@ install_xorg_packages() {
             $SUDO dnf install -y -q \
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap \
                 i3 i3status dmenu i3lock copyq \
-                alsa-utils pavucontrol brightnessctl xclip cifs-utils samba-client btop remmina remmina-plugins-rdp kbd terminus-fonts-console
+                alsa-utils pavucontrol brightnessctl xclip xorg-x11-server-utils cifs-utils samba-client btop remmina remmina-plugins-rdp kbd terminus-fonts-console
             ;;
     esac
     install_copyq_deb

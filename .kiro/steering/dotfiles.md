@@ -140,6 +140,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   `/src` and test files mounted at another path.
 - Unit tests with stubs and fake sysfs: `test/fzf-cache/test.sh`,
   `test/i3status-kb/test.sh`, `test/power-mode/test.sh`, `test/i3-session/test.sh`,
+  `test/xprofile/test.sh` (runs `.xprofile` with only stubs on PATH),
   `test/system-sleep/power-button-wake.sh`. Add new tests in this style.
 - X programs: Xorg dummy driver in a container. i3 bindings: Xvfb + i3 with
   the repo config in a Fedora image, `xdotool key super+j`, then read the
@@ -205,7 +206,10 @@ New link or system file: install function, `check_link` or `cmp` check in
 
 - `$mod` is Mod4. xremap swaps left Alt and Ctrl for all layouts. `kb`
   switches `us de bone2` in X and on the console (kmscon: `localectl` with
-  `de(bone)`).
+  `de(bone)`). Login layout is `de`: `.xprofile` starts xremap, waits (max
+  3 s) for its virtual keyboard in `xinput`, then runs `kb de`. A keyboard
+  added later gets the server default from `00-keyboard.conf` (which `kb`
+  rewrites through localectl), not kb's layout, and the bar would be wrong.
 - Floating windows need `for_window` rules: nmrs (`class`), `blueman-*`,
   copyq (`move position mouse`), arandr and pavucontrol (`instance`).
 - No `tray_output`: with `primary`, the tray vanishes when no output is

@@ -33,7 +33,7 @@ this installs i3, i3status, dmenu, the wezterm nightly and the X utilities
 and links `.xinitrc`, `.xprofile`, `.Xresources`, `.Xmodmap`, `i3-session.target` (systemd
 user target for `graphical-session.target`, which the desktop portal needs),
 `.wezterm.lua`, `.config/i3` and `.config/i3status`, plus `~/bin/kb` to switch
-the keyboard layout (`us`, `de`, `bone2`) in X and on the Linux console; the
+the keyboard layout (`us`, `de`, `bone2`; `de` at login) in X and on the Linux console; the
 i3 bar shows the layout and cycles it on click (left: next, right: previous), the
 screen brightness (`☀: 65%`), the active VPN and Tailscale (`VPN: <connection>` or `VPN: off`)
 and CPU and RAM use (`C: 12% R: 40%`); a click on
