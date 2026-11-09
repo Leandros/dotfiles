@@ -18,7 +18,9 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
   need `-s sh`. Shellcheck command (no local install):
   `docker run --rm -v "$PWD:/mnt:ro" -w /mnt koalaman/shellcheck:stable <files>`
 - Agent tool calls in one block run in parallel. Never put dependent calls
-  in the same block.
+  in the same block. That includes several edits of one file, and a read or
+  command that needs an edit: edits can overwrite each other, and a read can
+  see the old file.
 
 ## Known failures that are not regressions
 
@@ -66,8 +68,21 @@ Report, Main.
   `readonly NAME_(VERSION|VERSION_PIN|REF|VERSION_LINUX|VERSION_MACOS|VERSION_AL2_AARCH64|TOOLCHAIN)=`.
   Name new pins with one of these suffixes.
 - `run_all` lists `step <name> <function>`. `BOOTSTRAP_SKIP="name ..."` skips
-  steps. Env: `BOOTSTRAP_XORG=1`, `BOOTSTRAP_DPI_SCALE`, `BOOTSTRAP_NONINTERACTIVE=1`,
+  steps. Env: `BOOTSTRAP_CATEGORIES`, `BOOTSTRAP_XORG=1` (adds `desktop`;
+  the prompt still runs), `BOOTSTRAP_DPI_SCALE`, `BOOTSTRAP_NONINTERACTIVE=1`,
   `BOOTSTRAP_DOTFILES_REPO`, `BOOTSTRAP_DOTFILES_REF`.
+- Categories: `basic` always; `devtools` (lazygit, direnv, rust-analyzer,
+  lspmux, codelldb) and `desktop` (the Xorg/i3 desktop) are optional.
+  `choose_categories` in `main` sets `CATEGORIES` from `BOOTSTRAP_CATEGORIES`
+  (`all`, `""`), else a prompt on a terminal, else basic only. Desktop is not
+  offered and is dropped with a warning where `xorg_supported` fails. Steps
+  of a category: `category_step <category> <name> <function>`; other code
+  checks `category_selected`. A run with fewer categories removes nothing.
+  Rust stays in basic: tree-sitter (basic) and nmrs-gui/wmfocus (desktop)
+  build with cargo. Test: `test/categories/test.sh` (pulls the functions out
+  with `sed`; also passes with AL2's bash 4.2).
+- bash 4.2 (AL2) fails on `"${a[@]}"` of an empty array under `set -u`; use
+  `${a[@]+"${a[@]}"}`.
 - Ask all prompts in `main` before the installs, so a run does not stall
   after minutes of work. Validate static settings there too
   (`check_idle_settings`).
@@ -85,11 +100,14 @@ Report, Main.
   `amzn2`, `amzn2023`, `macos`. Tools go to `/usr/local`.
 - `clone_dotfiles` resets `lazy-lock.json`, stashes local edits around a
   fast-forward update, and dies on local commits.
-- Xorg (`setup_xorg`) runs only with `BOOTSTRAP_XORG=1` on debian, ubuntu,
+- Xorg (`setup_xorg`) runs only with the `desktop` category on debian, ubuntu,
   fedora, rhel <= 9.
 
-New tool: version constant with URL, install function with stamp, `step` in
-`run_all`, `print_version` in `report`, `check_version` in `verify.sh`, README.
+New tool: choose its category first. Version constant with URL, install
+function with stamp, `step` (basic) or `category_step` in `run_all`,
+`print_version` in `report` (in the category's block), `check_version` in
+`verify.sh` (dev tools in `check_devtools`, plus an absence check in
+`check_no_devtools`), README.
 New link or system file: install function, `check_link` or `cmp` check in
 `verify.sh`, README.
 
@@ -140,8 +158,11 @@ New link or system file: install function, `check_link` or `cmp` check in
 - `test/bootstrap/run.sh <distro>`: distros `debian12 ubuntu2204 fedora43
   fedora44 fedora45 rocky9 al2 al2023`. Snapshots the working tree (uncommitted files
   too) into a git repo mounted at `/src`, runs bootstrap twice with
-  `BOOTSTRAP_XORG=1 BOOTSTRAP_DPI_SCALE=1.5`, then `verify.sh`. Log:
-  `test/bootstrap/logs/<distro>.log`. Runs take minutes; run in background
+  `BOOTSTRAP_CATEGORIES` (default `"devtools desktop"`; `BOOTSTRAP_CATEGORIES=
+  run.sh <distro>` for basic only) and `BOOTSTRAP_DPI_SCALE=1.5`, then
+  `verify.sh`, which reads the same variable. Log:
+  `test/bootstrap/logs/<distro>-<categories>.log` (`fedora43-devtools-desktop.log`,
+  `fedora43-basic.log`). Runs take minutes; run in background
   and tail the log. Run one distro at a time with pauses: parallel runs get
   GitHub 403 (rate limit).
 - Fast nvim-only container run: `BOOTSTRAP_SKIP` with every step except
@@ -320,3 +341,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   `load:unbind(load)+reload-sync(fzf-cache update ...)`. `fzf-cache` refreshes
   in its own process group (fzf kills the reload group), locks per directory
   and command, and prunes caches older than `MAX_AGE_DAYS`.
+- `.zshrc` loads the oh-my-zsh `direnv` plugin only when `direnv` is on
+  PATH (`${commands[direnv]:+direnv}` in `plugins`): without the devtools
+  category the plugin printed a warning in every shell. `verify.sh` checks
+  `zsh -i` for it.

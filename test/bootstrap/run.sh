@@ -6,6 +6,8 @@
 # Usage:
 #   test/bootstrap/run.sh                 all distros
 #   test/bootstrap/run.sh al2 debian12    subset (debian12 ubuntu2204 fedora43 fedora44 fedora45 rocky9 al2 al2023)
+#   BOOTSTRAP_CATEGORIES= test/bootstrap/run.sh al2
+#                                         basic only; default "devtools desktop"
 #
 # The working tree (including uncommitted changes) is snapshotted into a
 # temporary git repository that bootstrap.sh clones from, so the test covers
@@ -18,6 +20,8 @@ REPO="$(cd "$HERE/../.." && pwd)"
 readonly HERE REPO
 readonly LOG_DIR="$HERE/logs"
 readonly ALL_DISTROS="debian12 ubuntu2204 fedora43 fedora44 fedora45 rocky9 al2 al2023"
+# Optional categories for both runs and verify.sh; empty: basic only.
+readonly CATEGORIES="${BOOTSTRAP_CATEGORIES-devtools desktop}"
 readonly IMAGE_PREFIX="dotfiles-bootstrap"
 
 base_image() {
@@ -64,7 +68,8 @@ snapshot_repo() {
 
 run_distro() {
     local distro="$1" snap="$2"
-    local image="$IMAGE_PREFIX-$distro" log="$LOG_DIR/$distro.log"
+    local suffix="${CATEGORIES:-basic}"
+    local image="$IMAGE_PREFIX-$distro" log="$LOG_DIR/$distro-${suffix// /-}.log"
     local base
     base="$(base_image "$distro")"
 
@@ -82,7 +87,7 @@ run_distro() {
         -e BOOTSTRAP_DOTFILES_REPO=/src \
         -e BOOTSTRAP_DOTFILES_REF=master \
         -e BOOTSTRAP_NONINTERACTIVE=1 \
-        -e BOOTSTRAP_XORG=1 \
+        -e BOOTSTRAP_CATEGORIES="$CATEGORIES" \
         -e BOOTSTRAP_DPI_SCALE=1.5 \
         "$image" bash -c '
             set -euo pipefail

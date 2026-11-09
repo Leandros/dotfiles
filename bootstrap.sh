@@ -20,7 +20,11 @@
 #   BOOTSTRAP_DOTFILES_REPO=<url>    dotfiles source (default: GitHub)
 #   BOOTSTRAP_DOTFILES_REF=<branch>  dotfiles branch (default: master)
 #   BOOTSTRAP_NONINTERACTIVE=1       allow a non-tty stdin (CI, tests)
-#   BOOTSTRAP_XORG=1                 also set up an Xorg/i3 desktop (Debian, Ubuntu, Fedora, RHEL 9)
+#   BOOTSTRAP_CATEGORIES="devtools desktop"|all|""
+#                                    optional categories besides basic; prompted
+#                                    when unset on a terminal, basic only otherwise
+#   BOOTSTRAP_XORG=1                 add desktop, an Xorg/i3 desktop (Debian, Ubuntu,
+#                                    Fedora, RHEL 9); the prompt still asks for the rest
 #   BOOTSTRAP_DPI_SCALE=1|1.5|1.75|2 display scale for the desktop; prompted when unset
 #
 set -euo pipefail
@@ -141,6 +145,7 @@ GO_ARCH=""   # amd64 | arm64
 RUST_TARGET_LINUX_MUSL=""
 RUST_TARGET_DARWIN=""
 DPI_SCALE=""      # chosen Xorg display scale (xorg step only)
+CATEGORIES=""     # chosen optional categories, space-separated
 
 # =============================================================================
 # Helpers
@@ -306,6 +311,14 @@ step() {
     "$@"
 }
 
+# A step of an optional category runs only when the category is selected.
+category_step() {
+    local category="$1"
+    shift
+    category_selected "$category" || return 0
+    step "$@"
+}
+
 version_ge() {
     # Returns 0 when $1 >= $2 (dotted numeric versions).
     [[ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | head -n 1)" == "$2" ]]
@@ -377,6 +390,98 @@ detect_sudo() {
     fi
     have sudo || die "sudo required"
     SUDO="sudo"
+}
+
+# =============================================================================
+# Categories
+# =============================================================================
+# basic is always installed. BOOTSTRAP_CATEGORIES selects the optional ones
+# ("devtools desktop", "all", or "" for basic only). Without it, a terminal
+# gets a prompt and a run without one installs basic only. BOOTSTRAP_XORG=1
+# adds desktop to the choice. A later run with fewer categories keeps what an
+# earlier run installed.
+readonly OPTIONAL_CATEGORIES=(devtools desktop)
+
+category_selected() {
+    [[ " $CATEGORIES " == *" $1 "* ]]
+}
+
+category_label() {
+    case "$1" in
+        devtools) echo "dev tools (lazygit, direnv, rust-analyzer, lspmux, codelldb)" ;;
+        desktop)  echo "desktop environment (Xorg, i3)" ;;
+    esac
+}
+
+# Print the optional categories named in $1, in OPTIONAL_CATEGORIES order.
+parse_categories() {
+    local words=() word wanted=" " name out=""
+    read -r -a words <<< "$1"
+    # ${a[@]+...}: bash 4.2 (AL2) rejects an empty array under set -u.
+    for word in ${words[@]+"${words[@]}"}; do
+        case "$word" in
+            basic) ;;
+            all)   wanted+="${OPTIONAL_CATEGORIES[*]} " ;;
+            *)
+                [[ " ${OPTIONAL_CATEGORIES[*]} " == *" $word "* ]] \
+                    || die "unknown category: $word (one of: basic ${OPTIONAL_CATEGORIES[*]} all)"
+                wanted+="$word "
+                ;;
+        esac
+    done
+    for name in "${OPTIONAL_CATEGORIES[@]}"; do
+        if [[ "$wanted" == *" $name "* ]]; then
+            out+="${out:+ }$name"
+        fi
+    done
+    echo "$out"
+}
+
+# Ask which optional categories to install; print them. The desktop is only
+# offered where it can be installed.
+prompt_categories() {
+    local offered=() name i reply="" words=() word picked=""
+    for name in "${OPTIONAL_CATEGORIES[@]}"; do
+        if [[ "$name" == desktop ]] && ! xorg_supported; then
+            continue
+        fi
+        offered+=("$name")
+    done
+
+    echo "Categories (basic is always installed):" >&2
+    for i in "${!offered[@]}"; do
+        printf '  %d) %s\n' "$((i + 1))" "$(category_label "${offered[$i]}")" >&2
+    done
+    read -r -p "select, space-separated [none]: " reply || true
+
+    read -r -a words <<< "$reply"
+    for word in ${words[@]+"${words[@]}"}; do
+        [[ "$word" =~ ^[1-9][0-9]*$ && "$word" -le "${#offered[@]}" ]] \
+            || die "invalid category choice: $word"
+        picked+="${offered[$((word - 1))]} "
+    done
+    parse_categories "$picked"
+}
+
+# Set CATEGORIES from the environment, else from a prompt on a terminal,
+# else basic only. BOOTSTRAP_XORG=1 adds desktop to the result.
+choose_categories() {
+    if [[ -n "${BOOTSTRAP_CATEGORIES+set}" ]]; then
+        CATEGORIES="$(parse_categories "$BOOTSTRAP_CATEGORIES")"
+    elif [[ -t 0 ]]; then
+        CATEGORIES="$(prompt_categories)"
+    else
+        CATEGORIES=""
+    fi
+
+    if [[ "${BOOTSTRAP_XORG:-0}" == "1" ]]; then
+        CATEGORIES="$(parse_categories "$CATEGORIES desktop")"
+    fi
+
+    if category_selected desktop && ! xorg_supported; then
+        warn "desktop: no i3 packages for $DISTRO, skipping"
+        CATEGORIES="$(parse_categories "${CATEGORIES/desktop/}")"
+    fi
 }
 
 # =============================================================================
@@ -1042,7 +1147,9 @@ link_dotfiles() {
     link "$d/.tmux/custom" "$HOME/.tmux/custom"
 
     link "$d/.config/yazi" "$HOME/.config/yazi"
-    link "$d/AppData/Roaming/lazygit/config.yml" "$(lazygit_config_dir)/config.yml"
+    if category_selected devtools; then
+        link "$d/AppData/Roaming/lazygit/config.yml" "$(lazygit_config_dir)/config.yml"
+    fi
     # fzf CTRL-T list cache, used by .zshrc.
     link "$d/bin/fzf-cache" "$HOME/bin/fzf-cache"
 }
@@ -1056,7 +1163,7 @@ readonly XORG_DISTROS=" debian ubuntu fedora rhel "
 readonly RHEL_XORG_MAX_MAJOR=9
 
 xorg_requested() {
-    [[ "${BOOTSTRAP_XORG:-0}" == "1" ]]
+    category_selected desktop
 }
 
 xorg_supported() {
@@ -1703,24 +1810,26 @@ report() {
     print_version fzf fzf --version
     print_version zoxide zoxide --version
     print_version yazi bash -c 'yazi --version | sed -n "2s/^ *//p"'
-    print_version lazygit lazygit --version
     print_version uv uv --version
     print_version fd fd --version
     print_version dua dua --version
     print_version rg rg --version
     print_version bat bat --version
     print_version mise mise --version
-    print_version direnv direnv version
     print_version rustc "$CARGO_HOME_DIR/bin/rustc" --version
-    print_version rust-analyzer "$CARGO_HOME_DIR/bin/rust-analyzer" --version
     print_version tree-sitter tree-sitter --version
-    print_version lspmux lspmux --version
     print_version node node --version
     print_version python "$PREFIX/bin/python$PYTHON_VERSION" --version
     if [[ "$OS" == "linux" ]]; then
         print_version nnn nnn -V
     fi
-    print_version codelldb cat "$(codelldb_dir)/.bootstrap-version"
+    if category_selected devtools; then
+        print_version lazygit lazygit --version
+        print_version direnv direnv version
+        print_version rust-analyzer "$CARGO_HOME_DIR/bin/rust-analyzer" --version
+        print_version lspmux lspmux --version
+        print_version codelldb cat "$(codelldb_dir)/.bootstrap-version"
+    fi
     if xorg_requested && xorg_supported; then
         print_version wezterm wezterm --version
         print_version nmrs-gui nmrs-gui --version
@@ -1745,18 +1854,18 @@ run_all() {
     step fzf install_fzf
     step zoxide install_zoxide
     step yazi install_yazi
-    step lazygit install_lazygit
+    category_step devtools lazygit install_lazygit
     step uv install_uv
     step fd install_fd
     step dua install_dua
     step ripgrep install_ripgrep
     step bat install_bat
     step mise install_mise
-    step direnv install_direnv
+    category_step devtools direnv install_direnv
     step rust install_rust
-    step rust-analyzer install_rust_analyzer
+    category_step devtools rust-analyzer install_rust_analyzer
     step tree-sitter install_tree_sitter
-    step lspmux setup_lspmux
+    category_step devtools lspmux setup_lspmux
     step sshd install_sshd_conf
     step node install_node
     step python install_python
@@ -1770,7 +1879,7 @@ run_all() {
     step nvim-python setup_nvim_python
     step nvim-plugins setup_nvim_plugins
     # After nvim-plugins: lazy.nvim replaces the vimspector checkout it lives in.
-    step codelldb install_codelldb
+    category_step devtools codelldb install_codelldb
     step tmux-plugins setup_tmux_plugins
 
     report
@@ -1789,6 +1898,7 @@ main() {
     detect_platform
     detect_sudo
     # Ask up front so the run does not stall on a prompt after minutes of installs.
+    choose_categories
     if xorg_requested && xorg_supported; then
         check_idle_settings
         DPI_SCALE="$(choose_dpi_scale)"
@@ -1796,6 +1906,7 @@ main() {
     WORK_DIR="$(mktemp -d)"
     export PATH="$PREFIX/bin:$PATH"
     log "platform: $DISTRO $ARCH${GLIBC:+ glibc $GLIBC}"
+    log "categories: basic${CATEGORIES:+ $CATEGORIES}"
     run_all
 }
 

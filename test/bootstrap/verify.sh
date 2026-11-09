@@ -49,6 +49,23 @@ arch="$(uname -m)"
 is_al2=0
 grep -q 'VERSION_ID="2"' /etc/os-release && is_al2=1
 
+# The categories bootstrap.sh installed: BOOTSTRAP_CATEGORIES from run.sh,
+# "all", and the BOOTSTRAP_XORG=1 alias for desktop.
+categories=" ${BOOTSTRAP_CATEGORIES:-} "
+[[ "$categories" == *" all "* ]] && categories=" devtools desktop "
+[[ "${BOOTSTRAP_XORG:-0}" == "1" ]] && categories+="desktop "
+has_category() { [[ "$categories" == *" $1 "* ]]; }
+
+# For a category that was not selected: its files must not exist.
+check_absent() {
+    local category="$1" path="$2"
+    if [[ -e "$path" || -L "$path" ]]; then
+        fail "$path exists without $category"
+    else
+        ok "no $path without $category"
+    fi
+}
+
 node_want="$NODE_VERSION"
 if [[ $is_al2 -eq 1 && "$arch" == "aarch64" ]]; then
     node_want="$NODE_VERSION_AL2_AARCH64"
@@ -60,34 +77,17 @@ check_version nvim    "NVIM v$NVIM_VERSION" nvim --version
 check_version fzf     "$FZF_VERSION" fzf --version
 check_version zoxide  "zoxide $ZOXIDE_VERSION" zoxide --version
 check_version yazi    "Version: $YAZI_VERSION" yazi --version
-check_version lazygit "version=$LAZYGIT_VERSION" lazygit --version
 check_version uv      "uv $UV_VERSION" uv --version
 check_version fd      "fd $FD_VERSION" fd --version
 check_version dua     "dua $DUA_VERSION" dua --version
 check_version rg      "ripgrep $RIPGREP_VERSION" rg --version
 check_version bat     "bat $BAT_VERSION" bat --version
 check_version mise    "$MISE_VERSION" mise --version
-check_version direnv  "$DIRENV_VERSION" direnv version
 check_version rustc   "rustc $RUST_TOOLCHAIN" "$HOME/.cargo/bin/rustc" --version
-check_version rust-analyzer "rust-analyzer $RUST_TOOLCHAIN" "$HOME/.cargo/bin/rust-analyzer" --version
-if [[ -d "$("$HOME/.cargo/bin/rustc" --print sysroot 2>/dev/null)/lib/rustlib/src/rust/library/std" ]]; then
-    ok "rust-src (std sources for rust-analyzer)"
-else
-    fail "rust-src missing"
-fi
 check_version tree-sitter "tree-sitter $TREE_SITTER_VERSION" tree-sitter --version
 check_version node    "v$node_want" node --version
 check_version python  "Python $PYTHON_VERSION" "/usr/local/bin/python$PYTHON_VERSION" --version
 check_version nnn     "$NNN_VERSION" nnn -V
-check_version lspmux  "lspmux $LSPMUX_VERSION" lspmux --version
-
-codelldb_dir="$HOME/.local/share/nvim/lazy/vimspector/gadgets/linux/CodeLLDB"
-if [[ -x "$codelldb_dir/adapter/codelldb" && -f "$codelldb_dir/lldb/lib/liblldb.so" ]] \
-    && "$codelldb_dir/adapter/codelldb" --help >/dev/null 2>&1; then
-    ok "codelldb $CODELLDB_VERSION"
-else
-    fail "codelldb missing or not runnable in $codelldb_dir"
-fi
 
 check_version pynvim  "$PYNVIM_VERSION" \
     "$HOME/.local/share/nvim/python3-venv/bin/python" -c 'import importlib.metadata as m; print(m.version("pynvim"))'
@@ -101,7 +101,6 @@ check_link "$HOME/.config/nvim/lazy-lock.json" "$D/lazy-lock.json"
 check_link "$HOME/.tmux.conf" "$D/tmux/tmux_linux_$TMUX_VERSION_LINUX/.tmux.conf"
 check_link "$HOME/.tmux/custom" "$D/.tmux/custom"
 check_link "$HOME/.config/yazi" "$D/.config/yazi"
-check_link "$HOME/.config/lazygit/config.yml" "$D/AppData/Roaming/lazygit/config.yml"
 check_link "$HOME/bin/fzf-cache" "$D/bin/fzf-cache"
 check_link "$HOME/.vsnip" "$D/.vsnip"
 vsnip_internal="$HOME/.vsnip-internal"
@@ -138,53 +137,96 @@ if [[ -d /etc/ssh/sshd_config.d ]] && sudo -n grep -qE '^Include .*sshd_config\.
     rm -rf "$key_dir"
 fi
 
-# lspmux: owner-only Unix socket, no TCP port, user service enabled.
-lspmux_dir="$HOME/.local/state/lspmux"
-lspmux_sock="$lspmux_dir/lspmux.sock"
-lspmux_conf="$HOME/.config/lspmux/config.toml"
-if grep -qx "listen = \"$lspmux_sock\"" "$lspmux_conf" 2>/dev/null \
-    && grep -qx "connect = \"$lspmux_sock\"" "$lspmux_conf"; then
-    ok "lspmux config uses $lspmux_sock"
+# Dev tools: only with the devtools category.
+check_devtools() {
+    check_version lazygit "version=$LAZYGIT_VERSION" lazygit --version
+    check_version direnv  "$DIRENV_VERSION" direnv version
+    check_version rust-analyzer "rust-analyzer $RUST_TOOLCHAIN" "$HOME/.cargo/bin/rust-analyzer" --version
+    if [[ -d "$("$HOME/.cargo/bin/rustc" --print sysroot 2>/dev/null)/lib/rustlib/src/rust/library/std" ]]; then
+        ok "rust-src (std sources for rust-analyzer)"
+    else
+        fail "rust-src missing"
+    fi
+    check_version lspmux  "lspmux $LSPMUX_VERSION" lspmux --version
+    check_link "$HOME/.config/lazygit/config.yml" "$D/AppData/Roaming/lazygit/config.yml"
+
+    local codelldb_dir="$HOME/.local/share/nvim/lazy/vimspector/gadgets/linux/CodeLLDB"
+    if [[ -x "$codelldb_dir/adapter/codelldb" && -f "$codelldb_dir/lldb/lib/liblldb.so" ]] \
+        && "$codelldb_dir/adapter/codelldb" --help >/dev/null 2>&1; then
+        ok "codelldb $CODELLDB_VERSION"
+    else
+        fail "codelldb missing or not runnable in $codelldb_dir"
+    fi
+
+    # lspmux: owner-only Unix socket, no TCP port, service enabled.
+    local lspmux_dir="$HOME/.local/state/lspmux"
+    local lspmux_sock="$lspmux_dir/lspmux.sock"
+    local lspmux_conf="$HOME/.config/lspmux/config.toml"
+    if grep -qx "listen = \"$lspmux_sock\"" "$lspmux_conf" 2>/dev/null \
+        && grep -qx "connect = \"$lspmux_sock\"" "$lspmux_conf"; then
+        ok "lspmux config uses $lspmux_sock"
+    else
+        fail "lspmux config: $(cat "$lspmux_conf" 2>/dev/null || echo MISSING)"
+    fi
+    if [[ "$(stat -c %a "$lspmux_dir" 2>/dev/null)" == "700" ]]; then
+        ok "lspmux socket directory is owner-only"
+    else
+        fail "lspmux socket directory mode: $(stat -c %a "$lspmux_dir" 2>/dev/null || echo MISSING)"
+    fi
+    local lspmux_unit="/etc/systemd/system/lspmux.service"
+    if grep -qx "User=$USER" "$lspmux_unit" 2>/dev/null && ! grep -qE '##[A-Z_]+##' "$lspmux_unit"; then
+        ok "lspmux service runs as $USER"
+    else
+        fail "lspmux service missing or not filled in: $lspmux_unit"
+    fi
+    if ! command -v systemctl >/dev/null; then
+        ok "lspmux service enable skipped (no systemctl)"
+    elif [[ "$(readlink /etc/systemd/system/default.target.wants/lspmux.service)" == "$lspmux_unit" ]]; then
+        ok "lspmux service enabled"
+    else
+        fail "lspmux service not enabled"
+    fi
+    # No user manager runs in the container; start the server by hand.
+    lspmux server >/tmp/lspmux.log 2>&1 &
+    local lspmux_pid=$!
+    for _ in $(seq 50); do
+        [[ -S "$lspmux_sock" ]] && break
+        sleep 0.1
+    done
+    if lspmux status >/tmp/lspmux-status.log 2>&1; then
+        ok "lspmux server answers on its socket"
+    else
+        fail "lspmux status: $(head -n 3 /tmp/lspmux-status.log)"
+    fi
+    if (exec 3<>/dev/tcp/127.0.0.1/27631) 2>/dev/null; then
+        fail "lspmux listens on TCP 127.0.0.1:27631"
+    else
+        ok "lspmux has no TCP port"
+    fi
+    kill "$lspmux_pid" 2>/dev/null || true
+    wait "$lspmux_pid" 2>/dev/null || true
+}
+
+check_no_devtools() {
+    local path
+    for path in /usr/local/bin/lazygit /usr/local/bin/direnv /usr/local/bin/lspmux \
+        "$HOME/.config/lazygit/config.yml" "$HOME/.config/lspmux/config.toml" \
+        /etc/systemd/system/lspmux.service "$HOME/.local/share/nvim/lazy/vimspector/gadgets/linux/CodeLLDB"; do
+        check_absent devtools "$path"
+    done
+    if "$HOME/.cargo/bin/rustup" component list --installed --toolchain "$RUST_TOOLCHAIN" 2>/dev/null \
+        | grep -q '^rust-analyzer'; then
+        fail "rust-analyzer component installed without devtools"
+    else
+        ok "no rust-analyzer component without devtools"
+    fi
+}
+
+if has_category devtools; then
+    check_devtools
 else
-    fail "lspmux config: $(cat "$lspmux_conf" 2>/dev/null || echo MISSING)"
+    check_no_devtools
 fi
-if [[ "$(stat -c %a "$lspmux_dir" 2>/dev/null)" == "700" ]]; then
-    ok "lspmux socket directory is owner-only"
-else
-    fail "lspmux socket directory mode: $(stat -c %a "$lspmux_dir" 2>/dev/null || echo MISSING)"
-fi
-lspmux_unit="/etc/systemd/system/lspmux.service"
-if grep -qx "User=$USER" "$lspmux_unit" 2>/dev/null && ! grep -qE '##[A-Z_]+##' "$lspmux_unit"; then
-    ok "lspmux service runs as $USER"
-else
-    fail "lspmux service missing or not filled in: $lspmux_unit"
-fi
-if ! command -v systemctl >/dev/null; then
-    ok "lspmux service enable skipped (no systemctl)"
-elif [[ "$(readlink /etc/systemd/system/default.target.wants/lspmux.service)" == "$lspmux_unit" ]]; then
-    ok "lspmux service enabled"
-else
-    fail "lspmux service not enabled"
-fi
-# No user manager runs in the container; start the server by hand.
-lspmux server >/tmp/lspmux.log 2>&1 &
-lspmux_pid=$!
-for _ in $(seq 50); do
-    [[ -S "$lspmux_sock" ]] && break
-    sleep 0.1
-done
-if lspmux status >/tmp/lspmux-status.log 2>&1; then
-    ok "lspmux server answers on its socket"
-else
-    fail "lspmux status: $(head -n 3 /tmp/lspmux-status.log)"
-fi
-if (exec 3<>/dev/tcp/127.0.0.1/27631) 2>/dev/null; then
-    fail "lspmux listens on TCP 127.0.0.1:27631"
-else
-    ok "lspmux has no TCP port"
-fi
-kill "$lspmux_pid" 2>/dev/null || true
-wait "$lspmux_pid" 2>/dev/null || true
 
 # Xorg checks: distros where bootstrap installs the desktop (RHEL only up to 9).
 xorg_expected=0
@@ -192,10 +234,15 @@ xorg_expected=0
 os_id="$(. /etc/os-release && echo "$ID")"
 # shellcheck disable=SC1091
 os_major="$(. /etc/os-release && echo "${VERSION_ID%%.*}")"
-case "$os_id" in
-    debian|ubuntu|fedora) xorg_expected=1 ;;
-    rocky|almalinux|centos|rhel) [[ "$os_major" -le 9 ]] && xorg_expected=1 ;;
-esac
+if has_category desktop; then
+    case "$os_id" in
+        debian|ubuntu|fedora) xorg_expected=1 ;;
+        rocky|almalinux|centos|rhel) [[ "$os_major" -le 9 ]] && xorg_expected=1 ;;
+    esac
+else
+    check_absent desktop "$HOME/.xinitrc"
+    check_absent desktop /usr/local/bin/wmfocus
+fi
 if [[ $xorg_expected -eq 1 ]]; then
     check_link "$HOME/.xinitrc" "$D/.xinitrc"
     check_link "$HOME/.xprofile" "$D/.xprofile"
@@ -475,6 +522,12 @@ if /usr/local/bin/zsh -i -c 'exit 0' >/tmp/zsh.log 2>&1; then
     ok "zsh -i starts"
 else
     fail "zsh -i: $(head -n 3 /tmp/zsh.log)"
+fi
+# .zshrc loads the oh-my-zsh direnv plugin only when direnv (devtools) exists.
+if grep -q 'direnv not found' /tmp/zsh.log; then
+    fail "zsh -i warns: $(grep 'direnv not found' /tmp/zsh.log | head -n 1)"
+else
+    ok "zsh -i: no direnv warning"
 fi
 
 if nvim --headless -c 'lua if vim.fn.filereadable(vim.g.python3_host_prog) == 0 then os.exit(1) end' +qa >/tmp/nvim.log 2>&1; then
