@@ -1079,6 +1079,9 @@ install_xorg_packages() {
                 kbd console-data console-setup
             ;;
         fedora)
+            # firewall-config (Fedora only) is the GUI for firewalld, its
+            # default firewall; on Debian/Ubuntu it would pull in and start
+            # firewalld in place of their own setup.
             # gobject-introspection has the xlib typelib blueman-applet
             # imports; the blueman package does not depend on it. arandr
             # imports GTK 3 but does not depend on gtk3 either.
@@ -1086,7 +1089,7 @@ install_xorg_packages() {
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap xrandr \
                 i3 i3status dmenu i3lock xss-lock xautolock blueman gobject-introspection copyq \
                 arandr autorandr gtk3 \
-                alsa-utils pavucontrol brightnessctl xclip xinput picom cifs-utils samba-client btop remmina remmina-plugins-rdp kbd terminus-fonts-console
+                alsa-utils pavucontrol brightnessctl xclip xinput picom cifs-utils samba-client btop remmina remmina-plugins-rdp firewall-config kbd terminus-fonts-console
             ;;
         rhel)
             $SUDO dnf install -y -q epel-release

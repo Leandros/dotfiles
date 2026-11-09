@@ -378,6 +378,10 @@ if [[ $xorg_expected -eq 1 ]]; then
     for bin in i3 i3status dmenu xsetroot xset setxkbmap xmodmap amixer pavucontrol brightnessctl xinput rfkill smbclient mount.cifs btop remmina startx xclip i3lock; do
         if command -v "$bin" >/dev/null; then ok "xorg bin $bin"; else fail "xorg bin missing: $bin"; fi
     done
+    # firewalld's GUI: Fedora only.
+    if [[ "$os_id" == fedora ]]; then
+        if command -v firewall-config >/dev/null; then ok "xorg bin firewall-config"; else fail "xorg bin missing: firewall-config"; fi
+    fi
     # Not packaged for EL9.
     if grep -qE '^ID=(debian|ubuntu|fedora)$' /etc/os-release; then
         for bin in xss-lock xautolock blueman-applet blueman-manager picom; do
