@@ -2642,6 +2642,9 @@ local spec = {
                   method = "connect",
                   -- rust-analyzer needs to be in PATH, or specify full path
                   server = "rust-analyzer",
+                  -- lspmux starts rust-analyzer with this PATH, not the
+                  -- service's: cargo wrappers need tools from the PATH
+                  env = { PATH = vim.env.PATH },
                 },
                 cargo = {
                   features = "all",
