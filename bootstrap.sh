@@ -92,6 +92,8 @@ readonly LIBEVENT_VERSION="2.1.12-stable"
 readonly WEZTERM_RELEASE="nightly"
 # Fedora/RHEL: https://copr.fedorainfracloud.org/coprs/wezfurlong/wezterm-nightly/
 readonly WEZTERM_COPR="wezfurlong/wezterm-nightly"
+# Fedora only (Xorg desktop): https://copr.fedorainfracloud.org/coprs/lizardbyte/stable/
+readonly SUNSHINE_COPR="lizardbyte/stable"
 # https://github.com/xremap/xremap/releases (Xorg desktop only)
 readonly XREMAP_VERSION="0.15.15"
 # https://crates.io/crates/nmrs-gui (Xorg desktop only; needs Rust 1.95+)
@@ -1273,6 +1275,15 @@ install_wezterm_copr() {
     mark_current wezterm "$(rpm -q --qf '%{VERSION}' wezterm)"
 }
 
+# Game-stream host for remote desktop with Moonlight (VA-API/NVENC encoding).
+# Not started or opened in the firewall: run `sunshine`, pair in its web UI.
+install_sunshine() {
+    $SUDO dnf install -y -q dnf-plugins-core
+    quiet $SUDO dnf copr enable -y "$SUNSHINE_COPR"
+    quiet $SUDO dnf install -y -q Sunshine
+    quiet $SUDO dnf upgrade -y -q Sunshine
+}
+
 # Key remapper below the keymap; the config swaps left Alt and Ctrl. Runs as
 # the user from ~/.xprofile, which needs read access to the event devices
 # and write access to uinput.
@@ -1680,6 +1691,9 @@ setup_xorg() {
     fi
     install_xorg_packages
     install_wezterm
+    if [[ "$DISTRO" == fedora ]]; then
+        install_sunshine
+    fi
     install_xremap
     install_nmrs_gui
     install_wmfocus
@@ -1834,6 +1848,9 @@ report() {
         print_version wezterm wezterm --version
         print_version nmrs-gui nmrs-gui --version
         print_version wmfocus wmfocus --version
+        if [[ "$DISTRO" == fedora ]]; then
+            print_version sunshine rpm -q Sunshine
+        fi
     fi
     if [[ -d "$BACKUP_DIR" ]]; then
         log "backups in $BACKUP_DIR"

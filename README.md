@@ -30,6 +30,9 @@ at the top of `bootstrap.sh`.
 
 For an Xorg/i3 desktop (Debian, Ubuntu, Fedora, RHEL 9) run with `BOOTSTRAP_XORG=1`;
 this installs i3, i3status, dmenu, the wezterm nightly and the X utilities
+(on Fedora also firewall-config and Sunshine from the `lizardbyte/stable` copr, a
+remote-desktop host for Moonlight with VA-API/NVENC encoding; not started and no
+firewall ports opened: run `sunshine`, pair in its web UI at `https://localhost:47990`)
 and links `.xinitrc`, `.xprofile`, `.Xresources`, `.Xmodmap`, `i3-session.target` (systemd
 user target for `graphical-session.target`, which the desktop portal needs),
 `.wezterm.lua`, `.config/i3`, `.config/i3status` and `.config/picom` (picom with vsync
