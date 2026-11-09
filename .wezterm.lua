@@ -302,6 +302,16 @@ local function set_keys(tbl, keys)
   return tbl
 end
 
+-- Leaving copy mode clears the search pattern first. wezterm keeps the last
+-- pattern per tab (SAVED_PATTERN in copy.rs), and the next copy mode would
+-- open with the search bar shown and jump to its first match.
+-- `first` runs before (Y copies first: ClearPattern also drops the selection).
+local function leave_copy_mode(first)
+  local actions = { act.CopyMode 'ClearPattern', act.ScrollToBottom, act.CopyMode 'Close' }
+  if first then table.insert(actions, 1, first) end
+  return act.Multiple(actions)
+end
+
 local copy_mode = nil
 if wezterm.gui then
   copy_mode = set_keys(wezterm.gui.default_key_tables().copy_mode, {
@@ -323,28 +333,44 @@ if wezterm.gui then
       act.CopyMode 'ClearSelectionMode',
     } },
     -- Copy and leave copy mode.
-    { key = 'Y', mods = 'SHIFT', action = act.Multiple {
-      act.CopyTo 'ClipboardAndPrimarySelection',
-      act.ScrollToBottom,
-      act.CopyMode 'Close',
-    } },
+    { key = 'Y', mods = 'SHIFT', action = leave_copy_mode(act.CopyTo 'ClipboardAndPrimarySelection') },
+    -- The default ways out, with the pattern cleared.
+    { key = 'q', mods = 'NONE', action = leave_copy_mode() },
+    { key = 'c', mods = 'CTRL', action = leave_copy_mode() },
+    { key = 'g', mods = 'CTRL', action = leave_copy_mode() },
     -- Search: / opens the prompt (Enter searches up); ? repeats in that
     -- direction, - goes the other way, as tmux's search-again and
     -- search-reverse. f keeps wezterm's jump to a character.
     { key = '/', mods = 'NONE', action = act.CopyMode 'EditPattern' },
     { key = '?', mods = 'NONE', action = act.CopyMode 'PriorMatch' },
     { key = '-', mods = 'NONE', action = act.CopyMode 'NextMatch' },
-    -- Escape leaves the search prompt (only AcceptPattern ends pattern
-    -- editing; the pattern stays for ? and -) and clears the selection;
-    -- it stays in copy mode. q leaves.
-    { key = 'Escape', mods = 'NONE', action = act.Multiple {
+    -- Escape clears the selection and stays in copy mode; q leaves.
+    { key = 'Escape', mods = 'NONE', action = act.CopyMode 'ClearSelectionMode' },
+  })
+end
+
+-- The search prompt. While the pattern is edited (/ in copy mode, or
+-- Ctrl+Shift+F) wezterm uses this table, not copy_mode, and only
+-- AcceptPattern leaves pattern editing; its default Enter jumps without
+-- leaving and Escape closes everything. As in tmux: Enter jumps up and
+-- returns to copy mode with the pattern (? and - then move between
+-- matches); Escape cancels the search back to copy mode.
+local search_mode = nil
+if wezterm.gui then
+  search_mode = set_keys(wezterm.gui.default_key_tables().search_mode, {
+    { key = 'Enter', mods = 'NONE', action = act.Multiple {
+      act.CopyMode 'PriorMatch',
       act.CopyMode 'AcceptPattern',
-      act.CopyMode 'ClearSelectionMode',
+    } },
+    { key = 'Escape', mods = 'NONE', action = act.Multiple {
+      act.CopyMode 'ClearPattern',
+      act.CopyMode 'AcceptPattern',
     } },
   })
 end
 config.key_tables = {
   copy_mode = copy_mode,
+  search_mode = search_mode,
 }
 
 -- Bone2 puts '[' and other symbols on the CapsLock (Mode_switch) layer, but

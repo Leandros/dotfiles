@@ -278,6 +278,17 @@ New link or system file: install function, `check_link` or `cmp` check in
   20261108). wezterm still reloads the config when the portal setting
   changes. `test/wezterm/test.sh` loads `.wezterm.lua`
   with a fake `wezterm` module in `nvim -l`.
+- wezterm copy mode (`Leader+[`) mirrors tmux's copy-mode keys. `set_keys`
+  replaces default entries with the same key and modifiers. While a search
+  pattern is edited, wezterm uses the `search_mode` table, not `copy_mode`
+  (copy.rs `update_key_table`), and only `AcceptPattern` ends editing: Enter
+  = PriorMatch + AcceptPattern, Escape = ClearPattern + AcceptPattern.
+  `config.key_tables` must list `search_mode` too. wezterm keeps the last
+  pattern per tab (`SAVED_PATTERN`); a new copy mode with one shows the search
+  bar and jumps to its first match, so every exit (q, Ctrl+c, Ctrl+g, Y) runs
+  `ClearPattern` first (`leave_copy_mode`). The config also runs in LuaJIT
+  (tests): no `table.unpack`. Check with
+  `wezterm show-keys --lua --key-table copy_mode|search_mode`.
 - nvim, tmux and wezterm all use Solarized dark and light. Keep their colors
   the same. nvim has `EnableDarkMode()` and `EnableLightMode()`.
 - On Linux all three follow `theme` by reading the desktop, never by `theme`

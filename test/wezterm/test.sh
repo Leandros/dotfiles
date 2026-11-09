@@ -64,9 +64,16 @@ if appearance ~= "none" then
           { key = "b", mods = "NONE", action = act.CopyMode "MoveBackwardWord" },
           { key = "w", mods = "NONE", action = act.CopyMode "MoveForwardWord" },
           { key = "Escape", mods = "NONE", action = act.CopyMode "Close" },
+          { key = "q", mods = "NONE", action = act.Multiple { act.ScrollToBottom, act.CopyMode "Close" } },
+          { key = "c", mods = "CTRL", action = act.Multiple { act.ScrollToBottom, act.CopyMode "Close" } },
+          { key = "g", mods = "CTRL", action = act.Multiple { act.ScrollToBottom, act.CopyMode "Close" } },
           { key = "f", mods = "NONE", action = act.CopyMode { JumpForward = { prev_char = false } } },
         },
-        search_mode = {},
+        search_mode = {
+          { key = "Escape", mods = "NONE", action = act.CopyMode "Close" },
+          { key = "Enter", mods = "NONE", action = act.CopyMode "PriorMatch" },
+          { key = "n", mods = "CTRL", action = act.CopyMode "NextMatch" },
+        },
       }
     end,
     get_appearance = function() return appearance end,
@@ -88,8 +95,9 @@ end
 
 local config = dofile(config_path)
 
--- "copy": copy mode entries of the keys below, "key[mods]=actions;".
-if what == "copy" then
+-- "copy" / "search": entries of the keys below in copy_mode / search_mode,
+-- "key[mods]=actions;".
+if what == "copy" or what == "search" then
   local function describe(a)
     if type(a) ~= "table" then return tostring(a) end
     if a.name == "Multiple" then
@@ -101,9 +109,11 @@ if what == "copy" then
     return a.name
   end
   local out = {}
-  for _, k in ipairs(config.key_tables.copy_mode) do
+  local tbl = what == "copy" and config.key_tables.copy_mode or config.key_tables.search_mode
+  for _, k in ipairs(tbl) do
     local keys = { y = 1, b = 1, B = 1, S = 1, N = 1, R = 1, ["("] = 1, [")"] = 1,
-      Y = 1, ["/"] = 1, ["?"] = 1, ["-"] = 1, Escape = 1, f = 1 }
+      Y = 1, ["/"] = 1, ["?"] = 1, ["-"] = 1, Escape = 1, f = 1, Enter = 1,
+      q = 1, c = 1, g = 1 }
     if keys[k.key] then
       out[#out + 1] = k.key .. "[" .. (k.mods or "") .. "]=" .. describe(k.action)
     end
@@ -156,9 +166,10 @@ main() {
     # Copy mode, as in tmux: y copies and stays (clears the selection), Y
     # copies and leaves; Shift+b / Shift+s by word; N / R one line, ( / )
     # one page; / searches up, ? / - next / previous match in that
-    # direction; Escape leaves the search prompt (only AcceptPattern ends
-    # pattern editing) and clears the selection; f keeps wezterm's jump to a
-    # character. Each key appears once.
+    # direction; Escape clears the selection; f keeps wezterm's jump to a
+    # character. Leaving (q, Ctrl+c, Ctrl+g, Y) clears the search pattern:
+    # wezterm keeps it per tab, and the next copy mode would open with the
+    # search bar and jump to its first match. Each key appears once.
     local want=(
         "(\[NONE\]=CopyMode(PageDown)"
         ")\[NONE\]=CopyMode(PageUp)"
@@ -166,11 +177,14 @@ main() {
         "/\[NONE\]=CopyMode(EditPattern)"
         "?\[NONE\]=CopyMode(PriorMatch)"
         "B\[SHIFT\]=CopyMode(MoveBackwardWord)"
-        "Escape\[NONE\]=CopyMode(AcceptPattern),CopyMode(ClearSelectionMode)"
+        "Escape\[NONE\]=CopyMode(ClearSelectionMode)"
         "N\[SHIFT\]=ScrollByLine(1)"
         "R\[SHIFT\]=ScrollByLine(-1)"
         "S\[SHIFT\]=CopyMode(MoveForwardWord)"
-        "Y\[SHIFT\]=CopyTo(ClipboardAndPrimarySelection),ScrollToBottom,CopyMode(Close)"
+        "Y\[SHIFT\]=CopyTo(ClipboardAndPrimarySelection),CopyMode(ClearPattern),ScrollToBottom,CopyMode(Close)"
+        "q\[NONE\]=CopyMode(ClearPattern),ScrollToBottom,CopyMode(Close)"
+        "c\[CTRL\]=CopyMode(ClearPattern),ScrollToBottom,CopyMode(Close)"
+        "g\[CTRL\]=CopyMode(ClearPattern),ScrollToBottom,CopyMode(Close)"
         "b\[NONE\]=CopyMode(MoveLeft)"
         "f\[NONE\]=CopyMode(table)"
         "y\[NONE\]=CopyTo(ClipboardAndPrimarySelection),CopyMode(ClearSelectionMode)"
@@ -182,6 +196,14 @@ main() {
         if grep -qx -- "$line" <<< "$got"; then ok "copy mode: ${line//\\/}"; else fail "copy mode: missing ${line//\\/}"; fi
     done
     expect "copy mode: each key once" "${#want[@]}" "$(grep -c . <<< "$got")"
+
+    # Search prompt (search_mode, active while the pattern is edited): Enter
+    # jumps up and returns to copy mode with the pattern (? and - then move
+    # between matches); Escape cancels the search back to copy mode. Only
+    # AcceptPattern leaves pattern editing.
+    expect "search prompt keys" \
+        "Enter[NONE]=CopyMode(PriorMatch),CopyMode(AcceptPattern);Escape[NONE]=CopyMode(ClearPattern),CopyMode(AcceptPattern)" \
+        "$(run "$linux" Dark search)"
 
     exit "$FAILED"
 }
