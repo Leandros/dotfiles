@@ -140,6 +140,11 @@ New link or system file: install function, `check_link` or `cmp` check in
   its crates build them with cmake. Escape is hard-coded as exit; with
   `--exit-keys` set, a wrong key no longer closes it. Missing font family:
   falls back to the first monospace font.
+- rrandr (desktop): monitor layout GUI with refresh rate (arandr has none).
+  No release or crate: `cargo install --git --rev "$RRANDR_REF"`. Needs
+  GTK >= 4.6 (Ubuntu 22.04 has 4.6.9), `glib-compile-resources` and `msgfmt`
+  at build time. No `--version`: verify checks the stamp and `ldd`. WM_CLASS
+  `rrandr`, `rrandr` (checked under Xvfb). No profiles; autorandr saves them.
 - kmscon.conf (`kmscon_conf`): `font-size`, `palette=solarized` (libtsm
   built-in; also `solarized-black`, `solarized-white`), and
   `font-name=PragmataPro Mono` only where `fc-list` finds it (commercial font;
@@ -268,7 +273,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   settle, runs `kb <kb show>` and `touchpad restore` (the session's last
   choice). Installers that run `udevadm trigger` re-add every input device.
 - Floating windows need `for_window` rules: nmrs (`class`), `blueman-*`,
-  copyq (`move position mouse`), arandr and pavucontrol (`instance`).
+  copyq (`move position mouse`), arandr, rrandr and pavucontrol (`instance`).
 - No `tray_output`: with `primary`, the tray vanishes when no output is
   primary. i3bar shows the tray on one output only.
 - `i3-msg` exec needs one string: `i3-msg -q "exec --no-startup-id nmrs-gui"`.
@@ -277,6 +282,10 @@ New link or system file: install function, `check_link` or `cmp` check in
   `tailscale status --json` BackendState) blocks and
   click handling around i3status.
 - lightdm on Fedora/EL does not source `~/.xprofile`; the xinitrc.d hook does.
+- Language: `.xprofile` exports `LANG=en_US.UTF-8` before i3. lightdm sets
+  LANG from the AccountsService language, which came back as `de_DE.utf8`
+  after `SetLanguage en_US.UTF-8` (greeter suspected); arandr, pavucontrol
+  and blueman were German. Test: `test/xprofile/test.sh`.
 - Qt scaling: `.xprofile` exports `QT_SCALE_FACTOR=Xft.dpi/96` and
   `QT_FONT_DPI=96`. Qt 6 already scales by `Xft.dpi` (alone, QT_SCALE_FACTOR
   doubles it to 2.25); Qt 5 (Resolve bundles 5.15) scales only fonts by it.

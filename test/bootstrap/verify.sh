@@ -427,6 +427,19 @@ if [[ $xorg_expected -eq 1 ]]; then
     fi
     check_version nmrs-gui "nmrs-gui $NMRS_GUI_VERSION" nmrs-gui --version
     check_version wmfocus "wmfocus $WMFOCUS_VERSION" wmfocus --version
+    # rrandr has no --version: the stamp holds the pinned commit, and every
+    # library it links must resolve.
+    if [[ -x /usr/local/bin/rrandr && "$(cat /usr/local/share/bootstrap/rrandr 2>/dev/null)" == "$RRANDR_REF" ]]; then
+        ok "rrandr $RRANDR_REF"
+    else
+        fail "rrandr: want /usr/local/bin/rrandr at $RRANDR_REF"
+    fi
+    rrandr_libs="$(ldd /usr/local/bin/rrandr 2>&1 || true)"
+    if [[ "$rrandr_libs" == *"not found"* ]]; then
+        fail "rrandr libraries missing: $(grep 'not found' <<< "$rrandr_libs" | tr '\n' ' ')"
+    else
+        ok "rrandr libraries resolve"
+    fi
     if grep -qx 'Exec=nmrs-gui' /usr/local/share/applications/nmrs.desktop 2>/dev/null; then
         ok "nmrs.desktop installed"
     else

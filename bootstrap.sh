@@ -100,6 +100,9 @@ readonly XREMAP_VERSION="0.15.15"
 readonly NMRS_GUI_VERSION="2.1.0"
 # https://crates.io/crates/wmfocus (Xorg desktop only)
 readonly WMFOCUS_VERSION="1.5.0"
+# https://github.com/brofi/rrandr (Xorg desktop only; no releases or crate,
+# so a commit)
+readonly RRANDR_REF="d1677ca9b538d489b75a8760a1848d780733083a"
 # Not pinned: every run installs or updates the latest stable and makes it
 # the default, so the rustup proxies (rust-analyzer) find its components.
 readonly RUST_TOOLCHAIN="stable"
@@ -1379,6 +1382,34 @@ install_wmfocus() {
     mark_current wmfocus "$WMFOCUS_VERSION"
 }
 
+# RRandR: monitor layout GUI like arandr, plus the refresh rate. GTK >= 4.6;
+# the build compiles its resources (glib-compile-resources) and
+# translations (msgfmt).
+install_rrandr_deps() {
+    case "$DISTRO" in
+        debian|ubuntu)
+            $SUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
+                -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold \
+                libgtk-4-dev libglib2.0-dev-bin gettext
+            ;;
+        fedora|rhel)
+            $SUDO dnf install -y -q gtk4-devel glib2-devel gettext
+            ;;
+    esac
+}
+
+install_rrandr() {
+    is_current rrandr "$RRANDR_REF" "$PREFIX/bin/rrandr" && return
+
+    install_rrandr_deps
+    export CARGO_HOME="$CARGO_HOME_DIR" RUSTUP_HOME="$RUSTUP_HOME_DIR"
+    quiet "$CARGO_HOME_DIR/bin/cargo" "+$RUST_TOOLCHAIN" install -q --locked \
+        --git "$GITHUB/brofi/rrandr" --rev "$RRANDR_REF" \
+        --root "$WORK_DIR/rrandr" rrandr
+    install_bin "$WORK_DIR/rrandr/bin/rrandr" rrandr
+    mark_current rrandr "$RRANDR_REF"
+}
+
 # Console font matching the display scale, applied at boot. The Terminus
 # console fonts come in the four sizes the scales need.
 readonly CONSOLE_FONT_BASE_PX=16
@@ -1696,6 +1727,7 @@ setup_xorg() {
     install_xremap
     install_nmrs_gui
     install_wmfocus
+    install_rrandr
     install_xorg_conf
     install_logind_conf
     install_sleep_hook
@@ -1847,6 +1879,7 @@ report() {
         print_version wezterm wezterm --version
         print_version nmrs-gui nmrs-gui --version
         print_version wmfocus wmfocus --version
+        print_version rrandr cat "$(stamp_path rrandr)"
         if [[ "$DISTRO" == fedora ]]; then
             print_version sunshine rpm -q Sunshine
         fi

@@ -158,6 +158,9 @@ for_window [instance="^copyq$"] floating enable, move position mouse
 # ARandR (monitor layout) sets only the WM_CLASS instance.
 for_window [instance="^arandr$"] floating enable
 
+# RRandR (monitor layout and refresh rate): WM_CLASS "rrandr", "rrandr".
+for_window [instance="^rrandr$"] floating enable
+
 # Audio devices and per-app streams; opened from the bar's volume block.
 for_window [instance="^pavucontrol$"] floating enable
 

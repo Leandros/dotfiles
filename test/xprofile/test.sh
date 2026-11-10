@@ -53,6 +53,7 @@ EOF
 #!/bin/sh
 echo "theme \$*" >> "$CALLS"
 echo "qt \${QT_SCALE_FACTOR:-unset} \${QT_FONT_DPI:-unset}" >> "$CALLS"
+echo "lang \${LANG:-unset}" >> "$CALLS"
 EOF
     for cmd in kb input-restore; do
         printf '#!/bin/sh\necho "%s $*" >> "%s"\n' "$cmd" "$CALLS" > "$TMP/home/bin/$cmd"
@@ -81,8 +82,9 @@ EOF
 run() {
     : > "$CALLS"
     rm -f "$DEVICE"
-    # Without the Qt variables of the session running the test.
-    env -u QT_SCALE_FACTOR -u QT_FONT_DPI \
+    # Without the Qt variables of the session running the test. LANG as
+    # lightdm sets it from the AccountsService language (German here).
+    env -u QT_SCALE_FACTOR -u QT_FONT_DPI LANG=de_DE.utf8 \
         HOME="$TMP/home" PATH="$STUBS" DISPLAY=:99 XFT_DPI="${XFT_DPI:-}" /bin/sh "$XPROFILE"
     wait 2>/dev/null || true
 }
@@ -128,6 +130,10 @@ main() {
     # and other GUIs run as the user); a re-login replaces the old one.
     expect "polkit agent starts" "lxpolkit " "$(grep '^lxpolkit' "$CALLS")"
     if grep -qx 'pkill -x lxpolkit' "$CALLS"; then ok "the old polkit agent is stopped"; else fail "no pkill -x lxpolkit"; fi
+
+    # English programs (arandr, pavucontrol, blueman), whatever language
+    # lightdm took from AccountsService.
+    expect "programs start in English" "lang en_US.UTF-8" "$(grep '^lang ' "$CALLS")"
 
     # Qt scaling from Xft.dpi (bootstrap's scale): QT_SCALE_FACTOR plus
     # QT_FONT_DPI=96, or Qt 6 (already scaled by Xft.dpi) doubles and Qt 5

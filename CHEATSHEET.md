@@ -122,6 +122,7 @@ In X, xremap swaps the left Alt and Ctrl keys. Right modifiers do not change.
 | `flightmode on` / `off` / `toggle` | All radios off and battery power mode / back |
 | `theme dark` / `light` / `toggle` | Solarized dark or light: i3 colors, Firefox, GTK apps (on next start) |
 | `arandr`, `autorandr --save NAME` | Arrange and save monitor layouts |
+| `rrandr` | Monitor layout with refresh rate; save with `autorandr --save NAME` |
 
 ## tmux
 

@@ -1,5 +1,11 @@
 #!/bin/sh
 
+# English for everything the session starts, as in .zshrc. lightdm sets
+# LANG from the AccountsService language, which its greeter resets (German
+# after logins with en_US set).
+LANG=en_US.UTF-8
+export LANG
+
 # Xft.dpi and font settings; i3 (pango) and wezterm read them from here.
 [ -f ~/.Xresources ] && xrdb -merge ~/.Xresources
 
