@@ -17,12 +17,15 @@ dark() {
     tmux set -g status-style "$status_style_dark"
     tmux set -g window-status-current-format "$window_status_dark"
     tmux set -g pane-active-border-style fg=green
+    # tmux-flash reads it for its colors.
+    tmux set -g @color-mode dark
 }
 
 light() {
     tmux set -g status-style "$status_style_light"
     tmux set -g window-status-current-format "$window_status_light"
     tmux set -g pane-active-border-style fg=red
+    tmux set -g @color-mode light
 }
 
 case "${1:-}" in

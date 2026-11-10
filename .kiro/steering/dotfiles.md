@@ -196,6 +196,8 @@ New link or system file: install function, `check_link` or `cmp` check in
   `test/xprofile/test.sh` (runs `.xprofile` with only stubs on PATH),
   `test/tmux-plugins/test.sh` (fake HOME, private tmux sockets; never the
   caller's server),
+  `cargo test --manifest-path tmux-flash/Cargo.toml` (tmux-flash; its
+  integration tests start private tmux servers),
   `test/idle-settings/test.sh`, `test/caffeinate/test.sh`, `test/eww/test.sh`,
   `test/input-restore/test.sh`,
   `test/fetch/test.sh` (`fetch_unpack` must die on a failed download: it runs
@@ -390,16 +392,18 @@ New link or system file: install function, `check_link` or `cmp` check in
   `tmux load-buffer -w -` (clipboard too). Its `--version` prints several
   lines: `| head -n 1` under pipefail failed 21 of 300 times (SIGPIPE); use
   `sed -n 1p`.
-- tmux-jump (`prefix g`, `@jump-key g`; default is `j`): tpm plugin in Ruby,
-  needs Ruby >= 2.3 (`&.` in `jump_position.rb`). Distro `ruby` package; macOS
-  system Ruby. AL2 `/usr/bin/ruby` is 2.0 and amzn2int packages (ruby-s3,
-  ruby-sqs2) need it, no `amazon-linux-extras` Ruby: bootstrap installs the
-  prebuilt jdx/ruby release (`TMUX_JUMP_RUBY_VERSION`, glibc 2.14, 399 MB) in
-  `/usr/local/lib/tmux-jump-ruby`, not on PATH. The Linux `.tmux.conf`
-  re-binds `g` after tpm, with that Ruby first in PATH, when it exists (the
-  path to the plugin's `scripts/tmux-jump.sh` is in the config). verify.sh
-  types `prefix g` + `z` through a `script` client and checks the copy-mode
-  cursor (command-prompt needs a client).
+- tmux-flash (`prefix g`): Rust, in `tmux-flash/` of this repo, which will
+  move to its own repository (no `git init` there, keep it self-contained).
+  Its own steering file: `tmux-flash/.kiro/steering/tmux-flash.md`; read it
+  before changes there. Bootstrap step `tmux-flash` (basic, after `rust`):
+  `cargo install --locked --path`, stamp = git tree hash of `tmux-flash/`.
+  Binding: `run-shell -b 'tmux-flash --pane ... --client ...'` (the popup
+  needs the client). `toggle-dark-mode` sets `@color-mode dark|light` for its
+  colors. verify.sh types `prefix g`, `alpi`, Enter through a second tmux
+  server as the client and checks the copy-mode cursor.
+- tmux-jump (Ruby) was its predecessor. Machines that had it keep
+  `/usr/local/lib/tmux-jump-ruby` (AL2) and the distro `ruby` package:
+  bootstrap removes nothing. `prefix M-u` (tpm clean) removes the plugin.
 - wezterm: Xorg only, rolling nightly (GitHub `.deb` on Debian/Ubuntu, COPR on
   Fedora/EL). It reads the DPI from `~/.Xresources`. On Linux its scheme
   follows `gsettings get ... color-scheme` (set by `theme`), read in the

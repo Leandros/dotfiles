@@ -65,11 +65,13 @@ main() {
     write_stubs
     export PATH="$STUBS:$PATH"
 
-    # toggle-dark-mode with an explicit mode.
+    # toggle-dark-mode with an explicit mode. @color-mode tells tmux-flash.
     "$DIR/toggle-dark-mode" light > /dev/null
     expect "toggle-dark-mode light" "$LIGHT" "$(opt status-style)"
+    expect "toggle-dark-mode light sets @color-mode" "light" "$(opt @color-mode)"
     "$DIR/toggle-dark-mode" dark > /dev/null
     expect "toggle-dark-mode dark" "$DARK" "$(opt status-style)"
+    expect "toggle-dark-mode dark sets @color-mode" "dark" "$(opt @color-mode)"
     "$DIR/toggle-dark-mode" > /dev/null
     expect "toggle-dark-mode without argument toggles" "$LIGHT" "$(opt status-style)"
 

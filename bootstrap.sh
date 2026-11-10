@@ -47,8 +47,6 @@ readonly TMUX_VERSION_LINUX="3.5a"
 readonly TMUX_VERSION_MACOS="3.4"
 # https://github.com/abhinav/tmux-fastcopy/releases
 readonly TMUX_FASTCOPY_VERSION="0.15.0"
-# https://github.com/jdx/ruby/releases (prebuilt; AL2 only, for tmux-jump)
-readonly TMUX_JUMP_RUBY_VERSION="3.4.12"
 # https://www.zsh.org/pub/
 readonly ZSH_VERSION_PIN="5.9.2"
 # https://github.com/junegunn/fzf/releases
@@ -564,7 +562,7 @@ install_system_packages() {
                 -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold \
                 build-essential autoconf automake pkg-config cmake bison \
                 git rsync openssh-client tree wget curl ca-certificates \
-                file unzip xz-utils patch gettext locales ruby \
+                file unzip xz-utils patch gettext locales \
                 libevent-dev libncurses-dev libreadline-dev
             ensure_locale
             ;;
@@ -580,7 +578,7 @@ install_system_packages() {
             $SUDO dnf install -y -q \
                 gcc gcc-c++ make binutils autoconf automake pkgconf-pkg-config cmake bison \
                 git rsync openssh-clients tree wget \
-                file unzip xz tar gzip patch gettext gettext-devel which ruby \
+                file unzip xz tar gzip patch gettext gettext-devel which \
                 glibc-langpack-en libevent-devel ncurses-devel readline-devel
             ;;
         macos)
@@ -753,23 +751,6 @@ install_tmux_fastcopy() {
     dir="$(fetch_unpack "$GITHUB/abhinav/tmux-fastcopy/releases/download/v$TMUX_FASTCOPY_VERSION/tmux-fastcopy_${TMUX_FASTCOPY_VERSION}_${os}_$arch.tar.gz")"
     install_bin_from "$dir" tmux-fastcopy
     mark_current tmux-fastcopy "$TMUX_FASTCOPY_VERSION"
-}
-
-readonly TMUX_JUMP_RUBY_DIR="$PREFIX/lib/tmux-jump-ruby"
-
-# tmux-jump needs Ruby >= 2.3. AL2's /usr/bin/ruby is 2.0, and internal
-# packages (ruby-s3, ruby-sqs2) need it. A private Ruby, not on PATH, leaves
-# it in place; .tmux.conf runs tmux-jump with it.
-install_tmux_jump_ruby() {
-    [[ "$DISTRO" == "amzn2" ]] || return 0
-    is_current tmux-jump-ruby "$TMUX_JUMP_RUBY_VERSION" "$TMUX_JUMP_RUBY_DIR/bin/ruby" && return
-    local arch="x86_64" dir
-    [[ "$ARCH" == "aarch64" ]] && arch="arm64"
-    dir="$(fetch_unpack "$GITHUB/jdx/ruby/releases/download/$TMUX_JUMP_RUBY_VERSION/ruby-$TMUX_JUMP_RUBY_VERSION.${arch}_linux.tar.gz")"
-    $SUDO rm -rf "$TMUX_JUMP_RUBY_DIR"
-    $SUDO mkdir -p "$PREFIX/lib"
-    $SUDO mv "$(unpacked_root "$dir")" "$TMUX_JUMP_RUBY_DIR"
-    mark_current tmux-jump-ruby "$TMUX_JUMP_RUBY_VERSION"
 }
 
 install_nnn() {
@@ -1009,6 +990,23 @@ install_tree_sitter() {
         --root "$WORK_DIR/tree-sitter" "tree-sitter-cli@$TREE_SITTER_VERSION"
     install_bin "$WORK_DIR/tree-sitter/bin/tree-sitter" tree-sitter
     mark_current tree-sitter "$TREE_SITTER_VERSION"
+}
+
+# tmux-flash (prefix g in tmux) is in this repository. Its git tree is its
+# version: a change in it builds it again.
+install_tmux_flash() {
+    local tree
+    tree="$(git -C "$DOTFILES_DIR" rev-parse HEAD:tmux-flash)"
+    is_current tmux-flash "$tree" "$PREFIX/bin/tmux-flash" && return
+
+    export CARGO_HOME="$CARGO_HOME_DIR" RUSTUP_HOME="$RUSTUP_HOME_DIR"
+    # --path builds in the package's target/ by default: keep the build out
+    # of the clone.
+    quiet "$CARGO_HOME_DIR/bin/cargo" "+$RUST_TOOLCHAIN" install -q --locked \
+        --path "$DOTFILES_DIR/tmux-flash" --root "$WORK_DIR/tmux-flash" \
+        --target-dir "$WORK_DIR/tmux-flash-target"
+    install_bin "$WORK_DIR/tmux-flash/bin/tmux-flash" tmux-flash
+    mark_current tmux-flash "$tree"
 }
 
 # lspmux shares one language server per workspace between all editors. It has
@@ -2056,11 +2054,7 @@ report() {
     print_version tmux tmux -V
     # sed reads all lines: with head, a SIGPIPE fails the pipe at random.
     print_version tmux-fastcopy bash -c 'tmux-fastcopy --version | sed -n 1p'
-    if [[ "$DISTRO" == "amzn2" ]]; then
-        print_version tmux-jump-ruby "$TMUX_JUMP_RUBY_DIR/bin/ruby" --version
-    else
-        print_version ruby ruby --version
-    fi
+    print_version tmux-flash tmux-flash --version
     print_version nvim nvim --version
     print_version fzf fzf --version
     print_version zoxide zoxide --version
@@ -2114,7 +2108,6 @@ run_all() {
     step zsh install_zsh
     step tmux install_tmux
     step tmux-fastcopy install_tmux_fastcopy
-    step tmux-jump-ruby install_tmux_jump_ruby
     step nvim install_nvim
     step fzf install_fzf
     step zoxide install_zoxide
@@ -2130,6 +2123,7 @@ run_all() {
     step rust install_rust
     category_step devtools rust-analyzer install_rust_analyzer
     step tree-sitter install_tree_sitter
+    step tmux-flash install_tmux_flash
     category_step devtools lspmux setup_lspmux
     step sshd install_sshd_conf
     step node install_node

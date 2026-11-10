@@ -191,7 +191,7 @@ The prefix is `Ctrl+e`. `Prefix x` means: press `Ctrl+e`, release, press `x`.
 | `Y` or `Enter` | Copy and stop copy mode |
 | `Prefix ]` | Paste |
 | `Prefix f` | Labels on text in the pane (tmux-fastcopy); type a label to copy its text, `Tab` to select more than one |
-| `Prefix g` | Jump (tmux-jump): type a character, then the label of a word that starts with it; the cursor goes there in copy mode |
+| `Prefix g` | Jump (tmux-flash, rules of flash.nvim): type any number of characters, then the label of a match; `Enter` takes the next match, `Backspace` removes a character, `Escape` cancels. The cursor goes there in copy mode |
 
 Copies also reach the clipboard of the local terminal (OSC 52), through SSH
 and mosh too.

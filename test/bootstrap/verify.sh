@@ -74,6 +74,9 @@ fi
 check_version zsh     "zsh $ZSH_VERSION_PIN" /usr/local/bin/zsh --version
 check_version tmux    "tmux $TMUX_VERSION_LINUX" tmux -V
 check_version tmux-fastcopy "tmux-fastcopy version $TMUX_FASTCOPY_VERSION" tmux-fastcopy --version
+# tmux-flash is built from this repository: its version is in Cargo.toml.
+flash_version="$(sed -n 's/^version = "\(.*\)"$/\1/p' "$SRC/tmux-flash/Cargo.toml" | head -n 1)"
+check_version tmux-flash "tmux-flash $flash_version" tmux-flash --version
 check_version nvim    "NVIM v$NVIM_VERSION" nvim --version
 check_version fzf     "$FZF_VERSION" fzf --version
 check_version zoxide  "zoxide $ZOXIDE_VERSION" zoxide --version
@@ -544,7 +547,7 @@ check_pin "$HOME/.oh-my-zsh/custom/plugins/fast-syntax-highlighting" "$FAST_SYNT
 check_pin "$HOME/.tmux/plugins/tpm" "$TPM_REF"
 
 # tpm installed the plugins, and a new tmux server loads them.
-for plugin in tmux-scroll-copy-mode tmux-fastcopy tmux-jump; do
+for plugin in tmux-scroll-copy-mode tmux-fastcopy; do
     if [[ -d "$HOME/.tmux/plugins/$plugin/.git" ]]; then
         ok "tmux plugin $plugin"
     else
@@ -556,19 +559,20 @@ vtmux() { env -u TMUX TMUX_TMPDIR="$tmux_sock_dir" tmux "$@"; }
 vtmux new-session -d -s verify || true
 prefix_f="$(vtmux list-keys -T prefix f 2>&1 || true)"
 
-# prefix g: tmux-jump moves the cursor to the word that starts with the typed
-# character; with one match there is no label to type. command-prompt needs
-# a client: a second tmux server runs one in its pane and gets the keys (no
-# script(1) on Fedora, TERM=dumb in containers).
-vtmux new-session -d -s jump -x 80 -y 24 "printf 'alpha beta zulu\n'; sleep 60" || true
+# prefix g: tmux-flash; "alpi" has one match, Enter jumps to it. Its popup
+# needs a client: a second tmux server runs one in its pane and gets the keys
+# (no script(1) on Fedora, TERM=dumb in containers).
+vtmux new-session -d -s jump -x 80 -y 24 "printf 'alpha beta alpine zulu\n'; sleep 60" || true
 client_sock_dir="$(mktemp -d)"
 ctmux() { env -u TMUX TMUX_TMPDIR="$client_sock_dir" tmux -f /dev/null "$@"; }
 ctmux new-session -d -x 80 -y 24 "env -u TMUX TERM=screen TMUX_TMPDIR=$tmux_sock_dir tmux attach -t jump" || true
 sleep 2
 ctmux send-keys C-e g || true
 sleep 1
-ctmux send-keys z || true
-sleep 3
+ctmux send-keys -l alpi || true
+sleep 1
+ctmux send-keys Enter || true
+sleep 2
 jump="$(vtmux display-message -p -t jump '#{pane_mode} #{copy_cursor_x} #{copy_cursor_y}' 2>&1 || true)"
 ctmux kill-server >/dev/null 2>&1 || true
 rm -rf "$client_sock_dir"
@@ -581,21 +585,9 @@ else
     fail "tmux prefix f: $prefix_f"
 fi
 if [[ "$jump" == "copy-mode 11 0" ]]; then
-    ok "tmux prefix g jumps (tmux-jump)"
+    ok "tmux prefix g jumps (tmux-flash)"
 else
     fail "tmux prefix g: want 'copy-mode 11 0', got '$jump'"
-fi
-
-# AL2's /usr/bin/ruby (2.0) is too old for tmux-jump. Its Ruby is private:
-# not on PATH, where it would replace the system Ruby.
-if [[ $is_al2 -eq 1 ]]; then
-    jump_ruby_dir="/usr/local/lib/tmux-jump-ruby"
-    check_version tmux-jump-ruby "ruby $TMUX_JUMP_RUBY_VERSION" "$jump_ruby_dir/bin/ruby" --version
-    if [[ "$(command -v ruby || true)" == "$jump_ruby_dir"/* ]]; then
-        fail "tmux-jump Ruby is on PATH"
-    else
-        ok "tmux-jump Ruby not on PATH"
-    fi
 fi
 
 if grep -q '##NEW' "$HOME/.zshrc"; then

@@ -62,6 +62,7 @@ Test in Docker: `test/bootstrap/run.sh [debian12|ubuntu2204|fedora43|fedora44|fe
 (all categories; `BOOTSTRAP_CATEGORIES= test/bootstrap/run.sh <distro>` for basic only).
 Test the category choice: `test/categories/test.sh`.
 Test the tmux plugin install: `test/tmux-plugins/test.sh`.
+Test tmux-flash (`prefix g` in tmux): `cargo test --manifest-path tmux-flash/Cargo.toml`.
 Media keys (volume, mute, screen brightness) are bound in i3 only; check with `test/media-keys/test.sh`.
 
 
