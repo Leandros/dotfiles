@@ -100,8 +100,9 @@ readonly XREMAP_VERSION="0.15.15"
 readonly NMRS_GUI_VERSION="2.1.0"
 # https://crates.io/crates/wmfocus (Xorg desktop only)
 readonly WMFOCUS_VERSION="1.5.0"
-# https://github.com/rust-lang/rust/releases
-readonly RUST_TOOLCHAIN="1.99.0"
+# Not pinned: every run installs or updates the latest stable and makes it
+# the default, so the rustup proxies (rust-analyzer) find its components.
+readonly RUST_TOOLCHAIN="stable"
 # https://github.com/tree-sitter/tree-sitter/releases
 # Release binaries need glibc 2.39; built with cargo instead.
 readonly TREE_SITTER_VERSION="0.27.1"
@@ -893,20 +894,17 @@ install_rust() {
         return
     fi
 
-    if ! "$rustup" run "$RUST_TOOLCHAIN" rustc --version >/dev/null 2>&1; then
-        quiet "$rustup" toolchain install --profile minimal "$RUST_TOOLCHAIN"
-    fi
-    if ! "$rustup" default >/dev/null 2>&1; then
-        quiet "$rustup" default "$RUST_TOOLCHAIN"
-    fi
+    quiet "$rustup" toolchain install --profile minimal "$RUST_TOOLCHAIN"
+    quiet "$rustup" default "$RUST_TOOLCHAIN"
 }
 
 # rust-analyzer for nvim, also through lspmux; it reads the std sources from
-# rust-src. The toolchain builds need glibc 2.17 at most, so they also run on
-# AL2.
+# rust-src. llvm-tools: llvm-cov, llvm-profdata and llvm-objdump for the
+# toolchain. The toolchain builds need glibc 2.17 at most, so they also run
+# on AL2.
 install_rust_analyzer() {
     export CARGO_HOME="$CARGO_HOME_DIR" RUSTUP_HOME="$RUSTUP_HOME_DIR"
-    quiet "$CARGO_HOME_DIR/bin/rustup" component add --toolchain "$RUST_TOOLCHAIN" rust-analyzer rust-src
+    quiet "$CARGO_HOME_DIR/bin/rustup" component add --toolchain "$RUST_TOOLCHAIN" rust-analyzer rust-src llvm-tools
 }
 
 # nvim-treesitter (main) needs the CLI to build parsers.

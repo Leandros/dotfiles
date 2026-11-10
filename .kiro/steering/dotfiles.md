@@ -133,7 +133,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   (8.0.0); older versions keep passwords from password managers.
 - tuned-ppd: `dnf install --allowerasing` replaces power-profiles-daemon.
   Skip if `tlp` is installed.
-- nmrs-gui: built with `cargo install` (needs the pinned Rust); desktop file in
+- nmrs-gui: built with `cargo install` (needs Rust 1.95+); desktop file in
   `/usr/local/share/applications/nmrs.desktop`.
 - wmfocus (`$mod+j`): `cargo install --features i3`. Build needs the
   cairo-gobject, fontconfig, freetype and expat headers; without the last two
@@ -146,8 +146,13 @@ New link or system file: install function, `check_link` or `cmp` check in
   Mono: the console does no shaping). kmscon reads it at console start and
   does not follow `theme`. Test: `test/kmscon-conf/test.sh`.
 - tree-sitter CLI: built with cargo; release binaries need glibc 2.39.
-- rust-analyzer and rust-src: rustup components of the pinned toolchain. Their
-  builds need glibc 2.17 at most and run on AL2 (tested: analysis-stats in the
+- Rust is not pinned: `install_rust` runs `rustup toolchain install stable`
+  (installs or updates) and `rustup default stable` on every run. The
+  `rust-analyzer` in `~/.cargo/bin` is a rustup proxy that runs the default
+  toolchain's component; with another default it failed ("Unknown binary
+  'rust-analyzer' in official toolchain").
+- rust-analyzer, rust-src and llvm-tools (devtools): rustup components of
+  stable. Their builds need glibc 2.17 at most and run on AL2 (tested: analysis-stats in the
   AL2 image). A toolchain binary copied out of its toolchain fails: it loads
   `librustc_driver` from the toolchain.
 - AL2 aarch64: node 16 (`NODE_VERSION_AL2_AARCH64`).

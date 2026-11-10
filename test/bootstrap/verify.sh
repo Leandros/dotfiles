@@ -83,7 +83,10 @@ check_version dua     "dua $DUA_VERSION" dua --version
 check_version rg      "ripgrep $RIPGREP_VERSION" rg --version
 check_version bat     "bat $BAT_VERSION" bat --version
 check_version mise    "$MISE_VERSION" mise --version
-check_version rustc   "rustc $RUST_TOOLCHAIN" "$HOME/.cargo/bin/rustc" --version
+# Not pinned: the latest stable, and the default the rustup proxies
+# (rustc, rust-analyzer) run.
+check_version rustc   "rustc " "$HOME/.cargo/bin/rustc" --version
+check_version "rust default" "stable-" "$HOME/.cargo/bin/rustup" default
 check_version tree-sitter "tree-sitter $TREE_SITTER_VERSION" tree-sitter --version
 check_version node    "v$node_want" node --version
 check_version python  "Python $PYTHON_VERSION" "/usr/local/bin/python$PYTHON_VERSION" --version
@@ -141,7 +144,13 @@ fi
 check_devtools() {
     check_version lazygit "version=$LAZYGIT_VERSION" lazygit --version
     check_version direnv  "$DIRENV_VERSION" direnv version
-    check_version rust-analyzer "rust-analyzer $RUST_TOOLCHAIN" "$HOME/.cargo/bin/rust-analyzer" --version
+    check_version rust-analyzer "rust-analyzer " "$HOME/.cargo/bin/rust-analyzer" --version
+    if "$HOME/.cargo/bin/rustup" component list --installed --toolchain stable 2>/dev/null \
+        | grep -q '^llvm-tools'; then
+        ok "llvm-tools"
+    else
+        fail "llvm-tools component missing"
+    fi
     if [[ -d "$("$HOME/.cargo/bin/rustc" --print sysroot 2>/dev/null)/lib/rustlib/src/rust/library/std" ]]; then
         ok "rust-src (std sources for rust-analyzer)"
     else
@@ -214,11 +223,12 @@ check_no_devtools() {
         /etc/systemd/system/lspmux.service "$HOME/.local/share/nvim/lazy/vimspector/gadgets/linux/CodeLLDB"; do
         check_absent devtools "$path"
     done
-    if "$HOME/.cargo/bin/rustup" component list --installed --toolchain "$RUST_TOOLCHAIN" 2>/dev/null \
-        | grep -q '^rust-analyzer'; then
-        fail "rust-analyzer component installed without devtools"
+    local components
+    components="$("$HOME/.cargo/bin/rustup" component list --installed --toolchain stable 2>/dev/null || true)"
+    if grep -qE '^(rust-analyzer|llvm-tools)' <<< "$components"; then
+        fail "rust-analyzer or llvm-tools component installed without devtools"
     else
-        ok "no rust-analyzer component without devtools"
+        ok "no rust-analyzer or llvm-tools component without devtools"
     fi
 }
 
