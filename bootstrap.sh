@@ -1184,7 +1184,7 @@ install_xorg_packages() {
                 -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold \
                 xorg xinit x11-xserver-utils \
                 i3 i3status suckless-tools i3lock xss-lock xautolock blueman arandr autorandr \
-                alsa-utils pavucontrol brightnessctl xclip xinput rfkill cifs-utils smbclient btop remmina remmina-plugin-rdp picom \
+                alsa-utils pavucontrol brightnessctl xclip xinput rfkill cifs-utils smbclient btop remmina remmina-plugin-rdp picom lxpolkit \
                 kbd console-data console-setup
             ;;
         fedora)
@@ -1198,15 +1198,16 @@ install_xorg_packages() {
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap xrandr \
                 i3 i3status dmenu i3lock xss-lock xautolock blueman gobject-introspection copyq \
                 arandr autorandr gtk3 \
-                alsa-utils pavucontrol brightnessctl xclip xinput picom cifs-utils samba-client btop remmina remmina-plugins-rdp firewall-config kbd terminus-fonts-console
+                alsa-utils pavucontrol brightnessctl xclip xinput picom cifs-utils samba-client btop remmina remmina-plugins-rdp firewall-config lxpolkit kbd terminus-fonts-console
             ;;
         rhel)
             $SUDO dnf install -y -q epel-release
             $SUDO dnf config-manager --set-enabled crb
-            # xss-lock, xautolock, blueman, arandr, autorandr and picom are
-            # not packaged for EL9; .xprofile tolerates their absence. Without
-            # them there is no lock or suspend on idle, no Bluetooth GUI and
-            # no saved monitor layouts; ~/bin/pwr still locks.
+            # xss-lock, xautolock, blueman, arandr, autorandr, picom and
+            # lxpolkit are not packaged for EL9; .xprofile tolerates their
+            # absence. Without them there is no lock or suspend on idle, no
+            # Bluetooth GUI, no saved monitor layouts and no polkit password
+            # prompt; ~/bin/pwr still locks.
             $SUDO dnf install -y -q \
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap \
                 i3 i3status dmenu i3lock copyq \

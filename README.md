@@ -43,6 +43,8 @@ i3 bar shows the layout and cycles it on click (left: next, right: previous), th
 screen brightness (`☀: 65%`), the active VPN and Tailscale (`VPN: <connection>` or `VPN: off`)
 and CPU and RAM use (`C: 12% R: 40%`); a click on
 the volume block opens pavucontrol to pick the audio input and output.
+`.xprofile` starts lxpolkit (not on EL9), the polkit agent that asks for the password
+when a GUI running as you needs root, such as firewall-config or blueman.
 `~/bin/theme dark|light|toggle` switches i3 between Solarized dark and light and
 sets the desktop color-scheme that Firefox, wezterm, tmux and nvim follow and the GTK 3/4 dark preference
 (dark by default; GTK apps pick it up when they start). The `ssh` function in `.zshrc` sends it

@@ -433,7 +433,7 @@ if [[ $xorg_expected -eq 1 ]]; then
     fi
     # Not packaged for EL9.
     if grep -qE '^ID=(debian|ubuntu|fedora)$' /etc/os-release; then
-        for bin in xss-lock xautolock blueman-applet blueman-manager picom; do
+        for bin in xss-lock xautolock blueman-applet blueman-manager picom lxpolkit; do
             if command -v "$bin" >/dev/null; then ok "xorg bin $bin"; else fail "xorg bin missing: $bin"; fi
         done
         # Imports all its GObject libraries; Fedora's package misses one.

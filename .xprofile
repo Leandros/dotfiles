@@ -85,6 +85,12 @@ xss-lock --transfer-sleep-lock -- ~/bin/pwr lock --nofork >/dev/null 2>&1 &
 # EL9 has no blueman.
 command -v blueman-applet >/dev/null && blueman-applet >/dev/null 2>&1 &
 
+# Polkit agent: asks for the password when a GUI running as the user needs
+# root through polkit (firewall-config, blueman). Without one polkit refuses
+# silently. EL9 has no lxpolkit.
+pkill -x lxpolkit 2>/dev/null
+command -v lxpolkit >/dev/null && lxpolkit >/dev/null 2>&1 &
+
 # Compositor for tear-free drawing (vsync); ~/.config/picom/picom.conf.
 # EL9 has no picom.
 pkill -x picom 2>/dev/null

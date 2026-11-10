@@ -36,7 +36,7 @@ expect() {
 write_stubs() {
     mkdir -p "$STUBS" "$TMP/home/bin" "$TMP/home/.config"
     local cmd
-    for cmd in systemctl autorandr xset setxkbmap xmodmap pkill xss-lock xautolock blueman-applet copyq picom; do
+    for cmd in systemctl autorandr xset setxkbmap xmodmap pkill xss-lock xautolock blueman-applet copyq picom lxpolkit; do
         printf '#!/bin/sh\necho "%s $*" >> "%s"\n' "$cmd" "$CALLS" > "$STUBS/$cmd"
     done
     # xrdb -query prints the Xft.dpi of XFT_DPI (unset: none), like the
@@ -123,6 +123,11 @@ main() {
     # picom: tear-free drawing (vsync); a re-login replaces the old one.
     expect "picom starts as a daemon" "picom -b" "$(grep '^picom' "$CALLS")"
     if grep -qx 'pkill -x picom' "$CALLS"; then ok "the old picom is stopped"; else fail "no pkill -x picom"; fi
+
+    # lxpolkit: the polkit agent that asks for the password (firewall-config
+    # and other GUIs run as the user); a re-login replaces the old one.
+    expect "polkit agent starts" "lxpolkit " "$(grep '^lxpolkit' "$CALLS")"
+    if grep -qx 'pkill -x lxpolkit' "$CALLS"; then ok "the old polkit agent is stopped"; else fail "no pkill -x lxpolkit"; fi
 
     # Qt scaling from Xft.dpi (bootstrap's scale): QT_SCALE_FACTOR plus
     # QT_FONT_DPI=96, or Qt 6 (already scaled by Xft.dpi) doubles and Qt 5

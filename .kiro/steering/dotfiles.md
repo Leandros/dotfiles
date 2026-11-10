@@ -122,7 +122,12 @@ New link or system file: install function, `check_link` or `cmp` check in
 - Sunshine (Moonlight remote-desktop host): Fedora + Xorg only, from the
   `lizardbyte/stable` copr (`SUNSHINE_COPR`, package `Sunshine`; chroots
   fedora-43..45). Installed only: not started, no firewall ports opened.
-- EL9 has no xss-lock, xautolock, blueman, arandr, autorandr, picom.
+- lxpolkit: polkit agent, started by `.xprofile` (`pkill -x` first). Without
+  an agent in i3, polkit refuses silently: firewall-config and other GUIs
+  that run as the user cannot change anything. Not in EL9 EPEL (it has
+  mate-polkit, polkit-gnome, xfce-polkit).
+- EL9 has no xss-lock, xautolock, blueman, arandr, autorandr, picom,
+  lxpolkit.
   `.xprofile` must work without them. RHEL 10 has no Xorg or i3.
 - CopyQ: Debian/Ubuntu only if the candidate is >= `COPYQ_MIN_VERSION`
   (8.0.0); older versions keep passwords from password managers.
