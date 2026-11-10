@@ -190,6 +190,7 @@ The prefix is `Ctrl+e`. `Prefix x` means: press `Ctrl+e`, release, press `x`.
 | `y` | Copy, stay in copy mode |
 | `Y` or `Enter` | Copy and stop copy mode |
 | `Prefix ]` | Paste |
+| `Prefix f` | Labels on text in the pane (tmux-fastcopy); type a label to copy its text, `Tab` to select more than one |
 
 Copies also reach the clipboard of the local terminal (OSC 52), through SSH
 and mosh too.
