@@ -45,6 +45,8 @@ readonly NVIM_VERSION="0.12.6"
 # https://github.com/tmux/tmux/releases
 readonly TMUX_VERSION_LINUX="3.5a"
 readonly TMUX_VERSION_MACOS="3.4"
+# https://github.com/abhinav/tmux-fastcopy/releases
+readonly TMUX_FASTCOPY_VERSION="0.15.0"
 # https://www.zsh.org/pub/
 readonly ZSH_VERSION_PIN="5.9.2"
 # https://github.com/junegunn/fzf/releases
@@ -736,6 +738,19 @@ install_tmux() {
         quiet $SUDO make install
     )
     mark_current tmux "$version"
+}
+
+# Without a tmux-fastcopy binary on PATH, the tpm plugin builds one with Go
+# at every tmux start. The release binary is static.
+install_tmux_fastcopy() {
+    is_current tmux-fastcopy "$TMUX_FASTCOPY_VERSION" "$PREFIX/bin/tmux-fastcopy" && return
+    local os="Linux" arch="$ARCH"
+    [[ "$OS" == "macos" ]] && os="Darwin"
+    [[ "$ARCH" == "aarch64" ]] && arch="arm64"
+    local dir
+    dir="$(fetch_unpack "$GITHUB/abhinav/tmux-fastcopy/releases/download/v$TMUX_FASTCOPY_VERSION/tmux-fastcopy_${TMUX_FASTCOPY_VERSION}_${os}_$arch.tar.gz")"
+    install_bin_from "$dir" tmux-fastcopy
+    mark_current tmux-fastcopy "$TMUX_FASTCOPY_VERSION"
 }
 
 install_nnn() {
@@ -1947,8 +1962,35 @@ set_login_shell() {
 setup_tmux_plugins() {
     local tpm="$HOME/.tmux/plugins/tpm"
     git_pin "$GITHUB/tmux-plugins/tpm.git" "$tpm" "$TPM_REF"
-    # Installs plugins listed in .tmux.conf. Needs a tmux server; tolerate failure.
-    "$tpm/bin/install_plugins" >/dev/null 2>&1 || warn "tpm: plugin install failed, run prefix+I in tmux"
+    install_tmux_plugins "$tpm"
+    reload_tmux_conf
+}
+
+# tmux without the caller's server: sockets in a directory of its own.
+private_tmux() {
+    local sock_dir="$1"
+    shift
+    env -u TMUX -u TMUX_PANE -u TMUX_PLUGIN_MANAGER_PATH TMUX_TMPDIR="$sock_dir" "$@"
+}
+
+# tpm gets its plugin directory from the tmux server. A server that did not
+# load tpm (bootstrap run in a tmux started before tpm existed) makes
+# install_plugins abort. A private server reads the current ~/.tmux.conf.
+install_tmux_plugins() {
+    local tpm="$1" sock_dir log="$WORK_DIR/tpm.log"
+    sock_dir="$(mktemp -d "$WORK_DIR/tmux.XXXXXX")" || die "mktemp failed"
+    if ! private_tmux "$sock_dir" "$tpm/bin/install_plugins" >"$log" 2>&1; then
+        warn "tpm: plugin install failed: $(tail -n 20 "$log")"
+    fi
+    private_tmux "$sock_dir" tmux kill-server >/dev/null 2>&1 || true
+}
+
+# A running server loads plugins only when it reads the config. Reload the
+# caller's server, so new plugins work without a tmux restart.
+reload_tmux_conf() {
+    tmux has-session >/dev/null 2>&1 || return 0
+    tmux source-file "$HOME/.tmux.conf" >/dev/null 2>&1 ||
+        warn "tmux: config reload failed, run: tmux source-file ~/.tmux.conf"
 }
 
 # lazy.nvim first, by hand: when nvim starts, lazy.nvim installs missing
@@ -1993,6 +2035,8 @@ report() {
     log "installed"
     print_version zsh "$(zsh_path)" --version
     print_version tmux tmux -V
+    # sed reads all lines: with head, a SIGPIPE fails the pipe at random.
+    print_version tmux-fastcopy bash -c 'tmux-fastcopy --version | sed -n 1p'
     print_version nvim nvim --version
     print_version fzf fzf --version
     print_version zoxide zoxide --version
@@ -2045,6 +2089,7 @@ run_all() {
 
     step zsh install_zsh
     step tmux install_tmux
+    step tmux-fastcopy install_tmux_fastcopy
     step nvim install_nvim
     step fzf install_fzf
     step zoxide install_zoxide

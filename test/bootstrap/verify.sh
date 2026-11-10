@@ -73,6 +73,7 @@ fi
 
 check_version zsh     "zsh $ZSH_VERSION_PIN" /usr/local/bin/zsh --version
 check_version tmux    "tmux $TMUX_VERSION_LINUX" tmux -V
+check_version tmux-fastcopy "tmux-fastcopy version $TMUX_FASTCOPY_VERSION" tmux-fastcopy --version
 check_version nvim    "NVIM v$NVIM_VERSION" nvim --version
 check_version fzf     "$FZF_VERSION" fzf --version
 check_version zoxide  "zoxide $ZOXIDE_VERSION" zoxide --version
@@ -541,6 +542,26 @@ check_pin "$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions" "$ZSH_AUTOSUGGES
 check_pin "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting" "$ZSH_SYNTAX_HIGHLIGHTING_REF"
 check_pin "$HOME/.oh-my-zsh/custom/plugins/fast-syntax-highlighting" "$FAST_SYNTAX_HIGHLIGHTING_REF"
 check_pin "$HOME/.tmux/plugins/tpm" "$TPM_REF"
+
+# tpm installed the plugins, and a new tmux server loads them.
+for plugin in tmux-scroll-copy-mode tmux-fastcopy; do
+    if [[ -d "$HOME/.tmux/plugins/$plugin/.git" ]]; then
+        ok "tmux plugin $plugin"
+    else
+        fail "tmux plugin $plugin missing"
+    fi
+done
+tmux_sock_dir="$(mktemp -d)"
+vtmux() { env -u TMUX TMUX_TMPDIR="$tmux_sock_dir" tmux "$@"; }
+vtmux new-session -d -s verify || true
+prefix_f="$(vtmux list-keys -T prefix f 2>&1 || true)"
+vtmux kill-server >/dev/null 2>&1 || true
+rm -rf "$tmux_sock_dir"
+if [[ "$prefix_f" == *"run-shell -b tmux-fastcopy"* ]]; then
+    ok "tmux prefix f runs tmux-fastcopy"
+else
+    fail "tmux prefix f: $prefix_f"
+fi
 
 if grep -q '##NEW' "$HOME/.zshrc"; then
     fail ".zshrc still has placeholders"

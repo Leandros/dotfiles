@@ -194,6 +194,8 @@ New link or system file: install function, `check_link` or `cmp` check in
 - Unit tests with stubs and fake sysfs: `test/fzf-cache/test.sh`,
   `test/i3status-kb/test.sh`, `test/power-mode/test.sh`, `test/i3-session/test.sh`,
   `test/xprofile/test.sh` (runs `.xprofile` with only stubs on PATH),
+  `test/tmux-plugins/test.sh` (fake HOME, private tmux sockets; never the
+  caller's server),
   `test/idle-settings/test.sh`, `test/caffeinate/test.sh`, `test/eww/test.sh`,
   `test/input-restore/test.sh`,
   `test/fetch/test.sh` (`fetch_unpack` must die on a failed download: it runs
@@ -375,8 +377,19 @@ New link or system file: install function, `check_link` or `cmp` check in
 
 - tmux: one config per tmux version; a version bump needs a new
   `tmux/tmux_linux_<ver>/` directory. `prefix T` runs
-  `.tmux/custom/toggle-dark-mode`. tpm is pinned (`TPM_REF`); a failed plugin
-  install only warns (`prefix I` in tmux).
+  `.tmux/custom/toggle-dark-mode`. tpm is pinned (`TPM_REF`); the `@plugin`
+  lines are not. `setup_tmux_plugins` runs tpm's `install_plugins` in a
+  private server (`env -u TMUX`, own `TMUX_TMPDIR`): tpm reads its plugin
+  path from the server, and in a server without tpm loaded it aborted
+  ("Tmux Plugin Manager not configured"). Then it runs `source-file
+  ~/.tmux.conf` in a running server, which loads new plugins. A failed
+  install warns with tpm's output. Test: `test/tmux-plugins/test.sh`.
+- tmux-fastcopy (`prefix f`, replaces find-window): tpm plugin, binary from
+  the GitHub release (`TMUX_FASTCOPY_VERSION`, static); the plugin falls back
+  to `tmux-fastcopy` on PATH, else builds with Go at every start. Action
+  `tmux load-buffer -w -` (clipboard too). Its `--version` prints several
+  lines: `| head -n 1` under pipefail failed 21 of 300 times (SIGPIPE); use
+  `sed -n 1p`.
 - wezterm: Xorg only, rolling nightly (GitHub `.deb` on Debian/Ubuntu, COPR on
   Fedora/EL). It reads the DPI from `~/.Xresources`. On Linux its scheme
   follows `gsettings get ... color-scheme` (set by `theme`), read in the
