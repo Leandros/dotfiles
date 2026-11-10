@@ -931,6 +931,11 @@ local function init_solarized_scheme()
         WhichKeyNormal = { bg = base03 },
         TelescopeNormal = { bg = base03 },
         FlashLabel = { fg = label_fg, bg = label_bg, bold = true },
+        -- Here, not in the flash.nvim config: a mode change loads the
+        -- colorscheme again, which drops links set once.
+        FlashBackdrop = { link = "Comment" },
+        FlashMatch = { link = "Search" },
+        FlashCurrent = { link = "IncSearch" },
         FloatTitle = { fg = base0, bg = "NONE" },
       }
 
@@ -3512,13 +3517,7 @@ local spec = {
         },
       })
 
-      -- Highlights
-      vim.api.nvim_set_hl(0, "FlashBackdrop", { link = "Comment" })
-      vim.api.nvim_set_hl(0, "FlashMatch", { link = "Search" })
-      vim.api.nvim_set_hl(0, "FlashCurrent", { link = "IncSearch" })
-
-      -- Is set in the solarized settings.
-      --vim.api.nvim_set_hl(0, 'FlashLabel', { link = 'WildMenu' })
+      -- Highlights are in the solarized settings (on_highlights).
 
       -- This mimics leap.nvim:
       --vim.api.nvim_set_hl(0, 'FlashLabel', { cterm = { underline = true, nocombine = true }, ctermfg=9, underline = true, nocombine = true, fg='#ccff88' })

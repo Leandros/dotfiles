@@ -66,6 +66,32 @@ run() {
     tr -d '\n' < "$OUT"
 }
 
+# Prints for the mode at start, then after the desktop change: "same" when
+# FlashBackdrop, FlashMatch and FlashCurrent look like Comment, Search and
+# IncSearch, else the first group that differs.
+flash_run() {
+    : > "$OUT"
+    START="$1" CHANGE="$2" PATH="$STUBS:$PATH" timeout 30 nvim --headless -u "$INIT" \
+        --cmd "autocmd VimEnter * ++once lua vim.defer_fn(function()
+            local function check()
+              local groups = { { 'FlashBackdrop', 'Comment' }, { 'FlashMatch', 'Search' }, { 'FlashCurrent', 'IncSearch' } }
+              for _, pair in ipairs(groups) do
+                local flash = vim.api.nvim_get_hl(0, { name = pair[1], link = false })
+                local base = vim.api.nvim_get_hl(0, { name = pair[2], link = false })
+                if not vim.deep_equal(flash, base) then return pair[1] end
+              end
+              return 'same'
+            end
+            local f = io.open('$OUT', 'w')
+            f:write(check(), ' ')
+            vim.wait(3000, function() return vim.o.background ~= '$3' end)
+            f:write(check(), '\n')
+            f:close()
+            vim.cmd('qa!')
+        end, 100)" > /dev/null 2>&1 || true
+    tr -d '\n' < "$OUT"
+}
+
 main() {
     command -v nvim >/dev/null || { echo "SKIP: nvim not installed"; exit 0; }
     write_stub
@@ -78,6 +104,9 @@ main() {
     expect "the desktop setting wins over LC_COLOR_SCHEME" "dark dark" "$(LC_COLOR_SCHEME=light run prefer-dark prefer-dark x)"
     expect "light start: light ColorColumn" "#eee8d5" "$(PRINT_COLORCOLUMN=1 run prefer-light prefer-light x)"
     expect "dark start: dark ColorColumn" "#004653" "$(PRINT_COLORCOLUMN=1 run prefer-dark prefer-dark x)"
+    # The colorscheme reload on a change must keep the flash.nvim groups.
+    expect "flash colors: dark, then light" "same same" "$(flash_run prefer-dark prefer-light dark)"
+    expect "flash colors: light, then dark" "same same" "$(flash_run prefer-light prefer-dark light)"
 
     exit "$FAILED"
 }
