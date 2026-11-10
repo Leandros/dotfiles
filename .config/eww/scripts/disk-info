@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+#
+# disk-info - the disks for the disk block tooltip, as a JSON array of
+# {"mounts": "/ /home", "used": "82 GiB", "size": "713 GiB", "pct": 12},
+# one per device (btrfs subvolumes share one). Real filesystems only: no
+# tmpfs, devtmpfs, squashfs, overlay, efivarfs or FUSE portals.
+#
+# The eww bar runs it only while the block is hovered.
+#
+set -euo pipefail
+
+main() {
+    df -P -T -k -x tmpfs -x devtmpfs -x squashfs -x overlay -x efivarfs -x fuse.portal 2>/dev/null |
+        awk 'NR > 1 { print $1, $4, $3, $7 }' |
+        jq -cR -s '
+            def gib: . / 1048576 | if . >= 10 then "\(round) GiB" else "\(. * 10 | round / 10) GiB" end;
+            [split("\n")[] | select(length > 0) | split(" ")
+             | {dev: .[0], used: (.[1] | tonumber), size: (.[2] | tonumber), mount: .[3]}]
+            | group_by(.dev)
+            | map({mounts: (map(.mount) | sort | join(" ")), used: (.[0].used | gib),
+                   size: (.[0].size | gib), pct: (if .[0].size > 0 then (100 * .[0].used / .[0].size | round) else 0 end)})
+            | sort_by(.mounts)'
+}
+
+main "$@"

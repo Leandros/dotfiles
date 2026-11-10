@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+#
+# status-blocks - the i3bar status blocks for eww, one JSON array per line.
+#
+# Runs ~/bin/i3status-kb (i3status plus the KB, PWR, ☀ and VPN blocks), so
+# both bars show the same text and colors. Drops the i3bar framing (the
+# header line, the "[" that opens the endless array, the "," before each
+# later status line) and keys the blocks by name: the bar draws each block
+# in its own widget, not in a `for` loop, which eww rebuilds on every
+# update (a graph in a tooltip lost its history every 5 s).
+#
+# Own process group: i3status-kb ends with `kill 0`, which would otherwise
+# reach eww. No stdin: eww sends clicks through block-click instead.
+#
+set -euo pipefail
+
+setsid "$HOME/bin/i3status-kb" < /dev/null | sed -u '1,2d; s/^,//' |
+    jq --unbuffered -c 'map({key: .name, value: .}) | from_entries'

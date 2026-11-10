@@ -266,6 +266,7 @@ if [[ $xorg_expected -eq 1 ]]; then
     check_link "$HOME/bin/caffeinate" "$D/bin/caffeinate"
     check_link "$HOME/bin/smb" "$D/bin/smb"
     check_link "$HOME/bin/input-restore" "$D/bin/input-restore"
+    check_link "$HOME/bin/bar" "$D/bin/bar"
     theme_out="$("$HOME/bin/theme" show 2>&1 || true)"
     if [[ "$theme_out" == "dark" ]]; then
         ok "theme defaults to dark"
@@ -416,6 +417,7 @@ if [[ $xorg_expected -eq 1 ]]; then
     check_link "$HOME/.config/i3" "$D/.config/i3"
     check_link "$HOME/.config/i3status" "$D/.config/i3status"
     check_link "$HOME/.config/picom" "$D/.config/picom"
+    check_link "$HOME/.config/eww" "$D/.config/eww"
     check_link "$HOME/.config/systemd/user/i3-session.target" "$D/.config/systemd/user/i3-session.target"
     check_link "$HOME/.wezterm.lua" "$D/.wezterm.lua"
     wezterm_stamp="$(cat /usr/local/share/bootstrap/wezterm 2>/dev/null || true)"
@@ -428,6 +430,16 @@ if [[ $xorg_expected -eq 1 ]]; then
     check_version nmrs-gui "nmrs-gui $NMRS_GUI_VERSION" nmrs-gui --version
     check_version wmfocus "wmfocus $WMFOCUS_VERSION" wmfocus --version
     check_version xidlehook "xidlehook $XIDLEHOOK_VERSION" xidlehook --version
+    # eww prints its commit: "eww 0.6.0 <commit>".
+    check_version eww "$EWW_REF" eww --version
+    # eww is the bar: no i3bar include (bootstrap links it only without eww).
+    if command -v eww >/dev/null; then
+        if [[ -e "$HOME/.config/i3-bar.d/i3bar.conf" || -L "$HOME/.config/i3-bar.d/i3bar.conf" ]]; then
+            fail "i3bar still included although eww is installed"
+        else
+            ok "no i3bar (eww is the bar)"
+        fi
+    fi
     check_version xidlehook-client "xidlehook-client $XIDLEHOOK_VERSION" xidlehook-client --version
     # rrandr has no --version: the stamp holds the pinned commit, and every
     # library it links must resolve. Not on EL9 (pango 1.48 < 1.50).
@@ -449,7 +461,7 @@ if [[ $xorg_expected -eq 1 ]]; then
     else
         fail "nmrs.desktop missing in /usr/local/share/applications"
     fi
-    for bin in i3 i3status dmenu xsetroot xset setxkbmap xmodmap amixer pavucontrol brightnessctl xinput rfkill smbclient mount.cifs btop remmina startx xclip i3lock; do
+    for bin in i3 i3status dmenu xsetroot xset setxkbmap xmodmap amixer pavucontrol brightnessctl xinput rfkill smbclient mount.cifs btop remmina startx xclip i3lock jq; do
         if command -v "$bin" >/dev/null; then ok "xorg bin $bin"; else fail "xorg bin missing: $bin"; fi
     done
     # firewalld's GUI and Sunshine (lizardbyte copr): Fedora only.

@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+#
+# theme-mode - "dark" or "light" for the eww bar, again on every change.
+#
+# Follows the desktop color-scheme that ~/bin/theme sets (gsettings), as
+# tmux and nvim do. Dark without gsettings.
+#
+set -euo pipefail
+
+readonly SCHEMA="org.gnome.desktop.interface" KEY="color-scheme"
+
+mode() {
+    case "$(gsettings get "$SCHEMA" "$KEY" 2>/dev/null)" in
+        *light*) echo light ;;
+        *)       echo dark ;;
+    esac
+}
+
+mode
+command -v gsettings >/dev/null || exit 0
+gsettings monitor "$SCHEMA" "$KEY" | while read -r _; do
+    mode
+done

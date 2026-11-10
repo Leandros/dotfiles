@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+#
+# bar - the eww status bar (~/.config/eww).
+#
+# Starts the eww daemon and returns: ~/.xprofile runs it before blueman and
+# CopyQ, so their tray icons go to eww's tray (StatusNotifierItem). A
+# watcher in the background then waits for i3, opens one bar per active
+# output (tray on the primary one, height for Xft.dpi) and opens them again
+# when outputs change. An i3 restart reconnects; the watcher ends with the X
+# session. Without eww nothing happens: bootstrap.sh then sets up i3bar
+# (.config/i3/i3bar.conf).
+#
+# Usage: bar          start (again: replaces the watcher, reopens the bars)
+#        bar watch    the watcher (started by bar)
+#
+set -euo pipefail
+
+readonly EWW="${BAR_EWW:-eww}"
+readonly CONFIG="${BAR_EWW_CONFIG:-$HOME/.config/eww}"
+# i3bar is 34 px high with its font (Menlo 10) at 144 dpi.
+readonly BASE_DPI=144 BASE_HEIGHT=34 X_DEFAULT_DPI=96
+readonly RETRY_S="${BAR_RETRY_S:-1}"
+readonly I3_WAIT_TRIES=100
+readonly OPEN_TRIES=3 SIZE_CHECK_S="${BAR_SIZE_CHECK_S:-1}"
+
+eww_() { "$EWW" -c "$CONFIG" "$@"; }
+
+# Bar height for the display scale (Xft.dpi, from ~/.Xresources).
+height() {
+    local dpi
+    dpi="$(xrdb -query 2>/dev/null | awk '/^Xft\.dpi:/ { print $2; exit }')"
+    dpi="${dpi%.*}"
+    [[ "$dpi" =~ ^[0-9]+$ ]] || dpi="$X_DEFAULT_DPI"
+    echo $(((BASE_HEIGHT * dpi + BASE_DPI / 2) / BASE_DPI))
+}
+
+# True once i3 docks every eww bar with a height. A bar sometimes came up
+# 0 px high (not reproducible later); reopening fixed it.
+bars_sized() {
+    i3-msg -t get_tree | jq -e '[.. | objects | select(.window_properties?.class? == "Eww") | .rect.height] | length > 0 and all(. > 0)' >/dev/null
+}
+
+# open_bars, again (at most OPEN_TRIES times) while a bar has no height.
+open_bars_checked() {
+    local i
+    for ((i = 1; i <= OPEN_TRIES; i++)); do
+        open_bars
+        sleep "$SIZE_CHECK_S"
+        bars_sized && return 0
+    done
+    echo "bar: a bar has no height after $OPEN_TRIES tries" >&2
+}
+
+# One bar per active output; the tray on the primary one, else the first.
+open_bars() {
+    local outputs h name tray=true
+    outputs="$(i3-msg -t get_outputs | jq -r '[.[] | select(.active)] | sort_by(.primary | not) | .[].name')"
+    h="$(height)"
+    eww_ close-all >/dev/null 2>&1 || true
+    while read -r name; do
+        [[ -n "$name" ]] || continue
+        eww_ open bar --id "bar-$name" --screen "$name" \
+            --arg "output=$name" --arg "height=$h" --arg "tray=$tray" >/dev/null
+        tray=false
+    done <<< "$outputs"
+    # eww starts every poll a window uses when it opens, ignoring
+    # :run-while, which it applies only when a variable it names changes.
+    # A change of hover stops the hover-only polls (CPU, RAM, time).
+    eww_ update hover=none >/dev/null 2>&1 || true
+    eww_ update hover= >/dev/null 2>&1 || true
+}
+
+wait_for_i3() {
+    local i
+    for ((i = 0; i < I3_WAIT_TRIES; i++)); do
+        i3-msg -t get_version >/dev/null 2>&1 && return 0
+        xset q >/dev/null 2>&1 || return 1
+        sleep 0.1
+    done
+    return 1
+}
+
+# Output events (monitor added, removed, rearranged) reopen the bars.
+watch() {
+    while xset q >/dev/null 2>&1; do
+        if wait_for_i3; then
+            open_bars_checked
+            while read -r _; do
+                open_bars_checked
+            done < <(i3-msg -t subscribe -m '["output"]' 2>/dev/null)
+        fi
+        sleep "$RETRY_S"
+    done
+}
+
+main() {
+    case "${1:-}" in
+        watch) watch; return ;;
+        "") ;;
+        *) echo "usage: bar [watch]" >&2; exit 1 ;;
+    esac
+    command -v "$EWW" >/dev/null || exit 0
+    eww_ ping >/dev/null 2>&1 || eww_ daemon >/dev/null 2>&1
+    # By command line: the script runs as "bash", so pkill -x would not match.
+    pkill -f '/bin/bar watch$' 2>/dev/null || true
+    setsid "$0" watch </dev/null >/dev/null 2>&1 &
+}
+
+main "$@"

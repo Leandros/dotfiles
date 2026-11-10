@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+#
+# block-tooltips - hover text for the battery and VPN blocks, as one JSON
+# object keyed by block name. A block without details is left out. The
+# network blocks have net-info. The eww bar runs it only while one of the
+# two is hovered.
+#
+set -euo pipefail
+
+readonly TIMEOUT_S=2
+readonly SYSFS="${BLOCK_TOOLTIPS_SYSFS:-/sys}"
+
+battery_tooltip() {
+    local bat
+    bat="$(upower -e 2>/dev/null | grep -m 1 battery_)" || return 0
+    upower -i "$bat" | awk -F': *' '
+        /^ +state:/          { print "State:    " $2 }
+        /^ +energy-rate:/    { print "Power:    " $2 }
+        /^ +time to (empty|full):/ { sub(/^ +/, "", $1); print "Time to " substr($1, 9) ": " $2 }
+        /^ +capacity:/       { print "Health:   " $2 }'
+    # The charge limit ~/bin/charge sets.
+    local limit
+    for limit in "$SYSFS"/class/power_supply/BAT*/charge_control_end_threshold; do
+        [[ -r "$limit" ]] && printf 'Limit:    %s%%\n' "$(< "$limit")"
+        break
+    done
+}
+
+vpn_tooltip() {
+    command -v tailscale >/dev/null || return 0
+    local ips
+    ips="$(timeout "$TIMEOUT_S" tailscale ip 2>/dev/null | paste -sd ' ')" || return 0
+    [[ -n "$ips" ]] && printf 'Tailscale: %s\n' "$ips"
+}
+
+main() {
+    jq -cn \
+        --arg battery "$(battery_tooltip)" \
+        --arg vpn "$(vpn_tooltip)" \
+        '$ARGS.named | with_entries(select(.value != ""))'
+}
+
+main "$@"

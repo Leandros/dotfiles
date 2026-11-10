@@ -40,8 +40,8 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `.tmux/custom` | `~/.tmux/custom` |
 | `.zshrc` | `~/.zshrc`, rendered copy (`##NEWHOME##`, `##NEWUSER##`) |
 | `.Xresources` | `~/.Xresources`, rendered copy (`##XFT_DPI##`) |
-| `.wezterm.lua`, `.xinitrc`, `.xprofile`, `.Xmodmap`, `.config/{i3,i3status,xremap,picom}`, `.config/systemd/user/i3-session.target` | `$HOME`, links, Xorg only |
-| `bin/{kb,i3status-kb,pwr,theme,flightmode,touchpad,charge,caffeinate,smb,input-restore}` | `~/bin`, links, Xorg only |
+| `.wezterm.lua`, `.xinitrc`, `.xprofile`, `.Xmodmap`, `.config/{i3,i3status,xremap,picom,eww}`, `.config/systemd/user/i3-session.target` | `$HOME`, links, Xorg only |
+| `bin/{kb,i3status-kb,pwr,theme,flightmode,touchpad,charge,caffeinate,smb,input-restore,bar}` | `~/bin`, links, Xorg only |
 | `bin/fzf-cache` | `~/bin`, link, always |
 | `xorg-conf/*.conf` | `/etc/X11/xorg.conf.d/` (root copy) |
 | `sshd-conf/50-color-scheme.conf` | `/etc/ssh/sshd_config.d/` (root copy, Linux, where sshd_config includes the directory; not AL2) |
@@ -194,7 +194,7 @@ New link or system file: install function, `check_link` or `cmp` check in
 - Unit tests with stubs and fake sysfs: `test/fzf-cache/test.sh`,
   `test/i3status-kb/test.sh`, `test/power-mode/test.sh`, `test/i3-session/test.sh`,
   `test/xprofile/test.sh` (runs `.xprofile` with only stubs on PATH),
-  `test/idle-settings/test.sh`, `test/caffeinate/test.sh`,
+  `test/idle-settings/test.sh`, `test/caffeinate/test.sh`, `test/eww/test.sh`,
   `test/input-restore/test.sh`,
   `test/fetch/test.sh` (`fetch_unpack` must die on a failed download: it runs
   in `$(...)`, where `set -e` does not apply),
@@ -277,9 +277,57 @@ New link or system file: install function, `check_link` or `cmp` check in
   as `bash`) watches `udevadm monitor` input add/change events and, once they
   settle, runs `kb <kb show>` and `touchpad restore` (the session's last
   choice). Installers that run `udevadm trigger` re-add every input device.
+- i3status `wireless`: `W: %essid (%quality)`, `format_quality = "%d%s"`
+  (no padding).
 - Floating windows need `for_window` rules: nmrs (`class`), `blueman-*`,
   copyq (`move position mouse`), arandr, rrandr and pavucontrol (`instance`).
-- No `tray_output`: with `primary`, the tray vanishes when no output is
+- Bar: eww (`.config/eww`, linked; `install_eww`, desktop, commit
+  `EWW_REF`, `--no-default-features --features x11`: release 0.6.0 pins
+  Rust 1.76). `bin/bar` (run by `.xprofile` before the tray apps) starts the
+  daemon, then `bar watch` (stopped with `pkill -f '/bin/bar watch$'`)
+  waits for i3, opens `bar` per active output (`--arg output/height/tray`;
+  tray on the primary one; height 34 px at 144 dpi, scaled by `Xft.dpi`)
+  and reopens on output events. i3bar is only the fallback: its block is
+  `.config/i3/i3bar.conf`, the i3 config has `include
+  ~/.config/i3-bar.d/*.conf` (variables of the main config reach it), and
+  bootstrap's `select_bar` links it there only without `$PREFIX/bin/eww`
+  (removes the link otherwise). Test: `test/i3-bar/test.sh` (i3 on Xvfb,
+  `get_bar_config`). A bar was sometimes docked
+  0 px high (not reproducible later): `bar` checks the i3 dock heights and
+  reopens, at most 3 times. Scripts in `scripts/`:
+  `status-blocks` reads `~/bin/i3status-kb` (own process group: it exits
+  with `kill 0`) and keys the blocks by name: the bar draws each block in
+  its own widget, in i3status order, hidden while missing. No `for` over
+  blocks: eww rebuilds a `for` body on every update, so a tooltip graph lost
+  its history every 5 s, and a widget after a `for` in the same box was not
+  drawn. `block-click` repeats its clicks, `block-tooltips` (battery,
+  VPN) is one JSON object per block name (`BLOCK_TOOLTIPS_SYSFS` for tests),
+  `net-info` (network blocks: addresses, down/up rate from two
+  `/sys/class/net/*/statistics` samples), `disk-info` (`df`, one entry per
+  device: btrfs `/` and `/home` share one), `theme-mode` follows gsettings (class `bar dark|light`), `i3-workspaces`
+  reconnects after an i3 restart. Tooltips are their own windows, so one
+  look for both themes. Tray: StatusNotifierItem only (eww is the watcher).
+  CPU, RAM and time have widget tooltips (`tooltip`: content built once,
+  so the CPU `graph` keeps 5 min of history from the i3status value, via
+  `replace(blocks?.cpu_usage?.full_text, ...)`, no extra polling). The
+  graph needs `:width`/`:height` (it requests only its line thickness; CSS
+  min-width does not apply); 0-100 %, not scaled to the peak (the user's
+  choice). Cores are colored by value (green, yellow from 50 %, red from
+  80 %), disks by usage (75 %, 90 %). Every tooltip is a widget tooltip:
+  with a label `:tooltip` text the bar sometimes came up 0 px high, and the
+  reopen guard reopening too early made it worse (`BAR_SIZE_CHECK_S`).
+  Each `for` sits in a box of its own (no widget after it). All details,
+  network, battery and VPN included, poll only while hovered; the bar
+  text is i3status (`disk "/"` for `D:`). Their details (`cpu-info`,
+  `mem-info`, `uptime -p`, date for `calendar`) poll only while hovered:
+  eventbox `onhover` sets `hover`, polls use `:run-while`. eww ignores
+  `:run-while` when a window opens and starts every poll the window uses;
+  `bar` sets hover twice after opening to stop them. Load: 1, 5, 15 min
+  (the kernel has no 30). "Wired" (macOS term): Unevictable + SUnreclaim +
+  KernelStack + PageTables; dropped from the RAM tooltip (used, available,
+  cached, free, swap).
+  Test: `test/eww/test.sh`.
+- i3bar fallback (`.config/i3/i3bar.conf`): no `tray_output`: with `primary`, the tray vanishes when no output is
   primary. i3bar shows the tray on one output only.
 - `i3-msg` exec needs one string: `i3-msg -q "exec --no-startup-id nmrs-gui"`.
 - `status_command` is `~/bin/i3status-kb`: adds `KB:`, `PWR:`, `☀:` (backlight, `I3STATUS_KB_SYSFS` for tests) and `VPN:`

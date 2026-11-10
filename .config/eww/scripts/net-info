@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+#
+# net-info - hover text for the network blocks, as one JSON object keyed
+# by block name (wireless, ethernet): connection, Wi-Fi signal, addresses
+# and the current download and upload rate (two byte counter samples
+# SAMPLE_S apart). A block without a connected device is left out.
+#
+# The eww bar runs it only while a network block is hovered.
+#
+set -euo pipefail
+
+readonly TIMEOUT_S=2 SAMPLE_S="${NET_INFO_SAMPLE_S:-1}"
+readonly SYSFS="${NET_INFO_SYSFS:-/sys}"
+
+# nmcli -t escapes ":" as "\:" and joins multiple values with " | ".
+field() {
+    timeout "$TIMEOUT_S" nmcli -t -g "$1" device show "$2" | sed 's/\\:/:/g; s/ | /\n/g'
+}
+
+# First connected device of a NetworkManager type (wifi, ethernet).
+device() {
+    timeout "$TIMEOUT_S" nmcli -t -f DEVICE,TYPE,STATE device |
+        awk -F: -v t="$1" '$2 == t && $3 == "connected" { print $1; exit }'
+}
+
+bytes() { cat "$SYSFS/class/net/$1/statistics/$2_bytes" 2>/dev/null || echo 0; }
+
+# Bytes per second, 1000-based like network speeds: "1.2 MB/s".
+rate() {
+    awk -v b="$1" -v s="$SAMPLE_S" 'BEGIN {
+        r = s > 0 ? b / s : 0
+        if (r >= 1e6) printf "%.1f MB/s", r / 1e6
+        else if (r >= 1e3) printf "%.0f kB/s", r / 1e3
+        else printf "%.0f B/s", r
+    }'
+}
+
+# Connection, rates and addresses of one device; rx and tx are the bytes
+# of the sample.
+text() {
+    local type="$1" dev="$2" rx="$3" tx="$4" signal
+    if [[ "$type" == wifi ]]; then
+        signal="$(timeout "$TIMEOUT_S" nmcli -t -f IN-USE,SIGNAL,FREQ,RATE device wifi list ifname "$dev" --rescan no |
+            awk -F: '$1 == "*" { print $2 "%, " $3 ", " $4; exit }')"
+        printf '%s on %s\nSignal:  %s\n' "$(field GENERAL.CONNECTION "$dev")" "$dev" "${signal:-?}"
+    else
+        printf '%s on %s\n' "$(field GENERAL.CONNECTION "$dev")" "$dev"
+    fi
+    printf 'Down:    %s\n' "$(rate "$rx")"
+    printf 'Up:      %s\n' "$(rate "$tx")"
+    printf 'IPv4:    %s\n' "$(field IP4.ADDRESS "$dev" | paste -sd ' ')"
+    printf 'Gateway: %s\n' "$(field IP4.GATEWAY "$dev")"
+    printf 'DNS:     %s\n' "$(field IP4.DNS "$dev" | paste -sd ' ')"
+    field IP6.ADDRESS "$dev" | grep -v '^fe80:' | sed 's/^/IPv6:    /' || true
+}
+
+main() {
+    local wifi eth wifi_rx=0 wifi_tx=0 eth_rx=0 eth_tx=0 wireless="" ethernet=""
+    wifi="$(device wifi)"
+    eth="$(device ethernet)"
+    # One sample for both devices, one wait; the counters are read right
+    # around it, before the slower nmcli calls.
+    if [[ -n "$wifi" ]]; then wifi_rx="$(bytes "$wifi" rx)"; wifi_tx="$(bytes "$wifi" tx)"; fi
+    if [[ -n "$eth" ]]; then eth_rx="$(bytes "$eth" rx)"; eth_tx="$(bytes "$eth" tx)"; fi
+    sleep "$SAMPLE_S"
+    if [[ -n "$wifi" ]]; then wifi_rx=$(($(bytes "$wifi" rx) - wifi_rx)); wifi_tx=$(($(bytes "$wifi" tx) - wifi_tx)); fi
+    if [[ -n "$eth" ]]; then eth_rx=$(($(bytes "$eth" rx) - eth_rx)); eth_tx=$(($(bytes "$eth" tx) - eth_tx)); fi
+    [[ -z "$wifi" ]] || wireless="$(text wifi "$wifi" "$wifi_rx" "$wifi_tx")"
+    [[ -z "$eth" ]] || ethernet="$(text ethernet "$eth" "$eth_rx" "$eth_tx")"
+    jq -cn --arg wireless "$wireless" --arg ethernet "$ethernet" \
+        '$ARGS.named | with_entries(select(.value != ""))'
+}
+
+main "$@"

@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+#
+# mem-info - details for the RAM block tooltip, as one JSON object of
+# GiB strings: used (total - available), available (what programs can get
+# without swapping, cache included), cache (page cache and buffers, freed
+# on demand), free (not used at all), swap ("used / total").
+#
+# The eww bar runs it only while the block is hovered.
+#
+set -euo pipefail
+
+readonly PROC="${MEM_INFO_PROC:-/proc}"
+
+main() {
+    awk '
+        { kb[$1] = $2 }
+        function gib(k) { return sprintf("%.1f GiB", k / 1048576) }
+        END {
+            printf "{\"used\":\"%s\",\"available\":\"%s\",\"cache\":\"%s\",\"free\":\"%s\",\"swap\":\"%s / %s\"}\n",
+                gib(kb["MemTotal:"] - kb["MemAvailable:"]),
+                gib(kb["MemAvailable:"]),
+                gib(kb["Buffers:"] + kb["Cached:"]),
+                gib(kb["MemFree:"]),
+                gib(kb["SwapTotal:"] - kb["SwapFree:"]), gib(kb["SwapTotal:"])
+        }' "$PROC/meminfo"
+}
+
+main "$@"

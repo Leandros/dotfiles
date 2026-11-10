@@ -55,7 +55,7 @@ echo "theme \$*" >> "$CALLS"
 echo "qt \${QT_SCALE_FACTOR:-unset} \${QT_FONT_DPI:-unset}" >> "$CALLS"
 echo "lang \${LANG:-unset}" >> "$CALLS"
 EOF
-    for cmd in kb input-restore; do
+    for cmd in kb input-restore bar; do
         printf '#!/bin/sh\necho "%s $*" >> "%s"\n' "$cmd" "$CALLS" > "$TMP/home/bin/$cmd"
     done
     printf '#!/bin/sh\nexec /usr/bin/sleep "$@"\n' > "$STUBS/sleep"
@@ -137,6 +137,17 @@ main() {
     # and other GUIs run as the user); a re-login replaces the old one.
     expect "polkit agent starts" "lxpolkit " "$(grep '^lxpolkit' "$CALLS")"
     if grep -qx 'pkill -x lxpolkit' "$CALLS"; then ok "the old polkit agent is stopped"; else fail "no pkill -x lxpolkit"; fi
+
+    # The eww bar starts its tray before the tray apps register (blueman,
+    # CopyQ); otherwise they use i3bar's, which bar hides.
+    local bar blueman
+    bar="$(line_of '^bar')"
+    blueman="$(line_of '^blueman-applet')"
+    if [[ "$bar" -gt 0 && "$blueman" -gt "$bar" ]]; then
+        ok "bar starts before the tray apps"
+    else
+        fail "bar line $bar, blueman line $blueman"
+    fi
 
     # Idle: xidlehook locks after 5 min and suspends 7 min later (12 in
     # all), not while audio plays or a window is fullscreen (video). The X

@@ -1,0 +1,53 @@
+// The i3bar colors (.config/i3/config) and font. Base colors follow
+// ~/bin/theme (Solarized dark or light, bin/theme palette); the accents
+// are the same in both.
+$blue: #268bd2;
+$green: #859900;
+$orange: #cb4b16;
+$yellow: #b58900;
+$red: #dc322f;
+
+* { all: unset; font-family: "Menlo", monospace; font-size: 10pt; }
+
+@mixin palette($baseA3, $baseA2, $baseB2, $baseB3, $custom) {
+  background-color: $baseA3;
+  color: $baseB2;
+
+  .ws { background-color: $baseA2; border-color: $baseA2; color: $baseB2; }
+  .ws.active { background-color: $custom; border-color: $custom; color: $baseA2; }
+  .ws.focused { background-color: $green; border-color: $green; color: $baseA3; }
+  .ws.urgent { background-color: $orange; border-color: $orange; color: $baseB3; }
+}
+
+.bar.dark { @include palette(#002b36, #073642, #eee8d5, #fdf6e3, #1c5766); }
+.bar.light { @include palette(#fdf6e3, #eee8d5, #073642, #002b36, #bcd1d4); }
+
+.ws { border: 1px solid; padding: 0 8px; margin: 2px 1px; }
+
+// i3bar draws a separator line between blocks.
+.block { padding: 0 8px; border-left: 1px solid $blue; }
+.block.first { border-left: none; }
+
+.tray { padding: 0 6px; }
+
+// Tooltips are windows of their own, outside .bar: one look for both themes.
+tooltip { background-color: #073642; color: #eee8d5; padding: 6px; border: 1px solid $blue; }
+
+// Widget tooltips (CPU, RAM, time).
+.tip { padding: 2px; }
+.cpu-graph { color: $blue; background-color: rgba(38, 139, 210, 0.15); }
+// Core and disk usage: green, yellow from 50 % (disks 75 %), red from
+// 80 % (disks 90 %).
+.core.low label { color: $green; }
+.core.mid label { color: $yellow; }
+.core.high label { color: $red; }
+.disk trough { min-height: 6px; min-width: 280px; background-color: rgba(147, 161, 161, 0.25); border-radius: 3px; }
+.disk progress { min-height: 6px; border-radius: 3px; }
+.disk.low progress { background-color: $green; }
+.disk.mid progress { background-color: $yellow; }
+.disk.high progress { background-color: $red; }
+calendar { padding: 4px; }
+calendar.header { color: $blue; }
+calendar.highlight { color: #93a1a1; }
+calendar:selected { background-color: $green; color: #002b36; }
+calendar.button { color: #93a1a1; }

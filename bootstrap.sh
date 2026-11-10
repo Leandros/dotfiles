@@ -100,6 +100,9 @@ readonly XREMAP_VERSION="0.15.15"
 readonly NMRS_GUI_VERSION="2.1.0"
 # https://crates.io/crates/wmfocus (Xorg desktop only)
 readonly WMFOCUS_VERSION="1.5.0"
+# https://github.com/elkowar/eww (Xorg desktop only). A commit: release
+# 0.6.0 pins Rust 1.76, and its old dependencies do not build with stable.
+readonly EWW_REF="48f5aa8b379adf29da0b0bb9ca04164f65d8bdaa"
 # https://crates.io/crates/xidlehook (Xorg desktop only; last release 2021)
 readonly XIDLEHOOK_VERSION="0.10.0"
 # https://github.com/brofi/rrandr (Xorg desktop only; no releases or crate,
@@ -1238,7 +1241,7 @@ install_xorg_packages() {
                 -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold \
                 xorg xinit x11-xserver-utils \
                 i3 i3status suckless-tools i3lock xss-lock blueman arandr autorandr \
-                alsa-utils pavucontrol brightnessctl xclip xinput rfkill cifs-utils smbclient btop remmina remmina-plugin-rdp picom lxpolkit \
+                alsa-utils pavucontrol brightnessctl xclip xinput rfkill cifs-utils smbclient btop remmina remmina-plugin-rdp picom lxpolkit jq \
                 kbd console-data console-setup
             ;;
         fedora)
@@ -1252,7 +1255,7 @@ install_xorg_packages() {
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap xrandr \
                 i3 i3status dmenu i3lock xss-lock blueman gobject-introspection copyq \
                 arandr autorandr gtk3 \
-                alsa-utils pavucontrol brightnessctl xclip xinput picom cifs-utils samba-client btop remmina remmina-plugins-rdp firewall-config lxpolkit kbd terminus-fonts-console
+                alsa-utils pavucontrol brightnessctl xclip xinput picom cifs-utils samba-client btop remmina remmina-plugins-rdp firewall-config lxpolkit jq kbd terminus-fonts-console
             ;;
         rhel)
             $SUDO dnf install -y -q epel-release
@@ -1265,7 +1268,7 @@ install_xorg_packages() {
             $SUDO dnf install -y -q \
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap \
                 i3 i3status dmenu i3lock copyq \
-                alsa-utils pavucontrol brightnessctl xclip xorg-x11-server-utils cifs-utils samba-client btop remmina remmina-plugins-rdp kbd terminus-fonts-console
+                alsa-utils pavucontrol brightnessctl xclip xorg-x11-server-utils cifs-utils samba-client btop remmina remmina-plugins-rdp jq kbd terminus-fonts-console
             ;;
     esac
     install_copyq_deb
@@ -1433,6 +1436,35 @@ install_wmfocus() {
         --root "$WORK_DIR/wmfocus" "wmfocus@$WMFOCUS_VERSION"
     install_bin "$WORK_DIR/wmfocus/bin/wmfocus" wmfocus
     mark_current wmfocus "$WMFOCUS_VERSION"
+}
+
+# eww: the status bar in place of i3bar (~/bin/bar, ~/.config/eww), with
+# tooltips on hover. X11 only (no gtk-layer-shell); libdbusmenu-gtk3 for its
+# tray. jq (packages) for the bar scripts.
+install_eww_deps() {
+    case "$DISTRO" in
+        debian|ubuntu)
+            $SUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
+                -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold \
+                libgtk-3-dev libdbusmenu-gtk3-dev
+            ;;
+        fedora|rhel)
+            $SUDO dnf install -y -q gtk3-devel libdbusmenu-gtk3-devel
+            ;;
+    esac
+}
+
+install_eww() {
+    is_current eww "$EWW_REF" "$PREFIX/bin/eww" && return
+
+    install_eww_deps
+    export CARGO_HOME="$CARGO_HOME_DIR" RUSTUP_HOME="$RUSTUP_HOME_DIR"
+    quiet "$CARGO_HOME_DIR/bin/cargo" "+$RUST_TOOLCHAIN" install -q --locked \
+        --git "$GITHUB/elkowar/eww" --rev "$EWW_REF" \
+        --no-default-features --features x11 \
+        --root "$WORK_DIR/eww" eww
+    install_bin "$WORK_DIR/eww/bin/eww" eww
+    mark_current eww "$EWW_REF"
 }
 
 # Idle lock and suspend (.xprofile), except while audio plays or a window
@@ -1787,6 +1819,7 @@ link_xorg_dotfiles() {
     link "$d/bin/caffeinate" "$HOME/bin/caffeinate"
     link "$d/bin/smb" "$HOME/bin/smb"
     link "$d/bin/input-restore" "$HOME/bin/input-restore"
+    link "$d/bin/bar" "$HOME/bin/bar"
     link "$d/.xinitrc" "$HOME/.xinitrc"
     link "$d/.xprofile" "$HOME/.xprofile"
     link "$d/.Xmodmap" "$HOME/.Xmodmap"
@@ -1794,7 +1827,25 @@ link_xorg_dotfiles() {
     link "$d/.config/xremap" "$HOME/.config/xremap"
     link "$d/.config/i3status" "$HOME/.config/i3status"
     link "$d/.config/picom" "$HOME/.config/picom"
+    link "$d/.config/eww" "$HOME/.config/eww"
     link "$d/.config/systemd/user/i3-session.target" "$HOME/.config/systemd/user/i3-session.target"
+}
+
+# The bar: eww (~/bin/bar) where it is installed, else i3bar. The i3
+# config includes ~/.config/i3-bar.d/*.conf; only without eww does the
+# i3bar config go there.
+readonly I3BAR_INCLUDE="$HOME/.config/i3-bar.d/i3bar.conf"
+
+select_bar() {
+    if [[ -x "$PREFIX/bin/eww" ]]; then
+        if [[ -L "$I3BAR_INCLUDE" ]]; then
+            rm -f "$I3BAR_INCLUDE"
+            log "i3bar replaced by eww"
+        fi
+    else
+        link "$DOTFILES_DIR/.config/i3/i3bar.conf" "$I3BAR_INCLUDE"
+        warn "eww missing: i3bar is the bar"
+    fi
 }
 
 setup_xorg() {
@@ -1814,6 +1865,7 @@ setup_xorg() {
     install_nmrs_gui
     install_wmfocus
     install_xidlehook
+    install_eww
     if [[ "$DISTRO" != rhel ]]; then
         install_rrandr
     fi
@@ -1825,6 +1877,7 @@ setup_xorg() {
     enable_bluetooth
     enable_autorandr
     link_xorg_dotfiles
+    select_bar
     write_xresources "$DPI_SCALE"
     write_idle_conf
     configure_console_font "$DPI_SCALE"
@@ -1969,6 +2022,7 @@ report() {
         print_version nmrs-gui nmrs-gui --version
         print_version wmfocus wmfocus --version
         print_version xidlehook xidlehook --version
+        print_version eww eww --version
         if [[ "$DISTRO" != rhel ]]; then
             print_version rrandr cat "$(stamp_path rrandr)"
         fi

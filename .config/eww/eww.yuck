@@ -1,0 +1,137 @@
+;; The status bar (eww), in place of i3bar; ~/bin/bar opens one per output.
+;; i3bar has no hover; here blocks show details as tooltips.
+;;
+;; Status blocks come from ~/bin/i3status-kb (scripts/status-blocks), so
+;; text and colors are those of i3bar; clicks do what they do there
+;; (scripts/block-click).
+
+(deflisten blocks :initial "{}" "scripts/status-blocks")
+(deflisten workspaces :initial "[]" "scripts/i3-workspaces")
+(deflisten theme :initial "dark" "scripts/theme-mode")
+;; The block under the mouse (onhover). All details below are fetched only
+;; while their block is hovered (:run-while); the bar text comes from
+;; i3status alone.
+(defvar hover "")
+(defpoll net_info :interval "2s" :initial "{}" :run-while {hover == "wireless" || hover == "ethernet"} "scripts/net-info")
+(defpoll tooltips :interval "5s" :initial "{}" :run-while {hover == "battery" || hover == "vpn"} "scripts/block-tooltips")
+(defpoll disk_info :interval "10s" :initial "[]" :run-while {hover == "disk_info"} "scripts/disk-info")
+(defpoll cpu_info :interval "2s" :initial "{}" :run-while {hover == "cpu_usage"} "scripts/cpu-info")
+(defpoll mem_info :interval "2s" :initial "{}" :run-while {hover == "memory"} "scripts/mem-info")
+(defpoll uptime :interval "60s" :initial "" :run-while {hover == "time"} "uptime -p")
+(defpoll today :interval "60s" :initial "{}" :run-while {hover == "time"}
+  "date '+{\"day\":%-d,\"month\":%-m,\"year\":%Y}'")
+
+;; CPU usage in percent from the status block ("C: 12%"), which i3status
+;; reads every 5 s anyway: the graph needs no polling of its own.
+
+;; Workspaces of this output. i3bar: focused, active (visible on another
+;; output), urgent, inactive.
+(defwidget workspace-buttons [output]
+  (box :class "workspaces" :space-evenly false :halign "start"
+    (for ws in workspaces
+      (button :visible {ws.output == output}
+              :class "ws ${ws.focused ? 'focused' : ws.visible ? 'active' : ''} ${ws.urgent ? 'urgent' : ''}"
+              :onclick "i3-msg -q workspace number ${ws.num}"
+        "${ws.name}"))))
+
+(defwidget cpu-tip []
+  (box :orientation "v" :space-evenly false :spacing 4
+    (label :halign "start" :text "Load:  ${cpu_info?.load ?: '…'}  (1, 5, 15 min)")
+    (label :halign "start" :text "Temp:  ${cpu_info?.temp ?: '…'}")
+    ;; Each `for` in a box of its own: eww drew no widget after a `for`.
+    (box :orientation "v" :space-evenly false
+      (for row in {cpu_info?.cores ?: []}
+        (box :space-evenly false
+          ;; Name and value in fixed widths, the value right-aligned: the
+          ;; percentages line up in columns (cpu9 / cpu10, 7% / 100%).
+          (for core in row
+            (box :space-evenly false :class "core ${core.pct >= 80 ? 'high' : core.pct >= 50 ? 'mid' : 'low'}"
+              (label :width 70 :xalign 0 :text "${core.name}")
+              (label :width 55 :xalign 1 :text "${core.pct}%")
+              (label :width 24 :text ""))))))
+    (label :halign "start" :text "Usage, last 5 min:")
+    ;; Size set here: the graph asks GTK only for its line thickness, and
+    ;; CSS min-width does not apply to it.
+    (graph :class "cpu-graph" :width 320 :height 60 :min 0 :max 100 :dynamic false
+           :time-range "5m" :thickness 2 :line-style "round"
+           :value {replace(blocks?.cpu_usage?.full_text ?: "0", "[^0-9]", "")})))
+
+(defwidget mem-tip []
+  (box :orientation "v" :space-evenly false :spacing 2
+    (label :halign "start" :text "Used:       ${mem_info?.used ?: '…'}")
+    (label :halign "start" :text "Available:  ${mem_info?.available ?: '…'}")
+    (label :halign "start" :text "Cached:     ${mem_info?.cache ?: '…'}")
+    (label :halign "start" :text "Free:       ${mem_info?.free ?: '…'}")
+    (label :halign "start" :text "Swap:       ${mem_info?.swap ?: '…'}")))
+
+;; One usage bar per disk (device), as disk-info lists them.
+(defwidget disk-tip []
+  (box :orientation "v" :space-evenly false
+    (label :visible {arraylength(disk_info) == 0} :text "…")
+    (box :orientation "v" :space-evenly false :spacing 6
+      (for d in disk_info
+        (box :orientation "v" :space-evenly false :spacing 2
+          (label :halign "start" :text "${d.mounts}   ${d.used} / ${d.size}  (${d.pct}%)")
+          (progress :class "disk ${d.pct >= 90 ? 'high' : d.pct >= 75 ? 'mid' : 'low'}"
+                    :width 280 :value {d.pct}))))))
+
+(defwidget time-tip []
+  (box :orientation "v" :space-evenly false :spacing 4
+    (calendar :day {today?.day ?: 1} :month {today?.month ?: 1} :year {today?.year ?: 2000}
+              :show-details false)
+    (label :halign "start" :text "${uptime}")))
+
+;; One i3status block by name, hidden while i3status has none (no
+;; backlight, no VPN tool). Clicks as in i3status-kb; hover sets `hover`
+;; for the polls that run only then. Blocks with details wrap the label in
+;; a widget tooltip.
+(defwidget block [name]
+  (eventbox :visible {(blocks?.[name]?.full_text ?: "") != ""}
+            :onclick "scripts/block-click ${name} left"
+            :onrightclick "scripts/block-click ${name} right"
+            :onhover "${EWW_CMD} update hover=${name}"
+            :onhoverlost "${EWW_CMD} update hover="
+    (children)))
+
+(defwidget block-label [name ?first]
+  (label :class "block ${first == 'true' ? 'first' : ''}"
+         :style "color: ${blocks?.[name]?.color ?: 'inherit'}"
+         :text "${blocks?.[name]?.full_text ?: ''}"))
+
+;; Text details (network: net_info, battery and VPN: tooltips); "…" until
+;; the first poll. A widget tooltip, not the label's :tooltip text: with
+;; that the bar sometimes came up 0 px high.
+(defwidget text-tip [name]
+  (label :halign "start" :text {net_info?.[name] ?: tooltips?.[name] ?: "…"}))
+
+;; In the order of .config/i3status/config after i3status-kb's blocks.
+(defwidget status []
+  (box :class "status" :space-evenly false :halign "end"
+    (block :name "kb" (block-label :name "kb" :first true))
+    (block :name "power_mode" (block-label :name "power_mode"))
+    (block :name "backlight" (block-label :name "backlight"))
+    (block :name "vpn" (tooltip (text-tip :name "vpn") (block-label :name "vpn")))
+    (block :name "wireless" (tooltip (text-tip :name "wireless") (block-label :name "wireless")))
+    (block :name "ethernet" (tooltip (text-tip :name "ethernet") (block-label :name "ethernet")))
+    (block :name "battery" (tooltip (text-tip :name "battery") (block-label :name "battery")))
+    (block :name "volume" (block-label :name "volume"))
+    (block :name "cpu_usage" (tooltip (cpu-tip) (block-label :name "cpu_usage")))
+    (block :name "memory" (tooltip (mem-tip) (block-label :name "memory")))
+    (block :name "disk_info" (tooltip (disk-tip) (block-label :name "disk_info")))
+    (block :name "time" (tooltip (time-tip) (block-label :name "time")))))
+
+;; output: RandR name (eDP-1), height: pixels for the display scale,
+;; tray: true on one output only (eww has one tray).
+;; A dock window: i3 reserves the strip, as for i3bar.
+(defwindow bar [output height tray]
+  :monitor output
+  :windowtype "dock"
+  :geometry (geometry :x "0%" :y "0%" :width "100%" :height "${height}px" :anchor "top center")
+  :reserve (struts :side "top" :distance "${height}px")
+  (centerbox :class "bar ${theme}"
+    (workspace-buttons :output output)
+    (box)
+    (box :space-evenly false :halign "end"
+      (status)
+      (box :visible tray
+        (systray :class "tray" :icon-size 20 :spacing 4)))))

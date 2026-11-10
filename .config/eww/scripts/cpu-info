@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+#
+# cpu-info - details for the CPU block tooltip, as one JSON object:
+# load (1, 5, 15 minutes; the kernel keeps no 30-minute average), cores
+# (rows of four {"name": "cpu0", "pct": 12}; the bar colors them by value)
+# and temp (CPU package).
+#
+# The eww bar runs it only while the block is hovered. Core usage is the
+# busy share of two /proc/stat samples SAMPLE_S apart.
+#
+set -euo pipefail
+
+readonly PROC="${CPU_INFO_PROC:-/proc}" SYSFS="${CPU_INFO_SYSFS:-/sys}"
+readonly SAMPLE_S="${CPU_INFO_SAMPLE_S:-0.5}" PER_ROW=4
+
+# "cpuN busy total" per core; busy is all but idle and iowait.
+stat_sample() {
+    awk '/^cpu[0-9]+ / {
+        total = 0; for (i = 2; i <= NF; i++) total += $i
+        print $1, total - $5 - $6, total
+    }' "$PROC/stat"
+}
+
+# "cpuN percent" per core.
+cores() {
+    local before after
+    before="$(stat_sample)"
+    sleep "$SAMPLE_S"
+    after="$(stat_sample)"
+    awk '
+        NR == FNR { busy[$1] = $2; total[$1] = $3; next }
+        {
+            dt = $3 - total[$1]
+            printf "%s %d\n", $1, (dt > 0 ? 100 * ($2 - busy[$1]) / dt : 0) + 0.5
+        }' <(echo "$before") <(echo "$after")
+}
+
+# Package temperature: coretemp (Intel) "Package id 0", k10temp (AMD)
+# Tctl, else the x86_pkg_temp thermal zone. Empty without a sensor.
+temp() {
+    local hw label input zone
+    for hw in "$SYSFS"/class/hwmon/hwmon*; do
+        case "$(cat "$hw/name" 2>/dev/null)" in
+            coretemp|k10temp) ;;
+            *) continue ;;
+        esac
+        for label in "$hw"/temp*_label; do
+            case "$(cat "$label" 2>/dev/null)" in
+                "Package id 0"|Tctl)
+                    input="${label%_label}_input"
+                    echo "$(($(cat "$input") / 1000)) °C"
+                    return
+                    ;;
+            esac
+        done
+    done
+    for zone in "$SYSFS"/class/thermal/thermal_zone*; do
+        if [[ "$(cat "$zone/type" 2>/dev/null)" == x86_pkg_temp ]]; then
+            echo "$(($(cat "$zone/temp") / 1000)) °C"
+            return
+        fi
+    done
+}
+
+main() {
+    local load
+    read -r -a load < "$PROC/loadavg"
+    cores | jq -cR -s \
+        --arg load "${load[0]}  ${load[1]}  ${load[2]}" \
+        --arg temp "$(temp)" \
+        --argjson per_row "$PER_ROW" '
+        [split("\n")[] | select(length > 0) | split(" ") | {name: .[0], pct: (.[1] | tonumber)}]
+        | {load: $load, temp: $temp, cores: [range(0; length; $per_row) as $i | .[$i:$i + $per_row]]}'
+}
+
+main "$@"

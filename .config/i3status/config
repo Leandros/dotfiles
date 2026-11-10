@@ -15,10 +15,13 @@ order += "battery _first_"
 order += "volume master"
 order += "cpu_usage"
 order += "memory"
+order += "disk /"
 order += "time"
 
 wireless _first_ {
-        format_up = "W: (%quality at %essid)"
+        # "W: MyWifi (39%)"; format_quality drops the padding of "%3d%s".
+        format_up = "W: %essid (%quality)"
+        format_quality = "%d%s"
         format_down = "W: down"
 }
 
@@ -48,6 +51,11 @@ cpu_usage {
 
 memory {
     format  = "R: %percentage_used"
+}
+
+# Root filesystem usage: "D: 12%". The bar's tooltip lists all disks.
+disk "/" {
+    format = "D: %percentage_used"
 }
 
 time {

@@ -98,6 +98,11 @@ if [ -n "${IDLE_LOCK_MINUTES:-}" ] && [ -n "${IDLE_SUSPEND_MINUTES:-}" ]; then
         >/dev/null 2>&1 &
 fi
 
+# Status bar: eww in place of i3bar (~/bin/bar; without eww i3bar stays).
+# Before the tray apps below: its tray must be there when they start, or
+# they fall back to i3bar's tray, which bar hides.
+[ -x ~/bin/bar ] && ~/bin/bar >/dev/null 2>&1
+
 # Bluetooth: tray icon in the i3 bar and the pairing agent (PIN prompts).
 # EL9 has no blueman.
 command -v blueman-applet >/dev/null && blueman-applet >/dev/null 2>&1 &

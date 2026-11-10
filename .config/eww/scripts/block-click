@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+#
+# block-click - what a click on an eww bar block does; the same as in
+# ~/bin/i3status-kb for i3bar.
+#
+# Usage: block-click <block name> left|right
+#
+#   kb                   left: next layout, right: previous
+#   wireless, ethernet   left: nmrs-gui
+#   volume               left: pavucontrol
+#
+set -euo pipefail
+
+# i3 starts the GUI, so eww does not wait for it. The i3 command is one
+# argument; i3-msg would read --no-startup-id as its own option.
+gui() { i3-msg -q "exec --no-startup-id $1"; }
+
+main() {
+    local name="${1:-}" button="${2:-}"
+    case "$name:$button" in
+        kb:left)  "$HOME/bin/kb" next >/dev/null ;;
+        kb:right) "$HOME/bin/kb" prev >/dev/null ;;
+        wireless:left|ethernet:left) gui nmrs-gui; return ;;
+        volume:left) gui pavucontrol; return ;;
+        *) return 0 ;;
+    esac
+    # Redraw now instead of at the next interval (both bars).
+    pkill -USR1 -x i3status || true
+}
+
+main "$@"

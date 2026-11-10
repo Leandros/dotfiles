@@ -39,9 +39,16 @@ user target for `graphical-session.target`, which the desktop portal needs),
 for tear-free drawing; no effects; not on EL9), plus `~/bin/kb` to switch
 the keyboard layout (`us`, `de`, `bone2`; `de` at login): inside X only the session's
 keyboard (`kb --console …` also the Linux console), on a tty only the console; the
-i3 bar shows the layout and cycles it on click (left: next, right: previous), the
+i3 bar (eww, one per monitor, light/dark with `theme`; bootstrap sets up i3bar only where
+eww is missing) shows the layout and cycles it on click (left: next, right: previous), the
 screen brightness (`☀: 65%`), the active VPN and Tailscale (`VPN: <connection>` or `VPN: off`)
-and CPU and RAM use (`C: 12% R: 40%`); a click on
+and CPU and RAM use (`C: 12% R: 40%`); hovering over Wi-Fi (`W: <SSID> (<signal>)`)
+or Ethernet shows the download and upload rate and the addresses, over battery or VPN
+power and charge limit or the Tailscale IPs; over CPU the load (1, 5, 15 min), the
+package temperature, each core colored by load and a 5-minute graph (0-100 %); over RAM
+used, available, cached, free and swap; over the disk block (`D: 12%`, the root
+filesystem) a usage bar per disk; over the time a calendar and the uptime (all of it
+fetched only while hovered); a click on
 the volume block opens pavucontrol to pick the audio input and output.
 [RRandR](https://github.com/brofi/rrandr) (built from a pinned commit) arranges
 monitors like arandr and also sets the refresh rate; save the result with
