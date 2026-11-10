@@ -131,7 +131,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   that run as the user cannot change anything. Not in EL9 EPEL (it has
   mate-polkit, polkit-gnome, xfce-polkit).
 - EL9 has no xss-lock, xautolock, blueman, arandr, autorandr, picom,
-  lxpolkit.
+  lxpolkit, rrandr.
   `.xprofile` must work without them. RHEL 10 has no Xorg or i3.
 - CopyQ: Debian/Ubuntu only if the candidate is >= `COPYQ_MIN_VERSION`
   (8.0.0); older versions keep passwords from password managers.
@@ -146,8 +146,8 @@ New link or system file: install function, `check_link` or `cmp` check in
   falls back to the first monospace font.
 - rrandr (desktop): monitor layout GUI with refresh rate (arandr has none).
   No release or crate: `cargo install --git --rev "$RRANDR_REF"`. Needs
-  GTK >= 4.6 (Ubuntu 22.04 has 4.6.9), `glib-compile-resources` and `msgfmt`
-  at build time. No `--version`: verify checks the stamp and `ldd`. WM_CLASS
+  GTK >= 4.6 (Ubuntu 22.04 has 4.6.9), pango >= 1.50 (EL9 has 1.48: not
+  built there), `glib-compile-resources` and `msgfmt` at build time. No `--version`: verify checks the stamp and `ldd`. WM_CLASS
   `rrandr`, `rrandr` (checked under Xvfb). No profiles; autorandr saves them.
 - kmscon.conf (`kmscon_conf`): `font-size`, `palette=solarized` (libtsm
   built-in; also `solarized-black`, `solarized-white`), and
