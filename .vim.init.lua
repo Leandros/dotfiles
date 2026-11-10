@@ -2741,8 +2741,10 @@ local spec = {
                 workspace = {
                   symbol = {
                     search = {
-                      -- defaults to 128
-                      limit = 64,
+                      -- The default (only_types) skips functions unless
+                      -- the query ends in "#".
+                      kind = "all_symbols",
+                      limit = 128,
                     },
                   },
                 },
