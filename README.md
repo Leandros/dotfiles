@@ -1,11 +1,21 @@
 dotfiles
 ========
 
-My dotfiles
+Hic sunt dracones.
 
-### Fonts
-
-All fonts are patched to work with powerline / airline.
+                      ,-,-
+                     / / |
+   ,-'             _/ / /
+  (-_          _,-' `Z_/
+   "#:      ,-'_,-.    \  _
+    #'    _(_-'_()\     \" |
+  ,--_,--'                 |
+ / ""                      L-'\
+ \,--^---v--v-._        /   \ |
+   \_________________,-'      |
+                    \
+                     \
+                      \
 
 
 ### Bootstrap a new machine
@@ -19,78 +29,10 @@ curl -fsSLo bootstrap.sh "https://raw.githubusercontent.com/Leandros/dotfiles/re
     ./bootstrap.sh
 ```
 
-Set `BOOTSTRAP_XORG=1` to also bootstrap Xorg.
-
-Download first; piping into `bash` leaves prompts (sudo password, dpkg
-dialogs) reading from the script and the script refuses to run.
-
-Installs pinned tool versions to `/usr/local`, clones this repository to
-`~/.dotfiles`, and symlinks the configs. Safe to re-run; versions are pinned
-at the top of `bootstrap.sh`.
-
-For an Xorg/i3 desktop (Debian, Ubuntu, Fedora, RHEL 9) run with `BOOTSTRAP_XORG=1`;
-this installs i3, i3status, dmenu, the wezterm nightly and the X utilities
-(on Fedora also firewall-config and Sunshine from the `lizardbyte/stable` copr, a
-remote-desktop host for Moonlight with VA-API/NVENC encoding; not started and no
-firewall ports opened: run `sunshine`, pair in its web UI at `https://localhost:47990`)
-and links `.xinitrc`, `.xprofile`, `.Xresources`, `.Xmodmap`, `i3-session.target` (systemd
-user target for `graphical-session.target`, which the desktop portal needs),
-`.wezterm.lua`, `.config/i3`, `.config/i3status` and `.config/picom` (picom with vsync
-for tear-free drawing; no effects; not on EL9), plus `~/bin/kb` to switch
-the keyboard layout (`us`, `de`, `bone2`; `de` at login): inside X only the session's
-keyboard (`kb --console …` also the Linux console), on a tty only the console; the
-i3 bar (eww, one per monitor, light/dark with `theme`; bootstrap sets up i3bar only where
-eww is missing) shows the layout and cycles it on click (left: next, right: previous), the
-screen brightness (`☀: 65%`), the active VPN and Tailscale (`VPN: <connection>` or `VPN: off`)
-and CPU and RAM use (`C: 12% R: 40%`); hovering over Wi-Fi (`W: <SSID> (<signal>)`)
-or Ethernet shows the download and upload rate and the addresses, over battery or VPN
-power and charge limit or the Tailscale IPs; over CPU the load (1, 5, 15 min), the
-package temperature, each core colored by load and a 5-minute graph (0-100 %); over RAM
-used, available, cached, free and swap; over the disk block (`D: 12%`, the root
-filesystem) a usage bar per disk; over the time a calendar and the uptime (all of it
-fetched only while hovered); a click on
-the volume block opens pavucontrol to pick the audio input and output.
-[RRandR](https://github.com/brofi/rrandr) (built from a pinned commit) arranges
-monitors like arandr and also sets the refresh rate; save the result with
-`autorandr --save NAME`. `.xprofile` sets `LANG=en_US.UTF-8` for the session (lightdm would use the login
-screen's language) and starts lxpolkit (not on EL9), the polkit agent that asks for the password
-when a GUI running as you needs root, such as firewall-config or blueman.
-`~/bin/theme dark|light|toggle` switches i3 between Solarized dark and light and
-sets the desktop color-scheme that Firefox, wezterm, tmux and nvim follow and the GTK 3/4 dark preference
-(dark by default; GTK apps pick it up when they start). The `ssh` function in `.zshrc` sends it
-as `LC_COLOR_SCHEME`, so tmux and nvim on a server follow too (bootstrap adds
-`AcceptEnv LC_COLOR_SCHEME` to sshd; fixed per connection, tmux re-reads it on attach). `~/bin/flightmode on`
-blocks all radios with rfkill and selects the battery power mode; `off` undoes both.
-Touchpads work as on macOS (`xorg-conf/40-touchpad.conf`): press to click, two-finger
-click for right click, and a macOS-like acceleration curve; `~/bin/touchpad tap|click`
-switches tap-to-click until logout (without tap-and-drag, so a touch right after a tap
-does not drag). `~/bin/input-restore` re-applies the keyboard layout and tap-to-click
-when X re-adds input devices with its defaults (installers that run `udevadm trigger`,
-an xremap restart, a new keyboard). `~/bin/charge full` lets the battery charge to
-100% through UPower's charge limit; `charge limit` goes back to 80%.
-The screen locks after 5 minutes idle and the machine suspends after 10 (xidlehook),
-but not while audio plays or a window is fullscreen, such as a video.
-`~/bin/caffeinate` keeps the machine from suspending on idle until Ctrl-C;
-`caffeinate display` also keeps the screen on and unlocked. `~/bin/smb` scans the
-local /24 for SMB servers, lists their shares and mounts the chosen one under `~/mnt`. The
-console bone2 keymap is `console/bone2.map`, generated from `.Xmodmap` with
-`console/xmodmap-to-console.py`; regenerate it when `.Xmodmap` changes. On a
-kmscon console (Fedora 45+) `kb` sets the layout through `localectl` instead,
-with the stock `de(bone)` variant standing in for bone2. That setting is also the X
-server default (login screen, newly added keyboards), which is why X alone never
-changes it. In X,
-`xremap` (started from `.xprofile`, config `.config/xremap/config.yml`) swaps the
-left Alt and Ctrl keys for every layout: Alt acts as Ctrl, Ctrl as Alt, and
-Alt+digit still switches the i3 workspace; i3 itself is driven with the Win key.
-The bootstrap adds the user to the `input` group, which needs a new login. The script asks for a display scale
-(1x, 1.5x, 1.75x, 2x) and renders `~/.Xresources` with the matching `Xft.dpi` (`.xprofile` derives
-`QT_SCALE_FACTOR` from it, with `QT_FONT_DPI=96`, so Qt 5 apps scale too);
-the same scale picks the console font at boot (Terminus 16/24/28/32 px via
-`console-setup` or `/etc/vconsole.conf`, and `font-size` in
-`/etc/kmscon/kmscon.conf`, which also gets the Solarized palette and PragmataPro Mono
-where fontconfig finds it). Set `BOOTSTRAP_DPI_SCALE` to skip the prompt. Start with `startx`.
-
-Test in Docker: `test/bootstrap/run.sh [debian12|ubuntu2204|fedora43|fedora44|fedora45|rocky9|al2|al2023]`.
+Test in Docker: `test/bootstrap/run.sh [debian12|ubuntu2204|fedora43|fedora44|fedora45|rocky9|al2|al2023]`
+(all categories; `BOOTSTRAP_CATEGORIES= test/bootstrap/run.sh <distro>` for basic only).
+Test the category choice: `test/categories/test.sh`.
+Test the tmux plugin install: `test/tmux-plugins/test.sh`.
 Media keys (volume, mute, screen brightness) are bound in i3 only; check with `test/media-keys/test.sh`.
 
 
@@ -99,3 +41,8 @@ Media keys (volume, mute, screen brightness) are bound in i3 only; check with `t
 ```
 curl -SsL "https://raw.githubusercontent.com/Leandros/dotfiles/refs/heads/master/init.sh" | bash
 ```
+
+
+### Fonts
+
+Requires PragmataPro Mono. It's a paid font. It's worth every penny, buy it.
