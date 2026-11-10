@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 #
 # Tests the install category choice of bootstrap.sh: BOOTSTRAP_CATEGORIES,
-# the BOOTSTRAP_XORG=1 alias, the prompt, and the basic-only default without
-# a terminal. Runs the functions from bootstrap.sh, nothing is installed.
+# the BOOTSTRAP_XORG=1 handling, the menu (keys typed into a pseudo terminal),
+# and the basic-only default without a terminal. Runs the functions from
+# bootstrap.sh, nothing is installed.
 #
 # Usage: test/categories/test.sh
 #
@@ -22,8 +23,8 @@ ok()   { printf 'ok:   %s\n' "$*"; }
 # The category functions and what they use, as defined in bootstrap.sh.
 {
     grep -E '^(log|warn|die)\(\) ' "$BOOTSTRAP"
-    grep -E '^readonly (XORG_DISTROS|RHEL_XORG_MAX_MAJOR|OPTIONAL_CATEGORIES)=' "$BOOTSTRAP"
-    sed -n '/^xorg_supported() {$/,/^}$/p' "$BOOTSTRAP"
+    grep -E '^readonly (XORG_DISTROS|RHEL_XORG_MAX_MAJOR|OPTIONAL_CATEGORIES|ESC|CLEAR_LINE|ARROW_[A-Z_]+|KEY_[A-Z_]+)=' "$BOOTSTRAP"
+    sed -n '/^xorg_supported() {$/,/^}$/p; /^menu_select() {$/,/^}$/p' "$BOOTSTRAP"
     sed -n '/^category_[a-z_]*() {$/,/^}$/p; /^[a-z]*_categories() {$/,/^}$/p' "$BOOTSTRAP"
 } > "$FUNCS"
 
@@ -87,61 +88,70 @@ out="$(choose fedora)"
 expect "no env, no terminal: basic only" "CAT=" "$(grep '^CAT=' <<< "$out")"
 if [[ "$out" == *"select"* ]]; then fail "prompted without a terminal: $out"; else ok "no prompt without a terminal"; fi
 
-# prompt_categories reads the numbers of the offered categories.
-prompt() { run "$1" "prompt_categories <<< '$2'" 2>&1; }
-out="$(prompt fedora "1 2")"
-if [[ "$out" == *"1) dev tools"* && "$out" == *"2) desktop environment"* && "$out" == *"basic is always installed"* ]]; then
-    ok "prompt lists the categories"
-else
-    fail "prompt list: $out"
+# The menu needs a terminal: script(1) runs the code in a pseudo terminal and
+# types the keys after a second. Unset BOOTSTRAP_* unless the caller passes
+# them. Prints what the terminal showed, without CR.
+readonly UP=$'\033[A' UP_APP=$'\033OA' DOWN=$'\033[B' ENTER=$'\r'
+if ! command -v script >/dev/null; then
+    fail "script(1) missing: the menu tests need a terminal"
+    exit "$FAILED"
 fi
-expect "prompt 1 2" "devtools desktop" "$(tail -n 1 <<< "$out")"
-expect "prompt 2" "desktop" "$(prompt fedora "2" | tail -n 1)"
-expect "prompt empty: basic only" "" "$(prompt fedora "" | tail -n 1)"
-out="$(prompt fedora "3")" && rc=0 || rc=$?
-if [[ $rc -ne 0 && "$out" == *"invalid category choice: 3"* ]]; then ok "prompt rejects 3"; else fail "prompt 3 (rc $rc): $out"; fi
-out="$(prompt fedora "x")" && rc=0 || rc=$?
-if [[ $rc -ne 0 && "$out" == *"invalid category choice: x"* ]]; then ok "prompt rejects x"; else fail "prompt x (rc $rc): $out"; fi
+
+in_terminal() {
+    local keys="$1" code="$2"
+    shift 2
+    { sleep 1; printf '%s' "$keys"; } \
+        | env -u BOOTSTRAP_CATEGORIES -u BOOTSTRAP_XORG "$@" \
+            script -qec "bash -c 'set -euo pipefail; CATEGORIES=; source $FUNCS; $code'" /dev/null 2>&1 \
+        | tr -d '\r'
+}
+
+# prompt_categories on distro $1 after the keys $2; prints "CAT=<result>.".
+menu() {
+    in_terminal "$2" "DISTRO=$1 DISTRO_MAJOR=43; echo CAT=\$(prompt_categories)." | grep -ao 'CAT=[a-z ]*\.'
+}
+
+out="$(in_terminal " $ENTER" "DISTRO=fedora DISTRO_MAJOR=43; echo CAT=\$(prompt_categories).")"
+if [[ "$out" == *"basic is always installed"* && "$out" == *"Up/Down: move"* \
+    && "$out" == *"> [ ] dev tools"* && "$out" == *"  [ ] desktop environment"* ]]; then
+    ok "menu lists the categories, cursor on the first"
+else
+    fail "menu list: $out"
+fi
+if [[ "$out" == *"> [x] dev tools"* ]]; then ok "Space shows the selection at once"; else fail "no [x] after Space: $out"; fi
+
+expect "menu Enter: basic only" "CAT=." "$(menu fedora "$ENTER")"
+expect "menu Space: dev tools" "CAT=devtools." "$(menu fedora " $ENTER")"
+expect "menu Down Space: desktop" "CAT=desktop." "$(menu fedora "$DOWN $ENTER")"
+expect "menu both" "CAT=devtools desktop." "$(menu fedora " $DOWN $ENTER")"
+expect "menu Space Space: unselected" "CAT=." "$(menu fedora "  $ENTER")"
+expect "menu Up in application mode" "CAT=devtools." "$(menu fedora "$DOWN$UP_APP $ENTER")"
+expect "menu stops at the bottom" "CAT=desktop." "$(menu fedora "$DOWN$DOWN $ENTER")"
+expect "menu stops at the top" "CAT=devtools." "$(menu fedora "$UP $ENTER")"
 
 # Where the desktop cannot be installed it is not offered.
-out="$(prompt amzn2 "1")"
-if [[ "$out" == *"1) dev tools"* && "$out" != *"desktop environment"* ]]; then
-    ok "amzn2 prompt offers no desktop"
+out="$(in_terminal "$ENTER" "DISTRO=amzn2 DISTRO_MAJOR=2; prompt_categories >/dev/null")"
+if [[ "$out" == *"dev tools"* && "$out" != *"desktop environment"* ]]; then
+    ok "amzn2 menu offers no desktop"
 else
-    fail "amzn2 prompt: $out"
+    fail "amzn2 menu: $out"
 fi
-expect "amzn2 prompt 1" "devtools" "$(tail -n 1 <<< "$out")"
-out="$(prompt amzn2 "2")" && rc=0 || rc=$?
-if [[ $rc -ne 0 ]]; then ok "amzn2 prompt rejects 2"; else fail "amzn2 prompt 2 accepted: $out"; fi
+expect "amzn2 menu Down Space: dev tools" "CAT=devtools." "$(menu amzn2 "$DOWN $ENTER")"
 
-# With a terminal and no environment, choose_categories prompts.
-if command -v script >/dev/null; then
-    out="$(printf '1\n' | env -u BOOTSTRAP_CATEGORIES -u BOOTSTRAP_XORG script -qec "bash -c '
-        set -euo pipefail
-        DISTRO=fedora DISTRO_MAJOR=43 CATEGORIES=
-        source $FUNCS
-        choose_categories
-        echo CAT=\$CATEGORIES.
-    '" /dev/null 2>&1 | tr -d '\r')"
-    if [[ "$out" == *"select"* && "$out" == *"CAT=devtools."* ]]; then
-        ok "terminal without env: prompt"
-    else
-        fail "terminal prompt: $out"
-    fi
+# With a terminal and no environment, choose_categories shows the menu.
+out="$(in_terminal " $ENTER" "DISTRO=fedora DISTRO_MAJOR=43; choose_categories; echo CAT=\$CATEGORIES.")"
+if [[ "$out" == *"Up/Down: move"* && "$out" == *"CAT=devtools."* ]]; then
+    ok "terminal without env: menu"
+else
+    fail "terminal menu: $out"
+fi
 
-    # BOOTSTRAP_XORG=1 selects desktop but still asks for the others.
-    out="$(printf '1\n' | env -u BOOTSTRAP_CATEGORIES BOOTSTRAP_XORG=1 script -qec "bash -c '
-        set -euo pipefail
-        DISTRO=fedora DISTRO_MAJOR=43 CATEGORIES=
-        source $FUNCS
-        choose_categories
-        echo CAT=\$CATEGORIES.
-    '" /dev/null 2>&1 | tr -d '\r')"
-    if [[ "$out" == *"select"* && "$out" == *"CAT=devtools desktop."* ]]; then
-        ok "BOOTSTRAP_XORG=1 on a terminal: prompt, plus desktop"
-    else
-        fail "BOOTSTRAP_XORG=1 terminal prompt: $out"
-    fi
+# BOOTSTRAP_XORG=1 selects desktop but still asks for the others.
+out="$(in_terminal " $ENTER" "DISTRO=fedora DISTRO_MAJOR=43; choose_categories; echo CAT=\$CATEGORIES." BOOTSTRAP_XORG=1)"
+if [[ "$out" == *"Up/Down: move"* && "$out" == *"CAT=devtools desktop."* ]]; then
+    ok "BOOTSTRAP_XORG=1 on a terminal: menu, plus desktop"
+else
+    fail "BOOTSTRAP_XORG=1 terminal menu: $out"
 fi
 
 exit "$FAILED"

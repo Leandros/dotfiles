@@ -74,13 +74,17 @@ Report, Main.
 - Categories: `basic` always; `devtools` (lazygit, direnv, rust-analyzer,
   lspmux, codelldb) and `desktop` (the Xorg/i3 desktop) are optional.
   `choose_categories` in `main` sets `CATEGORIES` from `BOOTSTRAP_CATEGORIES`
-  (`all`, `""`), else a prompt on a terminal, else basic only. Desktop is not
+  (`all`, `""`), else a menu on a terminal, else basic only. Desktop is not
   offered and is dropped with a warning where `xorg_supported` fails. Steps
   of a category: `category_step <category> <name> <function>`; other code
   checks `category_selected`. A run with fewer categories removes nothing.
   Rust stays in basic: tree-sitter (basic) and nmrs-gui/wmfocus (desktop)
   build with cargo. Test: `test/categories/test.sh` (pulls the functions out
   with `sed`; also passes with AL2's bash 4.2).
+- Menu: `menu_select` (pure bash, draws on stderr, prints the chosen
+  indices; Up/Down as CSI and SS3, Space, Enter); `prompt_categories` maps
+  them to names. Tests run it in a pseudo terminal with `script -qec` and
+  piped keys. Tested on bash 3.2, 4.2 and 5.2 (docker `bash:<ver>`).
 - bash 4.2 (AL2) fails on `"${a[@]}"` of an empty array under `set -u`; use
   `${a[@]+"${a[@]}"}`.
 - Ask all prompts in `main` before the installs, so a run does not stall

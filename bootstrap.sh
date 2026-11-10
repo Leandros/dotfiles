@@ -443,30 +443,81 @@ parse_categories() {
     echo "$out"
 }
 
+# Terminal control (ECMA-48) and the keys the category menu reads.
+readonly ESC=$'\033'
+readonly CLEAR_LINE="${ESC}[2K"
+# What follows ESC for the arrow keys, in normal and application cursor mode.
+readonly ARROW_UP_CSI="[A" ARROW_UP_SS3="OA"
+readonly ARROW_DOWN_CSI="[B" ARROW_DOWN_SS3="OB"
+readonly KEY_SPACE=" "
+# read -n1 stops at the newline that Enter sends and stores nothing.
+readonly KEY_ENTER=""
+
+# Let the user pick from the labels in $@ with Up/Down, Space and Enter.
+# Draws on stderr; prints the picked indices on stdout.
+menu_select() {
+    local n=$# cursor=0 i key rest mark arrow out="" drawn=0
+    local labels=("$@") picked=()
+    for ((i = 0; i < n; i++)); do
+        picked[i]=0
+    done
+
+    echo "Up/Down: move  Space: select  Enter: confirm" >&2
+    while true; do
+        # Draw over the last list: cursor up n lines, then clear each line.
+        if (( drawn )); then
+            printf '%s[%dA' "$ESC" "$n" >&2
+        fi
+        drawn=1
+        for ((i = 0; i < n; i++)); do
+            mark=" "
+            arrow=" "
+            if (( picked[i] )); then mark="x"; fi
+            if (( i == cursor )); then arrow=">"; fi
+            printf '\r%s%s [%s] %s\n' "$CLEAR_LINE" "$arrow" "$mark" "${labels[i]}" >&2
+        done
+
+        IFS= read -rsn1 key || break
+        case "$key" in
+            "$ESC")
+                IFS= read -rsn2 -t 1 rest || rest=""
+                case "$rest" in
+                    "$ARROW_UP_CSI"|"$ARROW_UP_SS3")
+                        if (( cursor > 0 )); then cursor=$((cursor - 1)); fi
+                        ;;
+                    "$ARROW_DOWN_CSI"|"$ARROW_DOWN_SS3")
+                        if (( cursor < n - 1 )); then cursor=$((cursor + 1)); fi
+                        ;;
+                esac
+                ;;
+            "$KEY_SPACE") picked[cursor]=$((1 - picked[cursor])) ;;
+            "$KEY_ENTER") break ;;
+        esac
+    done
+
+    for ((i = 0; i < n; i++)); do
+        if (( picked[i] )); then out+="${out:+ }$i"; fi
+    done
+    echo "$out"
+}
+
 # Ask which optional categories to install; print them. The desktop is only
 # offered where it can be installed.
 prompt_categories() {
-    local offered=() name i reply="" words=() word picked=""
+    local offered=() labels=() name i chosen=""
     for name in "${OPTIONAL_CATEGORIES[@]}"; do
         if [[ "$name" == desktop ]] && ! xorg_supported; then
             continue
         fi
         offered+=("$name")
+        labels+=("$(category_label "$name")")
     done
 
-    echo "Categories (basic is always installed):" >&2
-    for i in "${!offered[@]}"; do
-        printf '  %d) %s\n' "$((i + 1))" "$(category_label "${offered[$i]}")" >&2
+    echo "Categories (basic is always installed)" >&2
+    for i in $(menu_select "${labels[@]}"); do
+        chosen+="${offered[i]} "
     done
-    read -r -p "select, space-separated [none]: " reply || true
-
-    read -r -a words <<< "$reply"
-    for word in ${words[@]+"${words[@]}"}; do
-        [[ "$word" =~ ^[1-9][0-9]*$ && "$word" -le "${#offered[@]}" ]] \
-            || die "invalid category choice: $word"
-        picked+="${offered[$((word - 1))]} "
-    done
-    parse_categories "$picked"
+    parse_categories "$chosen"
 }
 
 # Set CATEGORIES from the environment, else from a prompt on a terminal,
