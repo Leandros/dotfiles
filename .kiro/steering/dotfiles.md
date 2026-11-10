@@ -390,6 +390,16 @@ New link or system file: install function, `check_link` or `cmp` check in
   `tmux load-buffer -w -` (clipboard too). Its `--version` prints several
   lines: `| head -n 1` under pipefail failed 21 of 300 times (SIGPIPE); use
   `sed -n 1p`.
+- tmux-jump (`prefix g`, `@jump-key g`; default is `j`): tpm plugin in Ruby,
+  needs Ruby >= 2.3 (`&.` in `jump_position.rb`). Distro `ruby` package; macOS
+  system Ruby. AL2 `/usr/bin/ruby` is 2.0 and amzn2int packages (ruby-s3,
+  ruby-sqs2) need it, no `amazon-linux-extras` Ruby: bootstrap installs the
+  prebuilt jdx/ruby release (`TMUX_JUMP_RUBY_VERSION`, glibc 2.14, 399 MB) in
+  `/usr/local/lib/tmux-jump-ruby`, not on PATH. The Linux `.tmux.conf`
+  re-binds `g` after tpm, with that Ruby first in PATH, when it exists (the
+  path to the plugin's `scripts/tmux-jump.sh` is in the config). verify.sh
+  types `prefix g` + `z` through a `script` client and checks the copy-mode
+  cursor (command-prompt needs a client).
 - wezterm: Xorg only, rolling nightly (GitHub `.deb` on Debian/Ubuntu, COPR on
   Fedora/EL). It reads the DPI from `~/.Xresources`. On Linux its scheme
   follows `gsettings get ... color-scheme` (set by `theme`), read in the
