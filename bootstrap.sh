@@ -100,6 +100,8 @@ readonly XREMAP_VERSION="0.15.15"
 readonly NMRS_GUI_VERSION="2.1.0"
 # https://crates.io/crates/wmfocus (Xorg desktop only)
 readonly WMFOCUS_VERSION="1.5.0"
+# https://crates.io/crates/xidlehook (Xorg desktop only; last release 2021)
+readonly XIDLEHOOK_VERSION="0.10.0"
 # https://github.com/brofi/rrandr (Xorg desktop only; no releases or crate,
 # so a commit)
 readonly RRANDR_REF="d1677ca9b538d489b75a8760a1848d780733083a"
@@ -1235,7 +1237,7 @@ install_xorg_packages() {
             $SUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
                 -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold \
                 xorg xinit x11-xserver-utils \
-                i3 i3status suckless-tools i3lock xss-lock xautolock blueman arandr autorandr \
+                i3 i3status suckless-tools i3lock xss-lock blueman arandr autorandr \
                 alsa-utils pavucontrol brightnessctl xclip xinput rfkill cifs-utils smbclient btop remmina remmina-plugin-rdp picom lxpolkit \
                 kbd console-data console-setup
             ;;
@@ -1248,18 +1250,18 @@ install_xorg_packages() {
             # imports GTK 3 but does not depend on gtk3 either.
             $SUDO dnf install -y -q \
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap xrandr \
-                i3 i3status dmenu i3lock xss-lock xautolock blueman gobject-introspection copyq \
+                i3 i3status dmenu i3lock xss-lock blueman gobject-introspection copyq \
                 arandr autorandr gtk3 \
                 alsa-utils pavucontrol brightnessctl xclip xinput picom cifs-utils samba-client btop remmina remmina-plugins-rdp firewall-config lxpolkit kbd terminus-fonts-console
             ;;
         rhel)
             $SUDO dnf install -y -q epel-release
             $SUDO dnf config-manager --set-enabled crb
-            # xss-lock, xautolock, blueman, arandr, autorandr, picom and
-            # lxpolkit are not packaged for EL9; .xprofile tolerates their
-            # absence. Without them there is no lock or suspend on idle, no
-            # Bluetooth GUI, no saved monitor layouts and no polkit password
-            # prompt; ~/bin/pwr still locks.
+            # xss-lock, blueman, arandr, autorandr, picom and lxpolkit are
+            # not packaged for EL9; .xprofile tolerates their absence.
+            # Without them there is no lock before suspend, no Bluetooth
+            # GUI, no saved monitor layouts and no polkit password prompt;
+            # ~/bin/pwr still locks.
             $SUDO dnf install -y -q \
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap \
                 i3 i3status dmenu i3lock copyq \
@@ -1431,6 +1433,35 @@ install_wmfocus() {
         --root "$WORK_DIR/wmfocus" "wmfocus@$WMFOCUS_VERSION"
     install_bin "$WORK_DIR/wmfocus/bin/wmfocus" wmfocus
     mark_current wmfocus "$WMFOCUS_VERSION"
+}
+
+# Idle lock and suspend (.xprofile), except while audio plays or a window
+# is fullscreen: Firefox's idle inhibit reaches nothing in i3. Links libxcb
+# (screensaver extension) and libpulse (--not-when-audio). caffeinate stops
+# its timers through xidlehook-client.
+install_xidlehook_deps() {
+    case "$DISTRO" in
+        debian|ubuntu)
+            $SUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
+                -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold \
+                libxcb1-dev libxcb-screensaver0-dev libpulse-dev
+            ;;
+        fedora|rhel)
+            $SUDO dnf install -y -q libxcb-devel pulseaudio-libs-devel
+            ;;
+    esac
+}
+
+install_xidlehook() {
+    is_current xidlehook "$XIDLEHOOK_VERSION" "$PREFIX/bin/xidlehook" && return
+
+    install_xidlehook_deps
+    export CARGO_HOME="$CARGO_HOME_DIR" RUSTUP_HOME="$RUSTUP_HOME_DIR"
+    quiet "$CARGO_HOME_DIR/bin/cargo" "+$RUST_TOOLCHAIN" install -q --locked \
+        --root "$WORK_DIR/xidlehook" "xidlehook@$XIDLEHOOK_VERSION"
+    install_bin "$WORK_DIR/xidlehook/bin/xidlehook" xidlehook
+    install_bin "$WORK_DIR/xidlehook/bin/xidlehook-client" xidlehook-client
+    mark_current xidlehook "$XIDLEHOOK_VERSION"
 }
 
 # RRandR: monitor layout GUI like arandr, plus the refresh rate. Needs GTK
@@ -1675,6 +1706,9 @@ check_idle_settings() {
     for name in IDLE_LOCK_MINUTES IDLE_SUSPEND_MINUTES; do
         [[ "${!name}" =~ ^[1-9][0-9]*$ ]] || die "$name must be a positive number of minutes: ${!name}"
     done
+    # xidlehook's suspend timer starts when the lock timer fires.
+    [[ "$IDLE_SUSPEND_MINUTES" -gt "$IDLE_LOCK_MINUTES" ]] ||
+        die "IDLE_SUSPEND_MINUTES ($IDLE_SUSPEND_MINUTES) must be after IDLE_LOCK_MINUTES ($IDLE_LOCK_MINUTES)"
 }
 
 write_idle_conf() {
@@ -1779,6 +1813,7 @@ setup_xorg() {
     install_xremap
     install_nmrs_gui
     install_wmfocus
+    install_xidlehook
     if [[ "$DISTRO" != rhel ]]; then
         install_rrandr
     fi
@@ -1933,6 +1968,7 @@ report() {
         print_version wezterm wezterm --version
         print_version nmrs-gui nmrs-gui --version
         print_version wmfocus wmfocus --version
+        print_version xidlehook xidlehook --version
         if [[ "$DISTRO" != rhel ]]; then
             print_version rrandr cat "$(stamp_path rrandr)"
         fi

@@ -77,15 +77,26 @@ pkill -f '/bin/input-restore$' 2>/dev/null
 # shellcheck source=/dev/null
 [ -f ~/.config/idle.conf ] && . ~/.config/idle.conf
 
-# Lock on idle, before suspend and on `loginctl lock-session` (~/bin/pwr).
-[ -n "${IDLE_LOCK_MINUTES:-}" ] && xset s $((IDLE_LOCK_MINUTES * 60))
+# The locker: runs before suspend and on `loginctl lock-session`
+# (~/bin/pwr, xidlehook below). Not on X's screensaver timer, which locks
+# whatever plays: it is off.
+xset s off
 xss-lock --transfer-sleep-lock -- ~/bin/pwr lock --nofork >/dev/null 2>&1 &
 
-# Suspend on idle. logind IdleAction cannot see X input in a startx session.
-# -detectsleep restarts the count after resume, so the machine does not
-# suspend again at once.
-[ -n "${IDLE_SUSPEND_MINUTES:-}" ] && xautolock -time "$IDLE_SUSPEND_MINUTES" \
-    -locker "systemctl suspend" -detectsleep >/dev/null 2>&1 &
+# Lock, then suspend, on idle; not while audio plays or a window is
+# fullscreen (video: Firefox's idle inhibit reaches no service in i3).
+# Timers run one after the other, so the suspend timer is the difference.
+# logind IdleAction cannot see X input in a startx session. --detect-sleep
+# restarts the count after resume. caffeinate controls the timers through
+# the socket: 0 locks, 1 suspends.
+pkill -x xidlehook 2>/dev/null
+if [ -n "${IDLE_LOCK_MINUTES:-}" ] && [ -n "${IDLE_SUSPEND_MINUTES:-}" ]; then
+    xidlehook --not-when-audio --not-when-fullscreen --detect-sleep \
+        --socket "$XDG_RUNTIME_DIR/xidlehook.sock" \
+        --timer $((IDLE_LOCK_MINUTES * 60)) 'loginctl lock-session' '' \
+        --timer $(((IDLE_SUSPEND_MINUTES - IDLE_LOCK_MINUTES) * 60)) 'systemctl suspend' '' \
+        >/dev/null 2>&1 &
+fi
 
 # Bluetooth: tray icon in the i3 bar and the pairing agent (PIN prompts).
 # EL9 has no blueman.

@@ -427,6 +427,8 @@ if [[ $xorg_expected -eq 1 ]]; then
     fi
     check_version nmrs-gui "nmrs-gui $NMRS_GUI_VERSION" nmrs-gui --version
     check_version wmfocus "wmfocus $WMFOCUS_VERSION" wmfocus --version
+    check_version xidlehook "xidlehook $XIDLEHOOK_VERSION" xidlehook --version
+    check_version xidlehook-client "xidlehook-client $XIDLEHOOK_VERSION" xidlehook-client --version
     # rrandr has no --version: the stamp holds the pinned commit, and every
     # library it links must resolve. Not on EL9 (pango 1.48 < 1.50).
     if [[ "$os_id" != rocky ]]; then
@@ -458,7 +460,7 @@ if [[ $xorg_expected -eq 1 ]]; then
     fi
     # Not packaged for EL9.
     if grep -qE '^ID=(debian|ubuntu|fedora)$' /etc/os-release; then
-        for bin in xss-lock xautolock blueman-applet blueman-manager picom lxpolkit; do
+        for bin in xss-lock blueman-applet blueman-manager picom lxpolkit; do
             if command -v "$bin" >/dev/null; then ok "xorg bin $bin"; else fail "xorg bin missing: $bin"; fi
         done
         # Imports all its GObject libraries; Fedora's package misses one.

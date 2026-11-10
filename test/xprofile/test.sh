@@ -36,7 +36,7 @@ expect() {
 write_stubs() {
     mkdir -p "$STUBS" "$TMP/home/bin" "$TMP/home/.config"
     local cmd
-    for cmd in systemctl autorandr xset setxkbmap xmodmap pkill xss-lock xautolock blueman-applet copyq picom lxpolkit; do
+    for cmd in systemctl autorandr xset setxkbmap xmodmap pkill xss-lock blueman-applet copyq picom lxpolkit; do
         printf '#!/bin/sh\necho "%s $*" >> "%s"\n' "$cmd" "$CALLS" > "$STUBS/$cmd"
     done
     # xrdb -query prints the Xft.dpi of XFT_DPI (unset: none), like the
@@ -61,6 +61,13 @@ EOF
     printf '#!/bin/sh\nexec /usr/bin/sleep "$@"\n' > "$STUBS/sleep"
     printf '#!/bin/sh\nexec /usr/bin/grep "$@"\n' > "$STUBS/grep"
     printf '#!/bin/sh\nexec /usr/bin/awk "$@"\n' > "$STUBS/awk"
+    # xidlehook records one argument per field, so empty ones stay visible.
+    cat > "$STUBS/xidlehook" <<EOF
+#!/bin/sh
+{ printf xidlehook; printf '|%s' "\$@"; echo; } >> "$CALLS"
+EOF
+    # The IDLE_* settings bootstrap.sh writes.
+    printf 'IDLE_LOCK_MINUTES=5\nIDLE_SUSPEND_MINUTES=12\n' > "$TMP/home/.config/idle.conf"
     # xremap: the virtual keyboard appears after a delay, unless XREMAP_FAILS.
     cat > "$STUBS/xremap" <<EOF
 #!/bin/sh
@@ -85,7 +92,7 @@ run() {
     # Without the Qt variables of the session running the test. LANG as
     # lightdm sets it from the AccountsService language (German here).
     env -u QT_SCALE_FACTOR -u QT_FONT_DPI LANG=de_DE.utf8 \
-        HOME="$TMP/home" PATH="$STUBS" DISPLAY=:99 XFT_DPI="${XFT_DPI:-}" /bin/sh "$XPROFILE"
+        HOME="$TMP/home" XDG_RUNTIME_DIR="$TMP/run" PATH="$STUBS" DISPLAY=:99 XFT_DPI="${XFT_DPI:-}" /bin/sh "$XPROFILE"
     wait 2>/dev/null || true
 }
 
@@ -130,6 +137,15 @@ main() {
     # and other GUIs run as the user); a re-login replaces the old one.
     expect "polkit agent starts" "lxpolkit " "$(grep '^lxpolkit' "$CALLS")"
     if grep -qx 'pkill -x lxpolkit' "$CALLS"; then ok "the old polkit agent is stopped"; else fail "no pkill -x lxpolkit"; fi
+
+    # Idle: xidlehook locks after 5 min and suspends 7 min later (12 in
+    # all), not while audio plays or a window is fullscreen (video). The X
+    # screensaver timer is off: xss-lock would lock on it regardless.
+    expect "idle timers" \
+        "xidlehook|--not-when-audio|--not-when-fullscreen|--detect-sleep|--socket|$TMP/run/xidlehook.sock|--timer|300|loginctl lock-session||--timer|420|systemctl suspend|" \
+        "$(grep '^xidlehook' "$CALLS")"
+    if grep -qx 'xset s off' "$CALLS"; then ok "X screensaver timer off"; else fail "no xset s off: $(grep '^xset' "$CALLS" | tr '\n' ';')"; fi
+    if grep -qx 'pkill -x xidlehook' "$CALLS"; then ok "the old xidlehook is stopped"; else fail "no pkill -x xidlehook"; fi
 
     # English programs (arandr, pavucontrol, blueman), whatever language
     # lightdm took from AccountsService.

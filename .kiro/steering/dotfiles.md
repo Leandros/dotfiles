@@ -130,7 +130,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   an agent in i3, polkit refuses silently: firewall-config and other GUIs
   that run as the user cannot change anything. Not in EL9 EPEL (it has
   mate-polkit, polkit-gnome, xfce-polkit).
-- EL9 has no xss-lock, xautolock, blueman, arandr, autorandr, picom,
+- EL9 has no xss-lock, blueman, arandr, autorandr, picom,
   lxpolkit, rrandr.
   `.xprofile` must work without them. RHEL 10 has no Xorg or i3.
 - CopyQ: Debian/Ubuntu only if the candidate is >= `COPYQ_MIN_VERSION`
@@ -194,6 +194,7 @@ New link or system file: install function, `check_link` or `cmp` check in
 - Unit tests with stubs and fake sysfs: `test/fzf-cache/test.sh`,
   `test/i3status-kb/test.sh`, `test/power-mode/test.sh`, `test/i3-session/test.sh`,
   `test/xprofile/test.sh` (runs `.xprofile` with only stubs on PATH),
+  `test/idle-settings/test.sh`, `test/caffeinate/test.sh`,
   `test/input-restore/test.sh`,
   `test/fetch/test.sh` (`fetch_unpack` must die on a failed download: it runs
   in `$(...)`, where `set -e` does not apply),
@@ -301,8 +302,19 @@ New link or system file: install function, `check_link` or `cmp` check in
 - Key repeat is set in `xorg-conf/50-keyboard-repeat.conf`; `xset r rate` does
   not reach the xremap device.
 - Idle: `.xprofile` sources `~/.config/idle.conf` (written from the
-  `IDLE_*` settings), runs `xss-lock` (`pwr lock --nofork`) and `xautolock`
-  (`-detectsleep`) for suspend. autorandr runs before i3.
+  `IDLE_*` settings; `check_idle_settings` needs suspend > lock, test
+  `test/idle-settings/test.sh`). xidlehook (cargo, desktop) runs both
+  timers, `--not-when-audio --not-when-fullscreen --detect-sleep`: timer 0
+  `loginctl lock-session` after the lock minutes, timer 1 `systemctl
+  suspend` after the difference (timers chain). Socket
+  `$XDG_RUNTIME_DIR/xidlehook.sock`; `caffeinate` disables timer 1 (with
+  `display` all) through `xidlehook-client`. `xss-lock` (`pwr lock
+  --nofork`) is only the locker (before suspend, on lock-session); `xset s
+  off`, because it would lock on X's timer during video. Replaced xautolock:
+  in i3 nothing implements Firefox's idle inhibit (no
+  `org.freedesktop.ScreenSaver`, no GNOME session manager). xidlehook's last
+  release is 0.10.0 (2021); links libxcb and libpulse. autorandr runs
+  before i3.
 - `pwr lock|sleep|hibernate|performance|balanced|battery|mode`. Modes use
   busctl `org.freedesktop.UPower.PowerProfiles` (tuned-ppd).
   `power-mode-auto` selects performance on AC and battery on battery, only

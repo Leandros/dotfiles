@@ -2,15 +2,15 @@
 #
 # caffeinate - keep the machine awake while this runs, like macOS caffeinate.
 #
-# Runs in the foreground until Ctrl-C. Idle suspend comes from xautolock
-# (~/.xprofile); this disables it and enables it again on exit. A logind
-# inhibitor would not help: logind lets a user's own `systemctl suspend`
-# pass that user's inhibitors.
+# Runs in the foreground until Ctrl-C. Idle lock and suspend come from
+# xidlehook (~/.xprofile): timer 0 locks, timer 1 suspends. This disables
+# the suspend timer through xidlehook's socket and enables it again on exit.
+# A logind inhibitor would not help: logind lets a user's own `systemctl
+# suspend` pass that user's inhibitors.
 #
-# With `display` the screen also stays on and unlocked: the X screensaver
-# timer, which xss-lock locks on and DPMS blanks on, is reset every minute.
-# Nothing is switched off for that, so a killed caffeinate leaves no trace.
-# Only `kill -9` would keep idle suspend disabled (`xautolock -enable`).
+# With `display` both timers are off, and the X idle time, which DPMS
+# blanks on, is reset every minute. Only `kill -9` would keep the timers
+# disabled (`xidlehook-client ... --action enable`).
 #
 # Closing the lid and `pwr sleep` still suspend.
 #
@@ -19,8 +19,12 @@
 #
 set -euo pipefail
 
-# Well below the 5 minute lock (IDLE_LOCK_MINUTES in bootstrap.sh).
+# Well below DPMS blanking (10 minutes by default).
 readonly INTERVAL_S="${CAFFEINATE_INTERVAL_S:-60}"
+readonly SOCKET="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/xidlehook.sock"
+readonly SUSPEND_TIMER=1
+# The timers to hold off: the suspend timer, or all (empty) with display.
+TIMERS=("--timer" "$SUSPEND_TIMER")
 readonly USAGE="usage: caffeinate [display]"
 SLEEP_PID=""
 
@@ -28,19 +32,24 @@ die() { printf 'caffeinate: %s\n' "$*" >&2; exit 1; }
 
 cleanup() {
     # A second Ctrl-C (or a signal to the whole process group) must not
-    # stop xautolock -enable; children inherit the ignored signals.
+    # stop the enable; children inherit the ignored signals.
     trap '' INT TERM HUP
     # Ctrl-C reaches the whole process group, so sleep is often gone already.
     if [[ -n "$SLEEP_PID" ]]; then kill "$SLEEP_PID" 2>/dev/null || true; fi
-    xautolock -enable 2>/dev/null || true
+    timers enable || true
     echo "caffeinate: idle suspend on again"
+}
+
+# Enables or disables the held-off xidlehook timers.
+timers() {
+    xidlehook-client --socket "$SOCKET" control --action "$1" ${TIMERS[@]+"${TIMERS[@]}"} >/dev/null 2>&1
 }
 
 main() {
     local display=""
     case "${1:-}" in
         "")      ;;
-        display) display=1 ;;
+        display) display=1; TIMERS=() ;;
         *)       die "$USAGE" ;;
     esac
     [[ -n "${DISPLAY:-}" ]] || die "needs X (DISPLAY is not set)"
@@ -51,7 +60,7 @@ main() {
     trap 'exit 143' TERM
     trap 'exit 129' HUP
 
-    xautolock -disable 2>/dev/null || echo "caffeinate: xautolock not running, no idle suspend to stop" >&2
+    timers disable || echo "caffeinate: xidlehook not running, no idle suspend to stop" >&2
     if [[ -n "$display" ]]; then
         echo "caffeinate: no idle suspend, lock or blanking; Ctrl-C to stop"
     else

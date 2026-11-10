@@ -61,6 +61,8 @@ does not drag). `~/bin/input-restore` re-applies the keyboard layout and tap-to-
 when X re-adds input devices with its defaults (installers that run `udevadm trigger`,
 an xremap restart, a new keyboard). `~/bin/charge full` lets the battery charge to
 100% through UPower's charge limit; `charge limit` goes back to 80%.
+The screen locks after 5 minutes idle and the machine suspends after 10 (xidlehook),
+but not while audio plays or a window is fullscreen, such as a video.
 `~/bin/caffeinate` keeps the machine from suspending on idle until Ctrl-C;
 `caffeinate display` also keeps the screen on and unlocked. `~/bin/smb` scans the
 local /24 for SMB servers, lists their shares and mounts the chosen one under `~/mnt`. The
