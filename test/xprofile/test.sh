@@ -44,6 +44,8 @@ write_stubs() {
     cat > "$STUBS/xrdb" <<EOF
 #!/bin/sh
 echo "xrdb \$*" >> "$CALLS"
+# The DPI autorandr's hook set (TMP/hook-dpi) wins.
+[ "\$1" = -query ] && [ -s "$TMP/hook-dpi" ] && { read -r d < "$TMP/hook-dpi"; printf 'Xft.dpi:\t%s\n' "\$d"; exit 0; }
 [ "\$1" = -query ] && [ -n "\${XFT_DPI:-}" ] && printf 'Xft.dpi:\t%s\n' "\$XFT_DPI"
 exit 0
 EOF
@@ -184,6 +186,11 @@ main() {
     # scales its fonts twice.
     expect "Qt scaling at 1.5x (144 dpi)" "qt 1.5 96" "$(XFT_DPI=144 run; grep '^qt ' "$CALLS")"
     expect "Qt scaling at 1.75x (168 dpi)" "qt 1.75 96" "$(XFT_DPI=168 run; grep '^qt ' "$CALLS")"
+    # autorandr's hook sets the profile's DPI (desk: 120); Qt follows it.
+    printf '#!/bin/sh\necho "autorandr $*" >> "%s"\necho 120 > "%s"\n' "$CALLS" "$TMP/hook-dpi" > "$STUBS/autorandr"
+    expect "Qt scaling from the DPI autorandr's profile set" "qt 1.25 96" "$(XFT_DPI=144 run; grep '^qt ' "$CALLS")"
+    printf '#!/bin/sh\necho "autorandr $*" >> "%s"\n' "$CALLS" > "$STUBS/autorandr"
+    rm -f "$TMP/hook-dpi"
     expect "no Xft.dpi: Qt left alone" "qt unset unset" "$(run; grep '^qt ' "$CALLS")"
 
     # Without xremap (no input group) the layout is still set, and soon.

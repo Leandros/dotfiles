@@ -40,7 +40,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `.tmux/custom` | `~/.tmux/custom` |
 | `.zshrc` | `~/.zshrc`, rendered copy (`##NEWHOME##`, `##NEWUSER##`) |
 | `.Xresources` | `~/.Xresources`, rendered copy (`##XFT_DPI##`) |
-| `.wezterm.lua`, `.xinitrc`, `.xprofile`, `.xsession`, `.Xmodmap`, `.config/{i3,i3status,xremap,picom,eww}`, `.config/systemd/user/i3-session.target` | `$HOME`, links, Xorg only |
+| `.wezterm.lua`, `.xinitrc`, `.xprofile`, `.xsession`, `.Xmodmap`, `.config/{i3,i3status,xremap,picom,eww}`, `.config/autorandr/postswitch` (the file only: profiles are per machine), `.config/systemd/user/i3-session.target` | `$HOME`, links, Xorg only |
 | `bin/{kb,i3status-kb,pwr,theme,flightmode,touchpad,charge,caffeinate,smb,input-restore,bar,pkill-display,term,xrdp-keys,syncthing-status}` | `~/bin`, links, Xorg only |
 | `bin/fzf-cache` | `~/bin`, link, always |
 | `xorg-conf/*.conf` | `/etc/X11/xorg.conf.d/` (root copy) |
@@ -205,6 +205,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   `test/idle-settings/test.sh`, `test/caffeinate/test.sh`, `test/eww/test.sh`,
   `test/pkill-display/test.sh`, `test/i3-bar/test.sh`, `test/xrdp/test.sh`,
   `test/xrdp-conf/test.sh`, `test/syncthing-status/test.sh`,
+  `test/autorandr-hook/test.sh`,
   `test/input-restore/test.sh`,
   `test/fetch/test.sh` (`fetch_unpack` must die on a failed download: it runs
   in `$(...)`, where `set -e` does not apply),
@@ -339,8 +340,9 @@ New link or system file: install function, `check_link` or `cmp` check in
 - Bar: eww (`.config/eww`, linked; `install_eww`, desktop, commit
   `EWW_REF`, `--no-default-features --features x11`: release 0.6.0 pins
   Rust 1.76). `bin/bar` (run by `.xprofile` before the tray apps) starts the
-  daemon (a running one reloads: eww does not see edits behind the
-  per-display links; an i3 restart does not reload eww), then `bar watch` (stopped with `pkill -f '/bin/bar watch$'`)
+  daemon, waiting until it answers (a running one is replaced: eww does
+  not see edits behind the per-display links, an i3 restart does not
+  restart eww, and `eww reload` stacked bars, see below), then `bar watch` (stopped with `pkill -f '/bin/bar watch$'`)
   waits for i3, opens `bar` per active output (`--arg output/height/tray`;
   tray on the primary one; height 34 px at 144 dpi, scaled by `Xft.dpi`)
   and reopens on output events. One daemon per X display: eww names its
@@ -352,9 +354,18 @@ New link or system file: install function, `check_link` or `cmp` check in
   ~/.config/i3-bar.d/*.conf` (variables of the main config reach it), and
   bootstrap's `select_bar` links it there only without `$PREFIX/bin/eww`
   (removes the link otherwise). Test: `test/i3-bar/test.sh` (i3 on Xvfb,
-  `get_bar_config`). A bar was sometimes docked
-  0 px high (not reproducible later): `bar` checks the i3 dock heights and
-  reopens, at most 3 times. Scripts in `scripts/`:
+  `get_bar_config`). An `eww open` that finds no daemon (not up yet, busy
+  in a reload) forks a daemon of its own (eww 0.6 main.rs; its process
+  keeps the `open` command line): it takes the socket, the old daemon
+  keeps its bars, and close-all and kill reach only one. Outputs had up
+  to five bars stacked, or none. So `open` runs with `--no-daemonize`
+  (then it fails) and `timeout` (a hung open blocked the watcher), only
+  `start_daemon` starts one, and a restart stops every eww process of the
+  display's config (`pkill-display -f "eww -c <config> "`). After opening,
+  `bar` checks that i3 docks exactly one eww bar with a height per active
+  output (a bar was sometimes 0 px high too), else restarts the daemon
+  and opens again, at most 3 times. Output events are debounced
+  (`BAR_SETTLE_S`, 1 s): a plugged monitor sends several. Scripts in `scripts/`:
   `status-blocks` reads `~/bin/i3status-kb` (own process group: it exits
   with `kill 0`) and keys the blocks by name: the bar draws each block in
   its own widget, in i3status order, hidden while missing. No `for` over
@@ -415,6 +426,15 @@ New link or system file: install function, `check_link` or `cmp` check in
   it binds `graphical-session.target`, which xdg-desktop-portal requires since
   Fedora 45. The i3 exit binding stops it. Without it the portal does not
   start and Firefox ignores `theme`.
+- Scale per monitor setup: X has one Xft.dpi for all screens. autorandr's
+  global hook `.config/autorandr/postswitch` sets Xft.dpi from the
+  profile's `xft-dpi` file (`~/.config/autorandr/<profile>/xft-dpi`), else
+  from `~/.Xresources`, and restarts i3 in place when it changed (the bar
+  reopens on the output event at the new height). Laptop desk: profile
+  `desk`, 120 (1.25x; 32" 4k DP-2 and eDP-1 at scale 1, the 1440p DP-1
+  `--scale 1.25`); elsewhere 144. `.xprofile` runs autorandr before it
+  computes the Qt scale. Running apps keep their DPI; `autorandr --load`
+  of the current profile skips hooks ("Config already loaded").
 - Key repeat is set in `xorg-conf/50-keyboard-repeat.conf`; `xset r rate` does
   not reach the xremap device.
 - Idle: `.xprofile` sources `~/.config/idle.conf` (written from the

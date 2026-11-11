@@ -280,6 +280,7 @@ if [[ $xorg_expected -eq 1 ]]; then
         fail "theme show: $theme_out"
     fi
     check_link "$HOME/.config/xremap" "$D/.config/xremap"
+    check_link "$HOME/.config/autorandr/postswitch" "$D/.config/autorandr/postswitch"
     eval "$(grep -E '^readonly IDLE_[A-Z_]+_MINUTES=' "$SRC/bootstrap.sh")"
     idle_want="IDLE_LOCK_MINUTES=$IDLE_LOCK_MINUTES IDLE_SUSPEND_MINUTES=$IDLE_SUSPEND_MINUTES "
     idle_have="$(grep -v '^#' "$HOME/.config/idle.conf" 2>/dev/null | tr '\n' ' ')"

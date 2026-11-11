@@ -1926,6 +1926,8 @@ link_xorg_dotfiles() {
     link "$d/.Xmodmap" "$HOME/.Xmodmap"
     link "$d/.config/i3" "$HOME/.config/i3"
     link "$d/.config/xremap" "$HOME/.config/xremap"
+    # A file, not the directory: the profiles there are this machine's.
+    link "$d/.config/autorandr/postswitch" "$HOME/.config/autorandr/postswitch"
     link "$d/.config/i3status" "$HOME/.config/i3status"
     link "$d/.config/picom" "$HOME/.config/picom"
     link "$d/.config/eww" "$HOME/.config/eww"

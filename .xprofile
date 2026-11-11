@@ -14,6 +14,24 @@ export XPROFILE_LOADED
 # Xft.dpi and font settings; i3 (pango) and wezterm read them from here.
 [ -f ~/.Xresources ] && xrdb -merge ~/.Xresources
 
+# Two X sessions can run at once: the local one and an xrdp one
+# (XRDP_SESSION). Old instances are stopped only on this display
+# (~/bin/pkill-display), so neither session stops the other's programs.
+# An xrdp session skips what works on the machine itself (monitors, input
+# devices, compositor, idle suspend, the keyboard layout: the RDP client
+# sets it) or talks to a per-user service the local session runs (blueman).
+local_session=1
+[ -n "${XRDP_SESSION:-}" ] && local_session=
+stop() { [ -x ~/bin/pkill-display ] && ~/bin/pkill-display "$@" >/dev/null 2>&1; }
+
+# Monitor layout: the autorandr profile saved for the connected monitors
+# (arrange with arandr, store with `autorandr --save NAME`). Before i3, so
+# i3 starts on the final outputs, and before the Qt scale: the profile
+# can set its own Xft.dpi (~/.config/autorandr/postswitch). Plugging in or
+# out later runs autorandr from its udev rule.
+[ -n "$local_session" ] && command -v autorandr >/dev/null &&
+    autorandr --change --default default >/dev/null 2>&1
+
 # Qt scaling from Xft.dpi, which bootstrap.sh renders from the display scale
 # it asks for (144 = 1.5 x 96). Qt 5 reads Xft.dpi for fonts only, so its
 # widgets stay small (DaVinci Resolve bundles Qt 5). QT_FONT_DPI=96 is
@@ -36,26 +54,9 @@ systemctl --user --no-block start i3-session.target >/dev/null 2>&1
 # the color-scheme Firefox reads. Before i3, which reads the resources once.
 [ -x ~/bin/theme ] && ~/bin/theme restore >/dev/null 2>&1
 
-# Two X sessions can run at once: the local one and an xrdp one
-# (XRDP_SESSION). Old instances are stopped only on this display
-# (~/bin/pkill-display), so neither session stops the other's programs.
-# An xrdp session skips what works on the machine itself (monitors, input
-# devices, compositor, idle suspend, the keyboard layout: the RDP client
-# sets it) or talks to a per-user service the local session runs (blueman).
-local_session=1
-[ -n "${XRDP_SESSION:-}" ] && local_session=
-stop() { [ -x ~/bin/pkill-display ] && ~/bin/pkill-display "$@" >/dev/null 2>&1; }
-
 # CopyQ runs one server per session name: the xrdp session gets its own,
 # and i3's `copyq toggle` ($mod+c) inherits the name. Exported before i3.
 [ -n "$local_session" ] || export COPYQ_SESSION_NAME=xrdp
-
-# Monitor layout: the autorandr profile saved for the connected monitors
-# (arrange with arandr, store with `autorandr --save NAME`). Before i3, so
-# i3 starts on the final outputs. Plugging in or out later runs autorandr
-# from its udev rule.
-[ -n "$local_session" ] && command -v autorandr >/dev/null &&
-    autorandr --change --default default >/dev/null 2>&1
 
 # Disable bell
 xset -b

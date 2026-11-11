@@ -16,8 +16,8 @@
 # that links the files of ~/.config/eww. Only this display's watcher is
 # replaced (~/bin/pkill-display).
 #
-# Usage: bar          start (again: reloads the config, replaces the
-#                     watcher, reopens the bars)
+# Usage: bar          start (again: a new daemon, which reads the config,
+#                     and a new watcher, which opens the bars)
 #        bar watch    the watcher (started by bar)
 #
 set -euo pipefail
@@ -30,6 +30,9 @@ readonly BASE_DPI=144 BASE_HEIGHT=34 X_DEFAULT_DPI=96
 readonly RETRY_S="${BAR_RETRY_S:-1}"
 readonly I3_WAIT_TRIES=100
 readonly OPEN_TRIES=3 SIZE_CHECK_S="${BAR_SIZE_CHECK_S:-1}"
+readonly OPEN_TIMEOUT_S="${BAR_OPEN_TIMEOUT_S:-10}" SETTLE_S="${BAR_SETTLE_S:-1}"
+readonly DAEMON_WAIT_TRIES=50
+readonly PKILL="${BAR_PKILL:-$HOME/bin/pkill-display}"
 
 eww_() { "$EWW" -c "$CONFIG" "$@"; }
 
@@ -52,21 +55,50 @@ height() {
     echo $(((BASE_HEIGHT * dpi + BASE_DPI / 2) / BASE_DPI))
 }
 
-# True once i3 docks every eww bar with a height. A bar sometimes came up
-# 0 px high (not reproducible later); reopening fixed it.
-bars_sized() {
-    i3-msg -t get_tree | jq -e '[.. | objects | select(.window_properties?.class? == "Eww") | .rect.height] | length > 0 and all(. > 0)' >/dev/null
+# True once i3 docks exactly one eww bar with a height on each active
+# output. A bar sometimes came up 0 px high; and outputs had several bars
+# stacked, or none: windows of a second eww daemon (see start_daemon).
+bars_ok() {
+    local outputs
+    outputs="$(i3-msg -t get_outputs | jq -c '[.[] | select(.active) | .name] | sort')"
+    i3-msg -t get_tree | jq -e --argjson outputs "$outputs" '
+        [.. | objects | select(.window_properties?.class? == "Eww")]
+        | ([.[].output] | sort) == $outputs and all(.[]; .rect.height > 0)' >/dev/null
 }
 
-# open_bars, again (at most OPEN_TRIES times) while a bar has no height.
+# Starts the daemon and waits until it answers. An `eww open` that finds
+# no daemon (not up yet, or busy in a reload) forks one of its own; that
+# one took the socket, the old one kept its bars, and close-all and kill
+# reached only one of them. So open runs with --no-daemonize, and only
+# this function starts a daemon.
+start_daemon() {
+    local i
+    eww_ daemon >/dev/null 2>&1 || true
+    for ((i = 0; i < DAEMON_WAIT_TRIES; i++)); do
+        eww_ ping >/dev/null 2>&1 && return 0
+        sleep 0.1
+    done
+}
+
+# A new daemon. Every eww process of this config goes first, a stray
+# second daemon too: its windows go with it.
+restart_daemon() {
+    eww_ kill >/dev/null 2>&1 || true
+    "$PKILL" -f "eww -c $CONFIG " >/dev/null 2>&1 || true
+    start_daemon
+}
+
+# open_bars, again with a new daemon (at most OPEN_TRIES times) until
+# every output has its one bar.
 open_bars_checked() {
     local i
     for ((i = 1; i <= OPEN_TRIES; i++)); do
         open_bars
         sleep "$SIZE_CHECK_S"
-        bars_sized && return 0
+        bars_ok && return 0
+        [[ "$i" -lt "$OPEN_TRIES" ]] && restart_daemon
     done
-    echo "bar: a bar has no height after $OPEN_TRIES tries" >&2
+    echo "bar: no single bar with a height on every output after $OPEN_TRIES tries" >&2
 }
 
 # One bar per active output; the tray on the primary one, else the first.
@@ -77,8 +109,9 @@ open_bars() {
     eww_ close-all >/dev/null 2>&1 || true
     while read -r name; do
         [[ -n "$name" ]] || continue
-        eww_ open bar --id "bar-$name" --screen "$name" \
-            --arg "output=$name" --arg "height=$h" --arg "tray=$tray" >/dev/null
+        # An open that never returned blocked the watcher for good.
+        timeout "$OPEN_TIMEOUT_S" "$EWW" -c "$CONFIG" --no-daemonize open bar --id "bar-$name" --screen "$name" \
+            --arg "output=$name" --arg "height=$h" --arg "tray=$tray" >/dev/null || true
         tray=false
     done <<< "$outputs"
     # eww starts every poll a window uses when it opens, ignoring
@@ -104,6 +137,9 @@ watch() {
         if wait_for_i3; then
             open_bars_checked
             while read -r _; do
+                # A monitor plugged in sends several events: reopen once
+                # they settle.
+                while read -r -t "$SETTLE_S" _; do :; done
                 open_bars_checked
             done < <(i3-msg -t subscribe -m '["output"]' 2>/dev/null)
         fi
@@ -120,15 +156,17 @@ main() {
         *) echo "usage: bar [watch]" >&2; exit 1 ;;
     esac
     command -v "$EWW" >/dev/null || exit 0
-    # A running daemon reloads: eww watches the display directory, whose
-    # links stay the same when the files behind them change.
+    # A running daemon is replaced: the new one reads the config (eww does
+    # not see edits behind the display directory's links) and has none of
+    # the old one's windows. eww reload reopened the bars while the
+    # watcher did too, and bars piled up.
     if eww_ ping >/dev/null 2>&1; then
-        eww_ reload >/dev/null 2>&1 || true
+        restart_daemon
     else
-        eww_ daemon >/dev/null 2>&1
+        start_daemon
     fi
     # By command line: the script runs as "bash", so -x would not match.
-    "${BAR_PKILL:-$HOME/bin/pkill-display}" -f '/bin/bar watch$' 2>/dev/null || true
+    "$PKILL" -f '/bin/bar watch$' 2>/dev/null || true
     setsid "$0" watch </dev/null >/dev/null 2>&1 &
 }
 

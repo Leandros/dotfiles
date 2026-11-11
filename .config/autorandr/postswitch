@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+#
+# autorandr's global hook, run after every profile switch: Xft.dpi for the
+# profile. X has one DPI for all screens, so a profile whose screens want
+# another scale (the desk: 1.25x on a 32" 4k) has a file xft-dpi next to
+# its config with the DPI (120); other profiles get the one of
+# ~/.Xresources (bootstrap's display scale, 144 = 1.5x).
+#
+# Apps read Xft.dpi at start. When it changed and i3 runs, i3 restarts in
+# place (layout kept) for its fonts; the bar reopens on the output change.
+# Qt's scale is set at login (~/.xprofile runs autorandr first). An xrdp
+# session keeps its DPI.
+#
+set -euo pipefail
+
+xft_dpi() { awk '/^Xft\.dpi:/ { print $2; exit }'; }
+
+main() {
+    [[ -z "${XRDP_SESSION:-}" ]] || return 0
+    local file="$HOME/.config/autorandr/${AUTORANDR_CURRENT_PROFILE:-}/xft-dpi" dpi old
+    if [[ -n "${AUTORANDR_CURRENT_PROFILE:-}" && -f "$file" ]]; then
+        dpi="$(< "$file")"
+    else
+        dpi="$(xft_dpi < "$HOME/.Xresources" 2>/dev/null || true)"
+    fi
+    [[ "$dpi" =~ ^[0-9]+$ ]] || return 0
+    old="$(xrdb -query 2>/dev/null | xft_dpi || true)"
+    echo "Xft.dpi: $dpi" | xrdb -merge
+    [[ "$dpi" != "$old" ]] || return 0
+    if i3-msg -t get_version >/dev/null 2>&1; then
+        i3-msg -q restart
+    fi
+}
+
+main "$@"

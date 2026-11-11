@@ -267,23 +267,37 @@ EOF
 
 test_bar() {
     stub eww
-    # Two outputs, the primary one second; one output change arrives while
-    # the watcher runs, then X is gone.
+    # ~/bin/pkill-display: records its arguments.
+    cat > "$HOME_DIR/bin/pkill-display" <<EOF
+#!/bin/sh
+echo "pkill-display \$*" >> "$CALLS"
+exit 0
+EOF
+    chmod +x "$HOME_DIR/bin/pkill-display"
+    # Two outputs, the primary one second; one output change (three events
+    # at once, as when a monitor is plugged in) arrives while the watcher
+    # runs, then X is gone.
     cat > "$STUBS/i3-msg" <<EOF
 #!/bin/sh
 echo "i3-msg \$*" >> "$CALLS"
 case "\$*" in
     "-t get_outputs") echo '[{"name":"HDMI-1","active":true,"primary":false},{"name":"eDP-1","active":true,"primary":true},{"name":"DP-1","active":false,"primary":false}]' ;;
-    "-t subscribe"*) echo '{"change":"unspecified"}' ;;
-    # The docked bars: heights from TMP/heights, one line per check (the
-    # last one repeats), 34 without the file.
+    "-t subscribe"*) printf '{"change":"unspecified"}\n{"change":"unspecified"}\n{"change":"unspecified"}\n' ;;
+    # The docked bars, one per active output: heights from TMP/heights,
+    # one line per check (the last one repeats), 34 without the file.
+    # TMP/zombie: once, a second bar on eDP-1 (one eww lost track of).
     "-t get_tree")
         h=34
         if [ -s "$TMP/heights" ]; then
             h="\$(head -n 1 "$TMP/heights")"
             [ "\$(wc -l < "$TMP/heights")" -gt 1 ] && sed -i 1d "$TMP/heights"
         fi
-        echo "{\"nodes\":[{\"window_properties\":{\"class\":\"Eww\"},\"rect\":{\"height\":\$h}}]}" ;;
+        extra=""
+        if [ -e "$TMP/zombie" ]; then
+            rm "$TMP/zombie"
+            extra=",{\"output\":\"eDP-1\",\"window_properties\":{\"class\":\"Eww\"},\"rect\":{\"height\":34}}"
+        fi
+        echo "{\"nodes\":[{\"output\":\"HDMI-1\",\"window_properties\":{\"class\":\"Eww\"},\"rect\":{\"height\":\$h}},{\"output\":\"eDP-1\",\"window_properties\":{\"class\":\"Eww\"},\"rect\":{\"height\":\$h}}\$extra]}" ;;
 esac
 exit 0
 EOF
@@ -299,10 +313,11 @@ EOF
     XFT_DPI=144 BAR_RETRY_S=0 BAR_SIZE_CHECK_S=0 run timeout 5 "$BAR" watch || true
 
     expect "bars per active output, tray on the primary one" \
-        "eww -c $TMP/run/eww/display7 open bar --id bar-eDP-1 --screen eDP-1 --arg output=eDP-1 --arg height=34 --arg tray=true;eww -c $TMP/run/eww/display7 open bar --id bar-HDMI-1 --screen HDMI-1 --arg output=HDMI-1 --arg height=34 --arg tray=false" \
+        "eww -c $TMP/run/eww/display7 --no-daemonize open bar --id bar-eDP-1 --screen eDP-1 --arg output=eDP-1 --arg height=34 --arg tray=true;eww -c $TMP/run/eww/display7 --no-daemonize open bar --id bar-HDMI-1 --screen HDMI-1 --arg output=HDMI-1 --arg height=34 --arg tray=false" \
         "$(grep ' open ' "$CALLS" | head -n 2 | paste -sd ';')"
-    # Start, then once for the output change.
-    expect "bars reopened when outputs change" "2" "$(grep -c ' close-all' "$CALLS")"
+    # Start, then once for the output change: its three events at once
+    # reopen once.
+    expect "bars reopened once when outputs change" "2" "$(grep -c ' close-all' "$CALLS")"
     # eww starts the hover polls with the window; a change of hover stops
     # them (:run-while), after the bars are open.
     expect "hover polls stopped after opening" \
@@ -331,6 +346,35 @@ EOF
     XFT_DPI=144 BAR_RETRY_S=0 BAR_SIZE_CHECK_S=0 run timeout 5 "$BAR" watch || true
     # Start: 0 px, then 34 (2 rounds); the output change: 1 round.
     expect "bar without height opened again" "3" "$(grep -c ' close-all' "$CALLS")"
+    expect "bar without height: a new daemon first" "1" "$(grep -c ' kill$' "$CALLS")"
+
+    # A second bar on one output: one of another eww daemon of this config
+    # (an `eww open` that found none started its own), which close-all
+    # and kill do not reach. Every eww process of the config goes, then a
+    # new daemon (once it answers) gets the bars.
+    local cfg="eww -c $TMP/run/eww/display7"
+    : > "$CALLS"
+    rm -f "$TMP/x-gone" "$TMP/heights"
+    touch "$TMP/zombie"
+    XFT_DPI=144 BAR_RETRY_S=0 BAR_SIZE_CHECK_S=0 run timeout 5 "$BAR" watch || true
+    expect "two bars on one output: all eww of the config stopped, new daemon, bars again" \
+        "$cfg kill;pkill-display -f eww -c $TMP/run/eww/display7 ;$cfg daemon;$cfg ping;$cfg close-all" \
+        "$(grep -E ' (kill|daemon|ping|close-all)$|^pkill-display -f eww' "$CALLS" | sed -n '2,6p' | paste -sd ';')"
+
+    # An eww open that hangs does not stop the watcher: the next output
+    # gets its bar.
+    cat > "$STUBS/eww" <<EOF
+#!/bin/sh
+echo "eww \$*" >> "$CALLS"
+case "\$*" in *"open bar --id bar-eDP-1 "*) sleep 30 ;; esac
+exit 0
+EOF
+    : > "$CALLS"
+    rm -f "$TMP/x-gone"
+    XFT_DPI=144 BAR_RETRY_S=0 BAR_SIZE_CHECK_S=0 BAR_OPEN_TIMEOUT_S=0.2 run timeout 5 "$BAR" watch || true
+    # At start and after the output change.
+    expect "a hanging open: the next bar opens" "2" "$(grep -c 'open bar --id bar-HDMI-1 ' "$CALLS")"
+    stub eww
 
     # One eww daemon per X display (two sessions: local and xrdp). eww
     # names its socket by the resolved config path, so each display has a
@@ -345,26 +389,30 @@ EOF
     expect "another display, another config directory" "2" \
         "$(grep -c "^eww -c $TMP/run/eww/display10.0 close-all" "$CALLS")"
 
-    # bar (start): a new daemon, or a running one reloads its config. eww
-    # watches the display directory, whose links do not change when the
-    # files behind them do. X is gone: the started watcher ends at once.
-    printf '#!/bin/sh\nexit 0\n' > "$STUBS/pkill-display"
-    chmod +x "$STUBS/pkill-display"
-    local cfg="eww -c $TMP/run/eww/display7"
+    # bar (start): a new daemon; a running one is replaced (it reads the
+    # config again and drops windows it lost track of; eww does not see
+    # edits behind the display directory's links). X is gone: the started
+    # watcher ends at once.
     touch "$TMP/x-gone"
     : > "$CALLS"
-    BAR_PKILL="$STUBS/pkill-display" run "$BAR"
-    expect "bar again: the running daemon reloads its config" "$cfg ping;$cfg reload" \
-        "$(grep -E ' (ping|reload|daemon)$' "$CALLS" | paste -sd ';')"
+    run "$BAR"
+    expect "bar again: every eww of the config replaced by a new daemon" \
+        "$cfg ping;$cfg kill;pkill-display -f eww -c $TMP/run/eww/display7 ;$cfg daemon;$cfg ping" \
+        "$(grep -E ' (ping|kill|reload|daemon)$|^pkill-display -f eww' "$CALLS" | paste -sd ';')"
+    # No daemon until `eww daemon` ran (TMP/up).
     cat > "$STUBS/eww" <<EOF
 #!/bin/sh
 echo "eww \$*" >> "$CALLS"
-case "\$*" in *" ping") exit 1 ;; esac
+case "\$*" in
+    *" ping") [ -e "$TMP/up" ] || exit 1 ;;
+    *" daemon") touch "$TMP/up" ;;
+esac
 exit 0
 EOF
+    rm -f "$TMP/up"
     : > "$CALLS"
-    BAR_PKILL="$STUBS/pkill-display" run "$BAR"
-    expect "bar: starts the daemon when none runs" "$cfg ping;$cfg daemon" \
+    run "$BAR"
+    expect "bar: starts the daemon when none runs, waits until it answers" "$cfg ping;$cfg daemon;$cfg ping" \
         "$(grep -E ' (ping|reload|daemon)$' "$CALLS" | paste -sd ';')"
 }
 
