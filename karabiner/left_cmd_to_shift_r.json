@@ -1,0 +1,28 @@
+{
+    "description": "(Remote Desktop LINUX) Left Command to Shift_R",
+    "manipulators": [
+        {
+            "conditions": [
+                {
+                    "bundle_identifiers": [
+                        "^com\\.microsoft\\.rdc\\.mac$",
+                        "^com\\.ericom\\.blazeclient$",
+                        "^com\\.lemonmojo\\.RoyalTSX\\.App$"
+                    ],
+                    "type": "frontmost_application_if"
+                }
+            ],
+            "from": {
+                "key_code": "left_command",
+                "modifiers": { "optional": ["any"] }
+            },
+            "to": [
+                {
+                    "key_code": "right_shift",
+                    "repeat": true
+                }
+            ],
+            "type": "basic"
+        }
+    ]
+}
