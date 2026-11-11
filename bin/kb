@@ -17,8 +17,10 @@
 set -euo pipefail
 
 readonly LAYOUTS=(us de bone2)
-# Remembered per session so the status bar does not query X on every tick.
-readonly STATE_FILE="${XDG_RUNTIME_DIR:-$HOME/.cache}/kb-layout"
+# Remembered per X display so the status bar does not query X on every
+# tick; two sessions (local and xrdp) keep their own layouts. Unused on a
+# tty.
+readonly STATE_FILE="${XDG_RUNTIME_DIR:-$HOME/.cache}/kb-layout-${DISPLAY:-}"
 readonly XMODMAP_FILE="$HOME/.Xmodmap"
 # Console keymap for bone2, generated from ~/.Xmodmap; lives next to this script.
 DOTFILES_DIR="$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)"

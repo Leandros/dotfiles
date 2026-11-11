@@ -41,7 +41,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `.zshrc` | `~/.zshrc`, rendered copy (`##NEWHOME##`, `##NEWUSER##`) |
 | `.Xresources` | `~/.Xresources`, rendered copy (`##XFT_DPI##`) |
 | `.wezterm.lua`, `.xinitrc`, `.xprofile`, `.Xmodmap`, `.config/{i3,i3status,xremap,picom,eww}`, `.config/systemd/user/i3-session.target` | `$HOME`, links, Xorg only |
-| `bin/{kb,i3status-kb,pwr,theme,flightmode,touchpad,charge,caffeinate,smb,input-restore,bar}` | `~/bin`, links, Xorg only |
+| `bin/{kb,i3status-kb,pwr,theme,flightmode,touchpad,charge,caffeinate,smb,input-restore,bar,pkill-display,term,xrdp-keys}` | `~/bin`, links, Xorg only |
 | `bin/fzf-cache` | `~/bin`, link, always |
 | `xorg-conf/*.conf` | `/etc/X11/xorg.conf.d/` (root copy) |
 | `sshd-conf/50-color-scheme.conf` | `/etc/ssh/sshd_config.d/` (root copy, Linux, where sshd_config includes the directory; not AL2) |
@@ -197,6 +197,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   `test/tmux-plugins/test.sh` (fake HOME, private tmux sockets; never the
   caller's server),
   `test/idle-settings/test.sh`, `test/caffeinate/test.sh`, `test/eww/test.sh`,
+  `test/pkill-display/test.sh`, `test/i3-bar/test.sh`, `test/xrdp/test.sh`,
   `test/input-restore/test.sh`,
   `test/fetch/test.sh` (`fetch_unpack` must die on a failed download: it runs
   in `$(...)`, where `set -e` does not apply),
@@ -284,6 +285,31 @@ New link or system file: install function, `check_link` or `cmp` check in
   choice). Installers that run `udevadm trigger` re-add every input device.
 - i3status `wireless`: `W: %essid (%quality)`, `format_quality = "%d%s"`
   (no padding).
+- Two X sessions at once (local plus xrdp, which starts its own session
+  through Fedora's Xsession; `~/.xsession` is `exec i3`, xinitrc.d already
+  runs `.xprofile`): `.xprofile` and `bar` stop old instances with
+  `bin/pkill-display -x|-f` (only processes whose `/proc/<pid>/environ`
+  has the caller's DISPLAY; plain pkill stopped the other session's
+  xremap, picom, xidlehook, ...). With `XRDP_SESSION` set, `.xprofile`
+  skips autorandr, xremap (it grabs the machine's keyboards), input-restore,
+  xidlehook (a remote idle would suspend the laptop), picom, blueman and
+  `kb de` (the RDP client sets the layout; the user wants it kept). CopyQ:
+  `COPYQ_SESSION_NAME=xrdp` (exported before i3) gives the session its own
+  server; i3's `copyq toggle` inherits it. $mod over RDP from the Mac
+  (Royal TSx): Cmd loses key-ups of keys pressed with it (macOS; they stay
+  pressed in X and i3's grab keeps the keyboard), Ctrl with "Windows Keys
+  Passthrough" arrives as Super only on release, Ctrl without it not at all
+  (client keylayout 0). The user maps a key to F19 = keycode 114, empty in
+  the xrdp keymap: `bin/xrdp-keys` makes it Super_L in Mod4 and checks
+  `xmodmap -pm` every 2 s (xrdp loads a fresh keymap per connect; xev has
+  no mapping mask and gets no core MappingNotify under XKB). `bin/term` ($mod+Return): `wezterm start
+  --always-new-process` in xrdp, else plain `wezterm` (joins the running
+  GUI, which may be the other session's). Test: `test/xrdp/test.sh`.
+  `kb` keeps its state per display
+  (`kb-layout-$DISPLAY`). eww: one daemon per display, see Bar. xrdp needs
+  `xorgxrdp` (or `xorgxrdp-glamor`), else Xorg finds no `xrdp/xorg.conf`
+  and fails on the real GPU. Tests: `test/pkill-display/test.sh` (real
+  processes), `test/xprofile/test.sh`, `test/kb/test.sh`.
 - Floating windows need `for_window` rules: nmrs (`class`), `blueman-*`,
   copyq (`move position mouse`), arandr, rrandr and pavucontrol (`instance`).
 - Bar: eww (`.config/eww`, linked; `install_eww`, desktop, commit
@@ -292,7 +318,11 @@ New link or system file: install function, `check_link` or `cmp` check in
   daemon, then `bar watch` (stopped with `pkill -f '/bin/bar watch$'`)
   waits for i3, opens `bar` per active output (`--arg output/height/tray`;
   tray on the primary one; height 34 px at 144 dpi, scaled by `Xft.dpi`)
-  and reopens on output events. i3bar is only the fallback: its block is
+  and reopens on output events. One daemon per X display: eww names its
+  socket by the canonical config path, so `bar` points it at
+  `$XDG_RUNTIME_DIR/eww/display<N>/`, a real directory of links to
+  `~/.config/eww/*` (a symlinked directory would resolve to the same path;
+  a changed XDG_RUNTIME_DIR would leak into kb and the other scripts). i3bar is only the fallback: its block is
   `.config/i3/i3bar.conf`, the i3 config has `include
   ~/.config/i3-bar.d/*.conf` (variables of the main config reach it), and
   bootstrap's `select_bar` links it there only without `$PREFIX/bin/eww`

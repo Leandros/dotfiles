@@ -15,7 +15,9 @@ readonly SCRIPT="$HERE/../../bin/kb"
 TMP="$(mktemp -d)"
 readonly TMP
 trap 'rm -rf "$TMP"' EXIT
-readonly STUBS="$TMP/stubs" CALLS="$TMP/calls" STATE="$TMP/run/kb-layout"
+# The bar's state of display :99; each X display has its own (two sessions,
+# e.g. a local one and xrdp, can use different layouts).
+readonly STUBS="$TMP/stubs" CALLS="$TMP/calls" STATE="$TMP/run/kb-layout-:99"
 FAILED=0
 
 fail() { printf 'FAIL: %s\n' "$*"; FAILED=1; }
@@ -63,7 +65,7 @@ run() {
     shift
     : > "$CALLS"
     local display=()
-    [[ "$where" == x ]] && display=(DISPLAY=:99)
+    [[ "$where" == x ]] && display=(DISPLAY="${KB_DISPLAY:-:99}")
     rm -f "$STUBS/kmscon"
     if [[ -e "$TMP/kmscon" ]]; then
         printf '#!/bin/sh\nexit 0\n' > "$STUBS/kmscon"
@@ -103,6 +105,14 @@ main() {
     run x --console bone2
     expect "X --console, kmscon: localectl de bone" "localectl --no-convert set-x11-keymap de  bone" "$(calls localectl)"
     rm -f "$TMP/kmscon"
+
+    # Another X session (display :98) keeps its own layout.
+    run x de
+    KB_DISPLAY=:98 run x us
+    expect "second display: its own state" "us" "$(cat "$TMP/run/kb-layout-:98" 2>/dev/null)"
+    expect "second display: the first one's state stays" "de" "$(cat "$STATE")"
+    KB_DISPLAY=:98 run x show
+    expect "kb show per display" "" "$(calls rc=)"
 
     # On a tty: the console only; the bar's X state stays.
     echo de > "$STATE"

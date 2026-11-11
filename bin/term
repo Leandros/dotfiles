@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+#
+# term - the terminal for i3's $mod+Return.
+#
+# wezterm hands a new window to a running GUI instance of the user. In an
+# xrdp session that may be the local session's, and the window would open
+# on the local screen: there it starts a process of its own. Elsewhere it
+# joins the running instance as usual.
+#
+# Usage: term [wezterm arguments]
+#
+set -euo pipefail
+
+if [[ -n "${XRDP_SESSION:-}" ]]; then
+    exec wezterm start --always-new-process "$@"
+fi
+exec wezterm "$@"

@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+#
+# pkill-display - pkill for the processes of this X display only.
+#
+# Two X sessions of one user can run at once (a local one and xrdp). Both
+# start the same programs from ~/.xprofile, which stops the old instances
+# first; a plain pkill would stop the other session's too. This only stops
+# the user's processes whose environment has the caller's DISPLAY.
+#
+# Usage: pkill-display -x NAME       process name, as pkill -x
+#        pkill-display -f PATTERN    command line, as pkill -f
+#
+# Exit status as pkill: 0 when it signaled a process, 1 when none matched.
+#
+set -euo pipefail
+
+readonly USAGE="usage: pkill-display -x NAME | -f PATTERN"
+
+die() { printf 'pkill-display: %s\n' "$*" >&2; exit 2; }
+
+main() {
+    [[ $# -eq 2 && ( "$1" == -x || "$1" == -f ) ]] || die "$USAGE"
+    [[ -n "${DISPLAY:-}" ]] || die "DISPLAY is not set"
+    local pid env rc=1
+    for pid in $(pgrep -u "$(id -u)" "$1" "$2" || true); do
+        [[ "$pid" -ne $$ ]] || continue
+        # Read first: grep -q in a pipe would make pipefail report tr's
+        # SIGPIPE. A process may end meanwhile.
+        env="$(tr '\0' '\n' < "/proc/$pid/environ" 2>/dev/null)" || continue
+        if grep -qxF "DISPLAY=$DISPLAY" <<< "$env"; then
+            kill "$pid" 2>/dev/null && rc=0
+        fi
+    done
+    return "$rc"
+}
+
+main "$@"

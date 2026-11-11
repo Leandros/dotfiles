@@ -31,11 +31,26 @@ systemctl --user --no-block start i3-session.target >/dev/null 2>&1
 # the color-scheme Firefox reads. Before i3, which reads the resources once.
 [ -x ~/bin/theme ] && ~/bin/theme restore >/dev/null 2>&1
 
+# Two X sessions can run at once: the local one and an xrdp one
+# (XRDP_SESSION). Old instances are stopped only on this display
+# (~/bin/pkill-display), so neither session stops the other's programs.
+# An xrdp session skips what works on the machine itself (monitors, input
+# devices, compositor, idle suspend, the keyboard layout: the RDP client
+# sets it) or talks to a per-user service the local session runs (blueman).
+local_session=1
+[ -n "${XRDP_SESSION:-}" ] && local_session=
+stop() { [ -x ~/bin/pkill-display ] && ~/bin/pkill-display "$@" >/dev/null 2>&1; }
+
+# CopyQ runs one server per session name: the xrdp session gets its own,
+# and i3's `copyq toggle` ($mod+c) inherits the name. Exported before i3.
+[ -n "$local_session" ] || export COPYQ_SESSION_NAME=xrdp
+
 # Monitor layout: the autorandr profile saved for the connected monitors
 # (arrange with arandr, store with `autorandr --save NAME`). Before i3, so
 # i3 starts on the final outputs. Plugging in or out later runs autorandr
 # from its udev rule.
-command -v autorandr >/dev/null && autorandr --change --default default >/dev/null 2>&1
+[ -n "$local_session" ] && command -v autorandr >/dev/null &&
+    autorandr --change --default default >/dev/null 2>&1
 
 # Disable bell
 xset -b
@@ -49,9 +64,14 @@ setxkbmap -option terminate:ctrl_alt_bksp
 
 # Left modifier remap (Alt -> Ctrl, Ctrl -> Alt); needs the input group and
 # the uinput udev rule from bootstrap.sh. --watch follows new keyboards.
-pkill -x xremap 2>/dev/null
-xremap --watch ~/.config/xremap/config.yml >/dev/null 2>&1 &
-xremap_pid=$!
+# Not in xrdp: it grabs the machine's keyboards; the RDP client's keys
+# arrive without it.
+xremap_pid=
+if [ -n "$local_session" ]; then
+    stop -x xremap
+    xremap --watch ~/.config/xremap/config.yml >/dev/null 2>&1 &
+    xremap_pid=$!
+fi
 
 # Keyboard layout de; `kb` switches it and records it for the status bar.
 # All typing goes through xremap's virtual keyboard, and a keyboard added
@@ -59,19 +79,29 @@ xremap_pid=$!
 # /etc/X11/xorg.conf.d/00-keyboard.conf). So wait for that keyboard first:
 # at most 3 s, and not at all once xremap has exited.
 i=0
-while [ "$i" -lt 30 ] && kill -0 "$xremap_pid" 2>/dev/null &&
+while [ -n "$xremap_pid" ] && [ "$i" -lt 30 ] && kill -0 "$xremap_pid" 2>/dev/null &&
     ! xinput list --name-only 2>/dev/null | grep -qx xremap; do
     sleep 0.1
     i=$((i + 1))
 done
-~/bin/kb de </dev/null 2>/dev/null || setxkbmap -layout de -option terminate:ctrl_alt_bksp
+# In xrdp the RDP client's keyboard layout stays.
+if [ -n "$local_session" ]; then
+    ~/bin/kb de </dev/null 2>/dev/null || setxkbmap -layout de -option terminate:ctrl_alt_bksp
+else
+    # $mod over RDP: the Mac sends F19 (keycode 114; Cmd loses key-ups,
+    # Ctrl arrives only on release). Set again after each reconnect.
+    stop -f '/bin/xrdp-keys$'
+    [ -x ~/bin/xrdp-keys ] && ~/bin/xrdp-keys >/dev/null 2>&1 &
+fi
 
 # Re-apply the layout and tap-to-click when X re-adds input devices with its
 # defaults (`udevadm trigger` from installers, an xremap restart, a new
 # keyboard). Ends with the X session.
-# By command line: the script runs as "bash", so pkill -x would not match.
-pkill -f '/bin/input-restore$' 2>/dev/null
-[ -x ~/bin/input-restore ] && ~/bin/input-restore >/dev/null 2>&1 &
+# By command line: the script runs as "bash", so -x would not match.
+if [ -n "$local_session" ]; then
+    stop -f '/bin/input-restore$'
+    [ -x ~/bin/input-restore ] && ~/bin/input-restore >/dev/null 2>&1 &
+fi
 
 # Idle timeouts in minutes, from the IDLE_* settings in bootstrap.sh.
 # shellcheck source=/dev/null
@@ -88,9 +118,10 @@ xss-lock --transfer-sleep-lock -- ~/bin/pwr lock --nofork >/dev/null 2>&1 &
 # Timers run one after the other, so the suspend timer is the difference.
 # logind IdleAction cannot see X input in a startx session. --detect-sleep
 # restarts the count after resume. caffeinate controls the timers through
-# the socket: 0 locks, 1 suspends.
-pkill -x xidlehook 2>/dev/null
-if [ -n "${IDLE_LOCK_MINUTES:-}" ] && [ -n "${IDLE_SUSPEND_MINUTES:-}" ]; then
+# the socket: 0 locks, 1 suspends. Not in xrdp: an idle remote session
+# would suspend the machine (and drop the connection).
+[ -n "$local_session" ] && stop -x xidlehook
+if [ -n "$local_session" ] && [ -n "${IDLE_LOCK_MINUTES:-}" ] && [ -n "${IDLE_SUSPEND_MINUTES:-}" ]; then
     xidlehook --not-when-audio --not-when-fullscreen --detect-sleep \
         --socket "$XDG_RUNTIME_DIR/xidlehook.sock" \
         --timer $((IDLE_LOCK_MINUTES * 60)) 'loginctl lock-session' '' \
@@ -98,25 +129,29 @@ if [ -n "${IDLE_LOCK_MINUTES:-}" ] && [ -n "${IDLE_SUSPEND_MINUTES:-}" ]; then
         >/dev/null 2>&1 &
 fi
 
-# Status bar: eww in place of i3bar (~/bin/bar; without eww i3bar stays).
-# Before the tray apps below: its tray must be there when they start, or
-# they fall back to i3bar's tray, which bar hides.
+# Status bar: eww (~/bin/bar; without eww bootstrap sets up i3bar), one
+# daemon per display. Before the tray apps below: its tray must be there
+# when they start, or they look for an XEmbed tray.
 [ -x ~/bin/bar ] && ~/bin/bar >/dev/null 2>&1
 
 # Bluetooth: tray icon in the i3 bar and the pairing agent (PIN prompts).
 # EL9 has no blueman.
-command -v blueman-applet >/dev/null && blueman-applet >/dev/null 2>&1 &
+[ -n "$local_session" ] && command -v blueman-applet >/dev/null &&
+    blueman-applet >/dev/null 2>&1 &
 
 # Polkit agent: asks for the password when a GUI running as the user needs
 # root through polkit (firewall-config, blueman). Without one polkit refuses
 # silently. EL9 has no lxpolkit.
-pkill -x lxpolkit 2>/dev/null
+stop -x lxpolkit
 command -v lxpolkit >/dev/null && lxpolkit >/dev/null 2>&1 &
 
 # Compositor for tear-free drawing (vsync); ~/.config/picom/picom.conf.
-# EL9 has no picom.
-pkill -x picom 2>/dev/null
-command -v picom >/dev/null && picom -b >/dev/null 2>&1
+# EL9 has no picom. Not in xrdp: compositing there only costs bandwidth.
+if [ -n "$local_session" ]; then
+    stop -x picom
+    command -v picom >/dev/null && picom -b >/dev/null 2>&1
+fi
 
-# Clipboard history: tray icon, and $mod+c in i3 opens it.
+# Clipboard history: tray icon, and $mod+c in i3 opens it. In xrdp its own
+# server (COPYQ_SESSION_NAME above).
 command -v copyq >/dev/null && copyq >/dev/null 2>&1 &

@@ -20,10 +20,12 @@ In X, xremap swaps the left Alt and Ctrl keys. Right modifiers do not change.
 
 | Key | Action |
 |---|---|
-| `Mod+Return` | Terminal (wezterm) |
+| `Mod+Return` | Terminal (wezterm; in xrdp a process of its own) |
 | `Mod+i` | Program menu (i3-dmenu-desktop) |
 | `Mod+c` | Clipboard history (CopyQ), at the pointer |
 | `Mod+Shift+j` | Close window |
+
+`Mod` is Super; over xrdp from a Mac also F19 (keycode 114, `~/bin/xrdp-keys`).
 
 ### Focus and move
 

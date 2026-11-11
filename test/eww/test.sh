@@ -45,7 +45,9 @@ EOF
     chmod +x "$dir/$name"
 }
 
-run() { HOME="$HOME_DIR" PATH="$STUBS:$PATH" "$@"; }
+# DISPLAY :7 and a runtime directory of the test: bar keeps its eww config
+# per display there.
+run() { HOME="$HOME_DIR" DISPLAY=:7 XDG_RUNTIME_DIR="$TMP/run" PATH="$STUBS:$PATH" "$@"; }
 
 test_status_blocks() {
     # i3status-kb: header, "[", then status lines, later ones after ",".
@@ -276,7 +278,7 @@ EOF
     XFT_DPI=144 BAR_RETRY_S=0 BAR_SIZE_CHECK_S=0 run timeout 5 "$BAR" watch || true
 
     expect "bars per active output, tray on the primary one" \
-        "eww -c $HOME_DIR/.config/eww open bar --id bar-eDP-1 --screen eDP-1 --arg output=eDP-1 --arg height=34 --arg tray=true;eww -c $HOME_DIR/.config/eww open bar --id bar-HDMI-1 --screen HDMI-1 --arg output=HDMI-1 --arg height=34 --arg tray=false" \
+        "eww -c $TMP/run/eww/display7 open bar --id bar-eDP-1 --screen eDP-1 --arg output=eDP-1 --arg height=34 --arg tray=true;eww -c $TMP/run/eww/display7 open bar --id bar-HDMI-1 --screen HDMI-1 --arg output=HDMI-1 --arg height=34 --arg tray=false" \
         "$(grep ' open ' "$CALLS" | head -n 2 | paste -sd ';')"
     # Start, then once for the output change.
     expect "bars reopened when outputs change" "2" "$(grep -c ' close-all' "$CALLS")"
@@ -308,11 +310,25 @@ EOF
     XFT_DPI=144 BAR_RETRY_S=0 BAR_SIZE_CHECK_S=0 run timeout 5 "$BAR" watch || true
     # Start: 0 px, then 34 (2 rounds); the output change: 1 round.
     expect "bar without height opened again" "3" "$(grep -c ' close-all' "$CALLS")"
+
+    # One eww daemon per X display (two sessions: local and xrdp). eww
+    # names its socket by the resolved config path, so each display has a
+    # config directory of its own, linking the real files.
+    expect "per-display config links the eww files" "$HOME_DIR/.config/eww/eww.yuck" \
+        "$(readlink "$TMP/run/eww/display7/eww.yuck")"
+    : > "$CALLS"
+    rm -f "$TMP/x-gone"
+    HOME="$HOME_DIR" DISPLAY=:10.0 XDG_RUNTIME_DIR="$TMP/run" PATH="$STUBS:$PATH" BAR_RETRY_S=0 BAR_SIZE_CHECK_S=0 \
+        timeout 5 "$BAR" watch || true
+    # At start and after the output change of the stub.
+    expect "another display, another config directory" "2" \
+        "$(grep -c "^eww -c $TMP/run/eww/display10.0 close-all" "$CALLS")"
 }
 
 main() {
     command -v jq >/dev/null || { echo "SKIP: jq not installed"; exit 0; }
     mkdir -p "$STUBS" "$HOME_DIR/bin" "$HOME_DIR/.config/eww"
+    touch "$HOME_DIR/.config/eww/eww.yuck" "$HOME_DIR/.config/eww/eww.scss"
     test_status_blocks
     test_block_click
     test_block_tooltips

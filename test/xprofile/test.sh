@@ -36,7 +36,7 @@ expect() {
 write_stubs() {
     mkdir -p "$STUBS" "$TMP/home/bin" "$TMP/home/.config"
     local cmd
-    for cmd in systemctl autorandr xset setxkbmap xmodmap pkill xss-lock blueman-applet copyq picom lxpolkit; do
+    for cmd in systemctl autorandr xset setxkbmap xmodmap pkill xss-lock blueman-applet picom lxpolkit; do
         printf '#!/bin/sh\necho "%s $*" >> "%s"\n' "$cmd" "$CALLS" > "$STUBS/$cmd"
     done
     # xrdb -query prints the Xft.dpi of XFT_DPI (unset: none), like the
@@ -55,12 +55,17 @@ echo "theme \$*" >> "$CALLS"
 echo "qt \${QT_SCALE_FACTOR:-unset} \${QT_FONT_DPI:-unset}" >> "$CALLS"
 echo "lang \${LANG:-unset}" >> "$CALLS"
 EOF
-    for cmd in kb input-restore bar; do
+    for cmd in kb input-restore bar pkill-display xrdp-keys; do
         printf '#!/bin/sh\necho "%s $*" >> "%s"\n' "$cmd" "$CALLS" > "$TMP/home/bin/$cmd"
     done
     printf '#!/bin/sh\nexec /usr/bin/sleep "$@"\n' > "$STUBS/sleep"
     printf '#!/bin/sh\nexec /usr/bin/grep "$@"\n' > "$STUBS/grep"
     printf '#!/bin/sh\nexec /usr/bin/awk "$@"\n' > "$STUBS/awk"
+    # copyq records the CopyQ session it starts (COPYQ_SESSION_NAME).
+    cat > "$STUBS/copyq" <<EOF
+#!/bin/sh
+echo "copyq \$* session=\${COPYQ_SESSION_NAME:-}" >> "$CALLS"
+EOF
     # xidlehook records one argument per field, so empty ones stay visible.
     cat > "$STUBS/xidlehook" <<EOF
 #!/bin/sh
@@ -122,21 +127,27 @@ main() {
     else
         fail "input-restore line $watcher, layout line $layout"
     fi
-    # A re-login replaces the old watcher; it runs as "bash", so not pkill -x.
-    if grep -qF 'pkill -f /bin/input-restore$' "$CALLS"; then
+    # A re-login replaces the old watcher (of this display only: a second
+    # session, xrdp, must not stop the first one's); it runs as "bash", so
+    # not -x.
+    if grep -qF 'pkill-display -f /bin/input-restore$' "$CALLS"; then
         ok "the old watcher is stopped by command line"
     else
-        fail "no pkill -f for input-restore: $(grep pkill "$CALLS" | tr '\n' ';')"
+        fail "no pkill-display -f for input-restore: $(grep pkill "$CALLS" | tr '\n' ';')"
     fi
 
     # picom: tear-free drawing (vsync); a re-login replaces the old one.
     expect "picom starts as a daemon" "picom -b" "$(grep '^picom' "$CALLS")"
-    if grep -qx 'pkill -x picom' "$CALLS"; then ok "the old picom is stopped"; else fail "no pkill -x picom"; fi
+    if grep -qx 'pkill-display -x picom' "$CALLS"; then ok "the old picom is stopped"; else fail "no pkill-display -x picom"; fi
+
+    # Local session: the default CopyQ server, no xrdp key setup.
+    expect "local: CopyQ default session" "copyq  session=" "$(grep '^copyq' "$CALLS")"
+    if grep -q '^xrdp-keys' "$CALLS"; then fail "local: xrdp-keys started"; else ok "local: no xrdp-keys"; fi
 
     # lxpolkit: the polkit agent that asks for the password (firewall-config
     # and other GUIs run as the user); a re-login replaces the old one.
     expect "polkit agent starts" "lxpolkit " "$(grep '^lxpolkit' "$CALLS")"
-    if grep -qx 'pkill -x lxpolkit' "$CALLS"; then ok "the old polkit agent is stopped"; else fail "no pkill -x lxpolkit"; fi
+    if grep -qx 'pkill-display -x lxpolkit' "$CALLS"; then ok "the old polkit agent is stopped"; else fail "no pkill-display -x lxpolkit"; fi
 
     # The eww bar starts its tray before the tray apps register (blueman,
     # CopyQ); otherwise they use i3bar's, which bar hides.
@@ -156,7 +167,8 @@ main() {
         "xidlehook|--not-when-audio|--not-when-fullscreen|--detect-sleep|--socket|$TMP/run/xidlehook.sock|--timer|300|loginctl lock-session||--timer|420|systemctl suspend|" \
         "$(grep '^xidlehook' "$CALLS")"
     if grep -qx 'xset s off' "$CALLS"; then ok "X screensaver timer off"; else fail "no xset s off: $(grep '^xset' "$CALLS" | tr '\n' ';')"; fi
-    if grep -qx 'pkill -x xidlehook' "$CALLS"; then ok "the old xidlehook is stopped"; else fail "no pkill -x xidlehook"; fi
+    if grep -qx 'pkill-display -x xidlehook' "$CALLS"; then ok "the old xidlehook is stopped"; else fail "no pkill-display -x xidlehook"; fi
+    if grep -q '^pkill ' "$CALLS"; then fail "plain pkill (all displays): $(grep '^pkill ' "$CALLS" | tr '\n' ';')"; else ok "no plain pkill"; fi
 
     # English programs (arandr, pavucontrol, blueman), whatever language
     # lightdm took from AccountsService.
@@ -176,6 +188,34 @@ main() {
     elapsed=$(( $(date +%s) - start ))
     expect "layout set without xremap" "kb de" "$(grep '^kb ' "$CALLS" | head -n 1)"
     if [[ "$elapsed" -le 4 ]]; then ok "login waits at most a few seconds ($elapsed s)"; else fail "login waited $elapsed s"; fi
+
+    # An xrdp session (XRDP_SESSION) next to the local one: nothing that
+    # works on the machine's hardware or on per-user services the local
+    # session already runs (xremap would grab the local keyboards, xidlehook
+    # suspend the laptop when the remote side idles, CopyQ and blueman talk
+    # to the local instances). The rest as usual.
+    start="$(date +%s)"
+    XRDP_SESSION=1 run
+    elapsed=$(( $(date +%s) - start ))
+    local skipped=""
+    for cmd in xremap input-restore xidlehook picom autorandr blueman-applet; do
+        grep -q "^$cmd\|-x $cmd\$\|/bin/$cmd" "$CALLS" && skipped+=" $cmd"
+    done
+    expect "xrdp: no local-only programs" "" "$skipped"
+    # The RDP client sets the layout; the session does not change it.
+    expect "xrdp: layout left to the client" "" "$(grep '^kb \|^setxkbmap -layout' "$CALLS")"
+    # F19 (keycode 114) as $mod: xrdp-keys sets it, again after a reconnect
+    # reloads the keymap.
+    if grep -q '^xrdp-keys' "$CALLS"; then ok "xrdp: xrdp-keys started"; else fail "xrdp: no xrdp-keys"; fi
+    # CopyQ: a server of its own (session "xrdp"); i3's copyq toggle
+    # inherits the name, so $mod+c no longer opens the local window.
+    expect "xrdp: CopyQ session of its own" "copyq  session=xrdp" "$(grep '^copyq' "$CALLS")"
+    if grep -q '^bar' "$CALLS" && grep -q '^xss-lock' "$CALLS" && grep -q '^lxpolkit' "$CALLS"; then
+        ok "xrdp: bar, locker and polkit agent start"
+    else
+        fail "xrdp: missing bar, xss-lock or lxpolkit: $(tr '\n' ';' < "$CALLS")"
+    fi
+    if [[ "$elapsed" -le 1 ]]; then ok "xrdp: no wait for xremap ($elapsed s)"; else fail "xrdp: waited $elapsed s"; fi
 
     exit "$FAILED"
 }

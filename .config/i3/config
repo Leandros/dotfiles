@@ -64,7 +64,8 @@ floating_modifier $mod
 # start a terminal
 # bindsym $mod+Return exec i3-sensible-terminal
 # bindsym $mod+Return exec urxvt
-bindsym $mod+Return exec wezterm
+# wezterm; in xrdp as a process of its own (~/bin/term).
+bindsym $mod+Return exec ~/bin/term
 
 # Increase screen brightness
 bindsym XF86MonBrightnessUp exec brightnessctl set +5% && pkill -USR1 -x i3status
