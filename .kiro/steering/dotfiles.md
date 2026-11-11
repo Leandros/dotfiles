@@ -40,7 +40,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `.tmux/custom` | `~/.tmux/custom` |
 | `.zshrc` | `~/.zshrc`, rendered copy (`##NEWHOME##`, `##NEWUSER##`) |
 | `.Xresources` | `~/.Xresources`, rendered copy (`##XFT_DPI##`) |
-| `.wezterm.lua`, `.xinitrc`, `.xprofile`, `.Xmodmap`, `.config/{i3,i3status,xremap,picom,eww}`, `.config/systemd/user/i3-session.target` | `$HOME`, links, Xorg only |
+| `.wezterm.lua`, `.xinitrc`, `.xprofile`, `.xsession`, `.Xmodmap`, `.config/{i3,i3status,xremap,picom,eww}`, `.config/systemd/user/i3-session.target` | `$HOME`, links, Xorg only |
 | `bin/{kb,i3status-kb,pwr,theme,flightmode,touchpad,charge,caffeinate,smb,input-restore,bar,pkill-display,term,xrdp-keys}` | `~/bin`, links, Xorg only |
 | `bin/fzf-cache` | `~/bin`, link, always |
 | `xorg-conf/*.conf` | `/etc/X11/xorg.conf.d/` (root copy) |
@@ -198,6 +198,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   caller's server),
   `test/idle-settings/test.sh`, `test/caffeinate/test.sh`, `test/eww/test.sh`,
   `test/pkill-display/test.sh`, `test/i3-bar/test.sh`, `test/xrdp/test.sh`,
+  `test/xrdp-conf/test.sh`,
   `test/input-restore/test.sh`,
   `test/fetch/test.sh` (`fetch_unpack` must die on a failed download: it runs
   in `$(...)`, where `set -e` does not apply),
@@ -285,9 +286,20 @@ New link or system file: install function, `check_link` or `cmp` check in
   choice). Installers that run `udevadm trigger` re-add every input device.
 - i3status `wireless`: `W: %essid (%quality)`, `format_quality = "%d%s"`
   (no padding).
-- Two X sessions at once (local plus xrdp, which starts its own session
-  through Fedora's Xsession; `~/.xsession` is `exec i3`, xinitrc.d already
-  runs `.xprofile`): `.xprofile` and `bar` stop old instances with
+- xrdp (desktop): packages `xrdp xorgxrdp` (Debian/Ubuntu, 0.9: the unit
+  runs it as `User=xrdp`), `xrdp xorgxrdp-glamor` (Fedora, EPEL 9; 0.10:
+  root unless `runtime_user`/`runtime_group` are set; the packages ship
+  them commented out, with the `xrdp` user, `root:xrdp` 0640 key files
+  and sesman's `SessionSockdirGroup=xrdp`). `install_xrdp`:
+  `xrdp_drop_privileges` edits `[Globals]` of `/etc/xrdp/xrdp.ini` in place
+  (no include directory), restorecon, `systemctl enable`, restart on a
+  change. No firewall rule (port 3389), as for Sunshine. Test:
+  `test/xrdp-conf/test.sh`; verify checks `/etc/X11/xrdp/xorg.conf`
+  (without xorgxrdp the session's Xorg failed on the real GPU).
+- Two X sessions at once (local plus xrdp, which starts its own session:
+  startwm.sh runs Xsession without arguments, which runs `~/.xsession`:
+  `.xprofile` unless `XPROFILE_LOADED` (Fedora's xinitrc.d hook loaded it;
+  Debian's Xsession does not), then `exec i3`): `.xprofile` and `bar` stop old instances with
   `bin/pkill-display -x|-f` (only processes whose `/proc/<pid>/environ`
   has the caller's DISPLAY; plain pkill stopped the other session's
   xremap, picom, xidlehook, ...). With `XRDP_SESSION` set, `.xprofile`

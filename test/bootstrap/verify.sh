@@ -437,6 +437,27 @@ if [[ $xorg_expected -eq 1 ]]; then
     check_version xidlehook "xidlehook $XIDLEHOOK_VERSION" xidlehook --version
     # eww prints its commit: "eww 0.6.0 <commit>".
     check_version eww "$EWW_REF" eww --version
+    # xrdp: the Xorg backend's config (without it the session's Xorg fails
+    # on the real GPU), enabled, and on Fedora/EL not running as root.
+    if command -v xrdp >/dev/null && [[ -f /etc/X11/xrdp/xorg.conf ]]; then
+        ok "xrdp with xorgxrdp"
+    else
+        fail "xrdp or xorgxrdp (/etc/X11/xrdp/xorg.conf) missing"
+    fi
+    if [[ "$(systemctl is-enabled xrdp.service 2>/dev/null || true)" == enabled ]]; then
+        ok "xrdp enabled"
+    else
+        fail "xrdp not enabled"
+    fi
+    if [[ "$os_id" == fedora || "$os_id" == rocky ]]; then
+        xrdp_ini="$(sudo -n cat /etc/xrdp/xrdp.ini 2>/dev/null || true)"
+        if grep -qx 'runtime_user=xrdp' <<< "$xrdp_ini" && grep -qx 'runtime_group=xrdp' <<< "$xrdp_ini"; then
+            ok "xrdp drops root (runtime_user/runtime_group xrdp)"
+        else
+            fail "xrdp runs as root: no runtime_user/runtime_group in xrdp.ini"
+        fi
+    fi
+    check_link "$HOME/.xsession" "$D/.xsession"
     # eww is the bar: no i3bar include (bootstrap links it only without eww).
     if command -v eww >/dev/null; then
         if [[ -e "$HOME/.config/i3-bar.d/i3bar.conf" || -L "$HOME/.config/i3-bar.d/i3bar.conf" ]]; then

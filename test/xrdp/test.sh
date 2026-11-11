@@ -92,6 +92,21 @@ main() {
     env -u XRDP_SESSION DISPLAY=:0 PATH="$STUBS:$PATH" "$BIN/term"
     expect "local: wezterm as usual (joins the running GUI)" "wezterm " "$(cat "$CALLS")"
 
+    # ~/.xsession, which xrdp's session script starts: .xprofile once (Fedora's
+    # Xsession loads it already and sets XPROFILE_LOADED; Debian's does not),
+    # then i3.
+    local home="$TMP/xs-home"
+    mkdir -p "$home"
+    printf 'echo xprofile >> "%s"\nXPROFILE_LOADED=1\n' "$CALLS" > "$home/.xprofile"
+    printf '#!/bin/sh\necho i3 >> "%s"\n' "$CALLS" > "$STUBS/i3"
+    chmod +x "$STUBS/i3"
+    : > "$CALLS"
+    env -u XPROFILE_LOADED HOME="$home" PATH="$STUBS:$PATH" sh "$HERE/../../.xsession"
+    expect "xsession without .xprofile loaded: loads it, then i3" "xprofile;i3" "$(paste -sd ';' "$CALLS")"
+    : > "$CALLS"
+    XPROFILE_LOADED=1 HOME="$home" PATH="$STUBS:$PATH" sh "$HERE/../../.xsession"
+    expect "xsession after Fedora's Xsession: only i3" "i3" "$(paste -sd ';' "$CALLS")"
+
     exit "$FAILED"
 }
 

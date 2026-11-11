@@ -6,6 +6,11 @@
 LANG=en_US.UTF-8
 export LANG
 
+# Loaded: ~/.xsession (xrdp) loads this file only where the session script
+# has not (Debian's Xsession has no xinitrc.d hook).
+XPROFILE_LOADED=1
+export XPROFILE_LOADED
+
 # Xft.dpi and font settings; i3 (pango) and wezterm read them from here.
 [ -f ~/.Xresources ] && xrdb -merge ~/.Xresources
 

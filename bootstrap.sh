@@ -1271,6 +1271,7 @@ install_xorg_packages() {
                 xorg xinit x11-xserver-utils \
                 i3 i3status suckless-tools i3lock xss-lock blueman arandr autorandr \
                 alsa-utils pavucontrol brightnessctl xclip xinput rfkill cifs-utils smbclient btop remmina remmina-plugin-rdp picom lxpolkit jq \
+                xrdp xorgxrdp \
                 kbd console-data console-setup
             ;;
         fedora)
@@ -1284,7 +1285,7 @@ install_xorg_packages() {
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap xrandr \
                 i3 i3status dmenu i3lock xss-lock blueman gobject-introspection copyq \
                 arandr autorandr gtk3 \
-                alsa-utils pavucontrol brightnessctl xclip xinput picom cifs-utils samba-client btop remmina remmina-plugins-rdp firewall-config lxpolkit jq kbd terminus-fonts-console
+                alsa-utils pavucontrol brightnessctl xclip xinput picom cifs-utils samba-client btop remmina remmina-plugins-rdp firewall-config lxpolkit jq xrdp xorgxrdp-glamor kbd terminus-fonts-console
             ;;
         rhel)
             $SUDO dnf install -y -q epel-release
@@ -1297,7 +1298,7 @@ install_xorg_packages() {
             $SUDO dnf install -y -q \
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap \
                 i3 i3status dmenu i3lock copyq \
-                alsa-utils pavucontrol brightnessctl xclip xorg-x11-server-utils cifs-utils samba-client btop remmina remmina-plugins-rdp jq kbd terminus-fonts-console
+                alsa-utils pavucontrol brightnessctl xclip xorg-x11-server-utils cifs-utils samba-client btop remmina remmina-plugins-rdp jq xrdp xorgxrdp-glamor kbd terminus-fonts-console
             ;;
     esac
     install_copyq_deb
@@ -1572,6 +1573,57 @@ kmscon_conf() {
     printf '%s\nfont-size=%s\npalette=%s\n' "$KMSCON_CONF_MARKER" "$1" "$KMSCON_PALETTE"
     if [[ -n "$(fc-list ":family=$KMSCON_FONT" 2>/dev/null)" ]]; then
         printf 'font-name=%s\n' "$KMSCON_FONT"
+    fi
+}
+
+# xrdp: a remote desktop session of its own next to the local one
+# (~/.xsession starts i3; .xprofile handles XRDP_SESSION). Firewall ports
+# are left closed, as for Sunshine. xrdp parses network input before any
+# login: xrdp 0.10 (Fedora, EPEL) runs it as root unless runtime_user and
+# runtime_group are set in xrdp.ini ("You are running xrdp as uid=0"); the
+# packages ship them commented out, with the xrdp user, the key readable by
+# group xrdp and sesman's SessionSockdirGroup=xrdp already in place.
+# Debian and Ubuntu (0.9) run it as User=xrdp from the unit.
+readonly XRDP_RUNTIME_USER="xrdp"
+readonly XRDP_INI="/etc/xrdp/xrdp.ini"
+
+# Sets runtime_user and runtime_group in [Globals] of the xrdp.ini at $1.
+# Returns 0 when it changed the file.
+xrdp_drop_privileges() {
+    local ini="$1" key changed=1
+    # Group first: a missing key goes right after [Globals], user above it.
+    for key in runtime_group runtime_user; do
+        $SUDO grep -qx "$key=$XRDP_RUNTIME_USER" "$ini" && continue
+        if $SUDO grep -qE "^#?[[:space:]]*$key=" "$ini"; then
+            $SUDO sed -i -E "s|^#?[[:space:]]*$key=.*|$key=$XRDP_RUNTIME_USER|" "$ini"
+        else
+            $SUDO sed -i "/^\[Globals\]/a $key=$XRDP_RUNTIME_USER" "$ini"
+        fi
+        changed=0
+    done
+    return "$changed"
+}
+
+install_xrdp() {
+    local changed=0
+    case "$DISTRO" in
+        fedora|rhel)
+            if xrdp_drop_privileges "$XRDP_INI"; then
+                changed=1
+                if have restorecon; then
+                    $SUDO restorecon "$XRDP_INI"
+                fi
+                log "xrdp runs as $XRDP_RUNTIME_USER"
+            fi
+            ;;
+    esac
+    $SUDO systemctl enable -q xrdp.service
+    if [[ -d /run/systemd/system ]]; then
+        if [[ "$changed" -eq 1 ]]; then
+            $SUDO systemctl restart xrdp.service
+        else
+            $SUDO systemctl start xrdp.service
+        fi
     fi
 }
 
@@ -1856,6 +1908,7 @@ link_xorg_dotfiles() {
     link "$d/bin/xrdp-keys" "$HOME/bin/xrdp-keys"
     link "$d/.xinitrc" "$HOME/.xinitrc"
     link "$d/.xprofile" "$HOME/.xprofile"
+    link "$d/.xsession" "$HOME/.xsession"
     link "$d/.Xmodmap" "$HOME/.Xmodmap"
     link "$d/.config/i3" "$HOME/.config/i3"
     link "$d/.config/xremap" "$HOME/.config/xremap"
@@ -1912,6 +1965,7 @@ setup_xorg() {
     enable_autorandr
     link_xorg_dotfiles
     select_bar
+    install_xrdp
     write_xresources "$DPI_SCALE"
     write_idle_conf
     configure_console_font "$DPI_SCALE"

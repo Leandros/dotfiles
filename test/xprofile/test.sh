@@ -54,6 +54,7 @@ EOF
 echo "theme \$*" >> "$CALLS"
 echo "qt \${QT_SCALE_FACTOR:-unset} \${QT_FONT_DPI:-unset}" >> "$CALLS"
 echo "lang \${LANG:-unset}" >> "$CALLS"
+echo "loaded \${XPROFILE_LOADED:-unset}" >> "$CALLS"
 EOF
     for cmd in kb input-restore bar pkill-display xrdp-keys; do
         printf '#!/bin/sh\necho "%s $*" >> "%s"\n' "$cmd" "$CALLS" > "$TMP/home/bin/$cmd"
@@ -169,6 +170,10 @@ main() {
     if grep -qx 'xset s off' "$CALLS"; then ok "X screensaver timer off"; else fail "no xset s off: $(grep '^xset' "$CALLS" | tr '\n' ';')"; fi
     if grep -qx 'pkill-display -x xidlehook' "$CALLS"; then ok "the old xidlehook is stopped"; else fail "no pkill-display -x xidlehook"; fi
     if grep -q '^pkill ' "$CALLS"; then fail "plain pkill (all displays): $(grep '^pkill ' "$CALLS" | tr '\n' ';')"; else ok "no plain pkill"; fi
+
+    # Marks itself loaded for ~/.xsession (xrdp), which loads it only where
+    # the session script has not (Debian).
+    expect "exports XPROFILE_LOADED" "loaded 1" "$(grep '^loaded ' "$CALLS")"
 
     # English programs (arandr, pavucontrol, blueman), whatever language
     # lightdm took from AccountsService.
