@@ -1517,7 +1517,9 @@ install_xidlehook_deps() {
 }
 
 install_xidlehook() {
-    is_current xidlehook "$XIDLEHOOK_VERSION" "$PREFIX/bin/xidlehook" && return
+    # One crate, two binaries: a missing client installs both again.
+    [[ -x "$PREFIX/bin/xidlehook-client" ]] &&
+        is_current xidlehook "$XIDLEHOOK_VERSION" "$PREFIX/bin/xidlehook" && return
 
     install_xidlehook_deps
     export CARGO_HOME="$CARGO_HOME_DIR" RUSTUP_HOME="$RUSTUP_HOME_DIR"

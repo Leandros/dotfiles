@@ -444,7 +444,9 @@ if [[ $xorg_expected -eq 1 ]]; then
             ok "no i3bar (eww is the bar)"
         fi
     fi
-    check_version xidlehook-client "xidlehook-client $XIDLEHOOK_VERSION" xidlehook-client --version
+    # The client prints the crate name: "xidlehook 0.10.0". Running it also
+    # checks that it is installed.
+    check_version xidlehook-client "$XIDLEHOOK_VERSION" xidlehook-client --version
     # rrandr has no --version: the stamp holds the pinned commit, and every
     # library it links must resolve. Not on EL9 (pango 1.48 < 1.50).
     if [[ "$os_id" != rocky ]]; then

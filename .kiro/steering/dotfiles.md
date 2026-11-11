@@ -234,6 +234,9 @@ New link or system file: install function, `check_link` or `cmp` check in
 - New `<leader>` groups go in the which-key `wk.add` list.
 - Theme: solarized.nvim, `init_solarized_scheme()` `on_highlights`, `is_dark`.
   `signcolumn = "number"` and `cursorline`, so sign groups need `Cul` variants.
+  Plugin groups (flash.nvim) go in `on_highlights`: a mode change loads the
+  colorscheme again and drops groups set once in a plugin config (light mode
+  lost the flash backdrop). Test: `test/nvim-theme/test.sh`.
 - gitsigns:
   - Pin >= `ef707fb`. It has `75a6649`: before it, one error in the watcher
     handler stopped all refreshes of the buffer until `:e`.
