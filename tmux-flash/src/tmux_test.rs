@@ -6,7 +6,7 @@ fn strings(args: &[&str]) -> Vec<String> {
 
 #[test]
 fn normal_mode_uses_cursor() {
-    let state = parse_state("80\t24\t\t\t3\t5\t\t\n").unwrap();
+    let (state, _) = parse_state("80\t24\t\t\t3\t5\t\t\t\t\n").unwrap();
 
     assert_eq!(
         state,
@@ -22,7 +22,7 @@ fn normal_mode_uses_cursor() {
 
 #[test]
 fn copy_mode_uses_copy_cursor() {
-    let state = parse_state("80\t24\tcopy-mode\t7\t3\t5\t10\t2\n").unwrap();
+    let (state, _) = parse_state("80\t24\tcopy-mode\t7\t3\t5\t10\t2\t\t\n").unwrap();
 
     assert_eq!(state.mode, PaneMode::Copy);
     assert_eq!(state.scroll, 7);
@@ -31,15 +31,36 @@ fn copy_mode_uses_copy_cursor() {
 
 #[test]
 fn other_modes_count_as_normal() {
-    let state = parse_state("80\t24\ttree-mode\t\t3\t5\t\t\n").unwrap();
+    let (state, _) = parse_state("80\t24\ttree-mode\t\t3\t5\t\t\t\t\n").unwrap();
 
     assert_eq!(state.mode, PaneMode::Normal);
 }
 
 #[test]
+fn options_follow_the_state() {
+    let (_, options) = parse_state("80\t24\t\t\t3\t5\t\t\tlight\tabc\n").unwrap();
+
+    assert_eq!(
+        options,
+        Options {
+            color_mode: "light".to_owned(),
+            labels: "abc".to_owned(),
+        }
+    );
+}
+
+#[test]
+fn unset_options_are_empty() {
+    let (_, options) = parse_state("80\t24\t\t\t3\t5\t\t\t\t\n").unwrap();
+
+    assert_eq!(options, Options::default());
+}
+
+#[test]
 fn bad_state_is_an_error() {
     assert!(parse_state("80\n").is_err());
-    assert!(parse_state("x\t24\t\t\t3\t5\t\t\n").is_err());
+    assert!(parse_state("80\t24\t\t\t3\t5\t\t\n").is_err());
+    assert!(parse_state("x\t24\t\t\t3\t5\t\t\t\t\n").is_err());
 }
 
 #[test]
@@ -50,7 +71,7 @@ fn size_is_width_and_height() {
 
 #[test]
 fn capture_normal_mode() {
-    let state = parse_state("80\t9\t\t\t0\t0\t\t\n").unwrap();
+    let (state, _) = parse_state("80\t9\t\t\t0\t0\t\t\t\t\n").unwrap();
 
     assert_eq!(
         capture_args("%1", &state),
@@ -60,8 +81,8 @@ fn capture_normal_mode() {
 
 #[test]
 fn capture_scrolled_view() {
-    let near = parse_state("80\t9\tcopy-mode\t7\t0\t0\t0\t0\n").unwrap();
-    let far = parse_state("80\t9\tcopy-mode\t20\t0\t0\t0\t0\n").unwrap();
+    let (near, _) = parse_state("80\t9\tcopy-mode\t7\t0\t0\t0\t0\t\t\n").unwrap();
+    let (far, _) = parse_state("80\t9\tcopy-mode\t20\t0\t0\t0\t0\t\t\n").unwrap();
 
     assert_eq!(
         capture_args("%1", &near),

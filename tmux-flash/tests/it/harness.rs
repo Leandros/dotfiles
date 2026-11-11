@@ -23,6 +23,8 @@ pub(crate) const PROMPT: &str = "⚡";
 /// The tmux default, 500 ms, makes each Escape key slow.
 const INNER_CONF: &str = "set -sg escape-time 10\n";
 const OUTER_CONF: &str = "set -g status off\nset -sg escape-time 10\n";
+/// A locale without UTF-8, as in containers and on CI runners.
+const NO_UTF8: &str = "C";
 
 static NEXT: AtomicUsize = AtomicUsize::new(0);
 
@@ -33,14 +35,21 @@ pub(crate) struct Servers {
 impl Servers {
     /// An inner pane that shows `text`; the cursor is after it.
     pub(crate) fn start(text: &str) -> Self {
+        Self::start_with(text, "")
+    }
+
+    /// As `start`, with more lines for the inner tmux config.
+    pub(crate) fn start_with(text: &str, conf: &str) -> Self {
         let id = NEXT.fetch_add(1, Ordering::SeqCst);
-        let dir = std::env::temp_dir().join(format!("tmux-flash-it-{}-{id}", std::process::id()));
+        // Short: macOS allows 104 bytes for a socket path, and its temp
+        // directory is long.
+        let dir = std::env::temp_dir().join(format!("tf-{}-{id}", std::process::id()));
         let _ = fs::remove_dir_all(&dir);
         for sub in ["in", "out"] {
             fs::create_dir_all(dir.join(sub)).unwrap();
         }
         fs::write(dir.join("content"), text).unwrap();
-        fs::write(dir.join("inner.conf"), INNER_CONF).unwrap();
+        fs::write(dir.join("inner.conf"), format!("{INNER_CONF}{conf}")).unwrap();
         fs::write(dir.join("outer.conf"), OUTER_CONF).unwrap();
 
         let servers = Self { dir };
@@ -58,8 +67,10 @@ impl Servers {
             &pane_command,
         ]);
 
+        // -u: UTF-8 also without a UTF-8 locale (containers, CI); else tmux
+        // shows the prompt's ⚡ and wide text as `_`.
         let attach = format!(
-            "env -u TMUX TERM=screen TMUX_TMPDIR='{}' tmux attach -t t",
+            "env -u TMUX TERM=screen TMUX_TMPDIR='{}' tmux -u attach -t t",
             servers.dir.join("in").display()
         );
         let _ = servers.outer(&[
@@ -124,12 +135,15 @@ impl Servers {
     }
 
     /// Starts tmux-flash as the key binding does, and waits for its prompt.
+    /// Without a UTF-8 locale: tmux-flash must not depend on it.
     pub(crate) fn flash(&self) -> Child {
         let child = Command::new(BIN)
             .args(["--pane", &self.pane(), "--client", &self.client()])
             .env_remove("TMUX")
             .env_remove("TMUX_PANE")
             .env("TMUX_TMPDIR", self.dir.join("in"))
+            .env("LC_ALL", NO_UTF8)
+            .env("LANG", NO_UTF8)
             .stdout(Stdio::null())
             .spawn()
             .unwrap();

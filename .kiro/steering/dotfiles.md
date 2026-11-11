@@ -368,8 +368,10 @@ New link or system file: install function, `check_link` or `cmp` check in
   off`, because it would lock on X's timer during video. Replaced xautolock:
   in i3 nothing implements Firefox's idle inhibit (no
   `org.freedesktop.ScreenSaver`, no GNOME session manager). xidlehook's last
-  release is 0.10.0 (2021); links libxcb and libpulse. autorandr runs
-  before i3.
+  release is 0.10.0 (2021); links libxcb and libpulse. One crate, two
+  binaries: `xidlehook-client --version` prints the crate name (`xidlehook
+  0.10.0`), so verify.sh matches the version only; a missing client
+  installs the crate again. autorandr runs before i3.
 - `pwr lock|sleep|hibernate|performance|balanced|battery|mode`. Modes use
   busctl `org.freedesktop.UPower.PowerProfiles` (tuned-ppd).
   `power-mode-auto` selects performance on AC and battery on battery, only
@@ -401,12 +403,14 @@ New link or system file: install function, `check_link` or `cmp` check in
   before changes there. Bootstrap step `tmux-flash` (basic, after `rust`):
   `cargo install --locked --path`, stamp = git tree hash of `tmux-flash/`.
   Binding: `run-shell -b 'tmux-flash --pane ... --client ...'` (the popup
-  needs the client). `toggle-dark-mode` sets `@color-mode dark|light` for its
-  colors. verify.sh types `prefix g`, `alpi`, Enter through a second tmux
-  server as the client and checks the copy-mode cursor.
-- tmux-jump (Ruby) was its predecessor. Machines that had it keep
-  `/usr/local/lib/tmux-jump-ruby` (AL2) and the distro `ruby` package:
-  bootstrap removes nothing. `prefix M-u` (tpm clean) removes the plugin.
+  needs the client). `@flash-labels` in the tmux configs sets the Bone 2
+  labels of the nvim flash config (the default is QWERTY). `toggle-dark-mode`
+  sets `@color-mode dark|light` for its colors. verify.sh types `prefix g`,
+  `alpi`, Enter through a second tmux server as the client and checks the
+  copy-mode cursor.
+- tmux-jump (Ruby) was its predecessor. Removed from this machine (the AL2
+  dev box, the only one that ran it): the private Ruby, the stamp and the
+  plugin. bootstrap removes nothing.
 - wezterm: Xorg only, rolling nightly (GitHub `.deb` on Debian/Ubuntu, COPR on
   Fedora/EL). It reads the DPI from `~/.Xresources`. On Linux its scheme
   follows `gsettings get ... color-scheme` (set by `theme`), read in the

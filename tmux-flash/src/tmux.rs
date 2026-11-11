@@ -9,15 +9,19 @@ use crate::flash::screen::Point;
 use crate::flash::session::Target;
 
 const TMUX: &str = "tmux";
+/// Without a UTF-8 locale (cron, containers, a bare run-shell), tmux turns
+/// tabs and non-ASCII text in its output into `_`; -u keeps them.
+const UTF8: &str = "-u";
 /// `pane_mode` of a pane in copy mode.
 const COPY_MODE: &str = "copy-mode";
 /// Separates tmux commands in one call.
 const SEPARATOR: &str = ";";
 const FIELD: char = '\t';
 const SIZE_FORMAT: &str = "#{pane_width}\t#{pane_height}";
+/// The user options of tmux-flash come with the state: no extra tmux call.
 const STATE_FORMAT: &str = "#{pane_width}\t#{pane_height}\t#{pane_mode}\t#{scroll_position}\t\
-                            #{cursor_x}\t#{cursor_y}\t#{copy_cursor_x}\t#{copy_cursor_y}";
-const COLOR_MODE_OPTION: &str = "@color-mode";
+                            #{cursor_x}\t#{cursor_y}\t#{copy_cursor_x}\t#{copy_cursor_y}\t\
+                            #{@color-mode}\t#{@flash-labels}";
 /// `display-message -d`: 0 keeps the message until the next one, 1
 /// removes it at once.
 const UNTIL_CLEARED: &str = "0";
@@ -39,6 +43,21 @@ pub(crate) struct PaneState {
     /// Rows the copy mode view is scrolled up.
     pub(crate) scroll: usize,
     pub(crate) cursor: Point,
+}
+
+/// The user options `@color-mode` and `@flash-labels`, empty when not set.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub(crate) struct Options {
+    pub(crate) color_mode: String,
+    pub(crate) labels: String,
+}
+
+/// The target pane: its state, the options and the text of its visible rows.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct PaneView {
+    pub(crate) state: PaneState,
+    pub(crate) options: Options,
+    pub(crate) text: String,
 }
 
 /// A text in the tmux message line.
@@ -87,12 +106,17 @@ pub(crate) fn open_popup(
     Ok(())
 }
 
-/// The state of the pane and the text of its visible rows.
-pub(crate) fn pane_view(pane: &str) -> Result<(PaneState, String), TmuxError> {
-    let state = parse_state(&run(&["display-message", "-p", "-t", pane, STATE_FORMAT])?)?;
+/// The state of the pane, the options and the text of its visible rows.
+pub(crate) fn pane_view(pane: &str) -> Result<PaneView, TmuxError> {
+    let (state, options) =
+        parse_state(&run(&["display-message", "-p", "-t", pane, STATE_FORMAT])?)?;
     let text = run(&capture_args(pane, &state))?;
 
-    Ok((state, text))
+    Ok(PaneView {
+        state,
+        options,
+        text,
+    })
 }
 
 /// Puts the pane in copy mode with the cursor on the target.
@@ -108,11 +132,6 @@ pub(crate) fn message(client: &str, message: &Message<'_>) -> Result<(), TmuxErr
     Ok(())
 }
 
-/// The value of `@color-mode`, empty when it is not set.
-pub(crate) fn color_mode() -> Result<String, TmuxError> {
-    run(&["show-options", "-gqv", COLOR_MODE_OPTION])
-}
-
 /// One shell word, for the command that the popup runs.
 pub(crate) fn quote(text: &str) -> String {
     format!("'{}'", text.replace('\'', r"'\''"))
@@ -120,6 +139,7 @@ pub(crate) fn quote(text: &str) -> String {
 
 fn run<S: AsRef<OsStr>>(args: &[S]) -> Result<String, TmuxError> {
     let output = Command::new(TMUX)
+        .arg(UTF8)
         .args(args)
         .output()
         .map_err(TmuxError::Start)?;
@@ -141,9 +161,21 @@ fn parse_size(text: &str) -> Result<(usize, usize), TmuxError> {
     Ok((number(width, text)?, number(height, text)?))
 }
 
-fn parse_state(text: &str) -> Result<PaneState, TmuxError> {
+fn parse_state(text: &str) -> Result<(PaneState, Options), TmuxError> {
     let fields: Vec<&str> = text.trim_end_matches('\n').split(FIELD).collect();
-    let [width, height, mode, scroll, x, y, copy_x, copy_y] = fields.as_slice() else {
+    let [
+        width,
+        height,
+        mode,
+        scroll,
+        x,
+        y,
+        copy_x,
+        copy_y,
+        color_mode,
+        labels,
+    ] = fields.as_slice()
+    else {
         return Err(TmuxError::Output(text.to_owned()));
     };
 
@@ -162,7 +194,7 @@ fn parse_state(text: &str) -> Result<PaneState, TmuxError> {
         number(scroll, text)?
     };
 
-    Ok(PaneState {
+    let state = PaneState {
         width: number(width, text)?,
         height: number(height, text)?,
         mode,
@@ -171,7 +203,13 @@ fn parse_state(text: &str) -> Result<PaneState, TmuxError> {
             row: number(y, text)?,
             col: number(x, text)?,
         },
-    })
+    };
+    let options = Options {
+        color_mode: (*color_mode).to_owned(),
+        labels: (*labels).to_owned(),
+    };
+
+    Ok((state, options))
 }
 
 fn number(field: &str, text: &str) -> Result<usize, TmuxError> {

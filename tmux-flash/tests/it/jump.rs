@@ -25,9 +25,27 @@ fn label_jumps_to_its_match() {
     let servers = Servers::start(TEXT);
     let mut flash = servers.flash();
 
-    // After "a" the labels go by distance from the cursor (row 1, col 0):
-    // alpine c, beta t, alpha's last a i, alpha e. They stay after "al";
-    // each one covers the cluster after its match.
+    // Default labels, by distance from the cursor (row 1, col 0). After "a":
+    // alpine a, beta s, alpha's last a d, alpha f (l follows a match: no
+    // label). They stay after "al"; each one covers the cluster after its
+    // match.
+    servers.type_text("al");
+    servers.wait_for("the labels", |s| {
+        s.screen().contains("alfha beta alaine zulu")
+    });
+    servers.type_text("f");
+
+    assert!(servers.wait_exit(&mut flash));
+    assert_eq!(servers.copy_cursor(), "copy-mode 0 0");
+}
+
+#[test]
+fn labels_come_from_the_option() {
+    let conf = "set -g @flash-labels ctieobnrsgjduaxphlmwfvyz\n";
+    let servers = Servers::start_with(TEXT, conf);
+    let mut flash = servers.flash();
+
+    // As above: alpine c, beta t, alpha's last a i, alpha e.
     servers.type_text("al");
     servers.wait_for("the labels", |s| {
         s.screen().contains("aleha beta alcine zulu")

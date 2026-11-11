@@ -17,8 +17,8 @@ pub(crate) const CLIENT_FLAG: &str = "--client";
 pub(crate) const UI_FLAG: &str = "--ui";
 
 const NAME: &str = env!("CARGO_PKG_NAME");
-/// The labels of the user's nvim flash setup: the Bone 2 home row first.
-const LABELS: &str = "ctieobnrsgjduaxphlmwfvyz";
+/// The flash.nvim default labels, used when `@flash-labels` is not set.
+const DEFAULT_LABELS: &str = "asdfghjklqwertyuiopzxcvbnm";
 const PROMPT: &str = "⚡";
 
 /// The pane to jump in and the client that pressed the key.
@@ -72,11 +72,13 @@ pub(crate) fn launch(origin: &Origin) -> Result<(), AppError> {
 
 /// The session in the popup: draw, read a key, until a jump or an exit.
 pub(crate) fn run_ui(origin: &Origin) -> Result<(), AppError> {
-    let (state, text) = tmux::pane_view(&origin.pane)?;
+    let view = tmux::pane_view(&origin.pane)?;
+    let state = view.state;
     // Without the option the colors are dark, as the tmux status line.
-    let theme = Theme::from_option(&tmux::color_mode().unwrap_or_default());
-    let screen = Screen::parse(&text, state.width, state.height);
-    let mut session = Session::new(screen, state.cursor, LABELS);
+    let theme = Theme::from_option(&view.options.color_mode);
+    let labels = labels_from(&view.options.labels);
+    let screen = Screen::parse(&view.text, state.width, state.height);
+    let mut session = Session::new(screen, state.cursor, &labels);
 
     let prompt = Prompt {
         client: &origin.client,
@@ -129,3 +131,21 @@ impl Drop for Prompt<'_> {
         let _ = tmux::message(self.client, &Message::Clear);
     }
 }
+
+/// The labels of `@flash-labels`; the default when it is not set. Spaces
+/// and control characters cannot be typed as a label.
+fn labels_from(option: &str) -> String {
+    let labels: String = option
+        .chars()
+        .filter(|c| !c.is_whitespace() && !c.is_control())
+        .collect();
+    if labels.is_empty() {
+        return DEFAULT_LABELS.to_owned();
+    }
+
+    labels
+}
+
+#[cfg(test)]
+#[path = "app_test.rs"]
+mod test;

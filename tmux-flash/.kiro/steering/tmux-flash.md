@@ -16,8 +16,10 @@ tmux-jump plugin (Ruby, one character, word starts only).
   matches, no match across lines.
 - Case: smart case (lowercase pattern ignores case), as the user's nvim
   (`ignorecase` + `smartcase`).
-- Label pool: `ctieobnrsgjduaxphlmwfvyz` (the user's nvim flash labels, Bone
-  2), then the same letters in uppercase; duplicates removed.
+- Label pool: the tmux option `@flash-labels` (whitespace and control
+  characters dropped), else the flash.nvim default
+  `asdfghjklqwertyuiopzxcvbnm`; then the same letters in uppercase;
+  duplicates removed. The user's dotfiles set Bone 2 labels.
 - Empty pattern: no labels.
 - Skip rule: no label is a grapheme that directly follows a visible match.
   With smart or ignore case both cases are skipped (flash uses `ignorecase`
@@ -66,6 +68,13 @@ tmux-jump plugin (Ruby, one character, word starts only).
     the same, bold; label fg `#fdf6e3` bg `#d33682` bold.
   The backdrop keeps the terminal background.
 - Time to popup: about 23 ms (tmux 3.5a, each tmux call about 5 ms).
+- Needs tmux 3.3: `display-popup -B` is new in 3.3 (`-x`/`-y` formats and
+  `popup_pane_*` in 3.2). Tested on 3.4 (Ubuntu 24.04) and 3.5a.
+- Every tmux call has `-u`: without a UTF-8 locale (containers, CI, a bare
+  `run-shell`) tmux writes tabs and non-ASCII text of its output as `_`, and
+  the tab-separated state did not parse ("unexpected tmux output: 80_23").
+- Options come in the state format (`#{@color-mode}`, `#{@flash-labels}`):
+  no extra tmux call.
 
 ## Layers
 
@@ -97,5 +106,17 @@ escape sequences). The pure modules do no I/O.
   prompt before typing; `prompt_is` compares the whole message line.
 - Expected labels follow reuse: they come from the first character typed
   ("a"), and stay when the pattern grows ("al"). Compute them that way.
+- `Servers::start_with(text, conf)` adds inner config lines (an option).
+  tmux-flash runs with `LC_ALL=C`, so the tests catch locale problems.
+  Socket paths stay short (`tf-<pid>-<n>`): macOS allows 104 bytes and its
+  temp directory is long.
+- CI: `.github/workflows/ci.yml` (it runs once this directory is a
+  repository root): fmt and clippy on `ubuntu-24.04`; build and test on
+  `ubuntu-24.04`, `ubuntu-24.04-arm` and `macos-15` (no Intel macOS, by
+  request). tmux from apt or brew; rustup when missing. `actions/checkout`
+  pinned by commit. Check with
+  `docker run --rm -v "$PWD:/repo:ro,z" -w /repo rhysd/actionlint:latest .github/workflows/ci.yml`.
+  The Linux job ran in an `ubuntu:24.04` container; arm and macOS did not
+  run before the move.
 - `cargo clippy --locked --all-targets -- -D warnings` and
   `cargo fmt --check` must be clean.

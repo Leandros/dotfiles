@@ -10,7 +10,7 @@ characters, then the label of a match; the cursor goes there in copy mode.
 bind-key g run-shell -b 'tmux-flash --pane "#{pane_id}" --client "#{client_name}"'
 ```
 
-Needs tmux 3.2 or later (`display-popup`). A popup covers the pane; the
+Needs tmux 3.3 or later (`display-popup -B`). A popup covers the pane; the
 pattern shows in the message line.
 
 | Key | Action |
@@ -22,12 +22,22 @@ pattern shows in the message line.
 | `Escape`, `Ctrl+c` | Cancel |
 
 - Smart case: a pattern without uppercase letters ignores case.
-- Labels: `ctieobnrsgjduaxphlmwfvyz`, then the same in uppercase. The nearest
-  match gets the first label. No label is a character that follows a match,
-  so typing on never jumps by mistake. A lowercase label stays on its match
-  while the pattern grows.
+- Labels: the nearest match gets the first label. No label is a character
+  that follows a match, so typing on never jumps by mistake. A lowercase
+  label stays on its match while the pattern grows. After the labels come the
+  same letters in uppercase.
 - A character that leaves no match ends tmux-flash.
-- Colors: Solarized; `set -g @color-mode light` selects the light colors.
+
+## Options
+
+| Option | Default | Meaning |
+|---|---|---|
+| `@flash-labels` | `asdfghjklqwertyuiopzxcvbnm` (flash.nvim) | Label characters, first used first. Spaces are ignored. |
+| `@color-mode` | `dark` | `light` selects the light Solarized colors. |
+
+```
+set -g @flash-labels 'ctieobnrsgjduaxphlmwfvyz'
+```
 
 ## Development
 
@@ -40,4 +50,7 @@ cargo fmt --check
 
 Unit tests are in `<file>_test.rs` next to the file they test. Integration
 tests are modules of one test binary, `tests/it/main.rs`; they start private
-tmux servers and need `tmux` 3.2 or later.
+tmux servers and need `tmux` 3.3 or later.
+
+CI (`.github/workflows/ci.yml`): fmt and clippy on Linux; build and test on
+Linux x86_64 and aarch64, and macOS aarch64.
