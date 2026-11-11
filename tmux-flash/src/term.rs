@@ -19,6 +19,9 @@ use crate::theme::{Rgb, Theme, Weight};
 #[derive(Debug)]
 pub(crate) struct Term {
     out: Stdout,
+    /// The rows on the screen now: a new frame writes only the rows that
+    /// changed.
+    shown: Vec<Vec<Span>>,
 }
 
 impl Term {
@@ -28,24 +31,26 @@ impl Term {
         let mut out = io::stdout();
         execute!(out, Hide)?;
 
-        Ok(Self { out })
+        Ok(Self {
+            out,
+            shown: Vec::new(),
+        })
     }
 
-    /// Draws all rows in one write, so that the popup does not flicker.
+    /// Writes the rows that changed, in one write. A clear of the whole
+    /// screen before each frame showed an empty popup for a moment: with fast
+    /// typing the pane flickered.
     pub(crate) fn draw(&mut self, rows: &[Vec<Span>], theme: Theme) -> io::Result<()> {
-        queue!(self.out, Clear(ClearType::All))?;
-
-        for (row, spans) in rows.iter().enumerate() {
-            let row = u16::try_from(row).map_err(io::Error::other)?;
-            queue!(self.out, MoveTo(0, row))?;
-
-            for span in spans {
-                self.paint_span(span, theme)?;
-            }
+        let bytes = frame_bytes(&self.shown, rows, theme)?;
+        if bytes.is_empty() {
+            return Ok(());
         }
 
-        queue!(self.out, SetAttribute(Attribute::Reset), ResetColor)?;
-        self.out.flush()
+        self.out.write_all(&bytes)?;
+        self.out.flush()?;
+        self.shown = rows.to_vec();
+
+        Ok(())
     }
 
     /// Keys arrive one by one only in the raw mode that `Term` holds.
@@ -60,25 +65,6 @@ impl Term {
             }
         }
     }
-
-    fn paint_span(&mut self, span: &Span, theme: Theme) -> io::Result<()> {
-        let look = theme.look(span.style);
-
-        queue!(
-            self.out,
-            SetAttribute(Attribute::Reset),
-            ResetColor,
-            SetForegroundColor(color(look.fg))
-        )?;
-        if let Some(bg) = look.bg {
-            queue!(self.out, SetBackgroundColor(color(bg)))?;
-        }
-        if look.weight == Weight::Bold {
-            queue!(self.out, SetAttribute(Attribute::Bold))?;
-        }
-
-        queue!(self.out, Print(&span.text))
-    }
 }
 
 impl Drop for Term {
@@ -87,6 +73,53 @@ impl Drop for Term {
         let _ = execute!(self.out, Show);
         let _ = terminal::disable_raw_mode();
     }
+}
+
+/// The escape sequences that turn the `previous` frame into the `next` one;
+/// empty when they are the same.
+fn frame_bytes(previous: &[Vec<Span>], next: &[Vec<Span>], theme: Theme) -> io::Result<Vec<u8>> {
+    let mut out = Vec::new();
+
+    for (row, spans) in next.iter().enumerate() {
+        if previous.get(row) == Some(spans) {
+            continue;
+        }
+
+        let row = u16::try_from(row).map_err(io::Error::other)?;
+        queue!(out, MoveTo(0, row))?;
+        for span in spans {
+            paint_span(&mut out, span, theme)?;
+        }
+
+        // The old row can be longer than the new one.
+        queue!(
+            out,
+            SetAttribute(Attribute::Reset),
+            ResetColor,
+            Clear(ClearType::UntilNewLine)
+        )?;
+    }
+
+    Ok(out)
+}
+
+fn paint_span(out: &mut Vec<u8>, span: &Span, theme: Theme) -> io::Result<()> {
+    let look = theme.look(span.style);
+
+    queue!(
+        out,
+        SetAttribute(Attribute::Reset),
+        ResetColor,
+        SetForegroundColor(color(look.fg))
+    )?;
+    if let Some(bg) = look.bg {
+        queue!(out, SetBackgroundColor(color(bg)))?;
+    }
+    if look.weight == Weight::Bold {
+        queue!(out, SetAttribute(Attribute::Bold))?;
+    }
+
+    queue!(out, Print(&span.text))
 }
 
 const fn color(rgb: Rgb) -> Color {

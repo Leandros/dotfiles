@@ -68,6 +68,12 @@ tmux-jump plugin (Ruby, one character, word starts only).
     the same, bold; label fg `#fdf6e3` bg `#d33682` bold.
   The backdrop keeps the terminal background.
 - Time to popup: about 23 ms (tmux 3.5a, each tmux call about 5 ms).
+- Frames: `term` writes only the rows that changed, each ended with an
+  erase to the line end. A clear of the whole popup before each frame made
+  tmux show a blank popup between pty reads (a frame is about 30 kB with
+  truecolor): fast typing flickered (blank popup rows in 0 to 6 of 300
+  screen samples, 0 after the change). A `display-message` with a popup open
+  redraws the popup region (about 6 kB); `tmux -u` makes no difference.
 - Needs tmux 3.3: `display-popup -B` is new in 3.3 (`-x`/`-y` formats and
   `popup_pane_*` in 3.2). Tested on 3.4 (Ubuntu 24.04) and 3.5a.
 - Every tmux call has `-u`: without a UTF-8 locale (containers, CI, a bare

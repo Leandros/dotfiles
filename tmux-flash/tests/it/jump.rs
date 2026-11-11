@@ -136,3 +136,24 @@ fn scrolled_view_is_kept() {
     let scroll = servers.inner(&["display-message", "-p", "-t", &pane, "#{scroll_position}"]);
     assert_eq!(scroll.trim(), "10");
 }
+
+#[test]
+fn full_width_row_keeps_last() {
+    // 80 columns, the pane width: the frame erases after each row.
+    let row = format!("{}Z", "x".repeat(79));
+    let servers = Servers::start(&format!("{row}\nalpha\n"));
+    let mut flash = servers.flash();
+
+    servers.type_text("alp");
+    servers.wait_for("the prompt", |s| s.prompt_is("alp"));
+    let first = servers
+        .screen()
+        .lines()
+        .next()
+        .unwrap_or_default()
+        .to_owned();
+    servers.press("Escape");
+
+    assert!(servers.wait_exit(&mut flash));
+    assert_eq!(first, row);
+}
