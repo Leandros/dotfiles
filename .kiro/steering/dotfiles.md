@@ -431,19 +431,25 @@ New link or system file: install function, `check_link` or `cmp` check in
   `tmux load-buffer -w -` (clipboard too). Its `--version` prints several
   lines: `| head -n 1` under pipefail failed 21 of 300 times (SIGPIPE); use
   `sed -n 1p`.
-- tmux-flash (`prefix g`): Rust, its own repository
+- tmux-flash (`prefix g` the active pane, `prefix G` all panes of the
+  window): Rust, its own repository
   <https://github.com/Leandros/tmux-flash> (locally
   `~/github/tmux-flash`, with its own steering file; read it before changes
   there). Bootstrap step `tmux-flash` (basic, next to `tmux-fastcopy`, no
   cargo): the release archive `tmux-flash-<target>.tar.gz` of
   `TMUX_FLASH_VERSION` (`RUST_TARGET_LINUX_MUSL`: static, also on AL2;
   `RUST_TARGET_DARWIN`: Apple Silicon only). Also on crates.io and with
-  `cargo binstall tmux-flash`. Binding: `run-shell -b 'tmux-flash --pane ...
-  --client ...'` (the popup needs the client). `@flash-labels` in the tmux
+  `cargo binstall tmux-flash`. Bindings: `run-shell -b 'tmux-flash
+  --multi-pane off|on --pane ... --client ...'` (the popup needs the client;
+  the flag overrides the `@flash-multi-pane` option, which is not set;
+  `--multi-pane` needs 0.2.0). `@flash-labels` in the tmux
   configs sets the Bone 2 labels of the nvim flash config (the default is
   QWERTY). `toggle-dark-mode` sets `@color-mode dark|light` for its colors.
   verify.sh types `prefix g`, `alpi`, Enter through a second tmux server as
-  the client and checks the copy-mode cursor.
+  the client and checks the copy-mode cursor; checks that `prefix g` has
+  `--multi-pane off`; then in a window with two panes types `prefix G`,
+  `om` and the label it reads from the client screen, and checks that the
+  right pane is active in copy mode.
 - tmux-jump (Ruby) was its predecessor. Removed from this machine (the AL2
   dev box, the only one that ran it): the private Ruby, the stamp and the
   plugin. bootstrap removes nothing.

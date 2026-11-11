@@ -577,6 +577,26 @@ sleep 1
 ctmux send-keys Enter || true
 sleep 2
 jump="$(vtmux display-message -p -t jump '#{pane_mode} #{copy_cursor_x} #{copy_cursor_y}' 2>&1 || true)"
+prefix_g="$(vtmux list-keys -T prefix g 2>&1 || true)"
+
+# prefix G: tmux-flash over all panes of the window. "om" is in the right
+# pane only; its label, on the e after it, jumps there.
+vtmux new-session -d -s multi -x 80 -y 24 "printf 'alpha beta alpine zulu\n'; sleep 60" || true
+right="$(vtmux split-window -d -h -t multi -P -F '#{pane_id}' "printf 'gamma omega alps\n'; sleep 60" 2>&1 || true)"
+client="$(vtmux list-clients -F '#{client_name}' 2>&1 | sed -n 1p || true)"
+vtmux switch-client -c "$client" -t multi || true
+sleep 1
+ctmux send-keys C-e G || true
+sleep 1
+ctmux send-keys -l om || true
+sleep 1
+label="$(ctmux capture-pane -p 2>&1 | grep -o 'gamma om.' | sed -n 1p || true)"
+label="${label: -1}"
+if [[ -n "$label" ]]; then
+    ctmux send-keys -l "$label" || true
+fi
+sleep 2
+multi="$(vtmux display-message -p -t multi '#{pane_id} #{pane_mode} #{copy_cursor_x} #{copy_cursor_y}' 2>&1 || true)"
 ctmux kill-server >/dev/null 2>&1 || true
 rm -rf "$client_sock_dir"
 
@@ -591,6 +611,16 @@ if [[ "$jump" == "copy-mode 11 0" ]]; then
     ok "tmux prefix g jumps (tmux-flash)"
 else
     fail "tmux prefix g: want 'copy-mode 11 0', got '$jump'"
+fi
+if [[ "$prefix_g" == *"--multi-pane off"* ]]; then
+    ok "tmux prefix g searches one pane"
+else
+    fail "tmux prefix g: no '--multi-pane off' in: $prefix_g"
+fi
+if [[ "$multi" == "$right copy-mode 6 0" ]]; then
+    ok "tmux prefix G jumps into another pane (tmux-flash)"
+else
+    fail "tmux prefix G: want '$right copy-mode 6 0', got '$multi'"
 fi
 
 if grep -q '##NEW' "$HOME/.zshrc"; then

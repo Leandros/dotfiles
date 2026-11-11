@@ -48,7 +48,7 @@ readonly TMUX_VERSION_MACOS="3.4"
 # https://github.com/abhinav/tmux-fastcopy/releases
 readonly TMUX_FASTCOPY_VERSION="0.15.0"
 # https://github.com/Leandros/tmux-flash/releases
-readonly TMUX_FLASH_VERSION="0.1.0"
+readonly TMUX_FLASH_VERSION="0.2.0"
 # https://www.zsh.org/pub/
 readonly ZSH_VERSION_PIN="5.9.2"
 # https://github.com/junegunn/fzf/releases
@@ -755,8 +755,8 @@ install_tmux_fastcopy() {
     mark_current tmux-fastcopy "$TMUX_FASTCOPY_VERSION"
 }
 
-# tmux-flash (prefix g in tmux). Its releases are static on Linux (musl): they
-# also run on AL2's old glibc.
+# tmux-flash (prefix g and G in tmux). Its releases are static on Linux (musl):
+# they also run on AL2's old glibc.
 install_tmux_flash() {
     is_current tmux-flash "$TMUX_FLASH_VERSION" "$PREFIX/bin/tmux-flash" && return
     local target="$RUST_TARGET_LINUX_MUSL"
