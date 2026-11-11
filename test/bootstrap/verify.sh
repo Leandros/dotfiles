@@ -458,6 +458,16 @@ if [[ $xorg_expected -eq 1 ]]; then
         fi
     fi
     check_link "$HOME/.xsession" "$D/.xsession"
+    # Syncthing: the distro package's user unit, enabled for the user. EL9
+    # has no package (not in EPEL).
+    if [[ "$os_id" != rocky ]]; then
+        if command -v syncthing >/dev/null; then ok "syncthing installed"; else fail "syncthing missing"; fi
+        if [[ "$(systemctl --user is-enabled syncthing.service 2>/dev/null || true)" == enabled ]]; then
+            ok "syncthing user unit enabled"
+        else
+            fail "syncthing user unit not enabled"
+        fi
+    fi
     # eww is the bar: no i3bar include (bootstrap links it only without eww).
     if command -v eww >/dev/null; then
         if [[ -e "$HOME/.config/i3-bar.d/i3bar.conf" || -L "$HOME/.config/i3-bar.d/i3bar.conf" ]]; then

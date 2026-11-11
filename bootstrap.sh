@@ -1271,7 +1271,7 @@ install_xorg_packages() {
                 xorg xinit x11-xserver-utils \
                 i3 i3status suckless-tools i3lock xss-lock blueman arandr autorandr \
                 alsa-utils pavucontrol brightnessctl xclip xinput rfkill cifs-utils smbclient btop remmina remmina-plugin-rdp picom lxpolkit jq \
-                xrdp xorgxrdp \
+                xrdp xorgxrdp syncthing \
                 kbd console-data console-setup
             ;;
         fedora)
@@ -1285,16 +1285,16 @@ install_xorg_packages() {
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap xrandr \
                 i3 i3status dmenu i3lock xss-lock blueman gobject-introspection copyq \
                 arandr autorandr gtk3 \
-                alsa-utils pavucontrol brightnessctl xclip xinput picom cifs-utils samba-client btop remmina remmina-plugins-rdp firewall-config lxpolkit jq xrdp xorgxrdp-glamor kbd terminus-fonts-console
+                alsa-utils pavucontrol brightnessctl xclip xinput picom cifs-utils samba-client btop remmina remmina-plugins-rdp firewall-config lxpolkit jq xrdp xorgxrdp-glamor syncthing kbd terminus-fonts-console
             ;;
         rhel)
             $SUDO dnf install -y -q epel-release
             $SUDO dnf config-manager --set-enabled crb
-            # xss-lock, blueman, arandr, autorandr, picom and lxpolkit are
-            # not packaged for EL9; .xprofile tolerates their absence.
-            # Without them there is no lock before suspend, no Bluetooth
-            # GUI, no saved monitor layouts and no polkit password prompt;
-            # ~/bin/pwr still locks.
+            # xss-lock, blueman, arandr, autorandr, picom, lxpolkit and
+            # syncthing are not packaged for EL9; .xprofile tolerates their
+            # absence. Without them there is no lock before suspend, no
+            # Bluetooth GUI, no saved monitor layouts, no polkit password
+            # prompt and no file sync; ~/bin/pwr still locks.
             $SUDO dnf install -y -q \
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap \
                 i3 i3status dmenu i3lock copyq \
@@ -1811,6 +1811,19 @@ enable_autorandr() {
     $SUDO systemctl enable -q autorandr.service
 }
 
+# Syncthing as the user's systemd unit (the package's, WantedBy
+# default.target): runs from login on, in no X session, so a second
+# session (xrdp) shares it. enable needs no running user manager; start
+# only where one answers (not in containers). Web UI on 127.0.0.1:8384.
+enable_syncthing() {
+    have syncthing || return 0
+    have systemctl || return 0
+    systemctl --user enable -q syncthing.service
+    if systemctl --user show-environment >/dev/null 2>&1; then
+        systemctl --user start syncthing.service
+    fi
+}
+
 # Idle timeouts for .xprofile. Settings are static, so check them before
 # minutes of installs.
 readonly IDLE_CONF="$HOME/.config/idle.conf"
@@ -1963,6 +1976,7 @@ setup_xorg() {
     install_power_modes
     enable_bluetooth
     enable_autorandr
+    enable_syncthing
     link_xorg_dotfiles
     select_bar
     install_xrdp
@@ -2146,6 +2160,9 @@ report() {
         fi
         if [[ "$DISTRO" == fedora ]]; then
             print_version sunshine rpm -q Sunshine
+        fi
+        if [[ "$DISTRO" != rhel ]]; then
+            print_version syncthing syncthing --version
         fi
     fi
     if [[ -d "$BACKUP_DIR" ]]; then

@@ -126,11 +126,17 @@ New link or system file: install function, `check_link` or `cmp` check in
 - Sunshine (Moonlight remote-desktop host): Fedora + Xorg only, from the
   `lizardbyte/stable` copr (`SUNSHINE_COPR`, package `Sunshine`; chroots
   fedora-43..45). Installed only: not started, no firewall ports opened.
+- Syncthing (desktop): distro package (Fedora 2.x; Debian 12 1.19, Ubuntu
+  22.04 1.18; not in EPEL 9, so not on EL9). `enable_syncthing` enables
+  the package's user unit `syncthing.service` (`systemctl --user enable`
+  works without a running user manager) and starts it only where the
+  user manager answers. One instance per user, outside the X sessions.
+  Devices and folders are set up by hand in its web UI (127.0.0.1:8384).
 - lxpolkit: polkit agent, started by `.xprofile` (`pkill -x` first). Without
   an agent in i3, polkit refuses silently: firewall-config and other GUIs
   that run as the user cannot change anything. Not in EL9 EPEL (it has
   mate-polkit, polkit-gnome, xfce-polkit).
-- EL9 has no xss-lock, blueman, arandr, autorandr, picom,
+- EL9 has no xss-lock, blueman, arandr, autorandr, picom, syncthing,
   lxpolkit, rrandr.
   `.xprofile` must work without them. RHEL 10 has no Xorg or i3.
 - CopyQ: Debian/Ubuntu only if the candidate is >= `COPYQ_MIN_VERSION`
