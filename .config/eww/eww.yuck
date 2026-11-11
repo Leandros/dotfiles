@@ -7,6 +7,8 @@
 
 (deflisten blocks :initial "{}" "scripts/status-blocks")
 (deflisten workspaces :initial "[]" "scripts/i3-workspaces")
+;; i3's binding mode (resize); empty in the default mode.
+(deflisten i3_mode :initial "" "scripts/i3-mode")
 (deflisten theme :initial "dark" "scripts/theme-mode")
 ;; The block under the mouse (onhover). All details below are fetched only
 ;; while their block is hovered (:run-while); the bar text comes from
@@ -136,7 +138,10 @@
   :geometry (geometry :x "0%" :y "0%" :width "100%" :height "${height}px" :anchor "top center")
   :reserve (struts :side "top" :distance "${height}px")
   (centerbox :class "bar ${theme}"
-    (workspace-buttons :output output)
+    ;; The mode after the workspaces, as i3bar shows it.
+    (box :space-evenly false :halign "start"
+      (workspace-buttons :output output)
+      (label :visible {i3_mode != ""} :class "mode" :text i3_mode))
     (box)
     (box :space-evenly false :halign "end"
       (status)

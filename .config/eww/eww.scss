@@ -17,12 +17,14 @@ $red: #dc322f;
   .ws.active { background-color: $custom; border-color: $custom; color: $baseA2; }
   .ws.focused { background-color: $green; border-color: $green; color: $baseA3; }
   .ws.urgent { background-color: $orange; border-color: $orange; color: $baseB3; }
+  // i3bar draws the binding mode in the urgent colors.
+  .mode { background-color: $orange; border-color: $orange; color: $baseB3; }
 }
 
 .bar.dark { @include palette(#002b36, #073642, #eee8d5, #fdf6e3, #1c5766); }
 .bar.light { @include palette(#fdf6e3, #eee8d5, #073642, #002b36, #bcd1d4); }
 
-.ws { border: 1px solid; padding: 0 8px; margin: 2px 1px; }
+.ws, .mode { border: 1px solid; padding: 0 8px; margin: 2px 1px; }
 
 // i3bar draws a separator line between blocks.
 .block { padding: 0 8px; border-left: 1px solid $blue; }

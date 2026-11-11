@@ -339,7 +339,8 @@ New link or system file: install function, `check_link` or `cmp` check in
 - Bar: eww (`.config/eww`, linked; `install_eww`, desktop, commit
   `EWW_REF`, `--no-default-features --features x11`: release 0.6.0 pins
   Rust 1.76). `bin/bar` (run by `.xprofile` before the tray apps) starts the
-  daemon, then `bar watch` (stopped with `pkill -f '/bin/bar watch$'`)
+  daemon (a running one reloads: eww does not see edits behind the
+  per-display links; an i3 restart does not reload eww), then `bar watch` (stopped with `pkill -f '/bin/bar watch$'`)
   waits for i3, opens `bar` per active output (`--arg output/height/tray`;
   tray on the primary one; height 34 px at 144 dpi, scaled by `Xft.dpi`)
   and reopens on output events. One daemon per X display: eww names its
@@ -364,7 +365,8 @@ New link or system file: install function, `check_link` or `cmp` check in
   `net-info` (network blocks: addresses, down/up rate from two
   `/sys/class/net/*/statistics` samples), `disk-info` (`df`, one entry per
   device: btrfs `/` and `/home` share one), `theme-mode` follows gsettings (class `bar dark|light`), `i3-workspaces`
-  reconnects after an i3 restart. Syncthing: `i3status-kb` adds `ST: idle`,
+  reconnects after an i3 restart, `i3-mode` too (binding mode, empty for
+  `default`; label after the workspaces in the urgent colors, as i3bar). Syncthing: `i3status-kb` adds `ST: idle`,
   `ST: <percent>%` (db/completion of the local copy, rounded down) or
   `ST: off` from `~/bin/syncthing-status`, no block without Syncthing;
   the tooltip polls `syncthing-status --details` (state, down/up rate

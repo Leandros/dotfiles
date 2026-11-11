@@ -16,7 +16,8 @@
 # that links the files of ~/.config/eww. Only this display's watcher is
 # replaced (~/bin/pkill-display).
 #
-# Usage: bar          start (again: replaces the watcher, reopens the bars)
+# Usage: bar          start (again: reloads the config, replaces the
+#                     watcher, reopens the bars)
 #        bar watch    the watcher (started by bar)
 #
 set -euo pipefail
@@ -119,7 +120,13 @@ main() {
         *) echo "usage: bar [watch]" >&2; exit 1 ;;
     esac
     command -v "$EWW" >/dev/null || exit 0
-    eww_ ping >/dev/null 2>&1 || eww_ daemon >/dev/null 2>&1
+    # A running daemon reloads: eww watches the display directory, whose
+    # links stay the same when the files behind them change.
+    if eww_ ping >/dev/null 2>&1; then
+        eww_ reload >/dev/null 2>&1 || true
+    else
+        eww_ daemon >/dev/null 2>&1
+    fi
     # By command line: the script runs as "bash", so -x would not match.
     "${BAR_PKILL:-$HOME/bin/pkill-display}" -f '/bin/bar watch$' 2>/dev/null || true
     setsid "$0" watch </dev/null >/dev/null 2>&1 &

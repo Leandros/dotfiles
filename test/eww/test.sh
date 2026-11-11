@@ -244,6 +244,27 @@ EOF
         "$(I3_WORKSPACES_RETRY_S=0 run timeout 5 "$SCRIPTS/i3-workspaces" | paste -sd ';')"
 }
 
+test_i3_mode() {
+    # The current mode, then one per mode event; "default" is empty (no
+    # indicator, as in i3bar). Then X is gone.
+    cat > "$STUBS/i3-msg" <<'EOF'
+#!/bin/sh
+case "$2" in
+    get_binding_state) echo '{"name":"default"}' ;;
+    subscribe) echo '{"change":"resize","pango_markup":false}'; echo '{"change":"default","pango_markup":false}' ;;
+esac
+EOF
+    cat > "$STUBS/xset" <<EOF
+#!/bin/sh
+[ -e "$TMP/x-gone" ] && exit 1
+touch "$TMP/x-gone"
+EOF
+    chmod +x "$STUBS/i3-msg" "$STUBS/xset"
+    rm -f "$TMP/x-gone"
+    expect "i3-mode: current mode, then each change; default is empty" ';resize;' \
+        "$(I3_MODE_RETRY_S=0 run timeout 5 "$SCRIPTS/i3-mode" | paste -sd ';')"
+}
+
 test_bar() {
     stub eww
     # Two outputs, the primary one second; one output change arrives while
@@ -323,6 +344,28 @@ EOF
     # At start and after the output change of the stub.
     expect "another display, another config directory" "2" \
         "$(grep -c "^eww -c $TMP/run/eww/display10.0 close-all" "$CALLS")"
+
+    # bar (start): a new daemon, or a running one reloads its config. eww
+    # watches the display directory, whose links do not change when the
+    # files behind them do. X is gone: the started watcher ends at once.
+    printf '#!/bin/sh\nexit 0\n' > "$STUBS/pkill-display"
+    chmod +x "$STUBS/pkill-display"
+    local cfg="eww -c $TMP/run/eww/display7"
+    touch "$TMP/x-gone"
+    : > "$CALLS"
+    BAR_PKILL="$STUBS/pkill-display" run "$BAR"
+    expect "bar again: the running daemon reloads its config" "$cfg ping;$cfg reload" \
+        "$(grep -E ' (ping|reload|daemon)$' "$CALLS" | paste -sd ';')"
+    cat > "$STUBS/eww" <<EOF
+#!/bin/sh
+echo "eww \$*" >> "$CALLS"
+case "\$*" in *" ping") exit 1 ;; esac
+exit 0
+EOF
+    : > "$CALLS"
+    BAR_PKILL="$STUBS/pkill-display" run "$BAR"
+    expect "bar: starts the daemon when none runs" "$cfg ping;$cfg daemon" \
+        "$(grep -E ' (ping|reload|daemon)$' "$CALLS" | paste -sd ';')"
 }
 
 main() {
@@ -338,6 +381,7 @@ main() {
     test_mem_info
     test_theme_mode
     test_i3_workspaces
+    test_i3_mode
     test_bar
     exit "$FAILED"
 }
