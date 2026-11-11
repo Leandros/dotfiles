@@ -14,6 +14,7 @@
 (defvar hover "")
 (defpoll net_info :interval "2s" :initial "{}" :run-while {hover == "wireless" || hover == "ethernet"} "scripts/net-info")
 (defpoll tooltips :interval "5s" :initial "{}" :run-while {hover == "battery" || hover == "vpn"} "scripts/block-tooltips")
+(defpoll syncthing_info :interval "3s" :initial "" :run-while {hover == "syncthing"} "~/bin/syncthing-status --details")
 (defpoll disk_info :interval "10s" :initial "[]" :run-while {hover == "disk_info"} "scripts/disk-info")
 (defpoll cpu_info :interval "2s" :initial "{}" :run-while {hover == "cpu_usage"} "scripts/cpu-info")
 (defpoll mem_info :interval "2s" :initial "{}" :run-while {hover == "memory"} "scripts/mem-info")
@@ -104,6 +105,11 @@
 (defwidget text-tip [name]
   (label :halign "start" :text {net_info?.[name] ?: tooltips?.[name] ?: "…"}))
 
+;; Syncthing: state, rates, needed files and bytes, errors, devices,
+;; folders (~/bin/syncthing-status --details).
+(defwidget syncthing-tip []
+  (label :halign "start" :text {syncthing_info != "" ? syncthing_info : "…"}))
+
 ;; In the order of .config/i3status/config after i3status-kb's blocks.
 (defwidget status []
   (box :class "status" :space-evenly false :halign "end"
@@ -111,6 +117,7 @@
     (block :name "power_mode" (block-label :name "power_mode"))
     (block :name "backlight" (block-label :name "backlight"))
     (block :name "vpn" (tooltip (text-tip :name "vpn") (block-label :name "vpn")))
+    (block :name "syncthing" (tooltip (syncthing-tip) (block-label :name "syncthing")))
     (block :name "wireless" (tooltip (text-tip :name "wireless") (block-label :name "wireless")))
     (block :name "ethernet" (tooltip (text-tip :name "ethernet") (block-label :name "ethernet")))
     (block :name "battery" (tooltip (text-tip :name "battery") (block-label :name "battery")))

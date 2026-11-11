@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+#
+# syncthing-status - the local Syncthing's sync state, for the bar.
+#
+# Usage: syncthing-status             idle, <percent done>% or off
+#        syncthing-status --details   hover text: state, down and up rate,
+#                                     needed files and bytes, errors,
+#                                     devices and folder states
+#
+# Prints nothing and exits 1 where Syncthing is not installed. Reads the
+# GUI address and API key from the running Syncthing (`syncthing cli`);
+# the key goes to curl on stdin, not in its arguments, which every user
+# can read. Percent done: the local copy of all folders (db/completion).
+#
+set -euo pipefail
+
+readonly TIMEOUT_S=2 SAMPLE_S="${SYNCTHING_STATUS_SAMPLE_S:-1}"
+BASE="" KEY=""
+TLS=()
+
+# Address and key of the GUI; fails while Syncthing is not running.
+connect() {
+    local gui
+    gui="$(timeout "$TIMEOUT_S" syncthing cli config gui dump-json 2>/dev/null)" || return 1
+    KEY="$(jq -r '.apiKey // empty' <<< "$gui")"
+    [[ -n "$KEY" ]] || return 1
+    if [[ "$(jq -r '.useTLS' <<< "$gui")" == true ]]; then
+        # Syncthing's own certificate.
+        BASE="https://$(jq -r '.address' <<< "$gui")"
+        TLS=(-k)
+    else
+        BASE="http://$(jq -r '.address' <<< "$gui")"
+    fi
+}
+
+# GET /rest/<path>. printf is a builtin: the key is in no process's
+# arguments.
+api() {
+    printf 'X-API-Key: %s\n' "$KEY" |
+        curl -fsS --max-time "$TIMEOUT_S" ${TLS[@]+"${TLS[@]}"} -H @- "$BASE/rest/$1"
+}
+
+# Percent done, rounded down: 100 only when nothing is needed.
+percent() {
+    api db/completion | jq -r '.completion | floor'
+}
+
+# Bytes, 1000-based like network speeds; $2 is the unit: "2.5 MB", "40 kB/s".
+human() {
+    awk -v b="$1" -v u="$2" 'BEGIN {
+        if (b >= 1e9) printf "%.1f G%s", b / 1e9, u
+        else if (b >= 1e6) printf "%.1f M%s", b / 1e6, u
+        else if (b >= 1e3) printf "%.0f k%s", b / 1e3, u
+        else printf "%.0f %s", b, u
+    }'
+}
+
+# Bytes of one sample per second.
+rate() {
+    human "$(awk -v b="$1" -v s="$SAMPLE_S" 'BEGIN { printf "%d", (s > 0 ? b / s : 0) }')" B/s
+}
+
+short() {
+    local pct
+    if ! connect || ! pct="$(percent)" || [[ -z "$pct" ]]; then
+        echo off
+    elif [[ "$pct" -ge 100 ]]; then
+        echo idle
+    else
+        echo "$pct%"
+    fi
+}
+
+details() {
+    local pct
+    if ! connect || ! pct="$(percent)" || [[ -z "$pct" ]]; then
+        echo "State:   off"
+        return
+    fi
+    local c1 c2 folders statuses="[]" id status syserr
+    c1="$(api system/connections)"
+    sleep "$SAMPLE_S"
+    c2="$(api system/connections)"
+    folders="$(api config/folders)"
+    while IFS= read -r id; do
+        status="$(api "db/status?folder=$(jq -rn --arg id "$id" '$id | @uri')")" || status='{}'
+        statuses="$(jq -c --arg id "$id" --argjson s "$status" '. + [$s + {id: $id}]' <<< "$statuses")"
+    done < <(jq -r '.[].id' <<< "$folders")
+    syserr="$(api system/error)" || syserr='{}'
+
+    local down up need_files need_bytes errors devices
+    read -r down up < <(jq -rn --argjson a "$c1" --argjson b "$c2" \
+        '"\($b.total.inBytesTotal - $a.total.inBytesTotal) \($b.total.outBytesTotal - $a.total.outBytesTotal)"')
+    read -r need_files need_bytes errors < <(jq -rn --argjson s "$statuses" --argjson e "$syserr" \
+        '"\([$s[].needFiles // 0] | add // 0) \([$s[].needBytes // 0] | add // 0) \(([$s[].errors // 0] | add // 0) + ($e.errors // [] | length))"')
+    devices="$(jq -r '[.connections[]] | "\(map(select(.connected)) | length) of \(length) connected"' <<< "$c2")"
+
+    if [[ "$pct" -ge 100 ]]; then
+        echo "State:   idle"
+    else
+        echo "State:   syncing ($pct%)"
+    fi
+    echo "Down:    $(rate "$down")"
+    echo "Up:      $(rate "$up")"
+    echo "Needed:  $need_files files, $(human "$need_bytes" B)"
+    echo "Errors:  $errors"
+    echo "Devices: $devices"
+    jq -rn --argjson f "$folders" --argjson s "$statuses" '
+        [$f[] | .id as $id | "\(if (.label // "") == "" then .id else .label end): \($s[] | select(.id == $id) | .state // "unknown")"]
+        | to_entries[] | (if .key == 0 then "Folders: " else "         " end) + .value'
+}
+
+main() {
+    command -v syncthing >/dev/null || exit 1
+    case "${1:-}" in
+        "") short ;;
+        --details) details ;;
+        *) echo "usage: syncthing-status [--details]" >&2; exit 2 ;;
+    esac
+}
+
+main "$@"

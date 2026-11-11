@@ -272,6 +272,7 @@ if [[ $xorg_expected -eq 1 ]]; then
     check_link "$HOME/bin/pkill-display" "$D/bin/pkill-display"
     check_link "$HOME/bin/term" "$D/bin/term"
     check_link "$HOME/bin/xrdp-keys" "$D/bin/xrdp-keys"
+    check_link "$HOME/bin/syncthing-status" "$D/bin/syncthing-status"
     theme_out="$("$HOME/bin/theme" show 2>&1 || true)"
     if [[ "$theme_out" == "dark" ]]; then
         ok "theme defaults to dark"

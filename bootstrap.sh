@@ -1919,6 +1919,7 @@ link_xorg_dotfiles() {
     link "$d/bin/pkill-display" "$HOME/bin/pkill-display"
     link "$d/bin/term" "$HOME/bin/term"
     link "$d/bin/xrdp-keys" "$HOME/bin/xrdp-keys"
+    link "$d/bin/syncthing-status" "$HOME/bin/syncthing-status"
     link "$d/.xinitrc" "$HOME/.xinitrc"
     link "$d/.xprofile" "$HOME/.xprofile"
     link "$d/.xsession" "$HOME/.xsession"

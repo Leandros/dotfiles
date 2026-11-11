@@ -153,6 +153,16 @@ main() {
         "$(status_line "")"
     echo Stopped > "$TAILSCALE"
     expect "stopped Tailscale is off" "[$kb,$vpn_off,$wireless]" "$(status_line "")"
+
+    # ~/bin/syncthing-status: its text after the VPN; no block when it
+    # fails (Syncthing not installed).
+    printf '#!/bin/sh\necho "42%%"\n' > "$TMP/home/bin/syncthing-status"
+    chmod +x "$TMP/home/bin/syncthing-status"
+    expect "Syncthing after the VPN" "[$kb,$vpn_off,{\"name\":\"syncthing\",\"full_text\":\"ST: 42%\"},$wireless]" \
+        "$(status_line "")"
+    printf '#!/bin/sh\nexit 1\n' > "$TMP/home/bin/syncthing-status"
+    expect "no Syncthing block without Syncthing" "[$kb,$vpn_off,$wireless]" "$(status_line "")"
+    rm "$TMP/home/bin/syncthing-status"
     echo none > "$TAILSCALE"
 
     echo fail > "$ACTIVE"

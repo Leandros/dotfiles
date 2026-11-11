@@ -7,7 +7,8 @@
 # A "PWR: <mode>" block after it shows the power mode from `pwr mode`.
 # A "☀: <percent>" block after that shows the screen brightness, and a
 # "VPN: <connection>" block the active NetworkManager VPN or WireGuard
-# connection and Tailscale (green), or "VPN: off".
+# connection and Tailscale (green), or "VPN: off". "ST: <state>" after it
+# is Syncthing's (idle, percent done, off).
 # A left click on the wireless or ethernet block opens nmrs-gui, on the
 # volume block pavucontrol.
 # Use as `status_command` in the i3 bar.
@@ -24,6 +25,8 @@ readonly PWR="$HOME/bin/pwr"
 readonly MODE_BLOCK_NAME="power_mode"
 readonly BACKLIGHT_BLOCK_NAME="backlight"
 readonly VPN_BLOCK_NAME="vpn"
+readonly SYNCTHING_STATUS="$HOME/bin/syncthing-status"
+readonly SYNCTHING_BLOCK_NAME="syncthing"
 # i3status color_good (~/.config/i3status/config).
 readonly COLOR_GOOD="#859900"
 # The bar asks every few seconds; it must not block on a stuck daemon
@@ -103,6 +106,16 @@ vpn_block() {
     printf ',{"name":"%s","full_text":"VPN: %s","color":"%s"}' "$VPN_BLOCK_NAME" "$joined" "$COLOR_GOOD"
 }
 
+# "ST: idle", "ST: <percent done>%" or "ST: off" from syncthing-status;
+# empty where it fails (Syncthing not installed).
+syncthing_block() {
+    local state
+    [[ -x "$SYNCTHING_STATUS" ]] || return 0
+    state="$("$SYNCTHING_STATUS" 2>/dev/null)" || return 0
+    [[ -n "$state" ]] || return 0
+    printf ',{"name":"%s","full_text":"ST: %s"}' "$SYNCTHING_BLOCK_NAME" "$state"
+}
+
 # i3bar writes one click event per line on stdin, after a leading "[".
 handle_clicks() {
     local line
@@ -147,7 +160,7 @@ with_block() {
     local line="$1" prefix rest blocks
     prefix="${line%%\[*}"
     rest="${line#*\[}"
-    blocks="$(layout_block)$(mode_block)$(backlight_block)$(vpn_block)"
+    blocks="$(layout_block)$(mode_block)$(backlight_block)$(vpn_block)$(syncthing_block)"
     if [[ "$rest" == "]" ]]; then
         echo "${prefix}[${blocks}]"
     else

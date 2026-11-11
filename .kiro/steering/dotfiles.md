@@ -41,7 +41,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `.zshrc` | `~/.zshrc`, rendered copy (`##NEWHOME##`, `##NEWUSER##`) |
 | `.Xresources` | `~/.Xresources`, rendered copy (`##XFT_DPI##`) |
 | `.wezterm.lua`, `.xinitrc`, `.xprofile`, `.xsession`, `.Xmodmap`, `.config/{i3,i3status,xremap,picom,eww}`, `.config/systemd/user/i3-session.target` | `$HOME`, links, Xorg only |
-| `bin/{kb,i3status-kb,pwr,theme,flightmode,touchpad,charge,caffeinate,smb,input-restore,bar,pkill-display,term,xrdp-keys}` | `~/bin`, links, Xorg only |
+| `bin/{kb,i3status-kb,pwr,theme,flightmode,touchpad,charge,caffeinate,smb,input-restore,bar,pkill-display,term,xrdp-keys,syncthing-status}` | `~/bin`, links, Xorg only |
 | `bin/fzf-cache` | `~/bin`, link, always |
 | `xorg-conf/*.conf` | `/etc/X11/xorg.conf.d/` (root copy) |
 | `sshd-conf/50-color-scheme.conf` | `/etc/ssh/sshd_config.d/` (root copy, Linux, where sshd_config includes the directory; not AL2) |
@@ -204,7 +204,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   caller's server),
   `test/idle-settings/test.sh`, `test/caffeinate/test.sh`, `test/eww/test.sh`,
   `test/pkill-display/test.sh`, `test/i3-bar/test.sh`, `test/xrdp/test.sh`,
-  `test/xrdp-conf/test.sh`,
+  `test/xrdp-conf/test.sh`, `test/syncthing-status/test.sh`,
   `test/input-restore/test.sh`,
   `test/fetch/test.sh` (`fetch_unpack` must die on a failed download: it runs
   in `$(...)`, where `set -e` does not apply),
@@ -364,7 +364,14 @@ New link or system file: install function, `check_link` or `cmp` check in
   `net-info` (network blocks: addresses, down/up rate from two
   `/sys/class/net/*/statistics` samples), `disk-info` (`df`, one entry per
   device: btrfs `/` and `/home` share one), `theme-mode` follows gsettings (class `bar dark|light`), `i3-workspaces`
-  reconnects after an i3 restart. Tooltips are their own windows, so one
+  reconnects after an i3 restart. Syncthing: `i3status-kb` adds `ST: idle`,
+  `ST: <percent>%` (db/completion of the local copy, rounded down) or
+  `ST: off` from `~/bin/syncthing-status`, no block without Syncthing;
+  the tooltip polls `syncthing-status --details` (state, down/up rate
+  from two `system/connections` samples, needed files and bytes, folder
+  and system errors, devices, folder states). It reads address and API
+  key with `syncthing cli config gui dump-json` and gives the key to curl
+  on stdin (`-H @-`), never in arguments. Tooltips are their own windows, so one
   look for both themes. Tray: StatusNotifierItem only (eww is the watcher).
   CPU, RAM and time have widget tooltips (`tooltip`: content built once,
   so the CPU `graph` keeps 5 min of history from the i3status value, via
