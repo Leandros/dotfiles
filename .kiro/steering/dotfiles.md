@@ -196,8 +196,6 @@ New link or system file: install function, `check_link` or `cmp` check in
   `test/xprofile/test.sh` (runs `.xprofile` with only stubs on PATH),
   `test/tmux-plugins/test.sh` (fake HOME, private tmux sockets; never the
   caller's server),
-  `cargo test --manifest-path tmux-flash/Cargo.toml` (tmux-flash; its
-  integration tests start private tmux servers),
   `test/idle-settings/test.sh`, `test/caffeinate/test.sh`, `test/eww/test.sh`,
   `test/input-restore/test.sh`,
   `test/fetch/test.sh` (`fetch_unpack` must die on a failed download: it runs
@@ -397,17 +395,19 @@ New link or system file: install function, `check_link` or `cmp` check in
   `tmux load-buffer -w -` (clipboard too). Its `--version` prints several
   lines: `| head -n 1` under pipefail failed 21 of 300 times (SIGPIPE); use
   `sed -n 1p`.
-- tmux-flash (`prefix g`): Rust, in `tmux-flash/` of this repo, which will
-  move to its own repository (no `git init` there, keep it self-contained).
-  Its own steering file: `tmux-flash/.kiro/steering/tmux-flash.md`; read it
-  before changes there. Bootstrap step `tmux-flash` (basic, after `rust`):
-  `cargo install --locked --path`, stamp = git tree hash of `tmux-flash/`.
-  Binding: `run-shell -b 'tmux-flash --pane ... --client ...'` (the popup
-  needs the client). `@flash-labels` in the tmux configs sets the Bone 2
-  labels of the nvim flash config (the default is QWERTY). `toggle-dark-mode`
-  sets `@color-mode dark|light` for its colors. verify.sh types `prefix g`,
-  `alpi`, Enter through a second tmux server as the client and checks the
-  copy-mode cursor.
+- tmux-flash (`prefix g`): Rust, its own repository
+  <https://github.com/Leandros/tmux-flash> (locally
+  `~/github/tmux-flash`, with its own steering file; read it before changes
+  there). Bootstrap step `tmux-flash` (basic, next to `tmux-fastcopy`, no
+  cargo): the release archive `tmux-flash-<target>.tar.gz` of
+  `TMUX_FLASH_VERSION` (`RUST_TARGET_LINUX_MUSL`: static, also on AL2;
+  `RUST_TARGET_DARWIN`: Apple Silicon only). Also on crates.io and with
+  `cargo binstall tmux-flash`. Binding: `run-shell -b 'tmux-flash --pane ...
+  --client ...'` (the popup needs the client). `@flash-labels` in the tmux
+  configs sets the Bone 2 labels of the nvim flash config (the default is
+  QWERTY). `toggle-dark-mode` sets `@color-mode dark|light` for its colors.
+  verify.sh types `prefix g`, `alpi`, Enter through a second tmux server as
+  the client and checks the copy-mode cursor.
 - tmux-jump (Ruby) was its predecessor. Removed from this machine (the AL2
   dev box, the only one that ran it): the private Ruby, the stamp and the
   plugin. bootstrap removes nothing.

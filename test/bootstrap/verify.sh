@@ -74,9 +74,7 @@ fi
 check_version zsh     "zsh $ZSH_VERSION_PIN" /usr/local/bin/zsh --version
 check_version tmux    "tmux $TMUX_VERSION_LINUX" tmux -V
 check_version tmux-fastcopy "tmux-fastcopy version $TMUX_FASTCOPY_VERSION" tmux-fastcopy --version
-# tmux-flash is built from this repository: its version is in Cargo.toml.
-flash_version="$(sed -n 's/^version = "\(.*\)"$/\1/p' "$SRC/tmux-flash/Cargo.toml" | head -n 1)"
-check_version tmux-flash "tmux-flash $flash_version" tmux-flash --version
+check_version tmux-flash "tmux-flash $TMUX_FLASH_VERSION" tmux-flash --version
 check_version nvim    "NVIM v$NVIM_VERSION" nvim --version
 check_version fzf     "$FZF_VERSION" fzf --version
 check_version zoxide  "zoxide $ZOXIDE_VERSION" zoxide --version

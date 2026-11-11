@@ -47,6 +47,8 @@ readonly TMUX_VERSION_LINUX="3.5a"
 readonly TMUX_VERSION_MACOS="3.4"
 # https://github.com/abhinav/tmux-fastcopy/releases
 readonly TMUX_FASTCOPY_VERSION="0.15.0"
+# https://github.com/Leandros/tmux-flash/releases
+readonly TMUX_FLASH_VERSION="0.1.0"
 # https://www.zsh.org/pub/
 readonly ZSH_VERSION_PIN="5.9.2"
 # https://github.com/junegunn/fzf/releases
@@ -753,6 +755,18 @@ install_tmux_fastcopy() {
     mark_current tmux-fastcopy "$TMUX_FASTCOPY_VERSION"
 }
 
+# tmux-flash (prefix g in tmux). Its releases are static on Linux (musl): they
+# also run on AL2's old glibc.
+install_tmux_flash() {
+    is_current tmux-flash "$TMUX_FLASH_VERSION" "$PREFIX/bin/tmux-flash" && return
+    local target="$RUST_TARGET_LINUX_MUSL"
+    [[ "$OS" == "macos" ]] && target="$RUST_TARGET_DARWIN"
+    local dir
+    dir="$(fetch_unpack "$GITHUB/Leandros/tmux-flash/releases/download/v$TMUX_FLASH_VERSION/tmux-flash-$target.tar.gz")"
+    install_bin_from "$dir" tmux-flash
+    mark_current tmux-flash "$TMUX_FLASH_VERSION"
+}
+
 install_nnn() {
     [[ "$OS" == "linux" ]] || return 0
     is_current nnn "$NNN_VERSION" "$PREFIX/bin/nnn" && return
@@ -990,23 +1004,6 @@ install_tree_sitter() {
         --root "$WORK_DIR/tree-sitter" "tree-sitter-cli@$TREE_SITTER_VERSION"
     install_bin "$WORK_DIR/tree-sitter/bin/tree-sitter" tree-sitter
     mark_current tree-sitter "$TREE_SITTER_VERSION"
-}
-
-# tmux-flash (prefix g in tmux) is in this repository. Its git tree is its
-# version: a change in it builds it again.
-install_tmux_flash() {
-    local tree
-    tree="$(git -C "$DOTFILES_DIR" rev-parse HEAD:tmux-flash)"
-    is_current tmux-flash "$tree" "$PREFIX/bin/tmux-flash" && return
-
-    export CARGO_HOME="$CARGO_HOME_DIR" RUSTUP_HOME="$RUSTUP_HOME_DIR"
-    # --path builds in the package's target/ by default: keep the build out
-    # of the clone.
-    quiet "$CARGO_HOME_DIR/bin/cargo" "+$RUST_TOOLCHAIN" install -q --locked \
-        --path "$DOTFILES_DIR/tmux-flash" --root "$WORK_DIR/tmux-flash" \
-        --target-dir "$WORK_DIR/tmux-flash-target"
-    install_bin "$WORK_DIR/tmux-flash/bin/tmux-flash" tmux-flash
-    mark_current tmux-flash "$tree"
 }
 
 # lspmux shares one language server per workspace between all editors. It has
@@ -2110,6 +2107,7 @@ run_all() {
     step zsh install_zsh
     step tmux install_tmux
     step tmux-fastcopy install_tmux_fastcopy
+    step tmux-flash install_tmux_flash
     step nvim install_nvim
     step fzf install_fzf
     step zoxide install_zoxide
@@ -2125,7 +2123,6 @@ run_all() {
     step rust install_rust
     category_step devtools rust-analyzer install_rust_analyzer
     step tree-sitter install_tree_sitter
-    step tmux-flash install_tmux_flash
     category_step devtools lspmux setup_lspmux
     step sshd install_sshd_conf
     step node install_node
