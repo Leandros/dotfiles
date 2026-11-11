@@ -204,7 +204,7 @@ main() {
     expect "xrdp: no local-only programs" "" "$skipped"
     # The RDP client sets the layout; the session does not change it.
     expect "xrdp: layout left to the client" "" "$(grep '^kb \|^setxkbmap -layout' "$CALLS")"
-    # F19 (keycode 114) as $mod: xrdp-keys sets it, again after a reconnect
+    # Right Shift (keycode 62) as $mod: xrdp-keys sets it, again after a reconnect
     # reloads the keymap.
     if grep -q '^xrdp-keys' "$CALLS"; then ok "xrdp: xrdp-keys started"; else fail "xrdp: no xrdp-keys"; fi
     # CopyQ: a server of its own (session "xrdp"); i3's copyq toggle

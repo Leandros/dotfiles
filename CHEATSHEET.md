@@ -25,7 +25,7 @@ In X, xremap swaps the left Alt and Ctrl keys. Right modifiers do not change.
 | `Mod+c` | Clipboard history (CopyQ), at the pointer |
 | `Mod+Shift+j` | Close window |
 
-`Mod` is Super; over xrdp from a Mac also F19 (keycode 114, `~/bin/xrdp-keys`).
+`Mod` is Super; over xrdp from a Mac also right Shift (Karabiner sends it for Cmd; `~/bin/xrdp-keys`).
 
 ### Focus and move
 

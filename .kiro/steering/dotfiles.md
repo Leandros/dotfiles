@@ -299,10 +299,16 @@ New link or system file: install function, `check_link` or `cmp` check in
   (Royal TSx): Cmd loses key-ups of keys pressed with it (macOS; they stay
   pressed in X and i3's grab keeps the keyboard), Ctrl with "Windows Keys
   Passthrough" arrives as Super only on release, Ctrl without it not at all
-  (client keylayout 0). The user maps a key to F19 = keycode 114, empty in
-  the xrdp keymap: `bin/xrdp-keys` makes it Super_L in Mod4 and checks
-  `xmodmap -pm` every 2 s (xrdp loads a fresh keymap per connect; xev has
-  no mapping mask and gets no core MappingNotify under XKB). `bin/term` ($mod+Return): `wezterm start
+  (client keylayout 0); F19 and Ctrl-with-passthrough arrive as a tap when
+  pressed, the Application key as scancode 0. xorgxrdp turns every
+  repeated key-down of an ordinary key into release + press
+  (`sendDownUpKeyEvent`, rdpKeyboard.c); only Shift, Caps, Ctrl, Alt, Win,
+  Menu and Meta pass unchanged. So right Shift (keycode 62) is $mod in
+  xrdp: Karabiner (Royal TSx only) sends right Shift for Cmd and left Shift
+  for the physical right Shift; `bin/xrdp-keys` removes Shift_R from Shift,
+  makes keycode 62 Super_L in Mod4 and checks `xmodmap -pm` every 2 s
+  (xrdp loads a fresh keymap per connect; xev has no mapping mask and gets
+  no core MappingNotify under XKB). `bin/term` ($mod+Return): `wezterm start
   --always-new-process` in xrdp, else plain `wezterm` (joins the running
   GUI, which may be the other session's). Test: `test/xrdp/test.sh`.
   `kb` keeps its state per display

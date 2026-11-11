@@ -88,8 +88,8 @@ done
 if [ -n "$local_session" ]; then
     ~/bin/kb de </dev/null 2>/dev/null || setxkbmap -layout de -option terminate:ctrl_alt_bksp
 else
-    # $mod over RDP: the Mac sends F19 (keycode 114; Cmd loses key-ups,
-    # Ctrl arrives only on release). Set again after each reconnect.
+    # $mod over RDP: right Shift (keycode 62; the Mac sends it for Cmd, see
+    # ~/bin/xrdp-keys). Set again after each reconnect.
     stop -f '/bin/xrdp-keys$'
     [ -x ~/bin/xrdp-keys ] && ~/bin/xrdp-keys >/dev/null 2>&1 &
 fi
