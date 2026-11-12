@@ -2050,11 +2050,12 @@ install_wayland_packages() {
     # xdg-desktop-portal-wlr: screen sharing and screenshots; -gtk: file
     # chooser and the color-scheme setting Firefox follows. The sway
     # package's sway-portals.conf selects them.
-    # Xwayland: X11 programs; sway starts it on demand.
+    # xwayland-satellite: X11 programs (it starts Xwayland); sway's own
+    # Xwayland, started on demand, where the sway config enables it.
     # util-linux: rfkill (flightmode); the container images have only
     # util-linux-core.
     $SUDO dnf install -y -q \
-        sway swaybg swayidle swaylock xorg-x11-server-Xwayland xrdb \
+        sway swaybg swayidle swaylock xwayland-satellite xorg-x11-server-Xwayland xrdb \
         xdg-desktop-portal-wlr xdg-desktop-portal-gtk \
         kanshi wdisplays wl-clipboard fuzzel i3status blueman gobject-introspection \
         grim slurp dunst playerctl libnotify \
@@ -2412,6 +2413,7 @@ report() {
         print_version sway-easyfocus sway-easyfocus --version
         print_version sway-audio-idle-inhibit cat "$(stamp_path sway-audio-idle-inhibit)"
         print_version fuzzel fuzzel --version
+        print_version xwayland-satellite xwayland-satellite -version
         # kanshi has no --version.
         print_version kanshi rpm -q kanshi
         # sed reads all lines: with head, a SIGPIPE fails the pipe.

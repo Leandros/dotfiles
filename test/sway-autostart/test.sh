@@ -4,7 +4,8 @@
 # stubs on PATH and checks what it starts, in which order and with which
 # arguments: the session environment for systemd and D-Bus before the
 # session target, the idle timeouts from ~/.config/idle.conf, kanshi only
-# with a config, the bar before the tray apps, and nothing of the X session.
+# with a config, xwayland-satellite where no X server listens on DISPLAY,
+# the bar before the tray apps, and nothing of the X session.
 #
 # Usage: test/sway-autostart/test.sh
 #
@@ -16,6 +17,9 @@ TMP="$(mktemp -d)"
 readonly TMP
 trap 'rm -rf "$TMP"' EXIT
 readonly STUBS="$TMP/stubs" CALLS="$TMP/calls" FAKE_HOME="$TMP/home"
+# X11_TMPDIR of the script: the X sockets are in .X11-unix below it.
+readonly X11_TMP="$TMP/x11"
+readonly X11_SOCKET="$X11_TMP/.X11-unix/X9"
 readonly SESSION_VARS="WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_TYPE DISPLAY"
 # Programs of the X session; none may start in sway.
 readonly X_ONLY=(xset setxkbmap xmodmap xremap picom xss-lock xidlehook copyq autorandr xinput)
@@ -67,16 +71,29 @@ write_stubs() {
     # shellcheck disable=SC2016 # $l belongs to the stub.
     printf 'while IFS= read -r l; do printf "%%s\\n" "$l"; done > "%s"\n' "$TMP/xrdb-in" >> "$STUBS/xrdb"
     printf 'case "$*" in *get_version*) exit 1 ;; esac\n' >> "$STUBS/swaymsg"
+    # xwayland-satellite: its Xwayland creates the socket a moment later.
+    # The line first: the script may see the socket at once.
+    write_stub "$STUBS/xwayland-satellite" xwayland-satellite
+    # shellcheck disable=SC2016 # $1 belongs to the stub.
+    printf 'sleep 0.3\necho x11-socket >> "%s"\n: > "%s/.X11-unix/X${1#:}"\n' "$CALLS" "$X11_TMP" \
+        >> "$STUBS/xwayland-satellite"
+    ln -s "$(command -v sleep)" "$STUBS/sleep"
     # The IDLE_* settings bootstrap.sh writes.
     printf 'IDLE_LOCK_MINUTES=5\nIDLE_SUSPEND_MINUTES=12\n' > "$FAKE_HOME/.config/idle.conf"
 }
 
 # Runs the script as sway does: the session variables set, PATH with the
-# stubs only. Prints its exit status.
+# stubs only. With "xwayland", sway's own Xwayland listens on DISPLAY (the
+# sway config enables it); without, no X server does. Prints the exit
+# status.
 run() {
+    local x_server="${1:-none}"
     : > "$CALLS"
+    rm -rf "$X11_TMP"
+    mkdir -p "$X11_TMP/.X11-unix"
+    [[ "$x_server" != xwayland ]] || : > "$X11_SOCKET"
     local rc=0
-    env -i HOME="$FAKE_HOME" PATH="$STUBS" XDG_RUNTIME_DIR="$TMP/run" \
+    env -i HOME="$FAKE_HOME" PATH="$STUBS" XDG_RUNTIME_DIR="$TMP/run" X11_TMPDIR="$X11_TMP" \
         WAYLAND_DISPLAY=wayland-9 SWAYSOCK="$TMP/run/sway-ipc.sock" DISPLAY=:9 \
         XDG_CURRENT_DESKTOP=sway XDG_SESSION_TYPE=wayland \
         /bin/bash "$SCRIPT" >/dev/null 2>"$TMP/stderr" || rc=$?
@@ -181,16 +198,28 @@ main() {
     # it ends with sway.
     expect "notification daemon starts" "dunst" "$(grep '^dunst' "$CALLS")"
 
-    # Xwayland: DPI 96 (sway scales its windows). Without resources Xlib
-    # reads ~/.Xdefaults, whose Xft.dpi (192) made X apps' text 2x on top.
-    expect "Xwayland gets X resources" "xrdb|-nocpp|-merge" "$(grep '^xrdb' "$CALLS")"
-    expect "Xwayland DPI 96" "Xft.dpi: 96" "$(cat "$TMP/xrdb-in" 2>/dev/null)"
+    # X11 programs: no X server listens on DISPLAY (the sway config
+    # disables sway's Xwayland), so xwayland-satellite starts there. It
+    # sets Xft.dpi from the output scale: no xrdb.
+    expect "xwayland-satellite on the session's display" "xwayland-satellite|:9" \
+        "$(grep '^xwayland-satellite' "$CALLS")"
+    before "satellite starts before the bar" '^xwayland-satellite' '^bar'
+    before "lxpolkit (X11) waits for the X server" '^x11-socket' '^lxpolkit'
+    if called '^xrdb'; then fail "xrdb with xwayland-satellite"; else ok "no xrdb with xwayland-satellite"; fi
 
     local cmd started=""
     for cmd in "${X_ONLY[@]}"; do
         called "^$cmd(\||$)" && started+=" $cmd"
     done
     expect "no programs of the X session" "" "$started"
+
+    # sway's own Xwayland: DPI 96 (sway scales its windows). Without
+    # resources Xlib reads ~/.Xdefaults, whose Xft.dpi (192) made X apps'
+    # text 2x on top.
+    run xwayland >/dev/null
+    if called '^xwayland-satellite'; then fail "satellite next to sway's Xwayland"; else ok "no satellite with sway's Xwayland"; fi
+    expect "Xwayland gets X resources" "xrdb|-nocpp|-merge" "$(grep '^xrdb' "$CALLS")"
+    expect "Xwayland DPI 96" "Xft.dpi: 96" "$(cat "$TMP/xrdb-in" 2>/dev/null)"
 
     # kanshi only with a profile file; it exits at once without one.
     if called '^kanshi'; then fail "kanshi without a config"; else ok "no kanshi without a config"; fi
@@ -208,7 +237,7 @@ main() {
 
     # Every optional program missing: the rest still runs.
     for cmd in kanshi swayidle sway-audio-idle-inhibit wl-paste cliphist blueman-applet lxpolkit \
-        dbus-update-activation-environment; do
+        dbus-update-activation-environment xwayland-satellite; do
         rm "$STUBS/$cmd"
     done
     expect "optional programs missing: exits 0" "0" "$(run)"

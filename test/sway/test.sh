@@ -4,10 +4,14 @@
 # machine-local includes), the bindings run their commands (stubs on
 # sway's PATH record the calls), $mod+m / $mod+Shift+m swap two windows,
 # Ctrl+digit (the physical Alt key after ctrl:swap_lalt_lctl) switches
-# workspaces, window rules float by Wayland app_id and X11 class, a
-# theme.conf in ~/.config/sway.d changes the colors after a reload, and
-# swaybar runs only with the include bootstrap.sh links where eww is
-# missing. Also checks the fuzzel and sway-easyfocus configs.
+# workspaces, window rules float by Wayland app_id, X11 programs run on
+# xwayland-satellite (Wayland windows, output pixels, Xft.dpi of the
+# scale), the config's switch back to sway's Xwayland works (class and
+# instance rules), the session wrapper and ~/bin/sway-autostart start
+# xwayland-satellite for X11 programs that sway starts, a theme.conf in
+# ~/.config/sway.d changes the colors after a reload, and swaybar runs
+# only with the include bootstrap.sh links where eww is missing. Also
+# checks the fuzzel and sway-easyfocus configs.
 #
 # Usage: test/sway/test.sh   (needs docker; skips without it)
 #
@@ -27,7 +31,7 @@ fi
 read -r -d '' INNER <<'EOF' || true
 set -uo pipefail
 dnf install -y -q --setopt=install_weak_deps=False sway wtype foot fuzzel xterm xorg-x11-server-Xwayland \
-    libxkbcommon-utils python3 python3-pyyaml util-linux procps-ng >/dev/null 2>&1 ||
+    xwayland-satellite xrdb xdpyinfo libxkbcommon-utils python3 python3-pyyaml util-linux procps-ng >/dev/null 2>&1 ||
     { echo "FAIL: dnf install"; exit 1; }
 
 FAILED=0
@@ -116,6 +120,9 @@ if [ -n "$kbd_line" ] && [ -n "$inc_line" ] && [ "$kbd_line" -lt "$inc_line" ]; 
 else
     fail "keyboard block at line $kbd_line, sway.d include at line $inc_line"
 fi
+# X11 programs run on xwayland-satellite; one line switches back to sway's
+# own Xwayland (blurry at a fractional scale).
+expect "sway's Xwayland disabled in one line" "1" "$(grep -cx 'xwayland disable' "$CONFIG")"
 
 # The physical left Alt key (<LALT>) gives Control with the config's
 # layout and options, so Alt+digit is the Ctrl+digit binding.
@@ -129,17 +136,34 @@ else
 fi
 
 # --- running sway ---------------------------------------------------------
-as_t sway -c "$CONFIG" >/tmp/sway.log 2>&1 &
-for _ in $(seq 1 50); do ls "$RUN"/sway-ipc.*.sock >/dev/null 2>&1 && break; sleep 0.1; done
-SWAYSOCK="$(ls "$RUN"/sway-ipc.*.sock)"
-WAYLAND_DISPLAY="$(cd "$RUN" && ls wayland-? | head -n 1)"
-export SWAYSOCK WAYLAND_DISPLAY
-sleep 1
+# As wayland-session/sway-session starts it: DISPLAY is the display of
+# xwayland-satellite (WLR_BACKENDS keeps wlroots from opening it).
+readonly X_DISPLAY=:5
+# Runs the command (sway or the session wrapper); LOG gets its output.
+start_sway() {
+    local log="$1"
+    shift
+    unset SWAYSOCK WAYLAND_DISPLAY
+    as_t "$@" >"$log" 2>&1 &
+    for _ in $(seq 1 50); do ls "$RUN"/sway-ipc.*.sock >/dev/null 2>&1 && break; sleep 0.1; done
+    SWAYSOCK="$(ls "$RUN"/sway-ipc.*.sock)"
+    WAYLAND_DISPLAY="$(cd "$RUN" && ls wayland-? | head -n 1)"
+    export SWAYSOCK WAYLAND_DISPLAY
+    sleep 1
+}
 # sway is not readable in /proc (file capabilities): ask a child.
-msg -q exec 'echo "$DISPLAY" > /tmp/display'
-sleep 0.5
-DISPLAY="$(cat /tmp/display)"
-export DISPLAY
+sway_display() {
+    rm -f /tmp/display
+    msg -q exec 'echo "$DISPLAY" > /tmp/display'
+    sleep 0.5
+    cat /tmp/display
+}
+export DISPLAY="$X_DISPLAY"
+start_sway /tmp/sway.log sway -c "$CONFIG"
+# With Xwayland disabled sway keeps the variable and runs no X server.
+expect "sway keeps the session's DISPLAY" "$X_DISPLAY" "$(sway_display)"
+ls /tmp/.X11-unix/X* >/dev/null 2>&1 && fail "an X server runs before xwayland-satellite: $(ls /tmp/.X11-unix)" ||
+    ok "no X server of sway"
 
 called "sway-autostart" && ok "exec ~/bin/sway-autostart" || fail "sway-autostart not run"
 expect "no swaybar without the include" "[]" "$(msg -t get_bar_config | tr -d ' \n')"
@@ -222,19 +246,26 @@ def find(n, ws):
 find(json.load(sys.stdin), None)"; }
 expect "Ctrl+Shift+2: window to workspace 2" "2" "$(ws_of A)"
 
-# Window rules: Wayland app_id, and class or instance on Xwayland.
+# Window rules: Wayland app_id. X11 windows on xwayland-satellite are
+# Wayland windows with the WM_CLASS class as app_id.
 floats() { msg -t get_tree | py "
 import json,sys
 def find(n):
     if n.get('name') == '$1' and n.get('pid'): print(n['type'])
     for c in n.get('nodes', []) + n.get('floating_nodes', []): find(c)
 find(json.load(sys.stdin))"; }
+app_of() { msg -t get_tree | py "
+import json,sys
+def find(n):
+    if n.get('name') == '$1' and n.get('pid'): print(n.get('shell'), n.get('app_id'))
+    for c in n.get('nodes', []) + n.get('floating_nodes', []): find(c)
+find(json.load(sys.stdin))"; }
 for id in nmrs blueman-manager blueman-services org.pulseaudio.pavucontrol wdisplays; do
     as_t foot --app-id "$id" -T "W-$id" sleep 600 >/dev/null 2>&1 &
 done
 as_t foot --app-id other -T W-other sleep 600 >/dev/null 2>&1 &
-# Xwayland starts with the first X11 client, and an xterm that connects
-# while it starts can fail: one after the other, each until it maps.
+# An xterm that connects while its X server starts can fail: one after
+# the other, each until it maps.
 mapped() { msg -t get_tree | grep -qF "\"name\": \"$1\""; }
 start_x() {
     local title="$1" try
@@ -247,14 +278,27 @@ start_x() {
         done
     done
 }
+xft_dpi() { as_t xrdb -query 2>/dev/null | sed -n 's/^Xft\.dpi:\s*//p'; }
+
+# xwayland-satellite on the session's display, as ~/bin/sway-autostart
+# starts it. At scale 1.5 X11 windows get the output's pixels; sway's
+# Xwayland draws them at 1x and sway scales them up (blurry).
+msg -q output '*' scale 1.5
+as_t xwayland-satellite "$DISPLAY" >/tmp/satellite.log 2>&1 &
+for _ in $(seq 1 50); do [ -e "/tmp/.X11-unix/X${DISPLAY#:}" ] && break; sleep 0.1; done
 start_x X-nmrs -class nmrs
-start_x X-blueman -name blueman-manager
-start_x X-pavucontrol -name pavucontrol
+expect "satellite: X11 window is a Wayland window, app_id = class" "xdg_shell nmrs" "$(app_of X-nmrs)"
+mode="$(msg -t get_outputs | py 'import json,sys; m=json.load(sys.stdin)[0]["current_mode"]; print("%dx%d" % (m["width"], m["height"]))')"
+expect "satellite: X screen in output pixels" "$mode" "$(as_t xdpyinfo 2>/dev/null | awk '/dimensions:/ { print $2 }')"
+# Text size: satellite sets Xft.dpi when a window gets the fractional scale.
+for _ in $(seq 1 20); do [ "$(xft_dpi)" = 144 ] && break; sleep 0.2; done
+expect "satellite: Xft.dpi of scale 1.5" "144" "$(xft_dpi)"
+
 for _ in $(seq 1 50); do
     [ "$(msg -t get_tree | grep -cE '"name": "W-')" -ge 6 ] && break
     sleep 0.2
 done
-for t in W-nmrs W-blueman-manager W-blueman-services W-org.pulseaudio.pavucontrol W-wdisplays X-nmrs X-blueman X-pavucontrol; do
+for t in W-nmrs W-blueman-manager W-blueman-services W-org.pulseaudio.pavucontrol W-wdisplays X-nmrs; do
     expect "$t floats" "floating_con" "$(floats "$t")"
 done
 expect "other windows tile" "con" "$(floats W-other)"
@@ -311,6 +355,49 @@ called "systemctl|--user|stop|sway-session.target" && ok "Ctrl+Alt+BackSpace sto
 
 grep -iE '\[ERROR\]' /tmp/sway.log | grep -viE 'swaybar|xwayland|status|drm|libinput|seat' | head -3 | sed 's/^/sway: /'
 
+# --- sway's own Xwayland --------------------------------------------------
+# The switch the config describes: a # before `xwayland disable`. sway
+# then replaces the session's DISPLAY with its Xwayland, and the class and
+# instance rules match X11 windows.
+sed 's/^xwayland disable$/#&/' "$CONFIG" > /tmp/xwayland.config
+chmod 0644 /tmp/xwayland.config
+export DISPLAY="$X_DISPLAY"
+start_sway /tmp/sway-xwayland.log sway -c /tmp/xwayland.config
+DISPLAY="$(sway_display)"
+if [ -n "$DISPLAY" ] && [ "$DISPLAY" != "$X_DISPLAY" ] && [ -e "/tmp/.X11-unix/X${DISPLAY#:}" ]; then
+    ok "switch: sway's Xwayland listens on DISPLAY ($DISPLAY)"
+else
+    fail "switch: DISPLAY '$DISPLAY', sockets: $(ls /tmp/.X11-unix 2>&1)"
+fi
+start_x X-nmrs -class nmrs
+start_x X-blueman -name blueman-manager
+start_x X-pavucontrol -name pavucontrol
+for t in X-nmrs X-blueman X-pavucontrol; do
+    expect "switch: $t floats" "floating_con" "$(floats "$t")"
+done
+expect "switch: X11 window on Xwayland" "xwayland" "$(app_of X-nmrs | cut -d' ' -f1)"
+# sway exits before it answers.
+msg -q exit 2>/dev/null
+sleep 1
+
+# --- the whole session ----------------------------------------------------
+# wayland-session/sway-session starts sway (the caller's WLR_BACKENDS
+# stays), sway runs ~/bin/sway-autostart, which starts xwayland-satellite
+# on the wrapper's display. X11 programs that sway starts (bindings,
+# fuzzel) open there.
+install -m 0755 /src/sway-session /usr/local/bin/sway-session
+install -m 0755 -o t /src/sway-autostart "$H/bin/sway-autostart"
+unset DISPLAY
+start_sway /tmp/sway-session.log /usr/local/bin/sway-session -c "$CONFIG"
+DISPLAY="$(sway_display)"
+pgrep -u t -f "xwayland-satellite $DISPLAY\$" >/dev/null && ok "session: xwayland-satellite on $DISPLAY" ||
+    fail "session: no xwayland-satellite on '$DISPLAY': $(pgrep -u t -a -f xwayland)"
+msg -q exec 'xterm -T X-session -e sleep 600'
+for _ in $(seq 1 50); do mapped X-session && break; sleep 0.2; done
+expect "session: an X11 program from sway opens on satellite" "xdg_shell XTerm" "$(app_of X-session)"
+msg -q exit 2>/dev/null
+sleep 1
+
 # --- fuzzel ---------------------------------------------------------------
 # The colors come from a file bin/theme writes (include=).
 printf '[colors]\nbackground=fdf6e3ff\ntext=586e75ff\n' > "$H/.local/state/theme/fuzzel.ini"
@@ -350,6 +437,7 @@ for dir in sway fuzzel sway-easyfocus; do
     fi
     cp -r "$ROOT/.config/$dir" "$TMP/src/"
 done
+cp "$ROOT/wayland-session/sway-session" "$ROOT/bin/sway-autostart" "$TMP/src/"
 # docker cp, not a bind mount: SELinux hosts would deny the container.
 docker cp "$TMP/src" "$container:/src"
 docker start -a "$container"

@@ -2,9 +2,10 @@
 #
 # The sway session at the login screen: the session entry lightdm lists
 # (wayland-session/sway-dotfiles.desktop), the wrapper it runs
-# (wayland-session/sway-session: English, the Wayland environment, then
-# sway) and the systemd target that activates graphical-session.target,
-# which xdg-desktop-portal requires since Fedora 45.
+# (wayland-session/sway-session: English, the Wayland environment, the X
+# display of xwayland-satellite, then sway) and the systemd target that
+# activates graphical-session.target, which xdg-desktop-portal requires
+# since Fedora 45.
 #
 # With docker it also runs the wrapper the way Fedora 45's lightdm does:
 # through its session-wrapper (Xsession, which sources xinitrc.d) with the
@@ -71,7 +72,8 @@ echo "args=$*"
 env
 EOF
     chmod +x "$TMP/bin/sway"
-    env -i PATH="$TMP/bin:/usr/bin:/bin" HOME="$TMP" "$@" /bin/sh "$WRAPPER" -d
+    mkdir -p "$TMP/x11/.X11-unix"
+    env -i PATH="$TMP/bin:/usr/bin:/bin" HOME="$TMP" X11_TMPDIR="$TMP/x11" "$@" /bin/sh "$WRAPPER" -d
 }
 
 check_wrapper() {
@@ -101,6 +103,21 @@ check_wrapper() {
     # Qt 5.12+ and 6 select "wayland;xcb" from XDG_SESSION_TYPE; Qt before
     # 5.12 (bundled in some programs) aborts on a QT_QPA_PLATFORM list.
     expect "QT_QPA_PLATFORM not set" "" "$(get QT_QPA_PLATFORM)"
+
+    # X11 programs: xwayland-satellite listens on DISPLAY (the sway config
+    # disables sway's own Xwayland). sway cannot change its environment
+    # later, so its bindings and fuzzel get DISPLAY only from here. With
+    # DISPLAY set and no WLR_BACKENDS, wlroots would run sway nested in
+    # that X server.
+    expect "DISPLAY: the first free X display" ":0" "$(get DISPLAY)"
+    expect "WLR_BACKENDS: as wlroots selects on a console" "libinput,drm" "$(get WLR_BACKENDS)"
+    # A socket of a running X server, the lock file of one that starts.
+    : > "$TMP/x11/.X11-unix/X0"
+    : > "$TMP/x11/.X1-lock"
+    out="$(run_wrapper)"
+    expect "DISPLAY: skips displays in use" ":2" "$(get DISPLAY)"
+    out="$(run_wrapper WLR_BACKENDS=headless)"
+    expect "WLR_BACKENDS of the caller stays" "headless" "$(get WLR_BACKENDS)"
 
     # Started from a virtual console: logind's type is tty and no
     # desktop is set; programs still see a Wayland session.
@@ -161,6 +178,10 @@ runuser -u t -- env -i HOME=/home/t USER=t SHELL=/bin/bash PATH=/usr/local/libex
 
 if [ -f /tmp/sway-env ]; then ok "lightdm's wrapper starts sway"; else fail "sway not started: $(tail -n 3 /tmp/session.log)"; fi
 grep -qx 'LANG=en_US.UTF-8' /tmp/sway-env 2>/dev/null && ok "sway in English after the wrapper" || fail "LANG: $(grep '^LANG=' /tmp/sway-env)"
+# Xsession runs before the wrapper: its xinitrc.d scripts never see the
+# display of xwayland-satellite, and wlroots selects DRM.
+grep -qE '^DISPLAY=:[0-9]+$' /tmp/sway-env 2>/dev/null && ok "sway gets an X display" || fail "DISPLAY: $(grep '^DISPLAY=' /tmp/sway-env)"
+grep -qx 'WLR_BACKENDS=libinput,drm' /tmp/sway-env 2>/dev/null && ok "sway gets WLR_BACKENDS" || fail "WLR_BACKENDS: $(grep '^WLR_BACKENDS=' /tmp/sway-env)"
 # ~/.xprofile is the X session (xremap, xrdb, i3-session.target, ...);
 # Xsession sources xinitrc.d for Wayland sessions too.
 [ -f /tmp/xprofile-loaded ] && fail "~/.xprofile ran in the sway session (xinitrc-d/90-xprofile.sh)" || ok "no ~/.xprofile in the sway session"

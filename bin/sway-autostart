@@ -32,6 +32,15 @@ readonly AUDIO_INHIBIT_PATTERN="(^|/)$AUDIO_INHIBIT\$"
 # config swaps them with XKB: both together cancel out. It holds the
 # machine's keyboards, so it has no place in any sway session.
 readonly XREMAP="xremap"
+# X11 programs: sway-session sets DISPLAY. Where no X server listens on it
+# (the sway config disables sway's Xwayland), xwayland-satellite starts.
+readonly SATELLITE="xwayland-satellite"
+# Tests set X11_TMPDIR.
+readonly X11_SOCKET_DIR="${X11_TMPDIR:-/tmp}/.X11-unix"
+# Xwayland listens some time after the start; X11 clients started before
+# fail. 5 s at most.
+readonly X11_WAIT_TRIES=50
+readonly X11_POLL_S=0.1
 
 has() { command -v "$1" >/dev/null; }
 
@@ -99,6 +108,38 @@ start_idle() {
         >/dev/null 2>&1 &
 }
 
+x11_socket() { printf '%s/X%s' "$X11_SOCKET_DIR" "${DISPLAY#:}"; }
+
+# A socket on DISPLAY is sway's own Xwayland; else xwayland-satellite
+# starts there. It is a Wayland client, so it ends with sway. Its log
+# goes to sway's log.
+start_x11() {
+    [[ -n "${DISPLAY:-}" ]] || return 0
+    if [[ ! -e "$(x11_socket)" ]]; then
+        has "$SATELLITE" || return 0
+        "$SATELLITE" "$DISPLAY" >/dev/null &
+        return 0
+    fi
+
+    # sway's Xwayland: DPI 96, as sway scales its windows by the output
+    # scale. Without any resources Xlib reads ~/.Xdefaults instead, and an
+    # Xft.dpi there scaled X apps' text a second time (VMware, GTK 3).
+    # xwayland-satellite sets Xft.dpi from the output scale.
+    if has xrdb; then
+        echo 'Xft.dpi: 96' | try xrdb -nocpp -merge
+    fi
+}
+
+wait_x11() {
+    [[ -n "${DISPLAY:-}" ]] || return 0
+    local try
+    for ((try = 0; try < X11_WAIT_TRIES; try++)); do
+        [[ -e "$(x11_socket)" ]] && return 0
+        sleep "$X11_POLL_S"
+    done
+    printf 'sway-autostart: no X server on %s\n' "$DISPLAY" >&2
+}
+
 main() {
     start_session
     end_session_with_sway </dev/null >/dev/null 2>&1 &
@@ -113,12 +154,8 @@ main() {
         pkill -u "$UID" -x "$XREMAP" >/dev/null 2>&1 || true
     fi
 
-    # Xwayland: DPI 96, as sway scales its windows by the output scale.
-    # Without any resources Xlib reads ~/.Xdefaults instead, and an
-    # Xft.dpi there scaled X apps' text a second time (VMware, GTK 3).
-    if has xrdb; then
-        echo 'Xft.dpi: 96' | try xrdb -nocpp -merge
-    fi
+    # Early: Xwayland then listens before the first X11 client starts.
+    start_x11
 
     # The sway config sets de; kb records it for the status bar.
     [[ -x ~/bin/kb ]] && try ~/bin/kb de </dev/null >/dev/null
@@ -153,8 +190,9 @@ main() {
 
     # Polkit agent: asks for the password when a GUI of the user needs root
     # through polkit (firewall-config, blueman). Without one polkit refuses
-    # silently. GTK 2: it runs on Xwayland.
+    # silently. GTK 2: it runs on X11.
     if has lxpolkit; then
+        wait_x11
         lxpolkit >/dev/null 2>&1 &
     fi
 

@@ -565,7 +565,8 @@ New link or system file: install function, `check_link` or `cmp` check in
 
 - Session: lightdm, entry "Sway (dotfiles)" -> `/usr/local/bin/sway-session`
   (exports LANG=en_US.UTF-8, the XDG desktop/session variables, Electron
-  and Java hints; not `QT_QPA_PLATFORM`: Qt picks Wayland from
+  and Java hints, `DISPLAY` and `WLR_BACKENDS` for xwayland-satellite (see
+  below); not `QT_QPA_PLATFORM`: Qt picks Wayland from
   `XDG_SESSION_TYPE`, and old bundled Qt 5 aborts on a list). lightdm runs
   Wayland sessions through `/etc/X11/xinit/Xsession` too, so
   `xinitrc-d/90-xprofile.sh` skips `~/.xprofile` when `XDG_SESSION_TYPE` is
@@ -590,12 +591,13 @@ New link or system file: install function, `check_link` or `cmp` check in
   into systemd and D-Bus, starts `sway-session.target` (graphical-session
   for xdg-desktop-portal), theme restore, `kb de`, kanshi (only with
   `~/.config/kanshi/config`), swayidle, sway-audio-idle-inhibit, `wl-paste
-  --watch cliphist store`, the bar, blueman-applet, lxpolkit. A watcher
+  --watch cliphist store`, xwayland-satellite (where no X server listens
+  on `DISPLAY`), the bar, blueman-applet, lxpolkit. A watcher
   stops the target and removes the variables when sway ends (D-Bus gets
   empty values): the user manager outlives a logout while ssh or lingering
   keeps it, and a later i3 login would see `SWAYSOCK`.
-- Session detection in every script: `SWAYSOCK` before `DISPLAY` (sway sets
-  `DISPLAY` for Xwayland). Per-session keys use `WAYLAND_DISPLAY` (state
+- Session detection in every script: `SWAYSOCK` before `DISPLAY` (set in
+  sway too: `sway-session`, or sway's Xwayland). Per-session keys use `WAYLAND_DISPLAY` (state
   files, eww's config directory `$XDG_RUNTIME_DIR/eww/wayland-N`,
   `pkill-display`). `bin/wm-msg` runs `swaymsg` in sway, else `i3-msg`.
 - Idle: swayidle timeouts count from the last input (not chained):
@@ -638,14 +640,42 @@ New link or system file: install function, `check_link` or `cmp` check in
   width; the rest shows swaybg's `#073642`) until the next repaint, e.g.
   a keypress. Under Xwayland (`enable_wayland = false`) it fills, but
   blurry. Not fixed; no upstream issue found.
-- Xwayland DPI: sway scales X windows by the output scale, so
-  `sway-autostart` loads `Xft.dpi: 96` with `xrdb -merge` (package
-  `xrdb`). Without any resources Xlib reads `~/.Xdefaults` (the repo's
-  legacy file, `Xft.dpi: 192`, copied by `setup.sh`), and VMware
+- X11 programs: xwayland-satellite (Fedora package; 0.8.3 on F45), not
+  sway's Xwayland, which draws X windows at scale 1 and lets sway scale
+  them up (blurry at 1.5; VMware). Switch: `xwayland disable` in the sway
+  config (sway reads it only at start; comment it out to go back).
+  `sway-session` sets `DISPLAY` to the first display without
+  `/tmp/.X11-unix/X<n>` or `/tmp/.X<n>-lock` (`X11_TMPDIR` for tests):
+  sway has no command to set its environment, so bindings and fuzzel
+  get it only from there. With `DISPLAY` set and no `WLR_BACKENDS`,
+  wlroots 0.20 runs sway nested in that X server (backend.c) and fails, so
+  the wrapper sets `WLR_BACKENDS=libinput,drm` (what autodetect picks on a
+  console; the caller's value stays). Children inherit it: a nested
+  wlroots compositor or `sway -C` in the session needs `env -u
+  WLR_BACKENDS`. With sway's Xwayland on, sway replaces `DISPLAY`.
+  `sway-autostart` starts satellite when no socket exists for `DISPLAY`
+  (else it merges `Xft.dpi: 96` for sway's Xwayland) and waits up to 5 s
+  for the socket before lxpolkit. Satellite facts (source v0.8.3):
+  app_id = WM_CLASS class (instance is lost: `instance=` and `class=`
+  rules match only on sway's Xwayland); X screen in output pixels; global
+  scale = smallest output scale; Xft.dpi (XSETTINGS `Xft/DPI` and the
+  `RESOURCE_MANAGER` line) = scale x 96, set from the integer
+  `wl_output.scale` (2 at 1.5) until an X window gets the fractional
+  scale (then 144); `Gdk/WindowScalingFactor` = int(scale), so GTK 3
+  X11 apps get 1.5x text and 1x widgets. No keyboard-shortcuts-inhibit:
+  sway keeps `$mod` keys while a VMware guest has the focus. Open
+  upstream: #194 (blurry cursor at 200%), #371 (popups off by the title
+  bar height), PR #420 (relative pointer scaling). `test/sway/test.sh`
+  runs it (output pixels, Xft.dpi 144, app_id), the switch, and the whole
+  session (wrapper, real sway-autostart, `swaymsg exec xterm`).
+- Xwayland DPI (sway's own Xwayland): sway scales X windows by the output
+  scale, so `sway-autostart` loads `Xft.dpi: 96` with `xrdb -merge`
+  (package `xrdb`). Without any resources Xlib reads `~/.Xdefaults` (the
+  repo's legacy file, `Xft.dpi: 192`, copied by `setup.sh`), and VMware
   Workstation's GTK 3 text came out 2x on top of the scale (icons normal).
-- Known gaps: XWayland apps (Qt 5, DaVinci Resolve) are blurry at a
-  fractional scale; no xrdp (it stays with the i3 session); no mouse keys;
-  the X touchpad curve. lxpolkit (GTK 2) runs on Xwayland.
+- Known gaps: with sway's Xwayland, X11 apps (Qt 5, DaVinci Resolve) are
+  blurry at a fractional scale; no xrdp (it stays with the i3 session); no
+  mouse keys; the X touchpad curve. lxpolkit (GTK 2) runs on X11.
 
 ## tmux and wezterm
 

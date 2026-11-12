@@ -71,6 +71,13 @@ input type:pointer {
     scroll_factor 0.5
 }
 
+# X11 programs (VMware) run on xwayland-satellite, which ~/bin/sway-autostart
+# starts: it gives them the output's pixels. sway's own Xwayland draws them
+# at scale 1 and sway scales them up, which is blurry at scale 1.5.
+# To use sway's Xwayland again: put a # before the next line, then log out
+# and in again (sway reads it only at start).
+xwayland disable
+
 # Machine-local settings, not in the repository: output.conf (bootstrap.sh,
 # the display scale), theme.conf (~/bin/theme) and kb.conf (~/bin/kb).
 # Variables set there replace the defaults above for all lines below.
@@ -193,8 +200,9 @@ bindsym $mod+u layout toggle split
 # toggle tiling / floating
 bindsym $mod+Shift+space floating toggle
 
-# Window rules: app_id for Wayland clients, class or instance for X11
-# clients on Xwayland.
+# Window rules: app_id for Wayland clients and for X11 clients on
+# xwayland-satellite (it sets the WM_CLASS class as app_id), class or
+# instance for X11 clients on sway's Xwayland.
 
 # nmrs-gui (network settings); a click on the bar's network block opens it.
 for_window [app_id="^nmrs$"] floating enable

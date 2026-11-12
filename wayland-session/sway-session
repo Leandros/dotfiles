@@ -4,8 +4,8 @@
 # (/usr/share/wayland-sessions/sway-dotfiles.desktop); bootstrap.sh installs
 # it as /usr/local/bin/sway-session. Arguments go to sway.
 #
-# sway sets WAYLAND_DISPLAY, SWAYSOCK and DISPLAY (Xwayland) itself, but no
-# desktop or session type.
+# sway sets WAYLAND_DISPLAY and SWAYSOCK itself, DISPLAY only with its own
+# Xwayland, and no desktop or session type.
 
 # English for everything the session starts, as in .zshrc. lightdm sets
 # LANG from the AccountsService language, which its greeter resets (German
@@ -29,7 +29,27 @@ ELECTRON_OZONE_PLATFORM_HINT=auto
 # reparent windows.
 _JAVA_AWT_WM_NONREPARENTING=1
 
+# X11 programs: xwayland-satellite (~/bin/sway-autostart) listens on this
+# display when the sway config disables sway's own Xwayland. sway cannot
+# change its environment later, so its bindings and fuzzel get DISPLAY
+# only from here. With its own Xwayland, sway replaces DISPLAY.
+# The first display without a socket or lock file, as X servers select.
+# Tests set X11_TMPDIR.
+x11_tmp="${X11_TMPDIR:-/tmp}"
+display=0
+while [ -e "$x11_tmp/.X11-unix/X$display" ] || [ -e "$x11_tmp/.X$display-lock" ]; do
+    display=$((display + 1))
+done
+DISPLAY=":$display"
+
+# Without WLR_BACKENDS and with DISPLAY set, wlroots runs sway in a window
+# of that X server, which does not run yet: sway fails. These are the
+# backends wlroots selects on a console. Programs of the session get the
+# variable too: there a nested wlroots compositor (or `sway -C`) needs
+# `env -u WLR_BACKENDS`.
+WLR_BACKENDS="${WLR_BACKENDS:-libinput,drm}"
+
 export LANG XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE \
-    ELECTRON_OZONE_PLATFORM_HINT _JAVA_AWT_WM_NONREPARENTING
+    ELECTRON_OZONE_PLATFORM_HINT _JAVA_AWT_WM_NONREPARENTING DISPLAY WLR_BACKENDS
 
 exec sway "$@"
