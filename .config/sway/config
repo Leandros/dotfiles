@@ -46,25 +46,29 @@ input type:keyboard {
 # tap-and-drag, two- and three-finger clicks anywhere on the pad.
 #
 # Acceleration: X uses a libinput custom curve, which sway 1.12 cannot set
-# (only adaptive|flat; swaywm/sway#8488, pull request #8592). libinput
-# applies it to raw touchpad units/ms, step 0.5 (v = 0, 0.5, ... 8):
-#   AccelStepMotion 0.5
-#   AccelPointsMotion 0.0 0.567 1.896 3.999 6.939 9.807 13.009 16.521 20.319
-#                     24.389 28.716 33.287 38.094 43.126 48.375 53.835 59.499
-# With #8592 merged the block takes it as:
+# (only adaptive|flat; swaywm/sway#8488, pull request #8592). With #8592
+# merged the block takes it as:
 #   accel_profile custom
 #   pointer_accel_custom 0.5 0.0 0.567 1.896 3.999 6.939 9.807 13.009 16.521 20.319 24.389 28.716 33.287 38.094 43.126 48.375 53.835 59.499
-# pointer_accel scales the whole adaptive curve (libinput 1.32
-# filter-touchpad.c). A fit of the X curve over 6 to 200 mm/s (1000 dpi,
-# output scale 1.5) needs about twice the speed of pointer_accel 1, so the
-# maximum 1 is the nearest: as fast as X at 25 mm/s, faster below,
-# slower above (2.5 times at 100 mm/s).
+# Until then: the adaptive curve, and the pointer and scroll speeds that felt
+# right on the laptop (ThinkPad P14s Gen 6). Try others live; swaymsg takes
+# a negative value only after --:
+#   swaymsg -- input type:touchpad pointer_accel -0.2
+#   swaymsg input type:touchpad scroll_factor 0.4
 input type:touchpad {
     tap disabled
     drag disabled
     click_method clickfinger
     accel_profile adaptive
-    pointer_accel 1
+    pointer_accel 0.3
+    scroll_factor 0.5
+}
+
+# TrackPoint and mice: speeds set on the laptop, as for the touchpad.
+input type:pointer {
+    accel_profile adaptive
+    pointer_accel -0.17
+    scroll_factor 0.5
 }
 
 # Machine-local settings, not in the repository: output.conf (bootstrap.sh,

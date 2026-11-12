@@ -145,7 +145,16 @@ New link or system file: install function, `check_link` or `cmp` check in
     session). `report` uses `rpm -q sway`. kanshi has no `--version`.
   - sway 1.12 has no `accel_profile custom` (only adaptive|flat;
     swaywm/sway#8488, PR #8592): the X touchpad curve is a comment in the
-    sway config; `pointer_accel 1` is the nearest fit.
+    sway config. Speeds set by feel on the P14s Gen 6: touchpad
+    `pointer_accel 0.3`, TrackPoint and mice `pointer_accel -0.17`, both
+    `scroll_factor 0.5`. The touchpad's adaptive speed is a factor `(s+1)^2.38 *
+    0.95 + 0.05` (libinput 1.32): `pointer_accel 1` was 5 times the
+    default, "way too fast". swaymsg reads a negative value as an option:
+    `swaymsg -- input ... pointer_accel -0.2`.
+  - xremap of an i3 session outlives the logout (logind keeps the user's
+    processes); in sway it cancels the XKB Alt/Ctrl swap (swapped twice).
+    `sway-autostart` stops it (`pkill -u $UID -x xremap`, the one plain
+    pkill: xremap holds the machine's keyboards).
   - cliphist: Fedora 43 has no package; the pinned release binary
     (`CLIPHIST_VERSION`, x86_64) on every release. CopyQ 17 under sway
     stores data marked `x-kde-passwordManagerHint` (tested with a GTK

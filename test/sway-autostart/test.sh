@@ -154,7 +154,17 @@ main() {
     else
         ok "no pkill-display -x for the audio idle inhibitor"
     fi
-    if called '^pkill\|'; then fail "plain pkill (all sessions)"; else ok "no plain pkill"; fi
+    if grep -E '^pkill\|' "$CALLS" | grep -vqxF "pkill|-u|$(id -u)|-x|xremap"; then
+        fail "plain pkill (all sessions): $(grep -E '^pkill\|' "$CALLS" | tr '\n' ';')"
+    else
+        ok "no plain pkill, except for xremap"
+    fi
+
+    # xremap of an i3 session outlives the logout (logind keeps the user's
+    # processes) and swaps Alt and Ctrl below the keymap: with the XKB swap
+    # of the sway config they would be swapped twice.
+    expect "stops the user's xremap" "pkill|-u|$(id -u)|-x|xremap" "$(grep -m 1 '^pkill|' "$CALLS")"
+    before "xremap stops before the layout is set" '^pkill\|.*xremap' '^kb\|de'
 
     # Clipboard history; cliphist skips data marked as a password.
     expect "clipboard history" "wl-paste|--watch|cliphist|store" "$(grep '^wl-paste' "$CALLS")"

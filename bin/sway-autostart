@@ -27,6 +27,11 @@ readonly LOCK_CMD='~/bin/pwr lock'
 # -x sees only 15 characters of a process name: match the command line.
 readonly AUDIO_INHIBIT="sway-audio-idle-inhibit"
 readonly AUDIO_INHIBIT_PATTERN="(^|/)$AUDIO_INHIBIT\$"
+# xremap of an i3 session outlives the logout (logind keeps the user's
+# processes). It swaps the left Alt and Ctrl below the keymap, and the sway
+# config swaps them with XKB: both together cancel out. It holds the
+# machine's keyboards, so it has no place in any sway session.
+readonly XREMAP="xremap"
 
 has() { command -v "$1" >/dev/null; }
 
@@ -102,6 +107,11 @@ main() {
     # into ~/.config/sway.d/theme.conf for the next login and sets them in
     # this session.
     [[ -x ~/bin/theme ]] && try ~/bin/theme restore >/dev/null
+
+    # Before the layout: see XREMAP.
+    if has pkill; then
+        pkill -u "$UID" -x "$XREMAP" >/dev/null 2>&1 || true
+    fi
 
     # The sway config sets de; kb records it for the status bar.
     [[ -x ~/bin/kb ]] && try ~/bin/kb de </dev/null >/dev/null

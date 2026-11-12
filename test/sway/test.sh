@@ -100,6 +100,13 @@ if grep -qE '^\s*xkb_options ctrl:swap_lalt_lctl$' "$CONFIG" && grep -qE '^\s*(t
 else
     fail "input blocks: $(grep -nE 'xkb_|tap|drag' "$CONFIG")"
 fi
+# Pointer and scroll speeds, set on the laptop (ThinkPad P14s Gen 6): the
+# X touchpad curve cannot be set in sway 1.12.
+block() { sed -n "/^input type:$1 {/,/^}/s/^\s*$2 //p" "$CONFIG"; }
+expect "touchpad pointer_accel" "0.3" "$(block touchpad pointer_accel)"
+expect "touchpad scroll_factor" "0.5" "$(block touchpad scroll_factor)"
+expect "pointer pointer_accel" "-0.17" "$(block pointer pointer_accel)"
+expect "pointer scroll_factor" "0.5" "$(block pointer scroll_factor)"
 # ~/bin/kb writes the session's layout into sway.d/kb.conf, so a reload
 # keeps it: the keyboard block must come before the include.
 kbd_line="$(grep -n -m 1 '^input type:keyboard' "$CONFIG" | cut -d: -f1)"
@@ -225,11 +232,28 @@ find(json.load(sys.stdin))"; }
 for id in nmrs blueman-manager blueman-services org.pulseaudio.pavucontrol wdisplays; do
     as_t foot --app-id "$id" -T "W-$id" sleep 600 >/dev/null 2>&1 &
 done
-as_t xterm -class nmrs -T X-nmrs -e sleep 600 >/dev/null 2>&1 &
-as_t xterm -name blueman-manager -T X-blueman -e sleep 600 >/dev/null 2>&1 &
-as_t xterm -name pavucontrol -T X-pavucontrol -e sleep 600 >/dev/null 2>&1 &
 as_t foot --app-id other -T W-other sleep 600 >/dev/null 2>&1 &
-sleep 4
+# Xwayland starts with the first X11 client, and an xterm that connects
+# while it starts can fail: one after the other, each until it maps.
+mapped() { msg -t get_tree | grep -qF "\"name\": \"$1\""; }
+start_x() {
+    local title="$1" try
+    shift
+    for try in 1 2; do
+        as_t xterm "$@" -T "$title" -e sleep 600 >/dev/null 2>&1 &
+        for _ in $(seq 1 50); do
+            mapped "$title" && return 0
+            sleep 0.2
+        done
+    done
+}
+start_x X-nmrs -class nmrs
+start_x X-blueman -name blueman-manager
+start_x X-pavucontrol -name pavucontrol
+for _ in $(seq 1 50); do
+    [ "$(msg -t get_tree | grep -cE '"name": "W-')" -ge 6 ] && break
+    sleep 0.2
+done
 for t in W-nmrs W-blueman-manager W-blueman-services W-org.pulseaudio.pavucontrol W-wdisplays X-nmrs X-blueman X-pavucontrol; do
     expect "$t floats" "floating_con" "$(floats "$t")"
 done
