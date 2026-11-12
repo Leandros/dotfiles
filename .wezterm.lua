@@ -414,6 +414,12 @@ config.font = wezterm.font_with_fallback {
 config.bold_brightens_ansi_colors = 'BrightAndBold'
 config.font_size = 14.0
 config.allow_square_glyphs_to_overflow_width = 'Never'
+-- macOS: full FreeType hinting on every display. wezterm turns hinting off
+-- by default at dpi 100 and above. Hinting changes the letter shapes slightly.
+if wezterm.target_triple:find('darwin') then
+  config.freetype_load_flags = 'DEFAULT'
+  config.freetype_interpreter_version = 35
+end
 
 -- Disable on newest nightlies (from 20230712-072601-f4abf8fd)
 -- config.anti_alias_custom_block_glyphs = false
