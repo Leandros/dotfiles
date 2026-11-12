@@ -115,7 +115,8 @@ readonly XIDLEHOOK_VERSION="0.10.0"
 # https://github.com/brofi/rrandr (Xorg desktop only; no releases or crate,
 # so a commit)
 readonly RRANDR_REF="d1677ca9b538d489b75a8760a1848d780733083a"
-# https://crates.io/crates/sway-easyfocus (sway desktop only)
+# https://crates.io/crates/sway-easyfocus (sway desktop only;
+# patches/sway-easyfocus-title-bar-x.patch must apply)
 readonly SWAY_EASYFOCUS_VERSION="1.0.1"
 # https://github.com/ErikReider/SwayAudioIdleInhibit/releases (sway desktop only)
 readonly SWAY_AUDIO_IDLE_INHIBIT_VERSION="0.2.0"
@@ -2072,15 +2073,27 @@ install_cliphist() {
 
 # Window hints for $mod+j in sway (wmfocus in i3). No distro packages it, so
 # cargo builds it. It draws with GTK 4 on a layer-shell surface.
+# Built from the crate with patches/sway-easyfocus-title-bar-x.patch: 1.0.1
+# adds sway's deco_rect.x, which is relative to the parent, to the absolute
+# rect.x, and labels of windows right of x = 0 land too far right, often off
+# the output (upstream issue 24). The stamp names the patch, so a machine
+# with the plain build rebuilds once.
+readonly SWAY_EASYFOCUS_PATCH="title-bar-x"
+
 install_sway_easyfocus() {
-    is_current sway-easyfocus "$SWAY_EASYFOCUS_VERSION" "$PREFIX/bin/sway-easyfocus" && return
+    local stamp="$SWAY_EASYFOCUS_VERSION+$SWAY_EASYFOCUS_PATCH" dir
+    is_current sway-easyfocus "$stamp" "$PREFIX/bin/sway-easyfocus" && return
 
     $SUDO dnf install -y -q gtk4-devel gtk4-layer-shell-devel
+    dir="$(fetch_unpack "https://static.crates.io/crates/sway-easyfocus/sway-easyfocus-$SWAY_EASYFOCUS_VERSION.crate")"
+    dir="$(unpacked_root "$dir")"
+    patch -d "$dir" -p1 -s < "$DOTFILES_DIR/patches/sway-easyfocus-$SWAY_EASYFOCUS_PATCH.patch" ||
+        die "sway-easyfocus: patch does not apply to $SWAY_EASYFOCUS_VERSION"
     export CARGO_HOME="$CARGO_HOME_DIR" RUSTUP_HOME="$RUSTUP_HOME_DIR"
     quiet "$CARGO_HOME_DIR/bin/cargo" "+$RUST_TOOLCHAIN" install -q --locked \
-        --root "$WORK_DIR/sway-easyfocus" "sway-easyfocus@$SWAY_EASYFOCUS_VERSION"
+        --root "$WORK_DIR/sway-easyfocus" --path "$dir"
     install_bin "$WORK_DIR/sway-easyfocus/bin/sway-easyfocus" sway-easyfocus
-    mark_current sway-easyfocus "$SWAY_EASYFOCUS_VERSION"
+    mark_current sway-easyfocus "$stamp"
 }
 
 # Holds a logind idle inhibitor while audio plays or records, so swayidle

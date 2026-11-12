@@ -18,7 +18,7 @@ trap 'rm -rf "$TMP"' EXIT
 readonly STUBS="$TMP/stubs" CALLS="$TMP/calls" FAKE_HOME="$TMP/home"
 readonly SESSION_VARS="WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_TYPE DISPLAY"
 # Programs of the X session; none may start in sway.
-readonly X_ONLY=(xrdb xset setxkbmap xmodmap xremap picom xss-lock xidlehook copyq autorandr xinput)
+readonly X_ONLY=(xset setxkbmap xmodmap xremap picom xss-lock xidlehook copyq autorandr xinput)
 # Programs started in the background record their call later than the script
 # returns; this long is enough for a stub that only appends a line.
 readonly SETTLE_S=0.5
@@ -62,6 +62,10 @@ write_stubs() {
     done
     # swaymsg: the subscription returns at once, and sway is gone.
     write_stub "$STUBS/swaymsg" swaymsg
+    # xrdb: also records what it reads from stdin.
+    write_stub "$STUBS/xrdb" xrdb
+    # shellcheck disable=SC2016 # $l belongs to the stub.
+    printf 'while IFS= read -r l; do printf "%%s\\n" "$l"; done > "%s"\n' "$TMP/xrdb-in" >> "$STUBS/xrdb"
     printf 'case "$*" in *get_version*) exit 1 ;; esac\n' >> "$STUBS/swaymsg"
     # The IDLE_* settings bootstrap.sh writes.
     printf 'IDLE_LOCK_MINUTES=5\nIDLE_SUSPEND_MINUTES=12\n' > "$FAKE_HOME/.config/idle.conf"
@@ -172,6 +176,11 @@ main() {
     # The eww bar is the tray; the tray apps register with it.
     before "bar starts before blueman-applet" '^bar' '^blueman-applet'
     before "bar starts before lxpolkit" '^bar' '^lxpolkit'
+
+    # Xwayland: DPI 96 (sway scales its windows). Without resources Xlib
+    # reads ~/.Xdefaults, whose Xft.dpi (192) made X apps' text 2x on top.
+    expect "Xwayland gets X resources" "xrdb|-nocpp|-merge" "$(grep '^xrdb' "$CALLS")"
+    expect "Xwayland DPI 96" "Xft.dpi: 96" "$(cat "$TMP/xrdb-in" 2>/dev/null)"
 
     local cmd started=""
     for cmd in "${X_ONLY[@]}"; do

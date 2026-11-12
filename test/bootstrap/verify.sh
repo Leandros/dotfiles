@@ -500,6 +500,12 @@ check_wayland() {
         fail "xdg-desktop-portal-wlr or -gtk missing"
     fi
     check_version sway-easyfocus "sway-easyfocus $SWAY_EASYFOCUS_VERSION" sway-easyfocus --version
+    # Built with patches/sway-easyfocus-title-bar-x.patch (labels off-screen).
+    if [[ "$(cat /usr/local/share/bootstrap/sway-easyfocus 2>/dev/null)" == "$SWAY_EASYFOCUS_VERSION+title-bar-x" ]]; then
+        ok "sway-easyfocus patched (title bar x)"
+    else
+        fail "sway-easyfocus not built with the title bar x patch"
+    fi
     if [[ "$(uname -m)" == x86_64 ]]; then
         check_version cliphist "$CLIPHIST_VERSION" cliphist version
     fi

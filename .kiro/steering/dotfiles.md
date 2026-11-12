@@ -163,7 +163,17 @@ New link or system file: install function, `check_link` or `cmp` check in
   - sway-easyfocus (`SWAY_EASYFOCUS_VERSION`, cargo; gtk4-devel,
     gtk4-layer-shell-devel; Rust edition 2024). 1.0.1 ignores its whole
     yaml on an unknown key or without `show_confirmation`; colors come on
-    the command line from sway variables.
+    the command line from sway variables. Built from the `.crate`
+    (static.crates.io) with `patches/sway-easyfocus-title-bar-x.patch`,
+    stamp `<version>+title-bar-x`: 1.0.1 added sway's `deco_rect.x`
+    (relative to the parent, or the workspace for its direct and floating
+    children) to the absolute `rect.x`, so labels of windows right of
+    x = 0 went off the output (upstream issue #24, open). The patch makes
+    `deco_rect.x` absolute in `get_all_windows` (zero `deco_rect`: no title
+    bar, `rect.x`) and adds Rust tests with real trees; it adds no
+    dependency (`--locked`). Test: `test/sway-easyfocus-patch/test.sh`
+    (crate download, patch, `cargo test`). Drop the patch once upstream
+    releases a fix.
   - sway-audio-idle-inhibit (`SWAY_AUDIO_IDLE_INHIBIT_VERSION`, meson from
     the tag, `-Dwerror=false`; libpulse, libsystemd): no `--version` (stamp
     and `ldd`), no systemd unit; holds a logind idle lock (not Wayland), so
@@ -262,6 +272,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   `test/idle-settings/test.sh`, `test/caffeinate/test.sh`, `test/eww/test.sh`,
   `test/pkill-display/test.sh`, `test/i3-bar/test.sh`, `test/xrdp/test.sh`,
   `test/xrdp-conf/test.sh`, `test/syncthing-status/test.sh`,
+  `test/sway-easyfocus-patch/test.sh` (network, cargo, gtk4 headers),
   `test/autorandr-hook/test.sh`,
   `test/input-restore/test.sh`,
   `test/fetch/test.sh` (`fetch_unpack` must die on a failed download: it runs
@@ -599,6 +610,29 @@ New link or system file: install function, `check_link` or `cmp` check in
 - Monitors: kanshi profiles in `~/.config/kanshi/config` (the user's file,
   not in the repo); `kanshi-save NAME` writes the current outputs (matched
   by make, model, serial) and runs `kanshictl reload`.
+- Slow scrolling under sway (2026-11, ThinkPad P14s Gen 6, Arrow Lake
+  i915, kernel 7.2, sway 1.12, wlroots 0.20): mostly the `battery` power
+  mode left on while on AC (`pwr performance` fixed it). Sway's log
+  (`~/.xsession-errors`) also showed bursts of up to 91/s `Atomic commit
+  failed: Device or resource busy` / `Page-flip failed on output eDP-1`
+  (dropped frames), and the kernel logged `Selective fetch area
+  calculation failed in pipe A` (PSR2 selective fetch). Turning PSR off
+  at runtime (`echo 0x1 | sudo tee
+  /sys/kernel/debug/dri/0000:00:02.0/i915_edp_psr_debug`, until reboot)
+  left one more failure. Not made permanent, by the user's choice. If the
+  failures come back: kernel option `i915.enable_psr2_sel_fetch=0`, or
+  `i915.enable_psr=0` (`grubby --update-kernel=ALL --args=...`; a little
+  more battery use). Xorg never hit it (no atomic page flips).
+- wezterm on Wayland at scale 1.5 (nightly 20261108): a new tiled window
+  draws only part of its area (the first buffer keeps a stale height or
+  width; the rest shows swaybg's `#073642`) until the next repaint, e.g.
+  a keypress. Under Xwayland (`enable_wayland = false`) it fills, but
+  blurry. Not fixed; no upstream issue found.
+- Xwayland DPI: sway scales X windows by the output scale, so
+  `sway-autostart` loads `Xft.dpi: 96` with `xrdb -merge` (package
+  `xrdb`). Without any resources Xlib reads `~/.Xdefaults` (the repo's
+  legacy file, `Xft.dpi: 192`, copied by `setup.sh`), and VMware
+  Workstation's GTK 3 text came out 2x on top of the scale (icons normal).
 - Known gaps: XWayland apps (Qt 5, DaVinci Resolve) are blurry at a
   fractional scale; no xrdp (it stays with the i3 session); no mouse keys;
   the X touchpad curve. lxpolkit (GTK 2) runs on Xwayland.
