@@ -62,6 +62,7 @@ Test in Docker: `test/bootstrap/run.sh [debian12|ubuntu2204|fedora43|fedora44|fe
 (all categories; `BOOTSTRAP_CATEGORIES= test/bootstrap/run.sh <distro>` for basic only).
 Test the category choice: `test/categories/test.sh`.
 Test the tmux plugin install: `test/tmux-plugins/test.sh`.
+Test the sleep hooks: `test/system-sleep/power-button-wake.sh`, `test/system-sleep/vmware-suspend.sh`.
 Media keys (volume, mute, screen brightness) are bound in i3 only; check with `test/media-keys/test.sh`.
 
 

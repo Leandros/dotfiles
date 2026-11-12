@@ -1751,20 +1751,25 @@ install_logind_conf() {
     log "installed $dst; applies after a reboot"
 }
 
-# Only the power button wakes from suspend or hibernation. systemd-sleep runs
-# the hooks in this directory before and after every sleep.
-readonly SLEEP_HOOK_NAME="power-button-wake"
+# systemd-sleep runs the hooks in this directory before and after every sleep.
+# power-button-wake: only the power button wakes from suspend or hibernation.
+# vmware-suspend: suspends running VMware VMs, which run slow after a resume.
+readonly SLEEP_HOOK_NAMES=(power-button-wake vmware-suspend)
 readonly SLEEP_HOOK_DIR="/usr/lib/systemd/system-sleep"
 
 install_sleep_hook() {
-    local src="$DOTFILES_DIR/system-sleep/$SLEEP_HOOK_NAME" dst="$SLEEP_HOOK_DIR/$SLEEP_HOOK_NAME"
-    cmp -s "$src" "$dst" 2>/dev/null && return
-    $SUDO install -D -m 0755 "$src" "$dst"
-    # SELinux: label for the target path, not the home directory source.
-    if have restorecon; then
-        $SUDO restorecon "$dst"
-    fi
-    log "installed $dst"
+    local name src dst
+    for name in "${SLEEP_HOOK_NAMES[@]}"; do
+        src="$DOTFILES_DIR/system-sleep/$name"
+        dst="$SLEEP_HOOK_DIR/$name"
+        cmp -s "$src" "$dst" 2>/dev/null && continue
+        $SUDO install -D -m 0755 "$src" "$dst"
+        # SELinux: label for the target path, not the home directory source.
+        if have restorecon; then
+            $SUDO restorecon "$dst"
+        fi
+        log "installed $dst"
+    done
 }
 
 # lightdm on Fedora and EL runs the session through /etc/X11/xinit/Xsession,

@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+#
+# vmware-suspend - systemd system-sleep hook: suspends running VMware
+# Workstation VMs before the machine sleeps.
+#
+# vmware-vmx sets up its virtual TSC (PTSC) at start. In suspend-to-idle the
+# host TSC keeps counting while CLOCK_MONOTONIC stops; at resume vmx sees
+# them disagree, logs "PTSC: using reference clock" and emulates every guest
+# time read until the vmx process restarts. The guest (Windows) is then slow.
+# A suspended VM starts a new vmx process at resume, which uses the TSC again.
+# Resume the VM in Workstation after the wake.
+#
+# Encrypted VMs (a vTPM needs encryption): vmrun asks for the password and
+# reads it from stdin. The hook pipes in /etc/vmware-suspend/<vmx name>.pw
+# (e.g. "Windows 11 x64.pw"), only if root owns it and no one else can read
+# it. Create it by hand:
+#   sudo install -d -m 0700 /etc/vmware-suspend
+#   sudo sh -c 'umask 077; cat > "/etc/vmware-suspend/Windows 11 x64.pw"'
+#
+# Installed to /usr/lib/systemd/system-sleep/ by bootstrap.sh.
+#
+set -euo pipefail
+
+# Overridable for test/system-sleep/vmware-suspend.sh.
+readonly PROC="${VMWARE_SUSPEND_PROC:-/proc}"
+readonly PASSWORDS="${VMWARE_SUSPEND_PASSWORDS:-/etc/vmware-suspend}"
+# Seconds per VM: the guest memory goes to disk. systemd-sleep waits for the
+# hook, so a hung vmrun must not block the sleep for good.
+readonly SUSPEND_TIMEOUT_S="${VMWARE_SUSPEND_TIMEOUT_S:-60}"
+
+# Prints "<user> <vmx path>" per running VM: the vmx path is the last
+# argument of vmware-vmx (it may contain spaces).
+running_vms() {
+    local dir comm user
+    local -a args
+    for dir in "$PROC"/[0-9]*; do
+        comm="$(cat "$dir/comm" 2>/dev/null)" || continue
+        [[ "$comm" == "vmware-vmx" ]] || continue
+        user="$(stat -c %U "$dir" 2>/dev/null)" || continue
+        mapfile -d '' -t args < "$dir/cmdline" 2>/dev/null || continue
+        [[ ${#args[@]} -gt 0 && "${args[-1]}" == *.vmx ]] || continue
+        printf '%s %s\n' "$user" "${args[-1]}"
+    done
+}
+
+# The password file of an encrypted VM, else /dev/null (vmrun then fails
+# at its prompt instead of waiting).
+password_file() {
+    local vmx="$1" file name
+    name="${vmx##*/}"
+    file="$PASSWORDS/${name%.vmx}.pw"
+    if [[ ! -f "$file" ]]; then
+        echo /dev/null
+    elif [[ -O "$file" && "$(stat -c %a "$file")" == 600 ]]; then
+        echo "$file"
+    else
+        echo "vmware-suspend: not using $file: must be mode 0600 and owned by $(id -un)" >&2
+        echo /dev/null
+    fi
+}
+
+main() {
+    [[ "${1:-}" == "pre" ]] || exit 0
+    command -v vmrun > /dev/null || exit 0
+
+    local user vmx password
+    while read -r user vmx; do
+        echo "vmware-suspend: suspending $vmx ($user)"
+        password="$(password_file "$vmx")"
+        # hard: no guest scripts, so it does not depend on VMware Tools.
+        # Own stdin: vmrun must not read the VM list of this loop.
+        if ! timeout "$SUSPEND_TIMEOUT_S" runuser -u "$user" -- vmrun -T ws suspend "$vmx" hard < "$password"; then
+            echo "vmware-suspend: cannot suspend $vmx" >&2
+        fi
+    done < <(running_vms)
+}
+
+main "$@"

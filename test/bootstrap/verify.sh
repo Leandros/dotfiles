@@ -292,12 +292,15 @@ check_desktop_shared() {
     else
         fail "logind.conf.d/50-lid-suspend.conf missing or differs"
     fi
-    if cmp -s "$D/system-sleep/power-button-wake" /usr/lib/systemd/system-sleep/power-button-wake \
-        && [[ -x /usr/lib/systemd/system-sleep/power-button-wake ]]; then
-        ok "system-sleep power-button-wake hook installed"
-    else
-        fail "system-sleep/power-button-wake missing, differs or not executable"
-    fi
+    local hook
+    for hook in power-button-wake vmware-suspend; do
+        if cmp -s "$D/system-sleep/$hook" "/usr/lib/systemd/system-sleep/$hook" \
+            && [[ -x "/usr/lib/systemd/system-sleep/$hook" ]]; then
+            ok "system-sleep $hook hook installed"
+        else
+            fail "system-sleep/$hook missing, differs or not executable"
+        fi
+    done
     pwr_out="$("$HOME/bin/pwr" --bogus 2>&1 || true)"
     if [[ "$pwr_out" == "usage: pwr lock [--nofork] | sleep | hibernate | performance | balanced | battery | mode" ]]; then
         ok "pwr rejects an unknown command"
