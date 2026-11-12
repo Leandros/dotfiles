@@ -1,0 +1,35 @@
+#!/bin/sh
+#
+# sway-session - the sway session of the dotfiles. The login screen runs it
+# (/usr/share/wayland-sessions/sway-dotfiles.desktop); bootstrap.sh installs
+# it as /usr/local/bin/sway-session. Arguments go to sway.
+#
+# sway sets WAYLAND_DISPLAY, SWAYSOCK and DISPLAY (Xwayland) itself, but no
+# desktop or session type.
+
+# English for everything the session starts, as in .zshrc. lightdm sets
+# LANG from the AccountsService language, which its greeter resets (German
+# after logins with en_US set).
+LANG=en_US.UTF-8
+
+# lightdm sets the next three from the session entry (DesktopNames, the
+# file name) and its session type; a start from a virtual console does
+# not. XDG_CURRENT_DESKTOP selects the portal backends
+# (sway-portals.conf). XDG_SESSION_DESKTOP as in the upstream session
+# (sway.desktop). Qt 5.12+, Qt 6, GTK and Electron 38+ select Wayland from
+# XDG_SESSION_TYPE.
+XDG_CURRENT_DESKTOP=sway
+XDG_SESSION_DESKTOP=sway
+XDG_SESSION_TYPE=wayland
+
+# Electron before 38 runs on Xwayland without it; later versions ignore it.
+ELECTRON_OZONE_PLATFORM_HINT=auto
+
+# Java AWT draws empty windows on Xwayland without it: sway does not
+# reparent windows.
+_JAVA_AWT_WM_NONREPARENTING=1
+
+export LANG XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE \
+    ELECTRON_OZONE_PLATFORM_HINT _JAVA_AWT_WM_NONREPARENTING
+
+exec sway "$@"

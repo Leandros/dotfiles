@@ -1,0 +1,13 @@
+# The sway session for systemd. graphical-session.target refuses a manual
+# start; a session target binds it instead (systemd.special(7)).
+# xdg-desktop-portal requires it since Fedora 45, and Firefox reads the
+# color-scheme (~/bin/theme) through the portal.
+#
+# ~/bin/sway-autostart starts it; the sway exit bindings stop it. Linked by
+# bootstrap.sh.
+[Unit]
+Description=sway session
+Documentation=man:systemd.special(7)
+BindsTo=graphical-session.target
+Wants=graphical-session-pre.target
+After=graphical-session-pre.target

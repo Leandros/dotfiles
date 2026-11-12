@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 #
-# Runs bin/theme with stubs for xrdb, gsettings and i3-msg and checks the X
-# resources, the color-scheme and the i3 reload. Also checks that the i3
-# config falls back to the dark palette.
+# Runs bin/theme with stubs for xrdb, gsettings, i3-msg and swaymsg and
+# checks the X resources, the color-scheme and the i3 reload; the sway
+# colors (~/.config/sway.d/theme.conf) and fuzzel colors
+# (~/.local/state/theme/fuzzel.ini) in both sessions, and the sway reload
+# without xrdb. Also checks that the i3 and sway configs fall back to the
+# dark palette.
 #
 # Usage: test/theme/test.sh
 #
@@ -11,10 +14,13 @@ set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly SCRIPT="$HERE/../../bin/theme"
 readonly I3_CONFIG="$HERE/../../.config/i3/config"
+readonly SWAY_CONFIG="$HERE/../../.config/sway/config" WM_MSG="$HERE/../../bin/wm-msg"
 TMP="$(mktemp -d)"
 readonly TMP
 trap 'rm -rf "$TMP"' EXIT
 readonly STUBS="$TMP/stubs" CALLS="$TMP/calls" SCHEME="$TMP/scheme" RESOURCES="$TMP/resources"
+readonly HOME_DIR="$TMP/home"
+readonly SWAY_THEME="$TMP/home/.config/sway.d/theme.conf" FUZZEL_THEME="$TMP/home/.local/state/theme/fuzzel.ini"
 FAILED=0
 
 fail() { printf 'FAIL: %s\n' "$*"; FAILED=1; }
@@ -45,11 +51,16 @@ EOF
 echo "xrdb \$*" >> "$CALLS"
 cat > "$RESOURCES"
 EOF
-    cat > "$STUBS/i3-msg" <<EOF
+    local tool
+    for tool in i3-msg swaymsg; do
+        cat > "$STUBS/$tool" <<EOF
 #!/bin/sh
-echo "i3-msg \$*" >> "$CALLS"
+echo "$tool \$*" >> "$CALLS"
 EOF
-    chmod +x "$STUBS/gsettings" "$STUBS/xrdb" "$STUBS/i3-msg"
+    done
+    chmod +x "$STUBS/gsettings" "$STUBS/xrdb" "$STUBS/i3-msg" "$STUBS/swaymsg"
+    mkdir -p "$HOME_DIR/bin"
+    ln -sf "$(readlink -f "$WM_MSG")" "$HOME_DIR/bin/wm-msg"
 }
 
 # Runs theme with the color-scheme set to SCHEME_VALUE; prints its stdout.
@@ -59,7 +70,116 @@ run() {
     echo "$scheme_value" > "$SCHEME"
     : > "$CALLS"
     : > "$RESOURCES"
-    DISPLAY=:99 XDG_CONFIG_HOME="$TMP/config" PATH="$STUBS:$PATH" "$SCRIPT" "$@"
+    env -u SWAYSOCK ${SESSION_ENV[@]+"${SESSION_ENV[@]}"} HOME="$HOME_DIR" DISPLAY=:99 XDG_CONFIG_HOME="$TMP/config" \
+        PATH="$STUBS:$PATH" "$SCRIPT" "$@"
+}
+
+# Extra variables for run: a sway session (sway sets DISPLAY for Xwayland).
+SESSION_ENV=()
+readonly SWAY_ENV=(SWAYSOCK=/run/sway.sock WAYLAND_DISPLAY=wayland-1 DISPLAY=:0)
+
+# Prints the "name value" pairs of the "set $name #hex" lines in FILE.
+# shellcheck disable=SC2016 # $ of sway variables.
+sway_sets() { sed -En 's/^set \$([A-Za-z0-9]+)[[:space:]]+(#[0-9a-f]+)[[:space:]]*$/\1 \2/p' "$1"; }
+
+# The value of KEY in the fuzzel colors.
+fuzzel() { sed -n "s/^$1=//p" "$FUZZEL_THEME"; }
+
+# A sway config as ~/.config/sway/config: themed colors in top-level lines
+# (one continued), and in lines that must not run again (set, include,
+# exec, comments, blocks); $baseA2x is not a themed variable.
+write_sway_config() {
+    mkdir -p "$HOME_DIR/.config/sway"
+    cat > "$HOME_DIR/.config/sway/config" <<'EOF'
+# Colors: $baseA2 and the rest.
+set $green #859900
+set $baseA2 #073642
+include ~/.config/sway.d/*.conf
+output * bg $baseA2 solid_color
+client.unfocused            $baseA2 $baseA2 $baseB1 $baseA1
+  client.focused              $green  $green  $baseB3 $blue
+exec swaybg -c $baseA3
+exec_always notify-send $baseA3
+bindsym $mod+j exec sway-easyfocus --label-background-color '$baseA2' \
+    --focused-text-color '$baseB3' focus
+bindsym $mod+Return exec ~/bin/term
+input type:touchpad {
+    tap disabled
+}
+bar {
+    colors {
+        background $baseA3
+    }
+}
+client.urgent $baseA2x $baseA2x $baseA2x $baseA2x
+EOF
+}
+
+test_sway() {
+    rm -rf "$HOME_DIR/.config" "$HOME_DIR/.local" "$TMP/config"
+    write_sway_config
+    SESSION_ENV=("${SWAY_ENV[@]}")
+    run "'prefer-dark'" light > /dev/null
+    SESSION_ENV=()
+    expect "sway: light sets the color-scheme" "'prefer-light'" "$(cat "$SCHEME")"
+    expect "sway: no xrdb (Xwayland)" "" "$(grep '^xrdb' "$CALLS" || true)"
+    # A reload would drop what was set at runtime (kanshi's monitor layout,
+    # keyboard layout, touchpad tapping): the colors, then the config lines
+    # that use them, again.
+    local sets
+    sets="$(sed 's/^/swaymsg -q /' "$SWAY_THEME")"
+    expect "sway: no reload, no i3; the colors, then the lines that use them" "$sets
+swaymsg -q output * bg \$baseA2 solid_color
+swaymsg -q client.unfocused            \$baseA2 \$baseA2 \$baseB1 \$baseA1
+swaymsg -q client.focused              \$green  \$green  \$baseB3 \$blue
+swaymsg -q bindsym \$mod+j exec sway-easyfocus --label-background-color '\$baseA2' --focused-text-color '\$baseB3' focus" \
+        "$(grep -E '^(swaymsg|i3-msg)' "$CALLS")"
+    expect "sway: light GTK 3" $'[Settings]\ngtk-application-prefer-dark-theme=0' "$(gtk_ini 3.0)"
+
+    # The same palette as the X resources, in the order of the i3 config.
+    run "'prefer-dark'" light > /dev/null
+    local want
+    want="$(sed 's/^i3wm\.\([A-Za-z0-9]*\): /\1 /' "$RESOURCES")"
+    expect "sway colors: light, as the X resources" "$want" "$(sway_sets "$SWAY_THEME")"
+    expect "sway colors: only the 9 set lines" "9" "$(wc -l < "$SWAY_THEME")"
+    expect "light fuzzel: colors section first" "[colors]" "$(head -n 1 "$FUZZEL_THEME")"
+    # Entries as unfocused window titles, the selection as the focused one.
+    expect "light fuzzel: background is base2" "eee8d5ff" "$(fuzzel background)"
+    expect "light fuzzel: text is base01" "586e75ff" "$(fuzzel text)"
+    expect "light fuzzel: selection is green" "859900ff" "$(fuzzel selection)"
+    expect "light fuzzel: selection text is base03" "002b36ff" "$(fuzzel selection-text)"
+    expect "light fuzzel: border is green" "859900ff" "$(fuzzel border)"
+    expect "light fuzzel: match is orange" "cb4b16ff" "$(fuzzel match)"
+    local bad
+    bad="$(grep -vE '^\[colors\]$|^[a-z-]+=[0-9a-f]{8}$' "$FUZZEL_THEME" || true)"
+    expect "fuzzel: RRGGBBAA values only" "" "$bad"
+
+    # X too: a sway login after a switch in i3 gets the colors.
+    run "'prefer-light'" dark > /dev/null
+    want="$(sed 's/^i3wm\.\([A-Za-z0-9]*\): /\1 /' "$RESOURCES")"
+    expect "X writes the sway colors too: dark" "$want" "$(sway_sets "$SWAY_THEME")"
+    expect "dark fuzzel: background is base02" "073642ff" "$(fuzzel background)"
+    expect "dark fuzzel: text is base1" "93a1a1ff" "$(fuzzel text)"
+    expect "dark fuzzel: selection text is base3" "fdf6e3ff" "$(fuzzel selection-text)"
+    expect "X: reloads i3 only" "i3-msg -q reload" "$(grep -E '^(swaymsg|i3-msg)' "$CALLS")"
+    local file files=()
+    for file in "$HOME_DIR/.config/sway.d"/* "$HOME_DIR/.local/state/theme"/*; do
+        files+=("${file##*/}")
+    done
+    expect "no temporary files left" "fuzzel.ini;theme.conf" "$(printf '%s\n' "${files[@]}" | sort | paste -sd ';')"
+
+    # The sway config (session) before ~/.config/sway.d: dark defaults.
+    if [[ ! -f "$SWAY_CONFIG" ]]; then
+        echo "skip: no .config/sway/config"
+        return
+    fi
+    local name fallback count=0
+    while read -r name fallback; do
+        count=$((count + 1))
+        expect "sway default $name is dark" "$(sed -n "s/^set \\\$$name //p" "$SWAY_THEME")" "$fallback"
+    done < <(sed -n '/^include ~\/.config\/sway.d/q; p' "$SWAY_CONFIG" | sway_sets /dev/stdin \
+        | grep -E '^(baseA[0-3]|baseB[0-3]|custom) ')
+    expect "sway config has every themed color" "9" "$count"
 }
 
 resource() { sed -n "s/^i3wm\.$1: //p" "$RESOURCES"; }
@@ -125,6 +245,7 @@ main() {
     done < <(sed -n 's/^set_from_resource \$\([A-Za-z0-9]*\) i3wm\.[A-Za-z0-9]* \(#[0-9a-f]*\)$/\1 \2/p' "$I3_CONFIG")
     expect "i3 config reads every themed color" "9" "$count"
 
+    test_sway
     exit "$FAILED"
 }
 

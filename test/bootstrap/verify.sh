@@ -52,7 +52,7 @@ grep -q 'VERSION_ID="2"' /etc/os-release && is_al2=1
 # The categories bootstrap.sh installed: BOOTSTRAP_CATEGORIES from run.sh,
 # "all", and the BOOTSTRAP_XORG=1 alias for desktop.
 categories=" ${BOOTSTRAP_CATEGORIES:-} "
-[[ "$categories" == *" all "* ]] && categories=" devtools desktop "
+[[ "$categories" == *" all "* ]] && categories=" devtools desktop desktop-wayland "
 [[ "${BOOTSTRAP_XORG:-0}" == "1" ]] && categories+="desktop "
 has_category() { [[ "$categories" == *" $1 "* ]]; }
 
@@ -240,8 +240,11 @@ else
     check_no_devtools
 fi
 
-# Xorg checks: distros where bootstrap installs the desktop (RHEL only up to 9).
+# Desktop checks: distros where bootstrap installs a desktop (Xorg: RHEL only
+# up to 9; sway: Fedora 43 and newer).
 xorg_expected=0
+wayland_expected=0
+eval "$(grep -E '^readonly WAYLAND_FEDORA_MIN_MAJOR=' "$SRC/bootstrap.sh")"
 # shellcheck disable=SC1091
 os_id="$(. /etc/os-release && echo "$ID")"
 # shellcheck disable=SC1091
@@ -255,32 +258,27 @@ else
     check_absent desktop "$HOME/.xinitrc"
     check_absent desktop /usr/local/bin/wmfocus
 fi
-if [[ $xorg_expected -eq 1 ]]; then
-    check_link "$HOME/.xinitrc" "$D/.xinitrc"
-    check_link "$HOME/.xprofile" "$D/.xprofile"
-    check_link "$HOME/bin/kb" "$D/bin/kb"
-    check_link "$HOME/bin/i3status-kb" "$D/bin/i3status-kb"
-    check_link "$HOME/bin/pwr" "$D/bin/pwr"
-    check_link "$HOME/bin/theme" "$D/bin/theme"
-    check_link "$HOME/bin/flightmode" "$D/bin/flightmode"
-    check_link "$HOME/bin/touchpad" "$D/bin/touchpad"
-    check_link "$HOME/bin/charge" "$D/bin/charge"
-    check_link "$HOME/bin/caffeinate" "$D/bin/caffeinate"
-    check_link "$HOME/bin/smb" "$D/bin/smb"
-    check_link "$HOME/bin/input-restore" "$D/bin/input-restore"
-    check_link "$HOME/bin/bar" "$D/bin/bar"
-    check_link "$HOME/bin/pkill-display" "$D/bin/pkill-display"
-    check_link "$HOME/bin/term" "$D/bin/term"
-    check_link "$HOME/bin/xrdp-keys" "$D/bin/xrdp-keys"
-    check_link "$HOME/bin/syncthing-status" "$D/bin/syncthing-status"
+if has_category desktop-wayland; then
+    [[ "$os_id" == fedora && "$os_major" -ge "$WAYLAND_FEDORA_MIN_MAJOR" ]] && wayland_expected=1
+else
+    check_absent desktop-wayland "$HOME/.config/sway"
+    check_absent desktop-wayland /usr/local/bin/sway-easyfocus
+fi
+
+# What both desktops (Xorg and sway) install.
+check_desktop_shared() {
+    local name theme_out idle_want idle_have pwr_out enabled pair font_line font_want
+    local kmscon_font kmscon_font_want status_line kb_out keymap wezterm_stamp eww_libs bin bt_enabled
+    for name in kb i3status-kb pwr theme flightmode touchpad charge caffeinate smb bar \
+        pkill-display term syncthing-status wm-msg; do
+        check_link "$HOME/bin/$name" "$D/bin/$name"
+    done
     theme_out="$("$HOME/bin/theme" show 2>&1 || true)"
     if [[ "$theme_out" == "dark" ]]; then
         ok "theme defaults to dark"
     else
         fail "theme show: $theme_out"
     fi
-    check_link "$HOME/.config/xremap" "$D/.config/xremap"
-    check_link "$HOME/.config/autorandr/postswitch" "$D/.config/autorandr/postswitch"
     eval "$(grep -E '^readonly IDLE_[A-Z_]+_MINUTES=' "$SRC/bootstrap.sh")"
     idle_want="IDLE_LOCK_MINUTES=$IDLE_LOCK_MINUTES IDLE_SUSPEND_MINUTES=$IDLE_SUSPEND_MINUTES "
     idle_have="$(grep -v '^#' "$HOME/.config/idle.conf" 2>/dev/null | tr '\n' ' ')"
@@ -309,12 +307,6 @@ if [[ $xorg_expected -eq 1 ]]; then
     # Power modes: tuned with its power-profiles-daemon API on Fedora and EL.
     case "$os_id" in
         fedora|rocky|almalinux|centos|rhel)
-            if cmp -s "$D/xinitrc-d/90-xprofile.sh" /etc/X11/xinit/xinitrc.d/90-xprofile.sh \
-                && [[ -x /etc/X11/xinit/xinitrc.d/90-xprofile.sh ]]; then
-                ok "xinitrc.d sources ~/.xprofile"
-            else
-                fail "xinitrc.d/90-xprofile.sh missing, differs or not executable"
-            fi
             if rpm -q tuned tuned-ppd >/dev/null; then ok "tuned and tuned-ppd installed"; else fail "tuned or tuned-ppd missing"; fi
             enabled="$(systemctl is-enabled tuned.service tuned-ppd.service power-mode-auto.service 2>&1 | tr '\n' ' ' || true)"
             if [[ "$enabled" == "enabled enabled enabled " ]]; then
@@ -372,6 +364,196 @@ if [[ $xorg_expected -eq 1 ]]; then
             fail "kmscon.conf font: want '$kmscon_font_want', got '$kmscon_font'"
         fi
     fi
+    # Third line is the first status array; it must start with the kb block.
+    status_line="$(timeout 5 "$HOME/bin/i3status-kb" </dev/null 2>/dev/null | sed -n 3p || true)"
+    if [[ "$status_line" == '[{"name":"kb","full_text":"KB: '* ]]; then
+        ok "i3status-kb emits the keyboard block"
+    else
+        fail "i3status-kb: ${status_line:-no output}"
+    fi
+    kb_out="$("$HOME/bin/kb" xx 2>&1 || true)"
+    if [[ "$kb_out" == *"unknown layout: xx"* ]]; then
+        ok "kb rejects an unknown layout"
+    else
+        fail "kb: $kb_out"
+    fi
+    # No console in the container: compile the keymaps instead of loading them.
+    for keymap in us de-latin1 "$D/console/bone2.map"; do
+        if loadkeys -u -m "$keymap" >/dev/null 2>&1; then
+            ok "console keymap compiles: ${keymap##*/}"
+        else
+            fail "console keymap: $(loadkeys -u -m "$keymap" 2>&1 >/dev/null | head -n 1) (${keymap##*/})"
+        fi
+    done
+    check_link "$HOME/.config/i3status" "$D/.config/i3status"
+    check_link "$HOME/.config/eww" "$D/.config/eww"
+    check_link "$HOME/.wezterm.lua" "$D/.wezterm.lua"
+    wezterm_stamp="$(cat /usr/local/share/bootstrap/wezterm 2>/dev/null || true)"
+    check_version wezterm "wezterm $wezterm_stamp" wezterm --version
+    if [[ "$wezterm_stamp" == 2026* || "$wezterm_stamp" == 2027* ]]; then
+        ok "wezterm is a recent nightly ($wezterm_stamp)"
+    else
+        fail "wezterm stamp not a nightly build: '$wezterm_stamp'"
+    fi
+    check_version nmrs-gui "nmrs-gui $NMRS_GUI_VERSION" nmrs-gui --version
+    # eww prints its commit: "eww 0.6.0 <commit>".
+    check_version eww "$EWW_REF" eww --version
+    # One binary for both desktops: the Wayland backend links gtk-layer-shell.
+    eww_libs="$(ldd /usr/local/bin/eww 2>&1 || true)"
+    if [[ "$eww_libs" == *"libgtk-layer-shell"* && "$eww_libs" != *"not found"* ]]; then
+        ok "eww links gtk-layer-shell (X11 and Wayland)"
+    else
+        fail "eww: no libgtk-layer-shell or libraries missing: $(grep -E 'layer-shell|not found' <<< "$eww_libs" | tr '\n' ' ')"
+    fi
+    # Syncthing: the distro package's user unit, enabled for the user. EL9
+    # has no package (not in EPEL).
+    if [[ "$os_id" != rocky ]]; then
+        if command -v syncthing >/dev/null; then ok "syncthing installed"; else fail "syncthing missing"; fi
+        if [[ "$(systemctl --user is-enabled syncthing.service 2>/dev/null || true)" == enabled ]]; then
+            ok "syncthing user unit enabled"
+        else
+            fail "syncthing user unit not enabled"
+        fi
+    fi
+    if grep -qx 'Exec=nmrs-gui' /usr/local/share/applications/nmrs.desktop 2>/dev/null; then
+        ok "nmrs.desktop installed"
+    else
+        fail "nmrs.desktop missing in /usr/local/share/applications"
+    fi
+    # firewalld's GUI and Sunshine (lizardbyte copr): Fedora only.
+    if [[ "$os_id" == fedora ]]; then
+        for bin in firewall-config sunshine; do
+            if command -v "$bin" >/dev/null; then ok "desktop bin $bin"; else fail "desktop bin missing: $bin"; fi
+        done
+    fi
+    # Not packaged for EL9.
+    if grep -qE '^ID=(debian|ubuntu|fedora)$' /etc/os-release; then
+        for bin in blueman-applet blueman-manager lxpolkit; do
+            if command -v "$bin" >/dev/null; then ok "desktop bin $bin"; else fail "desktop bin missing: $bin"; fi
+        done
+        # Imports all its GObject libraries; Fedora's package misses one.
+        if blueman-applet --help >/dev/null 2>/tmp/blueman.log; then
+            ok "blueman-applet starts"
+        else
+            fail "blueman-applet: $(tail -n 1 /tmp/blueman.log)"
+        fi
+        bt_enabled="$(systemctl is-enabled bluetooth.service 2>&1 || true)"
+        if ! command -v systemctl >/dev/null; then
+            ok "bluetooth.service: no systemctl in this image"
+        elif [[ "$bt_enabled" == "enabled" ]]; then
+            ok "bluetooth.service enabled"
+        else
+            fail "bluetooth.service: $bt_enabled"
+        fi
+    fi
+}
+
+# What only the sway desktop installs.
+check_wayland() {
+    local name path pair mode scale_line bin sway_rt sway_bin saii_libs
+    for name in sway-autostart kanshi-save clip-pick; do
+        check_link "$HOME/bin/$name" "$D/bin/$name"
+    done
+    check_link "$HOME/.config/sway" "$D/.config/sway"
+    check_link "$HOME/.config/fuzzel" "$D/.config/fuzzel"
+    check_link "$HOME/.config/sway-easyfocus" "$D/.config/sway-easyfocus"
+    check_link "$HOME/.config/systemd/user/sway-session.target" "$D/.config/systemd/user/sway-session.target"
+    check_link "$HOME/.config/xkb" "$D/xkb"
+    # lightdm runs these, so they are root copies, not links into the home.
+    for pair in "sway-session:/usr/local/bin/sway-session:755" \
+        "sway-dotfiles.desktop:/usr/share/wayland-sessions/sway-dotfiles.desktop:644"; do
+        IFS=: read -r name path mode <<< "$pair"
+        if cmp -s "$D/wayland-session/$name" "$path" && [[ ! -L "$path" && "$(stat -c %a "$path")" == "$mode" ]]; then
+            ok "installed $path ($mode)"
+        else
+            fail "$path missing, differs, a link or not mode $mode"
+        fi
+    done
+    # run.sh sets BOOTSTRAP_DPI_SCALE=1.5. ~/bin/theme writes into the same
+    # directory, so it must not be a link into the repo.
+    scale_line="$(grep -v '^#' "$HOME/.config/sway.d/output.conf" 2>/dev/null || true)"
+    if [[ "$scale_line" == "output * scale 1.5" ]]; then
+        ok "sway output scale 1.5"
+    else
+        fail "sway.d/output.conf: want 'output * scale 1.5', got '$scale_line'"
+    fi
+    if [[ -d "$HOME/.config/sway.d" && ! -L "$HOME/.config/sway.d" ]]; then
+        ok "sway.d is a real directory"
+    else
+        fail "sway.d missing or a link"
+    fi
+    if command -v eww >/dev/null; then
+        if [[ -e "$HOME/.config/sway-bar.d/swaybar.conf" || -L "$HOME/.config/sway-bar.d/swaybar.conf" ]]; then
+            fail "swaybar still included although eww is installed"
+        else
+            ok "no swaybar (eww is the bar)"
+        fi
+    fi
+    for bin in sway swaybg swayidle swaylock swaymsg kanshi wdisplays fuzzel cliphist wl-copy wl-paste \
+        sway-easyfocus sway-audio-idle-inhibit Xwayland i3status jq amixer brightnessctl pavucontrol \
+        rfkill smbclient mount.cifs btop remmina; do
+        if command -v "$bin" >/dev/null; then ok "wayland bin $bin"; else fail "wayland bin missing: $bin"; fi
+    done
+    if rpm -q xdg-desktop-portal-wlr xdg-desktop-portal-gtk >/dev/null; then
+        ok "xdg-desktop-portal-wlr and -gtk installed"
+    else
+        fail "xdg-desktop-portal-wlr or -gtk missing"
+    fi
+    check_version sway-easyfocus "sway-easyfocus $SWAY_EASYFOCUS_VERSION" sway-easyfocus --version
+    if [[ "$(uname -m)" == x86_64 ]]; then
+        check_version cliphist "$CLIPHIST_VERSION" cliphist version
+    fi
+    # sway-audio-idle-inhibit has no --version: the stamp holds the pinned
+    # release, and every library it links must resolve.
+    if [[ "$(cat /usr/local/share/bootstrap/sway-audio-idle-inhibit 2>/dev/null)" == "$SWAY_AUDIO_IDLE_INHIBIT_VERSION" ]]; then
+        ok "sway-audio-idle-inhibit $SWAY_AUDIO_IDLE_INHIBIT_VERSION"
+    else
+        fail "sway-audio-idle-inhibit: stamp not $SWAY_AUDIO_IDLE_INHIBIT_VERSION"
+    fi
+    saii_libs="$(ldd /usr/local/bin/sway-audio-idle-inhibit 2>&1 || true)"
+    if [[ "$saii_libs" == *"libpulse"* && "$saii_libs" != *"not found"* ]]; then
+        ok "sway-audio-idle-inhibit libraries resolve"
+    else
+        fail "sway-audio-idle-inhibit libraries: $(grep -E 'pulse|not found' <<< "$saii_libs" | tr '\n' ' ')"
+    fi
+    # sway validates its config without a seat on the headless backend.
+    # XDG_RUNTIME_DIR: an owner-only directory as logind makes it. Fedora's
+    # sway has the file capability cap_sys_nice, which is not in docker's
+    # bounding set: execve fails ("Operation not permitted"). A copy has no
+    # file capabilities.
+    sway_rt="$(mktemp -d)"
+    chmod 0700 "$sway_rt"
+    sway_bin="$(command -v sway || echo sway)"
+    cp "$sway_bin" "$sway_rt/sway" 2>/dev/null || true
+    if XDG_RUNTIME_DIR="$sway_rt" WLR_BACKENDS=headless WLR_RENDERER=pixman \
+        "$sway_rt/sway" -C -c "$HOME/.config/sway/config" >/tmp/sway.log 2>&1; then
+        ok "sway config valid"
+    else
+        fail "sway config: $(grep -vE '^\s*$' /tmp/sway.log | tail -n 3 | tr '\n' ' ')"
+    fi
+    rm -rf "$sway_rt"
+}
+
+if [[ $xorg_expected -eq 1 || $wayland_expected -eq 1 ]]; then
+    check_desktop_shared
+fi
+if [[ $xorg_expected -eq 1 ]]; then
+    check_link "$HOME/.xinitrc" "$D/.xinitrc"
+    check_link "$HOME/.xprofile" "$D/.xprofile"
+    check_link "$HOME/bin/input-restore" "$D/bin/input-restore"
+    check_link "$HOME/bin/xrdp-keys" "$D/bin/xrdp-keys"
+    check_link "$HOME/.config/xremap" "$D/.config/xremap"
+    check_link "$HOME/.config/autorandr/postswitch" "$D/.config/autorandr/postswitch"
+    case "$os_id" in
+        fedora|rocky|almalinux|centos|rhel)
+            if cmp -s "$D/xinitrc-d/90-xprofile.sh" /etc/X11/xinit/xinitrc.d/90-xprofile.sh \
+                && [[ -x /etc/X11/xinit/xinitrc.d/90-xprofile.sh ]]; then
+                ok "xinitrc.d sources ~/.xprofile"
+            else
+                fail "xinitrc.d/90-xprofile.sh missing, differs or not executable"
+            fi
+            ;;
+    esac
     if cmp -s "$D/xorg-conf/40-touchpad.conf" /etc/X11/xorg.conf.d/40-touchpad.conf; then
         ok "xorg.conf.d touchpad installed"
     else
@@ -393,52 +575,18 @@ if [[ $xorg_expected -eq 1 ]]; then
     else
         fail "user not in input group: $(id -nG "$USER")"
     fi
-    # Third line is the first status array; it must start with the kb block.
-    status_line="$(timeout 5 "$HOME/bin/i3status-kb" </dev/null 2>/dev/null | sed -n 3p || true)"
-    if [[ "$status_line" == '[{"name":"kb","full_text":"KB: '* ]]; then
-        ok "i3status-kb emits the keyboard block"
-    else
-        fail "i3status-kb: ${status_line:-no output}"
-    fi
     if [[ -f "$HOME/.Xresources" && ! -L "$HOME/.Xresources" ]] && grep -qE '^Xft\.dpi:\s+144$' "$HOME/.Xresources" \
         && ! grep -q '##XFT_DPI##' "$HOME/.Xresources"; then
         ok ".Xresources rendered with Xft.dpi 144 (1.5x)"
     else
         fail ".Xresources: $(grep -E '^Xft\.dpi' "$HOME/.Xresources" 2>/dev/null || echo missing)"
     fi
-    kb_out="$("$HOME/bin/kb" xx 2>&1 || true)"
-    if [[ "$kb_out" == *"unknown layout: xx"* ]]; then
-        ok "kb rejects an unknown layout"
-    else
-        fail "kb: $kb_out"
-    fi
-    # No console in the container: compile the keymaps instead of loading them.
-    for keymap in us de-latin1 "$D/console/bone2.map"; do
-        if loadkeys -u -m "$keymap" >/dev/null 2>&1; then
-            ok "console keymap compiles: ${keymap##*/}"
-        else
-            fail "console keymap: $(loadkeys -u -m "$keymap" 2>&1 >/dev/null | head -n 1) (${keymap##*/})"
-        fi
-    done
     check_link "$HOME/.Xmodmap" "$D/.Xmodmap"
     check_link "$HOME/.config/i3" "$D/.config/i3"
-    check_link "$HOME/.config/i3status" "$D/.config/i3status"
     check_link "$HOME/.config/picom" "$D/.config/picom"
-    check_link "$HOME/.config/eww" "$D/.config/eww"
     check_link "$HOME/.config/systemd/user/i3-session.target" "$D/.config/systemd/user/i3-session.target"
-    check_link "$HOME/.wezterm.lua" "$D/.wezterm.lua"
-    wezterm_stamp="$(cat /usr/local/share/bootstrap/wezterm 2>/dev/null || true)"
-    check_version wezterm "wezterm $wezterm_stamp" wezterm --version
-    if [[ "$wezterm_stamp" == 2026* || "$wezterm_stamp" == 2027* ]]; then
-        ok "wezterm is a recent nightly ($wezterm_stamp)"
-    else
-        fail "wezterm stamp not a nightly build: '$wezterm_stamp'"
-    fi
-    check_version nmrs-gui "nmrs-gui $NMRS_GUI_VERSION" nmrs-gui --version
     check_version wmfocus "wmfocus $WMFOCUS_VERSION" wmfocus --version
     check_version xidlehook "xidlehook $XIDLEHOOK_VERSION" xidlehook --version
-    # eww prints its commit: "eww 0.6.0 <commit>".
-    check_version eww "$EWW_REF" eww --version
     # xrdp: the Xorg backend's config (without it the session's Xorg fails
     # on the real GPU), enabled, and on Fedora/EL not running as root.
     if command -v xrdp >/dev/null && [[ -f /etc/X11/xrdp/xorg.conf ]]; then
@@ -460,16 +608,6 @@ if [[ $xorg_expected -eq 1 ]]; then
         fi
     fi
     check_link "$HOME/.xsession" "$D/.xsession"
-    # Syncthing: the distro package's user unit, enabled for the user. EL9
-    # has no package (not in EPEL).
-    if [[ "$os_id" != rocky ]]; then
-        if command -v syncthing >/dev/null; then ok "syncthing installed"; else fail "syncthing missing"; fi
-        if [[ "$(systemctl --user is-enabled syncthing.service 2>/dev/null || true)" == enabled ]]; then
-            ok "syncthing user unit enabled"
-        else
-            fail "syncthing user unit not enabled"
-        fi
-    fi
     # eww is the bar: no i3bar include (bootstrap links it only without eww).
     if command -v eww >/dev/null; then
         if [[ -e "$HOME/.config/i3-bar.d/i3bar.conf" || -L "$HOME/.config/i3-bar.d/i3bar.conf" ]]; then
@@ -496,39 +634,14 @@ if [[ $xorg_expected -eq 1 ]]; then
             ok "rrandr libraries resolve"
         fi
     fi
-    if grep -qx 'Exec=nmrs-gui' /usr/local/share/applications/nmrs.desktop 2>/dev/null; then
-        ok "nmrs.desktop installed"
-    else
-        fail "nmrs.desktop missing in /usr/local/share/applications"
-    fi
     for bin in i3 i3status dmenu xsetroot xset setxkbmap xmodmap amixer pavucontrol brightnessctl xinput rfkill smbclient mount.cifs btop remmina startx xclip i3lock jq; do
         if command -v "$bin" >/dev/null; then ok "xorg bin $bin"; else fail "xorg bin missing: $bin"; fi
     done
-    # firewalld's GUI and Sunshine (lizardbyte copr): Fedora only.
-    if [[ "$os_id" == fedora ]]; then
-        for bin in firewall-config sunshine; do
-            if command -v "$bin" >/dev/null; then ok "xorg bin $bin"; else fail "xorg bin missing: $bin"; fi
-        done
-    fi
     # Not packaged for EL9.
     if grep -qE '^ID=(debian|ubuntu|fedora)$' /etc/os-release; then
-        for bin in xss-lock blueman-applet blueman-manager picom lxpolkit; do
+        for bin in xss-lock picom; do
             if command -v "$bin" >/dev/null; then ok "xorg bin $bin"; else fail "xorg bin missing: $bin"; fi
         done
-        # Imports all its GObject libraries; Fedora's package misses one.
-        if blueman-applet --help >/dev/null 2>/tmp/blueman.log; then
-            ok "blueman-applet starts"
-        else
-            fail "blueman-applet: $(tail -n 1 /tmp/blueman.log)"
-        fi
-        bt_enabled="$(systemctl is-enabled bluetooth.service 2>&1 || true)"
-        if ! command -v systemctl >/dev/null; then
-            ok "bluetooth.service: no systemctl in this image"
-        elif [[ "$bt_enabled" == "enabled" ]]; then
-            ok "bluetooth.service enabled"
-        else
-            fail "bluetooth.service: $bt_enabled"
-        fi
         # The tray needs no primary output; arandr and autorandr use xrandr.
         if command -v xrandr >/dev/null; then ok "xorg bin xrandr"; else fail "xorg bin missing: xrandr"; fi
         # Monitor layout: arandr to arrange, autorandr to store and reapply.
@@ -574,6 +687,9 @@ if [[ $xorg_expected -eq 1 ]]; then
     else
         fail "i3 config: $(head -n 2 /tmp/i3.log)"
     fi
+fi
+if [[ $wayland_expected -eq 1 ]]; then
+    check_wayland
 fi
 
 check_pin "$HOME/.oh-my-zsh" "$OHMYZSH_REF"

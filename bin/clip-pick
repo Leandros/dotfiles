@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+#
+# clip-pick - pick an entry of the clipboard history (cliphist) with fuzzel
+# and copy it to the clipboard again.
+#
+# sway-autostart stores every copy with `wl-paste --watch cliphist store`.
+# Cancel (Escape) or input that matches no entry leaves the clipboard as
+# it is.
+#
+# Usage: clip-pick
+#
+set -euo pipefail
+
+# cliphist list prints "<id>\t<preview>"; fuzzel shows the preview and
+# prints the full line.
+readonly ENTRY_PATTERN=$'^[0-9]+\t'
+readonly PREVIEW_COLUMN=2
+
+main() {
+    local pick
+    pick="$(cliphist list | fuzzel --dmenu --with-nth="$PREVIEW_COLUMN" --prompt="clip: ")" || return 0
+    # fuzzel prints typed text that matches no entry as it is.
+    [[ "$pick" =~ $ENTRY_PATTERN ]] || return 0
+    cliphist decode <<< "$pick" | wl-copy
+}
+
+main "$@"

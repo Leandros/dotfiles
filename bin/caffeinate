@@ -5,14 +5,20 @@
 # Runs in the foreground until Ctrl-C. Idle lock and suspend come from
 # xidlehook (~/.xprofile): timer 0 locks, timer 1 suspends. This disables
 # the suspend timer through xidlehook's socket and enables it again on exit.
-# A logind inhibitor would not help: logind lets a user's own `systemctl
-# suspend` pass that user's inhibitors.
+# A logind inhibitor would not help: logind before systemd 257 lets a
+# user's own `systemctl suspend` pass that user's inhibitors.
 #
 # With `display` both timers are off, and the X idle time, which DPMS
 # blanks on, is reset every minute. Only `kill -9` would keep the timers
 # disabled (`xidlehook-client ... --action enable`).
 #
 # Closing the lid and `pwr sleep` still suspend.
+#
+# In sway (SWAYSOCK set) a logind inhibitor does it, held by
+# systemd-inhibit while this runs. swayidle skips its timeouts while an
+# idle inhibitor exists, and since systemd 257 logind also refuses the
+# owner's `systemctl suspend` while a sleep inhibitor blocks it: idle
+# suspend, but also `pwr sleep`. Closing the lid still suspends.
 #
 # Usage: caffeinate           no idle suspend
 #        caffeinate display   no idle suspend, lock or screen blanking
@@ -26,9 +32,12 @@ readonly SUSPEND_TIMER=1
 # The timers to hold off: the suspend timer, or all (empty) with display.
 TIMERS=("--timer" "$SUSPEND_TIMER")
 readonly USAGE="usage: caffeinate [display]"
+readonly MESSAGE="no idle suspend" DISPLAY_MESSAGE="no idle suspend, lock or blanking"
 SLEEP_PID=""
 
 die() { printf 'caffeinate: %s\n' "$*" >&2; exit 1; }
+
+is_sway() { [[ -n "${SWAYSOCK:-}" ]]; }
 
 cleanup() {
     # A second Ctrl-C (or a signal to the whole process group) must not
@@ -36,8 +45,24 @@ cleanup() {
     trap '' INT TERM HUP
     # Ctrl-C reaches the whole process group, so sleep is often gone already.
     if [[ -n "$SLEEP_PID" ]]; then kill "$SLEEP_PID" 2>/dev/null || true; fi
-    timers enable || true
+    is_sway || timers enable || true
     echo "caffeinate: idle suspend on again"
+}
+
+# sway: the lock goes with systemd-inhibit. It runs in the background, so a
+# signal ends `wait` at once; a background job ignores SIGINT, so Ctrl-C
+# reaches only this script, and cleanup stops it.
+inhibit() {
+    local what="sleep" why="$MESSAGE"
+    if [[ -n "$1" ]]; then
+        what="idle:sleep"
+        why="$DISPLAY_MESSAGE"
+    fi
+    systemd-inhibit --what="$what" --who=caffeinate --why="$why" sleep infinity &
+    SLEEP_PID=$!
+    echo "caffeinate: $why; Ctrl-C to stop"
+    wait "$SLEEP_PID" || true
+    die "systemd-inhibit ended; no inhibitor"
 }
 
 # Enables or disables the held-off xidlehook timers.
@@ -52,7 +77,7 @@ main() {
         display) display=1; TIMERS=() ;;
         *)       die "$USAGE" ;;
     esac
-    [[ -n "${DISPLAY:-}" ]] || die "needs X (DISPLAY is not set)"
+    is_sway || [[ -n "${DISPLAY:-}" ]] || die "needs X or sway (DISPLAY and SWAYSOCK are not set)"
 
     trap cleanup EXIT
     # Exit codes as for a signal death: 128 + signal number.
@@ -60,11 +85,14 @@ main() {
     trap 'exit 143' TERM
     trap 'exit 129' HUP
 
+    if is_sway; then
+        inhibit "$display"
+    fi
     timers disable || echo "caffeinate: xidlehook not running, no idle suspend to stop" >&2
     if [[ -n "$display" ]]; then
-        echo "caffeinate: no idle suspend, lock or blanking; Ctrl-C to stop"
+        echo "caffeinate: $DISPLAY_MESSAGE; Ctrl-C to stop"
     else
-        echo "caffeinate: no idle suspend; Ctrl-C to stop"
+        echo "caffeinate: $MESSAGE; Ctrl-C to stop"
     fi
 
     while true; do

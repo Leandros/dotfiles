@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 #
-# Feeds i3bar click events to bin/i3status-kb with stubs for i3status, kb
-# and i3-msg, and checks which commands the clicks run.
+# Feeds i3bar click events to bin/i3status-kb with stubs for i3status, kb,
+# i3-msg and swaymsg (through bin/wm-msg), and checks which commands the
+# clicks run.
 #
 # Usage: test/i3status-kb/test.sh
 #
@@ -9,6 +10,7 @@ set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly SCRIPT="$HERE/../../bin/i3status-kb"
+readonly WM_MSG="$HERE/../../bin/wm-msg"
 TMP="$(mktemp -d)"
 readonly TMP
 trap 'rm -rf "$TMP"' EXIT
@@ -40,10 +42,15 @@ EOF
     # shellcheck disable=SC2016 # $* and $1 belong to the stub.
     printf '#!/bin/sh\necho "kb $*" >> %s\n[ "$1" = show ] && echo us\nexit 0\n' "$CALLS" > "$TMP/home/bin/kb"
     # One field per argument: i3-msg reads options anywhere in its arguments.
-    cat > "$TMP/stubs/i3-msg" <<EOF
+    local tool
+    for tool in i3-msg swaymsg; do
+        cat > "$TMP/stubs/$tool" <<EOF
 #!/bin/sh
-{ printf 'i3-msg'; printf '|%s' "\$@"; echo; } >> "$CALLS"
+{ printf '$tool'; printf '|%s' "\$@"; echo; } >> "$CALLS"
 EOF
+        chmod +x "$TMP/stubs/$tool"
+    done
+    ln -sf "$(readlink -f "$WM_MSG")" "$TMP/home/bin/wm-msg"
     # nmcli prints the active connections from ACTIVE (`nmcli -t` format);
     # "fail" makes it fail like a system without NetworkManager.
     cat > "$TMP/stubs/nmcli" <<EOF
@@ -61,7 +68,7 @@ state="\$(cat "$TAILSCALE")"
 printf '{\n  "Version": "1.90.0",\n  "BackendState": "%s",\n  "Peer": {}\n}\n' "\$state"
 EOF
     echo none > "$TAILSCALE"
-    chmod +x "$TMP/stubs/i3status" "$TMP/home/bin/kb" "$TMP/stubs/i3-msg" "$TMP/stubs/nmcli" "$TMP/stubs/tailscale"
+    chmod +x "$TMP/stubs/i3status" "$TMP/home/bin/kb" "$TMP/stubs/nmcli" "$TMP/stubs/tailscale"
 }
 
 click() {
@@ -92,7 +99,7 @@ status_line() {
 }
 
 # Runs i3status-kb with the given click lines on stdin; prints the calls
-# made other than `kb show`.
+# made other than `kb show`. An X session; sway too when SWAYSOCK is set.
 run_clicks() {
     : > "$CALLS"
     {
@@ -103,7 +110,8 @@ run_clicks() {
             sleep 0.1
         done
         sleep "$SETTLE_S"
-    } | HOME="$TMP/home" PATH="$TMP/stubs:$PATH" timeout 5 "$SCRIPT" > /dev/null 2>&1 || true
+    } | env -u SWAYSOCK DISPLAY=:0 ${SWAYSOCK:+SWAYSOCK="$SWAYSOCK"} HOME="$TMP/home" PATH="$TMP/stubs:$PATH" \
+        timeout 5 "$SCRIPT" > /dev/null 2>&1 || true
     grep -v '^kb show' "$CALLS" | tr '\n' ';' | sed 's/;$//'
 }
 
@@ -118,6 +126,11 @@ main() {
     expect "left click on volume opens pavucontrol" "i3-msg|-q|exec --no-startup-id pavucontrol" \
         "$(run_clicks "$(click volume default.Master.0 1)")"
     expect "right click on volume does nothing" "" "$(run_clicks "$(click volume default.Master.0 3)")"
+    # sway accepts --no-startup-id and ignores it.
+    expect "sway: nmrs-gui through swaymsg" "swaymsg|-q|exec --no-startup-id nmrs-gui" \
+        "$(SWAYSOCK=/run/sway.sock run_clicks "$(click wireless _first_ 1)")"
+    expect "sway: pavucontrol through swaymsg" "swaymsg|-q|exec --no-startup-id pavucontrol" \
+        "$(SWAYSOCK=/run/sway.sock run_clicks "$(click volume default.Master.0 1)")"
     expect "left click on kb still cycles the layout" "kb next" "$(run_clicks "$(click kb "" 1)")"
     expect "right click on kb still goes back" "kb prev" "$(run_clicks "$(click kb "" 3)")"
 

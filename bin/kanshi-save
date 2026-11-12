@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+#
+# kanshi-save - save sway's current outputs as a kanshi profile.
+#
+# Writes profile NAME into ~/.config/kanshi/config (a file of this machine,
+# not in the dotfiles): an existing profile NAME is replaced in place, other
+# lines stay. Then kanshi reloads, when it runs. Arrange the monitors first
+# (wdisplays, swaymsg output ...), then save; kanshi applies the profile
+# when the same monitors are connected again.
+#
+# kanshi matches an output by its description ("<make> <model> <serial>"),
+# which stays the same across ports and reboots; two outputs with the same
+# description get their connector names (DP-1) instead.
+#
+# Usage: kanshi-save NAME   NAME: letters, digits, "_" and "-"
+#
+set -euo pipefail
+
+readonly USAGE="usage: kanshi-save NAME"
+readonly WM_MSG="$HOME/bin/wm-msg"
+readonly CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/kanshi/config"
+readonly NAME_PATTERN='^[A-Za-z0-9_][A-Za-z0-9_-]*$'
+readonly INDENT="    "
+
+# One kanshi output line per sway output. refresh is in mHz. An output
+# without a mode list (virtual) takes only custom modes.
+# shellcheck disable=SC2016 # jq variables.
+readonly OUTPUT_LINES='
+def field: if . == null or . == "" then "Unknown" else . end;
+def describe: "\(.make | field) \(.model | field) \(.serial | field)";
+def rate: if .refresh > 0
+    then "@\(.refresh / 1000 | floor).\("00\(.refresh % 1000)"[-3:])Hz"
+    else "" end;
+def mode: (if (.modes // [] | length) == 0 then "--custom " else "" end)
+    + "\(.current_mode.width)x\(.current_mode.height)" + (.current_mode | rate);
+[.[] | describe] as $all
+| .[]
+| describe as $desc
+| (if ([$all[] | select(. == $desc)] | length) > 1 or ($desc | test("\""))
+    then .name else $desc end) as $criteria
+| if .active
+    then "output \"\($criteria)\" enable mode \(mode) position \(.rect.x),\(.rect.y)"
+        + " scale \(.scale | tostring | sub("\\.0$"; "")) transform \(.transform)"
+    else "output \"\($criteria)\" disable" end'
+
+die() { printf 'kanshi-save: %s\n' "$*" >&2; exit 1; }
+
+profile() {
+    local name="$1" outputs line
+    outputs="$("$WM_MSG" -t get_outputs | jq -r "$OUTPUT_LINES")"
+    [[ -n "$outputs" ]] || die "sway has no outputs"
+    echo "profile $name {"
+    while IFS= read -r line; do
+        echo "$INDENT$line"
+    done <<< "$outputs"
+    echo "}"
+}
+
+# The config with profile NAME (from the line "profile NAME {" to its
+# closing brace; braces in comments do not count) replaced by PROFILE, or
+# PROFILE added at the end after an empty line.
+merge() {
+    local name="$1"
+    [[ -e "$CONFIG" ]] || { echo "$PROFILE"; return; }
+    PROFILE="$PROFILE" awk -v name="$name" '
+        function braces(s, open) {
+            sub(/#.*/, "", s)
+            open = gsub(/[{]/, "", s)
+            return open - gsub(/[}]/, "", s)
+        }
+        !skip && $0 ~ "^[[:space:]]*profile[[:space:]]+" name "([[:space:]{]|$)" {
+            skip = 1; depth = 0; opened = 0
+            if (!done) { print ENVIRON["PROFILE"]; done = 1 }
+        }
+        skip {
+            depth += braces($0)
+            if ($0 ~ /[{]/) { opened = 1 }
+            if (opened && depth <= 0) { skip = 0 }
+            next
+        }
+        { print; last = $0 }
+        END {
+            if (done) { exit }
+            if (NR > 0 && last != "") { print "" }
+            print ENVIRON["PROFILE"]
+        }
+    ' "$CONFIG"
+}
+
+# Through a temporary file: kanshi never reads half a config.
+write_config() {
+    local tmp
+    mkdir -p "$(dirname "$CONFIG")"
+    tmp="$(mktemp "$CONFIG.XXXXXX")"
+    if ! merge "$1" > "$tmp"; then
+        rm -f "$tmp"
+        die "cannot write $CONFIG"
+    fi
+    [[ -e "$CONFIG" ]] && chmod --reference="$CONFIG" "$tmp"
+    mv -f "$tmp" "$CONFIG"
+}
+
+main() {
+    [[ $# -eq 1 ]] || die "$USAGE"
+    local name="$1"
+    [[ "$name" =~ $NAME_PATTERN ]] || die "invalid name: '$name' ($USAGE)"
+    [[ -n "${SWAYSOCK:-}" ]] || die "needs sway (SWAYSOCK is not set)"
+
+    PROFILE="$(profile "$name")"
+    write_config "$name"
+    echo "kanshi-save: profile $name saved to $CONFIG"
+
+    pgrep -u "$(id -u)" -x kanshi >/dev/null || return 0
+    kanshictl reload || die "kanshictl reload failed; is $CONFIG valid?"
+}
+
+main "$@"

@@ -8,12 +8,16 @@
 # keyboard. Without xss-lock (EL9), i3lock runs directly. Only the power
 # button wakes the machine (system-sleep/power-button-wake).
 #
+# In sway (SWAYSOCK set) swayidle runs `pwr lock` on logind's Lock signal
+# (`loginctl lock-session`, idle) and before sleep, so `pwr lock` runs
+# swaylock itself; through logind it would loop.
+#
 # Power modes go through the power-profiles-daemon D-Bus API (tuned-ppd on
 # Fedora); it sets the ThinkPad firmware mode and the CPU energy settings.
 # power-mode/power-mode-auto picks the mode when the AC adapter changes.
 #
 # Usage: pwr lock            lock now
-#        pwr lock --nofork   run i3lock in the foreground (xss-lock locker)
+#        pwr lock --nofork   run i3lock (swaylock) in the foreground (xss-lock locker)
 #        pwr sleep           suspend now
 #        pwr hibernate       hibernate now
 #        pwr performance     maximum performance
@@ -33,6 +37,7 @@ readonly PPD_PROPERTY="ActiveProfile"
 readonly PPD_TIMEOUT_S=2
 # The lock screen always takes the password in this layout (see kb).
 readonly LOCK_LAYOUT="bone2"
+readonly FORK="fork" NOFORK="nofork"
 # kb lives next to this script; xss-lock may not have ~/bin on its PATH.
 KB="$(dirname "$(readlink -f "$0")")/kb"
 readonly KB
@@ -42,8 +47,33 @@ usage() {
     exit 2
 }
 
-xss_lock_running() {
-    pgrep -u "$(id -u)" -x xss-lock >/dev/null
+is_sway() { [[ -n "${SWAYSOCK:-}" ]]; }
+
+running() { pgrep -u "$(id -u)" -x "$1" >/dev/null; }
+
+xss_lock_running() { running xss-lock; }
+
+# The daemon that locks before sleep: xss-lock, or swayidle in sway.
+sleep_locker_running() {
+    if is_sway; then
+        running swayidle
+        return
+    fi
+    xss_lock_running
+}
+
+locker_name() {
+    if is_sway; then echo swaylock; else echo i3lock; fi
+}
+
+# i3lock or swaylock; FORK: it forks once it holds the keyboard.
+run_locker() {
+    local fork="$1"
+    if is_sway; then
+        if [[ "$fork" == "$FORK" ]]; then swaylock -f -c "$COLOR"; else swaylock -c "$COLOR"; fi
+        return
+    fi
+    if [[ "$fork" == "$FORK" ]]; then i3lock --color "$COLOR"; else i3lock --nofork --color "$COLOR"; fi
 }
 
 # Switch to the lock layout and print the layout to restore after unlocking,
@@ -62,15 +92,21 @@ lock_layout_restore() {
     "$KB" "$1" >/dev/null 2>&1 || true
 }
 
-# i3lock forks once it holds the keyboard. Callers rely on that to suspend
-# only after the screen is locked, so the layout is restored in the
-# background once the forked i3lock exits.
+# The locker forks once it holds the keyboard. Callers rely on that to
+# suspend only after the screen is locked, so the layout is restored in the
+# background once the forked locker exits.
 lock_forking() {
-    local previous pid status=0
+    local previous pid status=0 name
+    name="$(locker_name)"
+    # sway has one lock client at a time; a second swaylock fails (idle
+    # lock, then before-sleep).
+    if is_sway && running "$name"; then
+        return 0
+    fi
     previous="$(lock_layout_enter)"
-    i3lock --color "$COLOR" || status=$?
+    run_locker "$FORK" || status=$?
     if [[ -n "$previous" ]]; then
-        if pid="$(pgrep -n -u "$(id -u)" -x i3lock)"; then
+        if pid="$(pgrep -n -u "$(id -u)" -x "$name")"; then
             (tail --pid="$pid" -f /dev/null; lock_layout_restore "$previous") \
                 </dev/null >/dev/null 2>&1 &
             disown
@@ -86,7 +122,7 @@ lock() {
     case "${1:-}" in
         --nofork)
             previous="$(lock_layout_enter)"
-            i3lock --nofork --color "$COLOR" || status=$?
+            run_locker "$NOFORK" || status=$?
             lock_layout_restore "$previous"
             exit "$status"
             ;;
@@ -94,18 +130,18 @@ lock() {
         *) usage ;;
     esac
 
-    if xss_lock_running; then
+    if ! is_sway && xss_lock_running; then
         exec loginctl lock-session
     fi
     lock_forking
 }
 
-# xss-lock locks on logind's PrepareForSleep signal. Without it the screen
-# must be locked first; i3lock forks once it holds the keyboard. A console
-# without X has no locker.
+# xss-lock (swayidle) locks on logind's PrepareForSleep signal. Without it
+# the screen must be locked first; the locker forks once it holds the
+# keyboard. A console without X or sway has no locker.
 enter() {
     local action="$1"
-    if [[ -n "${DISPLAY:-}" ]] && ! xss_lock_running; then
+    if { is_sway || [[ -n "${DISPLAY:-}" ]]; } && ! sleep_locker_running; then
         lock_forking
     fi
     exec systemctl "$action"

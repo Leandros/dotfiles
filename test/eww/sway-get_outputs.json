@@ -1,0 +1,175 @@
+[
+  {
+    "id": 3,
+    "type": "output",
+    "orientation": "none",
+    "percent": 0.5,
+    "urgent": false,
+    "marks": [],
+    "layout": "output",
+    "border": "none",
+    "current_border_width": 0,
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 1280,
+      "height": 720
+    },
+    "deco_rect": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "window_rect": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "geometry": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "name": "HEADLESS-1",
+    "window": null,
+    "nodes": [],
+    "floating_nodes": [],
+    "focus": [
+      4
+    ],
+    "fullscreen_mode": 0,
+    "sticky": false,
+    "floating": null,
+    "scratchpad_state": null,
+    "primary": false,
+    "make": "Unknown",
+    "model": "Unknown",
+    "serial": "Unknown",
+    "modes": [],
+    "features": {
+      "adaptive_sync": false,
+      "hdr": false
+    },
+    "non_desktop": false,
+    "active": true,
+    "dpms": true,
+    "power": true,
+    "scale": 1.0,
+    "scale_filter": "nearest",
+    "transform": "normal",
+    "adaptive_sync_status": "disabled",
+    "current_workspace": "1",
+    "current_mode": {
+      "width": 1280,
+      "height": 720,
+      "refresh": 0
+    },
+    "max_render_time": 0,
+    "allow_tearing": false,
+    "hdr": false,
+    "focused": true,
+    "subpixel_hinting": "unknown"
+  },
+  {
+    "id": 5,
+    "type": "output",
+    "orientation": "none",
+    "percent": 0.5,
+    "urgent": false,
+    "marks": [],
+    "layout": "output",
+    "border": "none",
+    "current_border_width": 0,
+    "rect": {
+      "x": 1280,
+      "y": 0,
+      "width": 1280,
+      "height": 720
+    },
+    "deco_rect": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "window_rect": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "geometry": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "name": "HEADLESS-2",
+    "window": null,
+    "nodes": [],
+    "floating_nodes": [],
+    "focus": [
+      6
+    ],
+    "fullscreen_mode": 0,
+    "sticky": false,
+    "floating": null,
+    "scratchpad_state": null,
+    "primary": false,
+    "make": "Unknown",
+    "model": "Unknown",
+    "serial": "Unknown",
+    "modes": [],
+    "features": {
+      "adaptive_sync": false,
+      "hdr": false
+    },
+    "non_desktop": false,
+    "active": true,
+    "dpms": true,
+    "power": true,
+    "scale": 1.5,
+    "scale_filter": "linear",
+    "transform": "normal",
+    "adaptive_sync_status": "disabled",
+    "current_workspace": "2",
+    "current_mode": {
+      "width": 1920,
+      "height": 1080,
+      "refresh": 0
+    },
+    "max_render_time": 0,
+    "allow_tearing": false,
+    "hdr": false,
+    "focused": false,
+    "subpixel_hinting": "unknown"
+  },
+  {
+    "primary": false,
+    "make": "Unknown",
+    "model": "Unknown",
+    "serial": "Unknown",
+    "modes": [],
+    "features": {
+      "adaptive_sync": false,
+      "hdr": false
+    },
+    "non_desktop": false,
+    "type": "output",
+    "name": "HEADLESS-3",
+    "active": false,
+    "dpms": false,
+    "power": false,
+    "current_workspace": null,
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    },
+    "percent": null
+  }
+]

@@ -11,11 +11,12 @@
 # is Syncthing's (idle, percent done, off).
 # A left click on the wireless or ethernet block opens nmrs-gui, on the
 # volume block pavucontrol.
-# Use as `status_command` in the i3 bar.
+# Use as `status_command` in the i3 bar or swaybar.
 #
 set -euo pipefail
 
 readonly KB="$HOME/bin/kb"
+readonly WM_MSG="$HOME/bin/wm-msg"
 readonly BLOCK_NAME="kb"
 readonly BUTTON_LEFT=1
 readonly BUTTON_RIGHT=3
@@ -146,12 +147,13 @@ layout_click() {
     kill -USR1 "$I3STATUS_PID"
 }
 
-# i3 starts the GUI, so it is not in this script's process group, which
-# cleanup kills when the bar restarts. The i3 command is one argument;
-# i3-msg would read --no-startup-id as its own option.
+# The window manager (i3 or sway) starts the GUI, so it is not in this
+# script's process group, which cleanup kills when the bar restarts. The
+# command is one argument; i3-msg would read --no-startup-id as its own
+# option. sway ignores --no-startup-id.
 gui_click() {
     is_button "$1" "$BUTTON_LEFT" || return 0
-    i3-msg -q "exec --no-startup-id $2" || true
+    "$WM_MSG" -q "exec --no-startup-id $2" || true
 }
 
 # Insert the blocks at the front of the status array. The line is either

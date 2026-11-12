@@ -20,20 +20,23 @@
 #   BOOTSTRAP_DOTFILES_REPO=<url>    dotfiles source (default: GitHub)
 #   BOOTSTRAP_DOTFILES_REF=<branch>  dotfiles branch (default: master)
 #   BOOTSTRAP_NONINTERACTIVE=1       allow a non-tty stdin (CI, tests)
-#   BOOTSTRAP_CATEGORIES="devtools desktop"|all|""
+#   BOOTSTRAP_CATEGORIES="devtools desktop desktop-wayland"|all|""
 #                                    optional categories besides basic; prompted
-#                                    when unset on a terminal, basic only otherwise
+#                                    when unset on a terminal, basic only otherwise.
+#                                    desktop: Xorg/i3 (Debian, Ubuntu, Fedora,
+#                                    RHEL 9); desktop-wayland: sway (Fedora 43+)
 #   BOOTSTRAP_XORG=1                 add desktop, an Xorg/i3 desktop (Debian, Ubuntu,
 #                                    Fedora, RHEL 9); the prompt still asks for the rest
-#   BOOTSTRAP_DPI_SCALE=1|1.5|1.75|2 display scale for the desktop; prompted when unset
+#   BOOTSTRAP_DPI_SCALE=1|1.5|1.75|2 display scale for the desktops; prompted when unset
 #
 set -euo pipefail
 
 # =============================================================================
 # Settings
 # =============================================================================
-# Xorg desktop: minutes without input before the screen locks and before the
-# machine suspends. Re-run bootstrap.sh and start X again to apply a change.
+# Desktops (Xorg and sway): minutes without input before the screen locks and
+# before the machine suspends. Re-run bootstrap.sh and log in again to apply a
+# change.
 readonly IDLE_LOCK_MINUTES=5
 readonly IDLE_SUSPEND_MINUTES=10
 
@@ -90,21 +93,21 @@ readonly PYTHON_VERSION="3.12"
 readonly PYNVIM_VERSION="0.6.0"
 # https://github.com/libevent/libevent/releases
 readonly LIBEVENT_VERSION="2.1.12-stable"
-# Xorg desktop only. Rolling nightly, so no version is pinned; the installed
+# Desktops only. Rolling nightly, so no version is pinned; the installed
 # build is tracked by the package version.
 # Debian/Ubuntu: https://github.com/wezterm/wezterm/releases/tag/nightly
 readonly WEZTERM_RELEASE="nightly"
 # Fedora/RHEL: https://copr.fedorainfracloud.org/coprs/wezfurlong/wezterm-nightly/
 readonly WEZTERM_COPR="wezfurlong/wezterm-nightly"
-# Fedora only (Xorg desktop): https://copr.fedorainfracloud.org/coprs/lizardbyte/stable/
+# Fedora only (desktops): https://copr.fedorainfracloud.org/coprs/lizardbyte/stable/
 readonly SUNSHINE_COPR="lizardbyte/stable"
 # https://github.com/xremap/xremap/releases (Xorg desktop only)
 readonly XREMAP_VERSION="0.15.15"
-# https://crates.io/crates/nmrs-gui (Xorg desktop only; needs Rust 1.95+)
+# https://crates.io/crates/nmrs-gui (desktops only; needs Rust 1.95+)
 readonly NMRS_GUI_VERSION="2.1.0"
 # https://crates.io/crates/wmfocus (Xorg desktop only)
 readonly WMFOCUS_VERSION="1.5.0"
-# https://github.com/elkowar/eww (Xorg desktop only). A commit: release
+# https://github.com/elkowar/eww (desktops only). A commit: release
 # 0.6.0 pins Rust 1.76, and its old dependencies do not build with stable.
 readonly EWW_REF="48f5aa8b379adf29da0b0bb9ca04164f65d8bdaa"
 # https://crates.io/crates/xidlehook (Xorg desktop only; last release 2021)
@@ -112,6 +115,13 @@ readonly XIDLEHOOK_VERSION="0.10.0"
 # https://github.com/brofi/rrandr (Xorg desktop only; no releases or crate,
 # so a commit)
 readonly RRANDR_REF="d1677ca9b538d489b75a8760a1848d780733083a"
+# https://crates.io/crates/sway-easyfocus (sway desktop only)
+readonly SWAY_EASYFOCUS_VERSION="1.0.1"
+# https://github.com/ErikReider/SwayAudioIdleInhibit/releases (sway desktop only)
+readonly SWAY_AUDIO_IDLE_INHIBIT_VERSION="0.2.0"
+# https://github.com/sentriz/cliphist/releases (sway desktop only; Fedora 43
+# does not package it)
+readonly CLIPHIST_VERSION="0.7.0"
 # Not pinned: every run installs or updates the latest stable and makes it
 # the default, so the rustup proxies (rust-analyzer) find its components.
 readonly RUST_TOOLCHAIN="stable"
@@ -159,7 +169,7 @@ GLIBC=""     # e.g. 2.26 (linux only)
 GO_ARCH=""   # amd64 | arm64
 RUST_TARGET_LINUX_MUSL=""
 RUST_TARGET_DARWIN=""
-DPI_SCALE=""      # chosen Xorg display scale (xorg step only)
+DPI_SCALE=""      # chosen display scale (xorg and wayland steps only)
 CATEGORIES=""     # chosen optional categories, space-separated
 
 # =============================================================================
@@ -411,11 +421,11 @@ detect_sudo() {
 # Categories
 # =============================================================================
 # basic is always installed. BOOTSTRAP_CATEGORIES selects the optional ones
-# ("devtools desktop", "all", or "" for basic only). Without it, a terminal
-# gets a prompt and a run without one installs basic only. BOOTSTRAP_XORG=1
-# adds desktop to the choice. A later run with fewer categories keeps what an
-# earlier run installed.
-readonly OPTIONAL_CATEGORIES=(devtools desktop)
+# ("devtools desktop desktop-wayland", "all", or "" for basic only). Without
+# it, a terminal gets a prompt and a run without one installs basic only.
+# BOOTSTRAP_XORG=1 adds desktop to the choice. A later run with fewer
+# categories keeps what an earlier run installed.
+readonly OPTIONAL_CATEGORIES=(devtools desktop desktop-wayland)
 
 category_selected() {
     [[ " $CATEGORIES " == *" $1 "* ]]
@@ -425,6 +435,7 @@ category_label() {
     case "$1" in
         devtools) echo "dev tools (lazygit, direnv, rust-analyzer, lspmux, codelldb)" ;;
         desktop)  echo "desktop environment (Xorg, i3)" ;;
+        desktop-wayland) echo "desktop environment (Wayland, sway)" ;;
     esac
 }
 
@@ -510,12 +521,15 @@ menu_select() {
     echo "$out"
 }
 
-# Ask which optional categories to install; print them. The desktop is only
-# offered where it can be installed.
+# Ask which optional categories to install; print them. The desktops are only
+# offered where they can be installed.
 prompt_categories() {
     local offered=() labels=() name i chosen=""
     for name in "${OPTIONAL_CATEGORIES[@]}"; do
         if [[ "$name" == desktop ]] && ! xorg_supported; then
+            continue
+        fi
+        if [[ "$name" == desktop-wayland ]] && ! wayland_supported; then
             continue
         fi
         offered+=("$name")
@@ -546,8 +560,20 @@ choose_categories() {
 
     if category_selected desktop && ! xorg_supported; then
         warn "desktop: no i3 packages for $DISTRO, skipping"
-        CATEGORIES="$(parse_categories "${CATEGORIES/desktop/}")"
+        CATEGORIES="$(category_drop desktop)"
     fi
+
+    if category_selected desktop-wayland && ! wayland_supported; then
+        warn "desktop-wayland: sway only on Fedora $WAYLAND_FEDORA_MIN_MAJOR and newer, skipping"
+        CATEGORIES="$(category_drop desktop-wayland)"
+    fi
+}
+
+# Print CATEGORIES without $1. Whole words only: desktop is a prefix of
+# desktop-wayland.
+category_drop() {
+    local padded=" $CATEGORIES "
+    parse_categories "${padded/ $1 / }"
 }
 
 # =============================================================================
@@ -1468,33 +1494,36 @@ install_wmfocus() {
     mark_current wmfocus "$WMFOCUS_VERSION"
 }
 
-# eww: the status bar in place of i3bar (~/bin/bar, ~/.config/eww), with
-# tooltips on hover. X11 only (no gtk-layer-shell); libdbusmenu-gtk3 for its
-# tray. jq (packages) for the bar scripts.
+# eww: the status bar in place of i3bar and swaybar (~/bin/bar,
+# ~/.config/eww), with tooltips on hover. One binary for X11 and Wayland
+# (gtk-layer-shell >= 0.6); libdbusmenu-gtk3 for its tray. jq (packages)
+# for the bar scripts.
 install_eww_deps() {
     case "$DISTRO" in
         debian|ubuntu)
             $SUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
                 -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold \
-                libgtk-3-dev libdbusmenu-gtk3-dev
+                libgtk-3-dev libdbusmenu-gtk3-dev libgtk-layer-shell-dev
             ;;
         fedora|rhel)
-            $SUDO dnf install -y -q gtk3-devel libdbusmenu-gtk3-devel
+            $SUDO dnf install -y -q gtk3-devel libdbusmenu-gtk3-devel gtk-layer-shell-devel
             ;;
     esac
 }
 
+# Names the backends: an earlier X11-only build is rebuilt.
+readonly EWW_STAMP="$EWW_REF+wayland"
+
 install_eww() {
-    is_current eww "$EWW_REF" "$PREFIX/bin/eww" && return
+    is_current eww "$EWW_STAMP" "$PREFIX/bin/eww" && return
 
     install_eww_deps
     export CARGO_HOME="$CARGO_HOME_DIR" RUSTUP_HOME="$RUSTUP_HOME_DIR"
     quiet "$CARGO_HOME_DIR/bin/cargo" "+$RUST_TOOLCHAIN" install -q --locked \
         --git "$GITHUB/elkowar/eww" --rev "$EWW_REF" \
-        --no-default-features --features x11 \
         --root "$WORK_DIR/eww" eww
     install_bin "$WORK_DIR/eww/bin/eww" eww
-    mark_current eww "$EWW_REF"
+    mark_current eww "$EWW_STAMP"
 }
 
 # Idle lock and suspend (.xprofile), except while audio plays or a window
@@ -1824,8 +1853,8 @@ enable_syncthing() {
     fi
 }
 
-# Idle timeouts for .xprofile. Settings are static, so check them before
-# minutes of installs.
+# Idle timeouts for .xprofile and ~/bin/sway-autostart. Settings are static,
+# so check them before minutes of installs.
 readonly IDLE_CONF="$HOME/.config/idle.conf"
 readonly IDLE_CONF_MARKER="# Written by bootstrap.sh; edit the IDLE_* settings there."
 
@@ -1866,7 +1895,7 @@ choose_dpi_scale() {
     local scale="${BOOTSTRAP_DPI_SCALE:-}"
     if [[ -z "$scale" ]]; then
         local i
-        echo "Display scale for the Xorg desktop:" >&2
+        echo "Display scale for the desktop:" >&2
         for i in "${!DPI_SCALES[@]}"; do
             printf '  %d) %sx (%s dpi)\n' "$((i + 1))" "${DPI_SCALES[$i]}" \
                 "$(awk "BEGIN { print $BASE_DPI * ${DPI_SCALES[$i]} }")" >&2
@@ -1920,6 +1949,7 @@ link_xorg_dotfiles() {
     link "$d/bin/term" "$HOME/bin/term"
     link "$d/bin/xrdp-keys" "$HOME/bin/xrdp-keys"
     link "$d/bin/syncthing-status" "$HOME/bin/syncthing-status"
+    link "$d/bin/wm-msg" "$HOME/bin/wm-msg"
     link "$d/.xinitrc" "$HOME/.xinitrc"
     link "$d/.xprofile" "$HOME/.xprofile"
     link "$d/.xsession" "$HOME/.xsession"
@@ -1984,6 +2014,193 @@ setup_xorg() {
     select_bar
     install_xrdp
     write_xresources "$DPI_SCALE"
+    write_idle_conf
+    configure_console_font "$DPI_SCALE"
+}
+
+# =============================================================================
+# Wayland / sway desktop (opt-in)
+# =============================================================================
+# sway next to i3; lightdm offers both sessions. Fedora only, tested on 43 to
+# 45 (sway 1.11 and 1.12).
+readonly WAYLAND_FEDORA_MIN_MAJOR=43
+
+wayland_requested() {
+    category_selected desktop-wayland
+}
+
+wayland_supported() {
+    [[ "$DISTRO" == fedora ]] || return 1
+    [[ "$DISTRO_MAJOR" -ge "$WAYLAND_FEDORA_MIN_MAJOR" ]]
+}
+
+# An Xorg or sway desktop that this distro can install.
+desktop_requested() {
+    { xorg_requested && xorg_supported; } || { wayland_requested && wayland_supported; }
+}
+
+# Tools referenced by the sway config, ~/bin/sway-autostart and the ~/bin
+# scripts of both desktops. The rest as in install_xorg_packages.
+install_wayland_packages() {
+    # xdg-desktop-portal-wlr: screen sharing and screenshots; -gtk: file
+    # chooser and the color-scheme setting Firefox follows. The sway
+    # package's sway-portals.conf selects them.
+    # Xwayland: X11 programs; sway starts it on demand.
+    # util-linux: rfkill (flightmode); the container images have only
+    # util-linux-core.
+    $SUDO dnf install -y -q \
+        sway swaybg swayidle swaylock xorg-x11-server-Xwayland \
+        xdg-desktop-portal-wlr xdg-desktop-portal-gtk \
+        kanshi wdisplays wl-clipboard fuzzel i3status blueman gobject-introspection \
+        alsa-utils pavucontrol brightnessctl util-linux cifs-utils samba-client btop remmina remmina-plugins-rdp firewall-config lxpolkit jq syncthing kbd terminus-fonts-console
+}
+
+# Clipboard history (~/bin/clip-pick). Fedora packages it only from 44 on, so
+# all releases get the pinned release binary. It has no arm64 build: there
+# Fedora's package only.
+install_cliphist() {
+    if [[ "$ARCH" != x86_64 ]]; then
+        $SUDO dnf install -y -q cliphist || warn "cliphist: no package for Fedora $DISTRO_MAJOR $ARCH; no clipboard history"
+        return
+    fi
+    is_current cliphist "$CLIPHIST_VERSION" "$PREFIX/bin/cliphist" && return
+
+    fetch "$GITHUB/sentriz/cliphist/releases/download/v$CLIPHIST_VERSION/v$CLIPHIST_VERSION-linux-amd64" "$WORK_DIR/cliphist"
+    install_bin "$WORK_DIR/cliphist" cliphist
+    mark_current cliphist "$CLIPHIST_VERSION"
+}
+
+# Window hints for $mod+j in sway (wmfocus in i3). No distro packages it, so
+# cargo builds it. It draws with GTK 4 on a layer-shell surface.
+install_sway_easyfocus() {
+    is_current sway-easyfocus "$SWAY_EASYFOCUS_VERSION" "$PREFIX/bin/sway-easyfocus" && return
+
+    $SUDO dnf install -y -q gtk4-devel gtk4-layer-shell-devel
+    export CARGO_HOME="$CARGO_HOME_DIR" RUSTUP_HOME="$RUSTUP_HOME_DIR"
+    quiet "$CARGO_HOME_DIR/bin/cargo" "+$RUST_TOOLCHAIN" install -q --locked \
+        --root "$WORK_DIR/sway-easyfocus" "sway-easyfocus@$SWAY_EASYFOCUS_VERSION"
+    install_bin "$WORK_DIR/sway-easyfocus/bin/sway-easyfocus" sway-easyfocus
+    mark_current sway-easyfocus "$SWAY_EASYFOCUS_VERSION"
+}
+
+# Holds a logind idle inhibitor while audio plays or records, so swayidle
+# does not lock or suspend during a call. No distro packages it. It has no
+# systemd unit: ~/bin/sway-autostart starts it.
+install_sway_audio_idle_inhibit() {
+    local version="$SWAY_AUDIO_IDLE_INHIBIT_VERSION" dir
+    is_current sway-audio-idle-inhibit "$version" "$PREFIX/bin/sway-audio-idle-inhibit" && return
+
+    $SUDO dnf install -y -q meson gcc-c++ pulseaudio-libs-devel systemd-devel
+    dir="$(fetch_unpack "$GITHUB/ErikReider/SwayAudioIdleInhibit/archive/refs/tags/v$version.tar.gz")"
+    (
+        cd "$(unpacked_root "$dir")"
+        # Upstream sets werror: new warnings of a newer compiler must not
+        # stop the build.
+        quiet meson setup build --prefix="$PREFIX" --buildtype=release -Dwerror=false
+        quiet meson compile -C build
+        # Built as the user; root only copies (see build_nvim).
+        quiet $SUDO meson install -C build --no-rebuild
+    )
+    mark_current sway-audio-idle-inhibit "$version"
+}
+
+link_wayland_dotfiles() {
+    local d="$DOTFILES_DIR" name
+    link "$d/.wezterm.lua" "$HOME/.wezterm.lua"
+    for name in kb i3status-kb pwr theme flightmode touchpad charge caffeinate smb bar \
+        pkill-display term syncthing-status wm-msg sway-autostart kanshi-save clip-pick; do
+        link "$d/bin/$name" "$HOME/bin/$name"
+    done
+    link "$d/.config/sway" "$HOME/.config/sway"
+    link "$d/.config/i3status" "$HOME/.config/i3status"
+    link "$d/.config/eww" "$HOME/.config/eww"
+    link "$d/.config/fuzzel" "$HOME/.config/fuzzel"
+    link "$d/.config/sway-easyfocus" "$HOME/.config/sway-easyfocus"
+    link "$d/.config/systemd/user/sway-session.target" "$HOME/.config/systemd/user/sway-session.target"
+    # libxkbcommon finds the bone2 layout in ~/.config/xkb/symbols.
+    link "$d/xkb" "$HOME/.config/xkb"
+}
+
+# The bar: eww where it is installed, else swaybar. The sway config
+# includes ~/.config/sway-bar.d/*.conf; only without eww does the swaybar
+# block go there.
+readonly SWAYBAR_INCLUDE="$HOME/.config/sway-bar.d/swaybar.conf"
+
+select_sway_bar() {
+    if [[ ! -x "$PREFIX/bin/eww" ]]; then
+        link "$DOTFILES_DIR/.config/sway/swaybar.conf" "$SWAYBAR_INCLUDE"
+        warn "eww missing: swaybar is the bar"
+        return
+    fi
+    [[ -L "$SWAYBAR_INCLUDE" ]] || return 0
+    rm -f "$SWAYBAR_INCLUDE"
+    log "swaybar replaced by eww"
+}
+
+# sway has no global DPI: the scale goes to every output. The sway config
+# includes this machine-local directory (a real one; ~/bin/theme writes
+# there too). kanshi profiles set the scale per output over it.
+readonly SWAY_LOCAL_DIR="$HOME/.config/sway.d"
+readonly SWAY_OUTPUT_CONF="$SWAY_LOCAL_DIR/output.conf"
+readonly SWAY_OUTPUT_CONF_MARKER="# Written by bootstrap.sh; run it again to change the scale."
+
+write_sway_output_conf() {
+    local scale="$1" tmp="$WORK_DIR/sway-output.conf"
+    printf '%s\noutput * scale %s\n' "$SWAY_OUTPUT_CONF_MARKER" "$scale" > "$tmp"
+    cmp -s "$tmp" "$SWAY_OUTPUT_CONF" 2>/dev/null && return
+
+    mkdir -p "$SWAY_LOCAL_DIR"
+    cp "$tmp" "$SWAY_OUTPUT_CONF"
+    log "sway output scale $scale"
+}
+
+# The session for lightdm, which reads /usr/share/wayland-sessions only. The
+# wrapper sets the environment, then starts sway. lightdm runs them, so they
+# are root-owned copies, not links into the home.
+readonly SWAY_SESSION_FILES=(
+    "sway-session:/usr/local/bin/sway-session:0755"
+    "sway-dotfiles.desktop:/usr/share/wayland-sessions/sway-dotfiles.desktop:0644"
+)
+
+install_sway_session() {
+    local entry src dst mode
+    for entry in "${SWAY_SESSION_FILES[@]}"; do
+        IFS=: read -r src dst mode <<< "$entry"
+        src="$DOTFILES_DIR/wayland-session/$src"
+        cmp -s "$src" "$dst" 2>/dev/null && continue
+        $SUDO install -D -m "$mode" "$src" "$dst"
+        if have restorecon; then
+            $SUDO restorecon "$dst"
+        fi
+        log "installed $dst"
+    done
+}
+
+setup_wayland() {
+    if ! wayland_requested; then
+        return
+    fi
+    if ! wayland_supported; then
+        warn "wayland: sway only on Fedora $WAYLAND_FEDORA_MIN_MAJOR and newer, skipping"
+        return
+    fi
+    install_wayland_packages
+    install_cliphist
+    install_wezterm
+    install_sunshine
+    install_nmrs_gui
+    install_sway_easyfocus
+    install_sway_audio_idle_inhibit
+    install_eww
+    install_logind_conf
+    install_sleep_hook
+    install_power_modes
+    install_sway_session
+    enable_bluetooth
+    enable_syncthing
+    link_wayland_dotfiles
+    select_sway_bar
+    write_sway_output_conf "$DPI_SCALE"
     write_idle_conf
     configure_console_font "$DPI_SCALE"
 }
@@ -2152,21 +2369,35 @@ report() {
         print_version lspmux lspmux --version
         print_version codelldb cat "$(codelldb_dir)/.bootstrap-version"
     fi
-    if xorg_requested && xorg_supported; then
+    if desktop_requested; then
         print_version wezterm wezterm --version
         print_version nmrs-gui nmrs-gui --version
-        print_version wmfocus wmfocus --version
-        print_version xidlehook xidlehook --version
         print_version eww eww --version
-        if [[ "$DISTRO" != rhel ]]; then
-            print_version rrandr cat "$(stamp_path rrandr)"
-        fi
         if [[ "$DISTRO" == fedora ]]; then
             print_version sunshine rpm -q Sunshine
         fi
         if [[ "$DISTRO" != rhel ]]; then
             print_version syncthing syncthing --version
         fi
+    fi
+    if xorg_requested && xorg_supported; then
+        print_version wmfocus wmfocus --version
+        print_version xidlehook xidlehook --version
+        if [[ "$DISTRO" != rhel ]]; then
+            print_version rrandr cat "$(stamp_path rrandr)"
+        fi
+    fi
+    if wayland_requested && wayland_supported; then
+        # rpm, not sway --version: docker's bounding set lacks the
+        # cap_sys_nice of the binary, so it does not start in the test images.
+        print_version sway rpm -q sway
+        print_version sway-easyfocus sway-easyfocus --version
+        print_version sway-audio-idle-inhibit cat "$(stamp_path sway-audio-idle-inhibit)"
+        print_version fuzzel fuzzel --version
+        # kanshi has no --version.
+        print_version kanshi rpm -q kanshi
+        # sed reads all lines: with head, a SIGPIPE fails the pipe.
+        print_version cliphist bash -c 'cliphist version | sed -n 1p'
     fi
     if [[ -d "$BACKUP_DIR" ]]; then
         log "backups in $BACKUP_DIR"
@@ -2208,6 +2439,7 @@ run_all() {
 
     step link link_dotfiles
     step xorg setup_xorg
+    step wayland setup_wayland
     step zshrc write_zshrc
     step ohmyzsh setup_ohmyzsh
     step shell set_login_shell
@@ -2234,7 +2466,7 @@ main() {
     detect_sudo
     # Ask up front so the run does not stall on a prompt after minutes of installs.
     choose_categories
-    if xorg_requested && xorg_supported; then
+    if desktop_requested; then
         check_idle_settings
         DPI_SCALE="$(choose_dpi_scale)"
     fi

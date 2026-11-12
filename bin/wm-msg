@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+#
+# wm-msg - i3-msg or swaymsg, for the window manager of this session.
+#
+# The scripts send the same IPC messages to i3 and sway. sway sets
+# SWAYSOCK; it also sets DISPLAY (Xwayland), so DISPLAY does not mean i3.
+#
+# Usage: wm-msg ARGS...   the arguments of i3-msg and swaymsg
+#
+set -euo pipefail
+
+if [[ -n "${SWAYSOCK:-}" ]]; then
+    exec swaymsg "$@"
+fi
+exec i3-msg "$@"

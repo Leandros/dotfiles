@@ -1,0 +1,296 @@
+# sway config: the i3 config (~/.config/i3/config) for the Wayland session.
+# Bindings and window behaviour are the same; see sway(5).
+#
+# Bone 2 keys: b n r s = left down up right.
+
+# Solarized. ~/bin/theme switches dark and light: it writes the base colors
+# into ~/.config/sway.d/theme.conf for the next login and sets them in the
+# running session. Use the colors only in top-level lines (not in blocks,
+# not in exec lines): theme runs those lines again. The defaults below are
+# the dark palette.
+
+set $yellow     #b58900
+set $orange     #cb4b16
+set $red        #dc322f
+set $magenta    #d33682
+set $violet     #6c71c4
+set $blue       #268bd2
+set $cyan       #2aa198
+set $green      #859900
+
+set $baseA3 #002b36
+set $baseA2 #073642
+set $baseA1 #586e75
+set $baseA0 #657b83
+set $baseB0 #839496
+set $baseB1 #93a1a1
+set $baseB2 #eee8d5
+set $baseB3 #fdf6e3
+set $custom #1c5766
+
+# Keyboards. Left modifiers as on macOS with Cmd and Ctrl swapped (in X,
+# xremap does it): the Alt key next to Space gives Control, the Ctrl key in
+# the corner Alt. Right Alt stays the bone2 level key. Repeat: 180 ms
+# delay, 30/s, as in X (xorg-conf/50-keyboard-repeat.conf). ~/bin/kb
+# changes the layout and writes it into ~/.config/sway.d/kb.conf, so a
+# reload keeps it: this block must come before the include below.
+input type:keyboard {
+    xkb_layout de
+    xkb_options ctrl:swap_lalt_lctl
+    repeat_delay 180
+    repeat_rate 30
+}
+
+# Touchpads as in X (xorg-conf/40-touchpad.conf): click by pressing the pad,
+# no tapping (`~/bin/touchpad tap` turns it on for the session), no
+# tap-and-drag, two- and three-finger clicks anywhere on the pad.
+#
+# Acceleration: X uses a libinput custom curve, which sway 1.12 cannot set
+# (only adaptive|flat; swaywm/sway#8488, pull request #8592). libinput
+# applies it to raw touchpad units/ms, step 0.5 (v = 0, 0.5, ... 8):
+#   AccelStepMotion 0.5
+#   AccelPointsMotion 0.0 0.567 1.896 3.999 6.939 9.807 13.009 16.521 20.319
+#                     24.389 28.716 33.287 38.094 43.126 48.375 53.835 59.499
+# With #8592 merged the block takes it as:
+#   accel_profile custom
+#   pointer_accel_custom 0.5 0.0 0.567 1.896 3.999 6.939 9.807 13.009 16.521 20.319 24.389 28.716 33.287 38.094 43.126 48.375 53.835 59.499
+# pointer_accel scales the whole adaptive curve (libinput 1.32
+# filter-touchpad.c). A fit of the X curve over 6 to 200 mm/s (1000 dpi,
+# output scale 1.5) needs about twice the speed of pointer_accel 1, so the
+# maximum 1 is the nearest: as fast as X at 25 mm/s, faster below,
+# slower above (2.5 times at 100 mm/s).
+input type:touchpad {
+    tap disabled
+    drag disabled
+    click_method clickfinger
+    accel_profile adaptive
+    pointer_accel 1
+}
+
+# Machine-local settings, not in the repository: output.conf (bootstrap.sh,
+# the display scale), theme.conf (~/bin/theme) and kb.conf (~/bin/kb).
+# Variables set there replace the defaults above for all lines below.
+include ~/.config/sway.d/*.conf
+
+output * bg $baseA2 solid_color
+
+# class                     border  bg      text    indicator
+client.focused              $green  $green  $baseB3 $blue
+client.focused_inactive     $custom $custom $baseB2 $violet
+client.unfocused            $baseA2 $baseA2 $baseB1 $baseA1
+client.urgent               $yellow $yellow $baseB3 $orange
+
+# Win key.
+set $mod Mod4
+
+# Font for window titles; swaybar uses it too unless its bar block sets one.
+font pango:Menlo 10
+
+# Use Mouse+$mod to drag floating windows to their wanted position
+floating_modifier $mod normal
+
+# start a terminal (wezterm, ~/bin/term)
+bindsym $mod+Return exec ~/bin/term
+
+# Increase screen brightness
+bindsym XF86MonBrightnessUp exec brightnessctl set +5% && pkill -USR1 -x i3status
+# Decrease screen brightness
+bindsym XF86MonBrightnessDown exec brightnessctl set 5%- && pkill -USR1 -x i3status
+# Volume control
+bindsym XF86AudioLowerVolume exec amixer set Master 5%-
+bindsym XF86AudioRaiseVolume exec amixer set Master 5%+
+bindsym XF86AudioMute exec amixer set Master toggle
+# Mute the selected microphone (Capture is the default source via PipeWire)
+bindsym XF86AudioMicMute exec amixer set Capture toggle
+# Monitor layout; ~/bin/kanshi-save NAME keeps it for these monitors.
+bindsym XF86Display exec wdisplays
+
+# kill focused window
+bindsym $mod+Shift+j kill
+
+# program launcher (desktop entries)
+bindsym $mod+i exec fuzzel
+
+# change focus
+bindsym $mod+b focus left
+bindsym $mod+n focus down
+bindsym $mod+r focus up
+bindsym $mod+s focus right
+
+# alternatively, you can use the cursor keys:
+bindsym $mod+Left focus left
+bindsym $mod+Down focus down
+bindsym $mod+Up focus up
+bindsym $mod+Right focus right
+
+# Focus a window by its label, like tmux prefix q. The hint colors are the
+# window title colors; `theme` runs this line again, so they follow dark
+# and light. Labels and font: ~/.config/sway-easyfocus/config.yaml. Every
+# key exits.
+bindsym $mod+j exec sway-easyfocus --label-background-color '$baseA2' --label-text-color '$baseB1' \
+    --focused-background-color '$green' --focused-text-color '$baseB3' focus
+
+# move focused window
+bindsym $mod+Shift+b move left
+bindsym $mod+Shift+n move down
+bindsym $mod+Shift+r move up
+bindsym $mod+Shift+s move right
+
+# alternatively, you can use the cursor keys:
+bindsym $mod+Shift+Left move left
+bindsym $mod+Shift+Down move down
+bindsym $mod+Shift+Up move up
+bindsym $mod+Shift+Right move right
+
+# swap two windows: mark one ($mod+m again unmarks; the title shows
+# [swap], which sway hides for marks starting with "_"), focus the other,
+# then swap them
+bindsym $mod+m mark --toggle swap
+bindsym $mod+Shift+m swap container with mark swap; unmark swap
+
+# split in horizontal orientation
+bindsym $mod+v split h
+
+# split in vertical orientation
+bindsym $mod+f split v
+
+# enter fullscreen mode for the focused container
+bindsym $mod+e fullscreen
+
+# change container layout (tabbed, toggle split); no stacking binding: it
+# was easy to hit by accident
+bindsym $mod+d layout tabbed
+bindsym $mod+u layout toggle split
+
+# toggle tiling / floating
+bindsym $mod+Shift+space floating toggle
+
+# Window rules: app_id for Wayland clients, class or instance for X11
+# clients on Xwayland.
+
+# nmrs-gui (network settings); a click on the bar's network block opens it.
+for_window [app_id="^nmrs$"] floating enable
+for_window [class="^nmrs$"] floating enable
+# blueman (Bluetooth): its windows have the program name as app_id or
+# WM_CLASS instance (blueman-manager, blueman-services, ...).
+for_window [app_id="^blueman-"] floating enable
+for_window [instance="^blueman-"] floating enable
+
+# Clipboard history (cliphist) in fuzzel.
+bindsym $mod+c exec ~/bin/clip-pick
+
+# Monitor layout.
+for_window [app_id="^wdisplays$"] floating enable
+
+# Audio devices and per-app streams; opened from the bar's volume block.
+for_window [app_id="^org\.pulseaudio\.pavucontrol$"] floating enable
+for_window [instance="^pavucontrol$"] floating enable
+
+# No idle lock or suspend while a window is full screen (video).
+for_window [all] inhibit_idle fullscreen
+
+# change focus between tiling / floating windows
+bindsym $mod+space focus mode_toggle
+
+# focus the parent container
+bindsym $mod+h focus parent
+
+# focus the child container
+bindsym $mod+l focus child
+
+# switch to workspace
+bindsym $mod+1 workspace number 1
+bindsym $mod+2 workspace number 2
+bindsym $mod+3 workspace number 3
+bindsym $mod+4 workspace number 4
+bindsym $mod+5 workspace number 5
+bindsym $mod+6 workspace number 6
+bindsym $mod+7 workspace number 7
+bindsym $mod+8 workspace number 8
+bindsym $mod+9 workspace number 9
+bindsym $mod+0 workspace number 10
+
+# move focused container to workspace
+bindsym $mod+Shift+1 move container to workspace number 1
+bindsym $mod+Shift+2 move container to workspace number 2
+bindsym $mod+Shift+3 move container to workspace number 3
+bindsym $mod+Shift+4 move container to workspace number 4
+bindsym $mod+Shift+5 move container to workspace number 5
+bindsym $mod+Shift+6 move container to workspace number 6
+bindsym $mod+Shift+7 move container to workspace number 7
+bindsym $mod+Shift+8 move container to workspace number 8
+bindsym $mod+Shift+9 move container to workspace number 9
+bindsym $mod+Shift+0 move container to workspace number 10
+
+# The same with the Alt key next to Space (Control after the swap above),
+# as xremap does in X. Applications do not get Ctrl+digit.
+bindsym Ctrl+1 workspace number 1
+bindsym Ctrl+2 workspace number 2
+bindsym Ctrl+3 workspace number 3
+bindsym Ctrl+4 workspace number 4
+bindsym Ctrl+5 workspace number 5
+bindsym Ctrl+6 workspace number 6
+bindsym Ctrl+7 workspace number 7
+bindsym Ctrl+8 workspace number 8
+bindsym Ctrl+9 workspace number 9
+bindsym Ctrl+0 workspace number 10
+bindsym Ctrl+Shift+1 move container to workspace number 1
+bindsym Ctrl+Shift+2 move container to workspace number 2
+bindsym Ctrl+Shift+3 move container to workspace number 3
+bindsym Ctrl+Shift+4 move container to workspace number 4
+bindsym Ctrl+Shift+5 move container to workspace number 5
+bindsym Ctrl+Shift+6 move container to workspace number 6
+bindsym Ctrl+Shift+7 move container to workspace number 7
+bindsym Ctrl+Shift+8 move container to workspace number 8
+bindsym Ctrl+Shift+9 move container to workspace number 9
+bindsym Ctrl+Shift+0 move container to workspace number 10
+
+# reload the configuration file
+bindsym $mod+Shift+w reload
+# i3 restarts in place on this key; sway has no restart, and a reload
+# applies config changes too.
+bindsym $mod+Shift+a reload
+# exit sway (logs you out of your Wayland session)
+bindsym $mod+Shift+u exec swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit sway? This will end your Wayland session.' -B 'Yes, exit sway' 'systemctl --user stop sway-session.target; swaymsg exit'
+# Exit at once, as Ctrl+Alt+Backspace (terminate:ctrl_alt_bksp) in X.
+bindsym Ctrl+Alt+BackSpace exec systemctl --user stop sway-session.target; exit
+
+# scratchpad
+bindsym $mod+Shift+z move scratchpad
+bindsym $mod+z scratchpad show
+
+# resize window (you can also use the mouse for that)
+mode "resize" {
+        # These bindings trigger as soon as you enter the resize mode
+
+        # Pressing left will shrink the window’s width.
+        # Pressing right will grow the window’s width.
+        # Pressing up will shrink the window’s height.
+        # Pressing down will grow the window’s height.
+        bindsym b resize shrink width 10 px or 10 ppt
+        bindsym n resize grow height 10 px or 10 ppt
+        bindsym r resize shrink height 10 px or 10 ppt
+        bindsym s resize grow width 10 px or 10 ppt
+
+        # same bindings, but for the arrow keys
+        bindsym Left resize shrink width 10 px or 10 ppt
+        bindsym Down resize grow height 10 px or 10 ppt
+        bindsym Up resize shrink height 10 px or 10 ppt
+        bindsym Right resize grow width 10 px or 10 ppt
+
+        # back to normal: Enter or Escape
+        bindsym Return mode "default"
+        bindsym Escape mode "default"
+}
+
+bindsym $mod+a mode "resize"
+
+# The programs of the session (the bar, idle, clipboard history, ...); sway
+# runs it once, not on reload.
+exec ~/bin/sway-autostart
+
+# Status bar: eww (~/bin/bar, started by ~/bin/sway-autostart). Where
+# bootstrap.sh could not install eww it links swaybar.conf (swaybar with
+# i3status-kb) into ~/.config/sway-bar.d. Variables set above reach the
+# included file.
+include ~/.config/sway-bar.d/*.conf

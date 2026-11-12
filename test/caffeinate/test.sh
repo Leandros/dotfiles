@@ -3,7 +3,8 @@
 # Runs bin/caffeinate with stubs for xidlehook-client and xset, stops it
 # like Ctrl-C would, and checks that idle suspend (and with `display` the
 # lock and blanking) is held off only while it runs. xidlehook (.xprofile)
-# has two timers: 0 locks, 1 suspends.
+# has two timers: 0 locks, 1 suspends. Under sway the same with a logind
+# inhibitor (systemd-inhibit stub).
 #
 # Usage: test/caffeinate/test.sh
 #
@@ -56,6 +57,8 @@ run() {
 count() { grep -cx "$1" "$CALLS" || true; }
 
 main() {
+    # X tests first: not the caller's sway session.
+    unset SWAYSOCK
     write_stubs
 
     local rc
@@ -91,7 +94,68 @@ main() {
         ok "needs X"
     fi
 
+    test_sway
     exit "$FAILED"
+}
+
+# systemd-inhibit: records its arguments and the pid that holds the lock,
+# then runs the command, as the real one does (TMP/inhibit-fails: no
+# logind).
+write_inhibit_stub() {
+    cat > "$STUBS/systemd-inhibit" <<EOF
+#!/bin/sh
+echo "systemd-inhibit \$*" >> "$CALLS"
+[ -e "$TMP/inhibit-fails" ] && exit 1
+echo \$\$ > "$TMP/holder"
+while [ "\${1#--}" != "\$1" ]; do shift; done
+exec "\$@"
+EOF
+    chmod +x "$STUBS/systemd-inhibit"
+}
+
+# As run, in sway without Xwayland.
+run_sway() {
+    local signal="$1" rc=0
+    shift
+    : > "$CALLS"
+    rm -f "$TMP/holder"
+    env -u DISPLAY SWAYSOCK=/run/sway.sock XDG_RUNTIME_DIR="$TMP" CAFFEINATE_INTERVAL_S="$INTERVAL_S" \
+        PATH="$STUBS:$PATH" timeout --preserve-status -s "$signal" "$RUN_S" "$SCRIPT" "$@" > /dev/null 2>&1 || rc=$?
+    echo "$rc"
+}
+
+holder_gone() {
+    sleep 0.2
+    [[ -s "$TMP/holder" ]] && ! kill -0 "$(cat "$TMP/holder")" 2>/dev/null
+}
+
+# sway: swayidle skips its timeouts while logind has an idle inhibitor, and
+# logind refuses its suspend while a sleep inhibitor blocks it. The lock
+# lives as long as systemd-inhibit.
+test_sway() {
+    write_inhibit_stub
+    local why="--who=caffeinate --why="
+    local rc
+    rc="$(run_sway INT)"
+    expect "sway: Ctrl-C exit code" "130" "$rc"
+    expect "sway: a sleep inhibitor only (the screen still locks)" \
+        "systemd-inhibit --what=sleep ${why}no idle suspend sleep infinity" "$(cat "$CALLS")"
+    if holder_gone; then ok "sway: inhibitor released on exit"; else fail "sway: inhibitor still held"; fi
+
+    run_sway INT display > /dev/null
+    expect "sway: display inhibits idle (lock, blanking) and sleep" \
+        "systemd-inhibit --what=idle:sleep ${why}no idle suspend, lock or blanking sleep infinity" "$(cat "$CALLS")"
+    if holder_gone; then ok "sway: display: inhibitor released on exit"; else fail "sway: display: inhibitor still held"; fi
+
+    rc="$(run_sway HUP)"
+    expect "sway: hangup exit code" "129" "$rc"
+    if holder_gone; then ok "sway: hangup releases the inhibitor"; else fail "sway: hangup: inhibitor still held"; fi
+    expect "sway: no xidlehook or xset" "" "$(grep -v '^systemd-inhibit' "$CALLS" || true)"
+
+    touch "$TMP/inhibit-fails"
+    rc="$(run_sway INT)"
+    rm "$TMP/inhibit-fails"
+    if [[ "$rc" -ne 0 && "$rc" -ne 130 ]]; then ok "sway: fails without logind ($rc)"; else fail "sway: exit $rc without logind"; fi
 }
 
 main "$@"

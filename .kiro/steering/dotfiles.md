@@ -43,6 +43,12 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `.wezterm.lua`, `.xinitrc`, `.xprofile`, `.xsession`, `.Xmodmap`, `.config/{i3,i3status,xremap,picom,eww}`, `.config/autorandr/postswitch` (the file only: profiles are per machine), `.config/systemd/user/i3-session.target` | `$HOME`, links, Xorg only |
 | `bin/{kb,i3status-kb,pwr,theme,flightmode,touchpad,charge,caffeinate,smb,input-restore,bar,pkill-display,term,xrdp-keys,syncthing-status}` | `~/bin`, links, Xorg only |
 | `bin/fzf-cache` | `~/bin`, link, always |
+| `.config/{sway,fuzzel,sway-easyfocus}`, `.config/systemd/user/sway-session.target`, `xkb` (as `~/.config/xkb`) | `$HOME`, links, desktop-wayland only |
+| `bin/{wm-msg,sway-autostart,kanshi-save,clip-pick}` | `~/bin`, links; `wm-msg` also for desktop (the eww scripts and i3status-kb use it) |
+| `wayland-session/sway-session` | `/usr/local/bin/sway-session` (root copy, 0755; the lightdm session's wrapper) |
+| `wayland-session/sway-dotfiles.desktop` | `/usr/share/wayland-sessions/` (root copy, 0644; lightdm reads only `/usr/share`) |
+| `~/.config/sway.d/` | real directory, never a link: `output.conf` (bootstrap), `theme.conf` (`bin/theme`), `kb.conf` (`bin/kb`) |
+| `xkb/symbols/bone2` | generated from `.Xmodmap` by `xkb/xmodmap-to-xkb.py`; regenerate when `.Xmodmap` changes |
 | `xorg-conf/*.conf` | `/etc/X11/xorg.conf.d/` (root copy) |
 | `sshd-conf/50-color-scheme.conf` | `/etc/ssh/sshd_config.d/` (root copy, Linux, where sshd_config includes the directory; not AL2) |
 | `logind-conf/50-lid-suspend.conf` | `/etc/systemd/logind.conf.d/` (root copy, applies after reboot) |
@@ -72,10 +78,13 @@ Report, Main.
   the prompt still runs), `BOOTSTRAP_DPI_SCALE`, `BOOTSTRAP_NONINTERACTIVE=1`,
   `BOOTSTRAP_DOTFILES_REPO`, `BOOTSTRAP_DOTFILES_REF`.
 - Categories: `basic` always; `devtools` (lazygit, direnv, rust-analyzer,
-  lspmux, codelldb) and `desktop` (the Xorg/i3 desktop) are optional.
-  `choose_categories` in `main` sets `CATEGORIES` from `BOOTSTRAP_CATEGORIES`
+  lspmux, codelldb), `desktop` (the Xorg/i3 desktop) and `desktop-wayland`
+  (sway, Fedora 43+ only: `wayland_supported`) are optional; both desktops
+  can be installed together. `choose_categories` in `main` sets `CATEGORIES` from `BOOTSTRAP_CATEGORIES`
   (`all`, `""`), else a menu on a terminal, else basic only. Desktop is not
-  offered and is dropped with a warning where `xorg_supported` fails. Steps
+  offered and is dropped with a warning where `xorg_supported` fails, and
+  desktop-wayland where `wayland_supported` fails (`category_drop` removes
+  whole words: `desktop` is a prefix of `desktop-wayland`). Steps
   of a category: `category_step <category> <name> <function>`; other code
   checks `category_selected`. A run with fewer categories removes nothing.
   Rust stays in basic: tree-sitter (basic) and nmrs-gui/wmfocus (desktop)
@@ -106,6 +115,16 @@ Report, Main.
   fast-forward update, and dies on local commits.
 - Xorg (`setup_xorg`) runs only with the `desktop` category on debian, ubuntu,
   fedora, rhel <= 9.
+- sway (`setup_wayland`, step `wayland`, after `xorg`) runs only with
+  `desktop-wayland` on Fedora >= 43. It calls the shared install functions
+  too (wezterm, Sunshine, nmrs-gui, eww, logind, sleep hook, power modes,
+  Bluetooth, Syncthing, idle.conf, console font), none of the X-only ones
+  (xremap, xidlehook, wmfocus, rrandr, xorg-conf, xprofile hook, autorandr,
+  xrdp, .Xresources, CopyQ). `main` asks the display scale and checks the
+  idle settings once when either desktop is selected; for sway the scale
+  becomes `output * scale` in `~/.config/sway.d/output.conf`.
+- verify.sh: `check_desktop_shared` (either desktop), the Xorg block, and
+  `check_wayland`; absence checks for the categories not selected.
 
 New tool: choose its category first. Version constant with URL, install
 function with stamp, `step` (basic) or `category_step` in `run_all`,
@@ -117,6 +136,35 @@ New link or system file: install function, `check_link` or `cmp` check in
 
 ### Package quirks
 
+- sway desktop (Fedora 43+):
+  - Fedora's `/usr/bin/sway` has the file capability `cap_sys_nice=ep`:
+    in docker without `--cap-add SYS_NICE` it fails with "Operation not
+    permitted". verify.sh validates the config (`sway -C`) with a copy of
+    the binary (no capabilities), a private 0700 `XDG_RUNTIME_DIR` and
+    `WLR_BACKENDS=headless WLR_RENDERER=pixman` (else it fails on the DRM
+    session). `report` uses `rpm -q sway`. kanshi has no `--version`.
+  - sway 1.12 has no `accel_profile custom` (only adaptive|flat;
+    swaywm/sway#8488, PR #8592): the X touchpad curve is a comment in the
+    sway config; `pointer_accel 1` is the nearest fit.
+  - cliphist: Fedora 43 has no package; the pinned release binary
+    (`CLIPHIST_VERSION`, x86_64) on every release. CopyQ 17 under sway
+    stores data marked `x-kde-passwordManagerHint` (tested with a GTK
+    clipboard owner); cliphist with wl-clipboard 2.3 skips it. So no CopyQ
+    on sway.
+  - sway-easyfocus (`SWAY_EASYFOCUS_VERSION`, cargo; gtk4-devel,
+    gtk4-layer-shell-devel; Rust edition 2024). 1.0.1 ignores its whole
+    yaml on an unknown key or without `show_confirmation`; colors come on
+    the command line from sway variables.
+  - sway-audio-idle-inhibit (`SWAY_AUDIO_IDLE_INHIBIT_VERSION`, meson from
+    the tag, `-Dwerror=false`; libpulse, libsystemd): no `--version` (stamp
+    and `ldd`), no systemd unit; holds a logind idle lock (not Wayland), so
+    it stays after a logout: sway-autostart stops the old one
+    (`pkill-display -f`, the name is longer than `pgrep -x`'s 15 characters).
+  - eww is built with default features (X11 and Wayland in one binary;
+    gtk-layer-shell dev package on every desktop distro). The stamp is
+    `$EWW_REF+wayland`, so machines with the X11-only build rebuild once.
+    eww picks the backend at start from `XDG_SESSION_TYPE` and
+    `WAYLAND_DISPLAY`; one yuck file holds both property sets.
 - Fedora: blueman needs `gobject-introspection` (xlib typelib); arandr needs
   `gtk3`. `/usr/local/sbin` is a link to `/usr/local/bin`.
 - picom: only for tear-free drawing (`backend = "glx"`, `vsync`; Xorg 21.1
@@ -224,6 +272,28 @@ New link or system file: install function, `check_link` or `cmp` check in
   `--privileged` container.
 - Fast lspmux check: bootstrap with `BOOTSTRAP_SKIP` for all steps except
   `packages home dotfiles rust lspmux`, then `verify.sh | grep lspmux`.
+- sway tests: `test/sway/test.sh` (fedora:45, headless sway, `docker
+  create --cap-add SYS_NICE` + `docker cp`): config validation, bindings
+  through `wtype` with stubs on sway's PATH, swap, Ctrl+digit, window
+  rules by app_id and class, idle inhibit, swaybar fallback, fuzzel,
+  Ctrl+Alt+Backspace. `test/eww-sway/test.sh` (image `dotfiles-eww-sway`,
+  eww built at `EWW_REF`): one bar per output, tray on the first, reopen
+  after an output change. `test/sway-session/test.sh` (lightdm's Xsession
+  wrapper runs sway in English; `~/.xprofile` does not run).
+  `test/xkb-bone2/test.sh` (regenerate check, libxkbcommon levels against
+  `.Xmodmap`). Stub tests: `test/sway-autostart`, `test/wm-msg`,
+  `test/kanshi-save`, `test/clip-pick`, `test/pwr-lock`.
+- Headless sway in a container: `WLR_BACKENDS=headless WLR_RENDERER=pixman
+  WLR_LIBINPUT_NO_DEVICES=1`, a user with a 0700 `XDG_RUNTIME_DIR`,
+  `--cap-add SYS_NICE`. `wtype -M logo j -m logo` triggers bindings; a
+  client that grabs the keyboard needs `wtype -s 1500`. fuzzel needs
+  `--no-exit-on-keyboard-focus-loss` (wtype's keyboard takes the focus).
+  Layer surfaces (bars) are not in `get_tree`; the workspace rect moves by
+  the exclusive zone. sway's `/proc/<pid>/environ` is not readable (file
+  capabilities): ask a child (`swaymsg exec 'echo "$DISPLAY" > file'`).
+  Stubs that run at the same time must write each line in one call.
+  `systemd-analyze --user verify` fails on the AL2 host (systemd 219):
+  `test/i3-session` fails there for that reason only.
 
 ## Neovim (`.vim.init.lua`)
 
@@ -460,6 +530,69 @@ New link or system file: install function, `check_link` or `cmp` check in
   a replayed udev event keeps a mode set with `pwr`.
 - Sleep hook: only LNXPWRBN, PNP0C0C, intel-hid and intel-vbtn may wake.
   Fedora hibernation: zram swap only, and Secure Boot lockdown blocks it.
+
+## sway (desktop-wayland)
+
+- Session: lightdm, entry "Sway (dotfiles)" -> `/usr/local/bin/sway-session`
+  (exports LANG=en_US.UTF-8, the XDG desktop/session variables, Electron
+  and Java hints; not `QT_QPA_PLATFORM`: Qt picks Wayland from
+  `XDG_SESSION_TYPE`, and old bundled Qt 5 aborts on a list). lightdm runs
+  Wayland sessions through `/etc/X11/xinit/Xsession` too, so
+  `xinitrc-d/90-xprofile.sh` skips `~/.xprofile` when `XDG_SESSION_TYPE` is
+  `wayland`. lightdm sets `XDG_SESSION_DESKTOP` to the entry's file name.
+- `.config/sway/config` is the i3 config ported; order: dark color
+  defaults, the input blocks, `include ~/.config/sway.d/*.conf` (so
+  `kb.conf` wins over the default `xkb_layout de`), the rest, `exec
+  ~/bin/sway-autostart`, `include ~/.config/sway-bar.d/*.conf` (swaybar,
+  linked only without eww). Colors only in top-level lines: `bin/theme`
+  sets the variables at runtime and runs those lines again, without
+  `reload` (a sway 1.12 reload drops runtime output and input settings:
+  kanshi's layout, touchpad tapping). Differences from i3: fuzzel
+  (`$mod+i`), `clip-pick` (`$mod+c`, cliphist), sway-easyfocus (`$mod+j`),
+  wdisplays (XF86Display), `$mod+Shift+a` reloads, swaynag exit,
+  `Ctrl+Alt+BackSpace` exits, `Ctrl+N` / `Ctrl+Shift+N` workspace bindings
+  (physical Alt+digit, which xremap maps in X).
+- No xremap on sway: `xkb_options ctrl:swap_lalt_lctl` (applies to new
+  keyboards too). sway applies `input type:...` settings, also runtime
+  `swaymsg input` ones, to devices plugged in later: no `input-restore`.
+- `bin/sway-autostart` is the `.xprofile` of sway: imports
+  `WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_TYPE DISPLAY`
+  into systemd and D-Bus, starts `sway-session.target` (graphical-session
+  for xdg-desktop-portal), theme restore, `kb de`, kanshi (only with
+  `~/.config/kanshi/config`), swayidle, sway-audio-idle-inhibit, `wl-paste
+  --watch cliphist store`, the bar, blueman-applet, lxpolkit. A watcher
+  stops the target and removes the variables when sway ends (D-Bus gets
+  empty values): the user manager outlives a logout while ssh or lingering
+  keeps it, and a later i3 login would see `SWAYSOCK`.
+- Session detection in every script: `SWAYSOCK` before `DISPLAY` (sway sets
+  `DISPLAY` for Xwayland). Per-session keys use `WAYLAND_DISPLAY` (state
+  files, eww's config directory `$XDG_RUNTIME_DIR/eww/wayland-N`,
+  `pkill-display`). `bin/wm-msg` runs `swaymsg` in sway, else `i3-msg`.
+- Idle: swayidle timeouts count from the last input (not chained):
+  `loginctl lock-session` after IDLE_LOCK_MINUTES, `systemctl suspend`
+  after IDLE_SUSPEND_MINUTES; `lock` and `before-sleep` run `pwr lock`
+  (swaylock). `inhibit_idle fullscreen` for all windows.
+  `caffeinate` takes a logind inhibitor (`systemd-inhibit --what=sleep`,
+  with `display` also `idle`); swayidle honours it, and `pwr sleep` is
+  refused meanwhile (lid close still suspends).
+- Bar: the same eww config (Wayland properties `:exclusive`, `:focusable`,
+  `:namespace` next to the X11 ones). On sway: 23 logical px high (sway
+  scales), tray on the first active output, `bars_ok` checks that each
+  output's workspace rect starts one bar height below the output top
+  (assumes no top gaps).
+- Keyboard: `xkb/symbols/bone2` (one group, eight levels; Neo Mod3 =
+  level 3, Mod4 = level 5; name "Bone 2 (dotfiles)"); libxkbcommon finds it
+  in `~/.config/xkb`. Differences from the X keymap: Mod4+Space gives 0,
+  Mod4+Return KP_Enter, Mod4 on the keypad navigation, both orders lock
+  Mod4, no mouse keys; the Neo Mod4 lock uses the NumLock modifier (do not
+  set `xkb_numlock enabled`). `kb` on sway: `swaymsg input type:keyboard
+  xkb_layout`, plus `~/.config/sway.d/kb.conf` for reloads.
+- Monitors: kanshi profiles in `~/.config/kanshi/config` (the user's file,
+  not in the repo); `kanshi-save NAME` writes the current outputs (matched
+  by make, model, serial) and runs `kanshictl reload`.
+- Known gaps: XWayland apps (Qt 5, DaVinci Resolve) are blurry at a
+  fractional scale; no xrdp (it stays with the i3 session); no mouse keys;
+  the X touchpad curve. lxpolkit (GTK 2) runs on Xwayland.
 
 ## tmux and wezterm
 

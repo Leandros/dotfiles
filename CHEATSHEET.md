@@ -6,7 +6,8 @@ Neovim use them the same way.
 
 ## Modifiers
 
-In X, xremap swaps the left Alt and Ctrl keys. Right modifiers do not change.
+In X, xremap swaps the left Alt and Ctrl keys; in sway, the XKB option
+`ctrl:swap_lalt_lctl` does. Right modifiers do not change.
 
 | Sheet | Physical key |
 |---|---|
@@ -125,6 +126,32 @@ In X, xremap swaps the left Alt and Ctrl keys. Right modifiers do not change.
 | `theme dark` / `light` / `toggle` | Solarized dark or light: i3 colors, Firefox, GTK apps (on next start) |
 | `arandr`, `autorandr --save NAME` | Arrange and save monitor layouts |
 | `rrandr` | Monitor layout with refresh rate; save with `autorandr --save NAME` |
+
+## sway
+
+The Wayland session (login: "Sway (dotfiles)"). Every i3 key above works the
+same, except these:
+
+| Key | Action |
+|---|---|
+| `Mod+i` | Program menu (fuzzel) |
+| `Mod+c` | Clipboard history (cliphist in fuzzel); `Escape` keeps the clipboard |
+| `Mod+j` | Label every window (sway-easyfocus, `n r s g b e i t c o`); any other key cancels |
+| `Mod+Shift+a` | Reload config (sway has no restart) |
+| `Mod+Shift+u` | Exit sway (asks first) |
+| `Ctrl+Alt+Backspace` | Exit sway at once |
+| Display key | Monitor layout (wdisplays) |
+| Bar tray | Bluetooth (blueman); the tray is on the first monitor |
+
+| Command | Action |
+|---|---|
+| `kanshi-save NAME` | Keep the monitor layout for these monitors; kanshi applies it when they connect |
+| `kb us` / `de` / `bone2` | Keyboard layout of the sway session (also after a reload) |
+| `caffeinate` / `caffeinate display` | No idle suspend (and no lock) until Ctrl-C; `pwr sleep` is refused meanwhile |
+| `theme dark` / `light` / `toggle` | Also the sway colors and fuzzel, at once |
+| `wdisplays` | Arrange monitors; save with `kanshi-save NAME` |
+
+Not in sway: xrdp (use the i3 session), CopyQ, mouse keys.
 
 ## tmux
 

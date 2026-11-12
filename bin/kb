@@ -1,26 +1,41 @@
 #!/usr/bin/env bash
 #
-# kb - switch the keyboard layout of the X session or the virtual consoles.
+# kb - switch the keyboard layout of the X or sway session or the virtual
+# consoles.
 #
-# Inside X (DISPLAY set) it changes only the session's X keyboard; with
-# --console also the consoles. On a tty it changes only the consoles.
-# The console layout is system-wide: consoles run by kmscon (Fedora 45+)
-# follow localectl's X11 settings, which are also the X server default (the
-# login screen, keyboards X adds), and fbcon consoles share the kernel
-# keymap (loadkeys). So X must not change it by itself.
+# Inside X (DISPLAY set) it changes only the session's X keyboard, in sway
+# (SWAYSOCK set) only sway's keyboards; with --console also the consoles.
+# On a tty it changes only the consoles. The console layout is system-wide:
+# consoles run by kmscon (Fedora 45+) follow localectl's X11 settings, which
+# are also the X server default (the login screen, keyboards X adds), and
+# fbcon consoles share the kernel keymap (loadkeys). So a session must not
+# change it by itself.
 #
 # Usage: kb [--console]            interactive menu
 #        kb [--console] us|de|bone2
 #        kb [--console] next|prev  cycle through the layouts
-#        kb show                   print the session's X layout
+#        kb show                   print the session's layout
 #
 set -euo pipefail
 
 readonly LAYOUTS=(us de bone2)
-# Remembered per X display so the status bar does not query X on every
-# tick; two sessions (local and xrdp) keep their own layouts. Unused on a
-# tty.
-readonly STATE_FILE="${XDG_RUNTIME_DIR:-$HOME/.cache}/kb-layout-${DISPLAY:-}"
+# sway also sets DISPLAY (Xwayland), so SWAYSOCK decides first.
+if [[ -n "${SWAYSOCK:-}" ]]; then
+    SESSION="sway"
+elif [[ -n "${DISPLAY:-}" ]]; then
+    SESSION="x"
+else
+    SESSION="tty"
+fi
+readonly SESSION
+# Remembered per X or Wayland display so the status bar does not query the
+# session on every tick; two sessions (local and xrdp) keep their own
+# layouts. Unused on a tty.
+session_key="${DISPLAY:-}"
+[[ "$SESSION" != sway ]] || session_key="${WAYLAND_DISPLAY:-}"
+readonly STATE_FILE="${XDG_RUNTIME_DIR:-$HOME/.cache}/kb-layout-$session_key"
+# `swaymsg reload` drops input commands; the sway config includes this file.
+readonly SWAY_CONF="$HOME/.config/sway.d/kb.conf"
 readonly XMODMAP_FILE="$HOME/.Xmodmap"
 # Console keymap for bone2, generated from ~/.Xmodmap; lives next to this script.
 DOTFILES_DIR="$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)"
@@ -65,6 +80,35 @@ apply_x() {
     esac
 }
 
+# One layout, no XKB groups: some keyboards make bone2 in firmware. bone2 is
+# ~/.config/xkb/symbols/bone2. sway merges the type:keyboard settings, so
+# the xkb_options of the sway config stay.
+apply_sway() {
+    local reply error escaped_quote='\"' escaped_slash='\/'
+    if reply="$(swaymsg input type:keyboard xkb_layout "$1" 2>&1)"; then
+        mkdir -p "$(dirname "$SWAY_CONF")"
+        echo "input type:keyboard xkb_layout $1" > "$SWAY_CONF"
+        return
+    fi
+    # swaymsg exits 2 on "success": false and prints the reply as JSON.
+    error="$reply"
+    if [[ "$reply" =~ \"error\":\ *\"(([^\"\\]|\\.)*)\" ]]; then
+        error="${BASH_REMATCH[1]//"$escaped_quote"/\"}"
+        error="${error//"$escaped_slash"//}"
+    fi
+    die "sway did not set layout $1: $error"
+}
+
+# Layout names as libxkbcommon reports them (xkeyboard-config, xkb/symbols/bone2).
+layout_of_name() {
+    case "$1" in
+        "English (US)")      echo us ;;
+        "German")            echo de ;;
+        "Bone 2 (dotfiles)") echo bone2 ;;
+        *)                   return 1 ;;
+    esac
+}
+
 # Only prompt for the sudo password from a terminal; from .xprofile or a
 # bar click the prompt would block (startx leaves the console as stdin).
 as_root() {
@@ -79,8 +123,9 @@ kmscon_active() {
     [[ -n "$(systemctl list-units --state=active --plain --no-legend 'kmsconvt@*' 2>/dev/null)" ]]
 }
 
-# kmscon follows the X11 keymap published by localed. There is no xkb file
-# for the custom bone2, so the stock de(bone) variant stands in for it.
+# kmscon follows the X11 keymap published by localed. There is no system xkb
+# file for the custom bone2 (xkb/symbols/bone2 is the user's), so the stock
+# de(bone) variant stands in for it.
 apply_console_kmscon() {
     local args
     case "$1" in
@@ -128,22 +173,28 @@ apply_console_checked() {
     fi
 }
 
-# Inside X: the session's X keyboard, plus the consoles with --console. On a
-# tty: the consoles only; the state file records the X session's layout for
-# the bar, so it stays.
+# In a session (X or sway): its keyboards, plus the consoles with --console.
+# On a tty: the consoles only; the state file records the session's layout
+# for the bar, so it stays.
 apply() {
     [[ " ${LAYOUTS[*]} " == *" $1 "* ]] || die "unknown layout: $1 (one of: ${LAYOUTS[*]})"
-    if [[ -z "${DISPLAY:-}" ]]; then
+    if [[ "$SESSION" == tty ]]; then
         apply_console_checked "$1"
         echo "console keyboard layout: $1"
         return
     fi
-    apply_x "$1"
+    local where=X
+    if [[ "$SESSION" == sway ]]; then
+        where=sway
+        apply_sway "$1"
+    else
+        apply_x "$1"
+    fi
     mkdir -p "$(dirname "$STATE_FILE")"
     echo "$1" > "$STATE_FILE"
     if [[ -n "$CONSOLE" ]]; then
         apply_console_checked "$1"
-        echo "keyboard layout: $1 (X and console)"
+        echo "keyboard layout: $1 ($where and console)"
     else
         echo "keyboard layout: $1"
     fi
@@ -161,13 +212,30 @@ detect_x() {
     setxkbmap -query 2>/dev/null | awk '/^layout:/ { print $2 }' | cut -d, -f1 | grep .
 }
 
+# All keyboards have the type:keyboard layout. Virtual keyboards (wtype) have
+# a null name, so take the first name.
+detect_sway() {
+    local inputs
+    inputs="$(swaymsg -t get_inputs 2>/dev/null)" || return 1
+    [[ "$inputs" =~ \"xkb_active_layout_name\":\ *\"([^\"]*)\" ]] || return 1
+    layout_of_name "${BASH_REMATCH[1]}"
+}
+
+detect() {
+    case "$SESSION" in
+        sway) detect_sway ;;
+        x)    detect_x ;;
+        *)    return 1 ;;
+    esac
+}
+
 show() {
     if [[ -s "$STATE_FILE" ]]; then
         cat "$STATE_FILE"
         return
     fi
     local detected
-    if detected="$(detect_x)"; then
+    if detected="$(detect)"; then
         mkdir -p "$(dirname "$STATE_FILE")"
         echo "$detected" > "$STATE_FILE"
         echo "$detected"

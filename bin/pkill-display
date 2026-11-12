@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 #
-# pkill-display - pkill for the processes of this X display only.
+# pkill-display - pkill for the processes of this display (X or sway) only.
 #
 # Two X sessions of one user can run at once (a local one and xrdp). Both
 # start the same programs from ~/.xprofile, which stops the old instances
 # first; a plain pkill would stop the other session's too. This only stops
-# the user's processes whose environment has the caller's DISPLAY.
+# the user's processes whose environment has the caller's DISPLAY. In sway
+# (SWAYSOCK set) the key is WAYLAND_DISPLAY: sway sets DISPLAY for
+# Xwayland, and an X session can have the same DISPLAY.
 #
 # Usage: pkill-display -x NAME       process name, as pkill -x
 #        pkill-display -f PATTERN    command line, as pkill -f
@@ -18,16 +20,27 @@ readonly USAGE="usage: pkill-display -x NAME | -f PATTERN"
 
 die() { printf 'pkill-display: %s\n' "$*" >&2; exit 2; }
 
+# The environment entry of this session.
+session_key() {
+    if [[ -n "${SWAYSOCK:-}" ]]; then
+        [[ -n "${WAYLAND_DISPLAY:-}" ]] || die "WAYLAND_DISPLAY is not set"
+        echo "WAYLAND_DISPLAY=$WAYLAND_DISPLAY"
+        return
+    fi
+    [[ -n "${DISPLAY:-}" ]] || die "DISPLAY is not set"
+    echo "DISPLAY=$DISPLAY"
+}
+
 main() {
     [[ $# -eq 2 && ( "$1" == -x || "$1" == -f ) ]] || die "$USAGE"
-    [[ -n "${DISPLAY:-}" ]] || die "DISPLAY is not set"
-    local pid env rc=1
+    local key pid env rc=1
+    key="$(session_key)"
     for pid in $(pgrep -u "$(id -u)" "$1" "$2" || true); do
         [[ "$pid" -ne $$ ]] || continue
         # Read first: grep -q in a pipe would make pipefail report tr's
         # SIGPIPE. A process may end meanwhile.
         env="$(tr '\0' '\n' < "/proc/$pid/environ" 2>/dev/null)" || continue
-        if grep -qxF "DISPLAY=$DISPLAY" <<< "$env"; then
+        if grep -qxF "$key" <<< "$env"; then
             kill "$pid" 2>/dev/null && rc=0
         fi
     done

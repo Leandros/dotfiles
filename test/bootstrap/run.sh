@@ -8,6 +8,9 @@
 #   test/bootstrap/run.sh al2 debian12    subset (debian12 ubuntu2204 fedora43 fedora44 fedora45 rocky9 al2 al2023)
 #   BOOTSTRAP_CATEGORIES= test/bootstrap/run.sh al2
 #                                         basic only; default "devtools desktop"
+#   BOOTSTRAP_CATEGORIES="devtools desktop desktop-wayland" test/bootstrap/run.sh fedora45
+#                                         both desktops (sway: Fedora 43+); log
+#                                         fedora45-devtools-desktop-desktop-wayland.log
 #
 # The working tree (including uncommitted changes) is snapshotted into a
 # temporary git repository that bootstrap.sh clones from, so the test covers

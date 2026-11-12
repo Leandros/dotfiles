@@ -1,20 +1,31 @@
 #!/usr/bin/env bash
 #
-# i3-mode - i3's binding mode (resize), one line per change.
+# i3-mode - the binding mode (resize) of i3 or sway, one line per change.
 #
 # For the eww bar, as i3bar's mode indicator: the mode name, empty for
 # "default". Connects again after an i3 restart, starting with the
-# current mode; ends with the X session.
+# current mode; ends with the session.
 #
 set -euo pipefail
 
 readonly RETRY_S="${I3_MODE_RETRY_S:-1}"
+readonly WM_MSG="$HOME/bin/wm-msg"
 
 name() { jq -r --unbuffered "$1 | if . == \"default\" then \"\" else . end"; }
 
-while xset q >/dev/null 2>&1; do
-    if i3-msg -t get_binding_state 2>/dev/null | name '.name'; then
-        i3-msg -t subscribe -m '["mode"]' 2>/dev/null | name '.change' || true
+# The X server answers, or sway. sway does not restart in place: its IPC
+# goes only with the session.
+session_alive() {
+    if [[ -n "${SWAYSOCK:-}" ]]; then
+        "$WM_MSG" -t get_version >/dev/null 2>&1
+        return
+    fi
+    xset q >/dev/null 2>&1
+}
+
+while session_alive; do
+    if "$WM_MSG" -t get_binding_state 2>/dev/null | name '.name'; then
+        "$WM_MSG" -t subscribe -m '["mode"]' 2>/dev/null | name '.change' || true
     fi
     sleep "$RETRY_S"
 done

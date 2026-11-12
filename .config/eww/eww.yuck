@@ -34,7 +34,7 @@
     (for ws in workspaces
       (button :visible {ws.output == output}
               :class "ws ${ws.focused ? 'focused' : ws.visible ? 'active' : ''} ${ws.urgent ? 'urgent' : ''}"
-              :onclick "i3-msg -q workspace number ${ws.num}"
+              :onclick "~/bin/wm-msg -q workspace number ${ws.num}"
         "${ws.name}"))))
 
 (defwidget cpu-tip []
@@ -129,14 +129,20 @@
     (block :name "disk_info" (tooltip (disk-tip) (block-label :name "disk_info")))
     (block :name "time" (tooltip (time-tip) (block-label :name "time")))))
 
-;; output: RandR name (eDP-1), height: pixels for the display scale,
-;; tray: true on one output only (eww has one tray).
-;; A dock window: i3 reserves the strip, as for i3bar.
+;; output: output name (eDP-1), height: pixels for the display scale
+;; (logical pixels on sway, which scales them), tray: true on one output
+;; only (eww has one tray).
+;; X11: a dock window, i3 reserves the strip, as for i3bar. Wayland: a
+;; layer surface with an exclusive zone, without keyboard focus. eww reads
+;; the properties of its backend.
 (defwindow bar [output height tray]
   :monitor output
   :windowtype "dock"
   :geometry (geometry :x "0%" :y "0%" :width "100%" :height "${height}px" :anchor "top center")
   :reserve (struts :side "top" :distance "${height}px")
+  :exclusive true
+  :focusable "none"
+  :namespace "eww-bar"
   (centerbox :class "bar ${theme}"
     ;; The mode after the workspaces, as i3bar shows it.
     (box :space-evenly false :halign "start"

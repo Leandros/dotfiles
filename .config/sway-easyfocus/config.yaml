@@ -1,0 +1,20 @@
+# sway-easyfocus ($mod+j): a label on each window of the workspace; its key
+# focuses the window. The colors come from the sway binding (window title
+# colors, so they follow ~/bin/theme): this file cannot read sway variables.
+#
+# sway-easyfocus 1.0.1 ignores the whole file when a key is unknown or
+# show_confirmation is missing; its command line sets show_confirmation
+# again (false without --show-confirmation).
+
+# Bone 2 home row and its neighbors, as the X binding (wmfocus).
+chars: "nrsgbeitco"
+
+# Labels only; the windows are not dimmed (as wmfocus).
+window_background_opacity: 0.0
+
+# 72 device pixels at the output scale 1.5, as wmfocus in X.
+font_family: '"PragmataPro Mono", monospace'
+font_weight: bold
+font_size: 48px
+
+show_confirmation: false

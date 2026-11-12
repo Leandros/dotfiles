@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 #
-# Runs bin/kb with stubs for the X and console tools: inside X it changes
-# only the session's X keyboard (--console also the console); on a tty
-# (no DISPLAY) only the console. The console path writes the system-wide
-# keymap (localectl, which is also the X server default the login screen
-# uses) or the kernel keymap (loadkeys), so X must not touch it by itself.
+# Runs bin/kb with stubs for the X, sway and console tools: inside X it
+# changes only the session's X keyboard, in sway only sway's keyboards
+# (--console also the console); on a tty (no DISPLAY) only the console.
+# The console path writes the system-wide keymap (localectl, which is also
+# the X server default the login screen uses) or the kernel keymap
+# (loadkeys), so a session must not touch it by itself. sway also sets
+# DISPLAY (Xwayland): SWAYSOCK selects the sway path.
 #
 # Usage: test/kb/test.sh
 #
@@ -16,8 +18,12 @@ TMP="$(mktemp -d)"
 readonly TMP
 trap 'rm -rf "$TMP"' EXIT
 # The bar's state of display :99; each X display has its own (two sessions,
-# e.g. a local one and xrdp, can use different layouts).
+# e.g. a local one and xrdp, can use different layouts). sway's is keyed by
+# its Wayland display.
 readonly STUBS="$TMP/stubs" CALLS="$TMP/calls" STATE="$TMP/run/kb-layout-:99"
+readonly SWAY_STATE="$TMP/run/kb-layout-wayland-1" OUT="$TMP/out"
+# Survives `swaymsg reload`: the sway config includes ~/.config/sway.d/*.conf.
+readonly SWAY_CONF="$TMP/home/.config/sway.d/kb.conf"
 FAILED=0
 
 fail() { printf 'FAIL: %s\n' "$*"; FAILED=1; }
@@ -56,23 +62,55 @@ EOF
 [ -e "$TMP/kmscon" ] && echo "kmsconvt@tty2.service loaded active running"
 exit 0
 EOF
+    # swaymsg as sway 1.12 answers when stdout is not a terminal: get_inputs
+    # prints "$TMP/inputs.json"; with "$TMP/swaymsg-fail" a command fails as
+    # for a layout libxkbcommon cannot find (exit 2).
+    cat > "$STUBS/swaymsg" <<EOF
+#!/bin/sh
+echo "swaymsg \$*" >> "$CALLS"
+case "\$*" in
+    *get_inputs*) cat "$TMP/inputs.json" 2>/dev/null || echo '[]'; exit 0 ;;
+esac
+if [ -e "$TMP/swaymsg-fail" ]; then
+    printf '%s\n' '[ { "success": false, "parse_error": false, "error": "Failed to compile keymap: [XKB-338] Couldn'"'"'t find file \"symbols\/bone2\" in include paths" } ]'
+    exit 2
+fi
+echo '[ { "success": true } ]'
+EOF
     chmod +x "$STUBS"/*
 }
 
-# kb with DISPLAY ($1: "x" or "tty") and the remaining arguments.
+# sway's get_inputs: a touchpad, a virtual keyboard without a layout name,
+# then the keyboards with layout name $1.
+inputs() {
+    cat > "$TMP/inputs.json" <<EOF
+[
+  { "identifier": "1267:12608:Touchpad", "type": "touchpad" },
+  { "identifier": "0:0:wlr_virtual_keyboard_v1", "type": "keyboard", "xkb_active_layout_name": null },
+  { "identifier": "1:1:AT_Translated_Set_2_keyboard", "type": "keyboard", "xkb_active_layout_name": "$1" },
+  { "identifier": "1:1:Other_keyboard", "type": "keyboard", "xkb_active_layout_name": "Other" }
+]
+EOF
+}
+
+# kb in a session ($1: "x", "sway" or "tty") with the remaining arguments.
+# sway also sets DISPLAY for Xwayland.
 run() {
     local where="$1"
     shift
     : > "$CALLS"
-    local display=()
-    [[ "$where" == x ]] && display=(DISPLAY="${KB_DISPLAY:-:99}")
+    local session=()
+    case "$where" in
+        x) session=(DISPLAY="${KB_DISPLAY:-:99}") ;;
+        sway) session=(DISPLAY=:0 SWAYSOCK="$TMP/sway-ipc.sock" WAYLAND_DISPLAY="${KB_WAYLAND_DISPLAY:-wayland-1}") ;;
+    esac
     rm -f "$STUBS/kmscon"
     if [[ -e "$TMP/kmscon" ]]; then
         printf '#!/bin/sh\nexit 0\n' > "$STUBS/kmscon"
         chmod +x "$STUBS/kmscon"
     fi
-    env -u DISPLAY "${display[@]}" HOME="$TMP/home" XDG_RUNTIME_DIR="$TMP/run" \
-        XDG_CACHE_HOME="$TMP/cache" PATH="$STUBS:$PATH" "$SCRIPT" "$@" < /dev/null > /dev/null 2>&1 || echo "rc=$?" >> "$CALLS"
+    env -u DISPLAY -u SWAYSOCK -u WAYLAND_DISPLAY ${session[@]+"${session[@]}"} HOME="$TMP/home" XDG_RUNTIME_DIR="$TMP/run" \
+        XDG_CACHE_HOME="$TMP/cache" PATH="$STUBS:$PATH" "$SCRIPT" "$@" < /dev/null > "$OUT" 2>&1 || echo "rc=$?" >> "$CALLS"
 }
 
 # The calls of one tool, joined.
@@ -122,6 +160,61 @@ main() {
     expect "tty: the X state is kept" "de" "$(cat "$STATE")"
     run tty --console us
     expect "tty --console: console only" "loadkeys -u -q us" "$(calls loadkeys)"
+
+    # sway: its keyboards only, even with DISPLAY (Xwayland) set.
+    run sway bone2
+    expect "sway: bone2 via swaymsg" "swaymsg input type:keyboard xkb_layout bone2" "$(calls swaymsg)"
+    expect "sway: no X tools" "" "$(calls setxkbmap)$(calls xkbcomp)$(calls xmodmap)"
+    expect "sway: no console keymap" "" "$(calls loadkeys)$(calls localectl)"
+    expect "sway: state per Wayland display" "bone2" "$(cat "$SWAY_STATE" 2>/dev/null)"
+    expect "sway: no state for Xwayland's display" "" "$(cat "$TMP/run/kb-layout-:0" 2>/dev/null)"
+    expect "sway: the layout survives swaymsg reload" "input type:keyboard xkb_layout bone2" "$(cat "$SWAY_CONF" 2>/dev/null)"
+
+    # A layout sway cannot compile (bone2 not in ~/.config/xkb): an error; state and reload file stay.
+    touch "$TMP/swaymsg-fail"
+    run sway us
+    rm -f "$TMP/swaymsg-fail"
+    expect "sway: a failed swaymsg fails kb" "rc=1" "$(calls rc=)"
+    if grep -q "layout us: Failed to compile keymap: \[XKB-338\] Couldn't find file \"symbols/bone2\"" "$OUT"; then
+        ok "sway: the error gives sway's reason"
+    else
+        fail "sway: error: $(cat "$OUT")"
+    fi
+    expect "sway: state kept after a failure" "bone2" "$(cat "$SWAY_STATE" 2>/dev/null)"
+    expect "sway: reload file kept after a failure" "input type:keyboard xkb_layout bone2" "$(cat "$SWAY_CONF" 2>/dev/null)"
+
+    # Another sway session keeps its own state.
+    KB_WAYLAND_DISPLAY=wayland-2 run sway us
+    expect "second Wayland display: its own state" "us" "$(cat "$TMP/run/kb-layout-wayland-2" 2>/dev/null)"
+    expect "second Wayland display: the first one's state stays" "bone2" "$(cat "$SWAY_STATE" 2>/dev/null)"
+
+    # sway with --console: sway and the console (fbcon, then kmscon).
+    run sway --console de
+    expect "sway --console: sway layout" "swaymsg input type:keyboard xkb_layout de" "$(calls swaymsg)"
+    expect "sway --console: fbcon keymap" "loadkeys -u -q de-latin1" "$(calls loadkeys)"
+    touch "$TMP/kmscon"
+    run sway --console bone2
+    expect "sway --console, kmscon: localectl de bone" "localectl --no-convert set-x11-keymap de  bone" "$(calls localectl)"
+    run sway us
+    expect "sway, kmscon: localectl untouched" "" "$(calls localectl)"
+    rm -f "$TMP/kmscon"
+
+    # Without a state file (first call after login) kb show asks sway: the
+    # first keyboard with a layout name.
+    local pair name
+    for pair in "English (US)=us" "German=de" "Bone 2 (dotfiles)=bone2" "French=?"; do
+        name="${pair%=*}"
+        rm -f "$SWAY_STATE"
+        inputs "$name"
+        run sway show
+        expect "sway show without state: $name" "${pair##*=}" "$(cat "$OUT")"
+    done
+    expect "sway show reads get_inputs" "swaymsg -t get_inputs" "$(calls swaymsg)"
+    inputs "German"
+    run sway show
+    expect "sway show keeps the detected layout" "de" "$(cat "$SWAY_STATE" 2>/dev/null)"
+    run sway next
+    expect "sway next after de" "swaymsg input type:keyboard xkb_layout bone2" "$(calls swaymsg)"
 
     run x --bogus de
     if grep -q '^rc=' "$CALLS"; then ok "unknown option rejected"; else fail "unknown option accepted"; fi

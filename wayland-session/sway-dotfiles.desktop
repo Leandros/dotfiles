@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Sway (dotfiles)
+Comment=sway with the session environment of the dotfiles
+Exec=/usr/local/bin/sway-session
+Type=Application
+DesktopNames=sway

@@ -6,7 +6,8 @@
 # per block, disk-info one entry per device, theme-mode and
 # i3-workspaces follow changes, and bar opens one bar per output (tray on
 # the primary one, height for Xft.dpi) and reopens them on output changes. cpu-info and
-# mem-info read fake /proc and /sys files.
+# mem-info read fake /proc and /sys files. Under sway (swaymsg stub with
+# answers of sway 1.12) the scripts and bar do the same through wm-msg.
 #
 # Usage: test/eww/test.sh
 #
@@ -15,6 +16,7 @@ set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly SCRIPTS="$HERE/../../.config/eww/scripts"
 readonly BAR="$HERE/../../bin/bar"
+readonly WM_MSG="$HERE/../../bin/wm-msg" YUCK="$HERE/../../.config/eww/eww.yuck"
 TMP="$(mktemp -d)"
 readonly TMP
 trap 'rm -rf "$TMP"' EXIT
@@ -46,8 +48,43 @@ EOF
 }
 
 # DISPLAY :7 and a runtime directory of the test: bar keeps its eww config
-# per display there.
-run() { HOME="$HOME_DIR" DISPLAY=:7 XDG_RUNTIME_DIR="$TMP/run" PATH="$STUBS:$PATH" "$@"; }
+# per display there. Not sway: SWAYSOCK of the caller's session goes.
+run() {
+    env -u SWAYSOCK -u WAYLAND_DISPLAY HOME="$HOME_DIR" DISPLAY=:7 XDG_RUNTIME_DIR="$TMP/run" PATH="$STUBS:$PATH" "$@"
+}
+
+# A sway session: SWAYSOCK and WAYLAND_DISPLAY, and DISPLAY for Xwayland.
+run_sway() {
+    HOME="$HOME_DIR" DISPLAY=:7 WAYLAND_DISPLAY=wayland-1 SWAYSOCK="$TMP/sway.sock" \
+        XDG_RUNTIME_DIR="$TMP/run" PATH="$STUBS:$PATH" "$@"
+}
+
+# swaymsg: answers from STUBS/swaymsg.<type> (pretty JSON, as swaymsg
+# prints it; STUBS/swaymsg.<type>.once first, one time), the events of
+# STUBS/swaymsg.events for subscribe, and commands are recorded. After a
+# subscribe, sway is gone (get_version fails): the watchers end.
+sway_stub() {
+    cat > "$STUBS/swaymsg" <<EOF
+#!/bin/sh
+echo "swaymsg \$*" >> "$CALLS"
+case "\$*" in
+    "-t get_version")
+        [ -e "$TMP/sway-gone" ] && exit 1
+        echo '{"human_readable": "1.12", "variant": "sway"}' ;;
+    "-t subscribe"*) touch "$TMP/sway-gone"; cat "$STUBS/swaymsg.events" ;;
+    "-t "*)
+        if [ -e "$STUBS/swaymsg.\$2.once" ]; then
+            cat "$STUBS/swaymsg.\$2.once"
+            rm "$STUBS/swaymsg.\$2.once"
+        else
+            cat "$STUBS/swaymsg.\$2"
+        fi ;;
+esac
+exit 0
+EOF
+    chmod +x "$STUBS/swaymsg"
+    rm -f "$TMP/sway-gone"
+}
 
 test_status_blocks() {
     # i3status-kb: header, "[", then status lines, later ones after ",".
@@ -80,6 +117,13 @@ test_block_click() {
     : > "$CALLS"
     run "$SCRIPTS/block-click" volume left
     expect "volume: pavucontrol through i3" "i3-msg -q exec --no-startup-id pavucontrol" "$(cat "$CALLS")"
+    sway_stub
+    : > "$CALLS"
+    run_sway "$SCRIPTS/block-click" wireless left
+    expect "sway: nmrs-gui through sway" "swaymsg -q exec --no-startup-id nmrs-gui" "$(cat "$CALLS")"
+    : > "$CALLS"
+    run_sway "$SCRIPTS/block-click" volume left
+    expect "sway: pavucontrol through sway" "swaymsg -q exec --no-startup-id pavucontrol" "$(cat "$CALLS")"
     : > "$CALLS"
     run "$SCRIPTS/block-click" time left
     expect "other blocks: nothing" "" "$(cat "$CALLS")"
@@ -242,6 +286,13 @@ EOF
     rm -f "$TMP/x-gone"
     expect "i3-workspaces: list, again on a change, ends with X" '[{"num":1}];[{"num":1}]' \
         "$(I3_WORKSPACES_RETRY_S=0 run timeout 5 "$SCRIPTS/i3-workspaces" | paste -sd ';')"
+
+    # sway prints the list on many lines; eww reads one value per line.
+    sway_stub
+    printf '[\n  {\n    "num": 1\n  }\n]\n' > "$STUBS/swaymsg.get_workspaces"
+    echo '{ "change": "focus", "current": { "num": 1 } }' > "$STUBS/swaymsg.events"
+    expect "sway: list on one line, again on a change, ends with sway" '[{"num":1}];[{"num":1}]' \
+        "$(I3_WORKSPACES_RETRY_S=0 run_sway timeout 5 "$SCRIPTS/i3-workspaces" | paste -sd ';')"
 }
 
 test_i3_mode() {
@@ -263,6 +314,13 @@ EOF
     rm -f "$TMP/x-gone"
     expect "i3-mode: current mode, then each change; default is empty" ';resize;' \
         "$(I3_MODE_RETRY_S=0 run timeout 5 "$SCRIPTS/i3-mode" | paste -sd ';')"
+
+    sway_stub
+    printf '{\n  "name": "default"\n}\n' > "$STUBS/swaymsg.get_binding_state"
+    printf '{ "change": "resize", "pango_markup": false }\n{ "change": "default", "pango_markup": false }\n' \
+        > "$STUBS/swaymsg.events"
+    expect "sway: current mode, then each change, ends with sway" ';resize;' \
+        "$(I3_MODE_RETRY_S=0 run_sway timeout 5 "$SCRIPTS/i3-mode" | paste -sd ';')"
 }
 
 test_bar() {
@@ -416,10 +474,82 @@ EOF
         "$(grep -E ' (ping|reload|daemon)$' "$CALLS" | paste -sd ';')"
 }
 
+# The bar window: X11 properties (an i3 dock with a strut) and the
+# Wayland ones (a layer surface with an exclusive zone); eww reads the
+# set of its backend. Workspace clicks through i3 or sway.
+test_yuck() {
+    local window prop
+    window="$(sed -n '/^(defwindow bar /,/^  (centerbox/p' "$YUCK")"
+    for prop in ':windowtype "dock"' ':reserve (struts :side "top"' ':exclusive true' ':focusable "none"' \
+        ':namespace "eww-bar"'; do
+        if [[ "$window" == *"$prop"* ]]; then ok "bar window: $prop"; else fail "bar window misses $prop"; fi
+    done
+    # shellcheck disable=SC2016 # An eww expression, not the shell's.
+    if grep -qF ':onclick "~/bin/wm-msg -q workspace number ${ws.num}"' "$YUCK"; then
+        ok "workspace click through wm-msg"
+    else
+        fail "workspace click not through ~/bin/wm-msg"
+    fi
+    # Commands only: comments may name i3-msg.
+    expect "no i3-msg in the eww config" "" "$(grep -rl 'i3-msg -' "$YUCK" "$SCRIPTS" || true)"
+}
+
+# bar under sway: outputs and workspaces as swaymsg prints them (samples of
+# sway 1.12, headless: HEADLESS-1, HEADLESS-2 at scale 1.5, HEADLESS-3
+# disabled; a 23 px bar on each output). No primary output: the tray goes
+# on the first one. sway scales layer surfaces, so the height is for 96
+# dpi. Bars are not in sway's tree: their exclusive zone moves the
+# workspaces down by the bar height.
+test_bar_sway() {
+    stub eww
+    sway_stub
+    cp "$HERE/sway-get_outputs.json" "$STUBS/swaymsg.get_outputs"
+    cp "$HERE/sway-get_workspaces.json" "$STUBS/swaymsg.get_workspaces"
+    # One output change: three events at once.
+    printf '{ "change": "unspecified" }\n{ "change": "unspecified" }\n{ "change": "unspecified" }\n' \
+        > "$STUBS/swaymsg.events"
+    local cfg="eww -c $TMP/run/eww/wayland-1"
+    : > "$CALLS"
+    XFT_DPI=144 BAR_RETRY_S=0 BAR_SIZE_CHECK_S=0 run_sway timeout 5 "$BAR" watch || true
+    expect "sway: bars per active output, tray on the first, 96 dpi height" \
+        "$cfg --no-daemonize open bar --id bar-HEADLESS-1 --screen HEADLESS-1 --arg output=HEADLESS-1 --arg height=23 --arg tray=true;$cfg --no-daemonize open bar --id bar-HEADLESS-2 --screen HEADLESS-2 --arg output=HEADLESS-2 --arg height=23 --arg tray=false" \
+        "$(grep ' open ' "$CALLS" | head -n 2 | paste -sd ';')"
+    expect "sway: bars reopened once when outputs change" "2" "$(grep -c ' close-all' "$CALLS")"
+    expect "sway: bars in place, no new daemon" "0" "$(grep -c ' kill$' "$CALLS")"
+    expect "sway: no i3-msg" "" "$(grep '^i3-msg' "$CALLS" || true)"
+    expect "per-session config of WAYLAND_DISPLAY links the eww files" "$HOME_DIR/.config/eww/eww.yuck" \
+        "$(readlink "$TMP/run/eww/wayland-1/eww.yuck")"
+
+    # No exclusive zone on HEADLESS-2 (no bar), then two on HEADLESS-1
+    # (bars of two daemons): opened again with a new daemon each time.
+    local missing
+    for missing in 'select(.output == "HEADLESS-2").rect.y = 0' 'select(.output == "HEADLESS-1").rect.y = 46'; do
+        sway_stub
+        jq "map($missing)" "$HERE/sway-get_workspaces.json" > "$STUBS/swaymsg.get_workspaces.once"
+        : > "$CALLS"
+        BAR_RETRY_S=0 BAR_SIZE_CHECK_S=0 run_sway timeout 5 "$BAR" watch || true
+        # Start: 2 rounds; the output change: 1.
+        expect "sway: $missing: opened again" "3" "$(grep -c ' close-all' "$CALLS")"
+        expect "sway: $missing: a new daemon of this config first" \
+            "$cfg kill;pkill-display -f eww -c $TMP/run/eww/wayland-1 " \
+            "$(grep -E ' kill$|^pkill-display -f eww' "$CALLS" | paste -sd ';')"
+    done
+
+    # bar (start) without DISPLAY (sway without Xwayland); sway is gone, so
+    # the watcher ends at once.
+    touch "$TMP/sway-gone"
+    : > "$CALLS"
+    run_sway env -u DISPLAY "$BAR" || fail "sway: bar exited $?"
+    expect "sway: bar starts without DISPLAY" "$cfg ping;$cfg kill;$cfg daemon;$cfg ping" \
+        "$(grep -E ' (ping|kill|daemon)$' "$CALLS" | paste -sd ';')"
+}
+
 main() {
     command -v jq >/dev/null || { echo "SKIP: jq not installed"; exit 0; }
     mkdir -p "$STUBS" "$HOME_DIR/bin" "$HOME_DIR/.config/eww"
     touch "$HOME_DIR/.config/eww/eww.yuck" "$HOME_DIR/.config/eww/eww.scss"
+    ln -s "$(readlink -f "$WM_MSG")" "$HOME_DIR/bin/wm-msg"
+    test_yuck
     test_status_blocks
     test_block_click
     test_block_tooltips
@@ -431,6 +561,7 @@ main() {
     test_i3_workspaces
     test_i3_mode
     test_bar
+    test_bar_sway
     exit "$FAILED"
 }
 

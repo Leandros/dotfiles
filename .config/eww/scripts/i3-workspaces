@@ -1,19 +1,34 @@
 #!/usr/bin/env bash
 #
-# i3-workspaces - i3's workspaces as a JSON array, again on every change.
+# i3-workspaces - the workspaces of i3 or sway as a JSON array, again on
+# every change.
 #
 # For the eww bar: num, name, focused, visible, urgent and output of each
-# workspace, as `i3-msg -t get_workspaces` prints them on one line.
-# Connects again after an i3 restart; ends with the X session.
+# workspace, from `wm-msg -t get_workspaces`, on one line (swaymsg prints
+# many; eww reads one value per line). Connects again after an i3
+# restart; ends with the session.
 #
 set -euo pipefail
 
 readonly RETRY_S="${I3_WORKSPACES_RETRY_S:-1}"
+readonly WM_MSG="$HOME/bin/wm-msg"
 
-while xset q >/dev/null 2>&1; do
-    if i3-msg -t get_workspaces 2>/dev/null; then
-        i3-msg -t subscribe -m '["workspace","output"]' 2>/dev/null | while read -r _; do
-            i3-msg -t get_workspaces
+# The X server answers, or sway. sway does not restart in place: its IPC
+# goes only with the session.
+session_alive() {
+    if [[ -n "${SWAYSOCK:-}" ]]; then
+        "$WM_MSG" -t get_version >/dev/null 2>&1
+        return
+    fi
+    xset q >/dev/null 2>&1
+}
+
+workspaces() { "$WM_MSG" -t get_workspaces 2>/dev/null | jq -c .; }
+
+while session_alive; do
+    if workspaces; then
+        "$WM_MSG" -t subscribe -m '["workspace","output"]' 2>/dev/null | while read -r _; do
+            workspaces
         done
     fi
     sleep "$RETRY_S"

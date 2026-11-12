@@ -11,9 +11,10 @@
 #
 set -euo pipefail
 
-# i3 starts the GUI, so eww does not wait for it. The i3 command is one
-# argument; i3-msg would read --no-startup-id as its own option.
-gui() { i3-msg -q "exec --no-startup-id $1"; }
+# The window manager (i3 or sway) starts the GUI, so eww does not wait for
+# it. The command is one argument; i3-msg would read --no-startup-id as its
+# own option. sway ignores --no-startup-id.
+gui() { "$HOME/bin/wm-msg" -q "exec --no-startup-id $1"; }
 
 main() {
     local name="${1:-}" button="${2:-}"

@@ -1,0 +1,145 @@
+#!/usr/bin/env bash
+#
+# sway-autostart - start the programs of the sway session; the ~/.xprofile
+# of sway. The sway config runs it once (exec) at login.
+#
+# Programs that are Wayland clients end with sway. A program without a
+# Wayland connection stays after a logout and is stopped here first.
+#
+# Usage: sway-autostart
+#
+set -euo pipefail
+
+# Session variables that user services and D-Bus-activated programs need
+# (xdg-desktop-portal and its backends open the display).
+readonly SESSION_VARS=(WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_TYPE DISPLAY)
+readonly SESSION_TARGET="sway-session.target"
+# How often the end-of-session watcher checks that sway still answers.
+readonly SWAY_POLL_S=5
+readonly CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+readonly IDLE_CONF="$CONFIG_HOME/idle.conf"
+readonly KANSHI_CONF="$CONFIG_HOME/kanshi/config"
+readonly SECONDS_PER_MINUTE=60
+# swayidle runs its commands in sh, which expands the tilde.
+# shellcheck disable=SC2088
+readonly LOCK_CMD='~/bin/pwr lock'
+# Uses a logind idle lock, not Wayland, so it stays after a logout. pgrep
+# -x sees only 15 characters of a process name: match the command line.
+readonly AUDIO_INHIBIT="sway-audio-idle-inhibit"
+readonly AUDIO_INHIBIT_PATTERN="(^|/)$AUDIO_INHIBIT\$"
+
+has() { command -v "$1" >/dev/null; }
+
+# A failed step must not stop the steps after it.
+try() {
+    "$@" || printf 'sway-autostart: failed: %s\n' "$*" >&2
+}
+
+# Stops the instances of this display only; another session keeps its own.
+stop_old() {
+    [[ -x ~/bin/pkill-display ]] || return 0
+    ~/bin/pkill-display "$@" >/dev/null 2>&1 || true
+}
+
+start_session() {
+    try systemctl --user import-environment "${SESSION_VARS[@]}"
+    if has dbus-update-activation-environment; then
+        try dbus-update-activation-environment --systemd "${SESSION_VARS[@]}"
+    fi
+
+    # graphical-session.target for user services that require it, such as
+    # xdg-desktop-portal (Fedora 45+). The exit bindings stop it.
+    try systemctl --user --no-block start "$SESSION_TARGET"
+}
+
+# The user manager outlives a logout while an ssh login or lingering keeps
+# it. An i3 login after this session would see SWAYSOCK and take the sway
+# paths of kb, theme and bar. So when sway ends (also without the exit
+# bindings), stop the target and remove the variables. D-Bus cannot remove
+# a variable: it gets an empty value, which the scripts treat as unset.
+end_session_with_sway() {
+    # Returns when sway closes the socket; the loop is for a subscription
+    # that fails at once.
+    swaymsg -t subscribe '["shutdown"]' >/dev/null 2>&1 || true
+    while swaymsg -t get_version >/dev/null 2>&1; do
+        sleep "$SWAY_POLL_S"
+    done
+
+    try systemctl --user stop "$SESSION_TARGET"
+    try systemctl --user unset-environment "${SESSION_VARS[@]}"
+    if has dbus-update-activation-environment; then
+        try dbus-update-activation-environment "${SESSION_VARS[@]/%/=}"
+    fi
+}
+
+# Lock and suspend on idle; lock before sleep and on `loginctl
+# lock-session`. Each timeout counts from the last input: they do not
+# chain as the xidlehook timers do. Full-screen windows inhibit idle
+# (sway config), audio through the logind lock of AUDIO_INHIBIT.
+start_idle() {
+    has swayidle || return 0
+
+    # shellcheck source=/dev/null
+    [[ -f "$IDLE_CONF" ]] && . "$IDLE_CONF"
+    local timeouts=()
+    if [[ -n "${IDLE_LOCK_MINUTES:-}" && -n "${IDLE_SUSPEND_MINUTES:-}" ]]; then
+        timeouts=(
+            timeout $((IDLE_LOCK_MINUTES * SECONDS_PER_MINUTE)) 'loginctl lock-session'
+            timeout $((IDLE_SUSPEND_MINUTES * SECONDS_PER_MINUTE)) 'systemctl suspend'
+        )
+    fi
+
+    # -w: suspend waits until the screen is locked.
+    swayidle -w ${timeouts[@]+"${timeouts[@]}"} lock "$LOCK_CMD" before-sleep "$LOCK_CMD" \
+        >/dev/null 2>&1 &
+}
+
+main() {
+    start_session
+    end_session_with_sway </dev/null >/dev/null 2>&1 &
+
+    # Solarized dark or light (the saved choice): theme writes the colors
+    # into ~/.config/sway.d/theme.conf for the next login and sets them in
+    # this session.
+    [[ -x ~/bin/theme ]] && try ~/bin/theme restore >/dev/null
+
+    # The sway config sets de; kb records it for the status bar.
+    [[ -x ~/bin/kb ]] && try ~/bin/kb de </dev/null >/dev/null
+
+    # Monitor layout: the kanshi profile for the connected outputs (save
+    # one with ~/bin/kanshi-save). kanshi exits without a config.
+    if has kanshi && [[ -f "$KANSHI_CONF" ]]; then
+        kanshi >/dev/null 2>&1 &
+    fi
+
+    start_idle
+
+    if has "$AUDIO_INHIBIT"; then
+        stop_old -f "$AUDIO_INHIBIT_PATTERN"
+        "$AUDIO_INHIBIT" >/dev/null 2>&1 &
+    fi
+
+    # Clipboard history for ~/bin/clip-pick. cliphist skips data that
+    # password managers mark as secret.
+    if has wl-paste && has cliphist; then
+        wl-paste --watch cliphist store >/dev/null 2>&1 &
+    fi
+
+    # Status bar: eww (without eww, bootstrap.sh sets up swaybar). Before
+    # the tray apps: they register with its tray when they start.
+    [[ -x ~/bin/bar ]] && try ~/bin/bar >/dev/null
+
+    # Bluetooth: tray icon and the pairing agent (PIN prompts).
+    if has blueman-applet; then
+        blueman-applet >/dev/null 2>&1 &
+    fi
+
+    # Polkit agent: asks for the password when a GUI of the user needs root
+    # through polkit (firewall-config, blueman). Without one polkit refuses
+    # silently. GTK 2: it runs on Xwayland.
+    if has lxpolkit; then
+        lxpolkit >/dev/null 2>&1 &
+    fi
+}
+
+main "$@"

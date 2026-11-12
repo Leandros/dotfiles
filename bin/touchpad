@@ -6,7 +6,8 @@
 # macOS); this changes it until the next login. It sets every device with a
 # libinput tapping property, so the TrackPoint and mice are left alone. The
 # choice is kept per session, and `restore` applies it again after X re-adds
-# the touchpad (bin/input-restore).
+# the touchpad (bin/input-restore). In sway (SWAYSOCK set) it sets the
+# input type touchpad, which sway applies to touchpads added later too.
 #
 # Usage: touchpad tap      tap to click
 #        touchpad click    press to click
@@ -19,8 +20,17 @@ set -euo pipefail
 readonly PROP="libinput Tapping Enabled"
 readonly USAGE="usage: touchpad tap | click | toggle | show | restore"
 readonly STATE_FILE="${XDG_RUNTIME_DIR:-$HOME/.cache}/touchpad-tap"
+readonly WM_MSG="$HOME/bin/wm-msg"
+readonly SWAY_TOUCHPADS="type:touchpad"
 
 die() { printf 'touchpad: %s\n' "$*" >&2; exit 1; }
+
+is_sway() { [[ -n "${SWAYSOCK:-}" ]]; }
+
+# sway's tap state of the first touchpad: enabled, disabled or empty.
+sway_tap() {
+    "$WM_MSG" -t get_inputs | jq -r 'first(.[] | select(.type == "touchpad") | .libinput.tap) // empty'
+}
 
 # Ids of the devices that support tapping.
 touchpads() {
@@ -34,6 +44,12 @@ touchpads() {
 
 set_tapping() {
     local value="$1" id found=""
+    if is_sway; then
+        local state=disabled
+        [[ "$value" -eq 1 ]] && state=enabled
+        "$WM_MSG" -q input "$SWAY_TOUCHPADS" tap "$state"
+        return
+    fi
     for id in $(touchpads); do
         xinput set-prop "$id" "$PROP" "$value"
         found=1
@@ -44,6 +60,14 @@ set_tapping() {
 # State of the first touchpad.
 show() {
     local id
+    if is_sway; then
+        case "$(sway_tap)" in
+            enabled) echo tap ;;
+            disabled) echo click ;;
+            *) die "no touchpad found" ;;
+        esac
+        return
+    fi
     # No `| head -n 1`: with two touchpads pipefail would report SIGPIPE.
     id="$(touchpads)"
     id="${id%%$'\n'*}"
@@ -62,7 +86,7 @@ remember() {
 }
 
 main() {
-    [[ -n "${DISPLAY:-}" ]] || die "needs X (DISPLAY is not set)"
+    is_sway || [[ -n "${DISPLAY:-}" ]] || die "needs X or sway (DISPLAY and SWAYSOCK are not set)"
     case "${1:-}" in
         tap)    set_tapping 1; remember tap; echo "touchpad: tap to click" ;;
         click)  set_tapping 0; remember click; echo "touchpad: press to click" ;;

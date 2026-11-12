@@ -10,11 +10,17 @@
 # session. Without eww nothing happens: bootstrap.sh then sets up i3bar
 # (.config/i3/i3bar.conf).
 #
+# sway (SWAYSOCK set; checked first, sway sets DISPLAY for Xwayland):
+# ~/bin/sway-autostart runs it. sway has no primary output: the tray goes
+# on the first one. Bars are layer surfaces that sway scales: the height is
+# in logical pixels. The watcher ends with sway.
+#
 # Two X sessions can run at once (local and xrdp): each display gets its own
 # eww daemon. eww names its socket after the resolved config path, so the
-# daemon reads a directory of this display ($XDG_RUNTIME_DIR/eww/display0)
-# that links the files of ~/.config/eww. Only this display's watcher is
-# replaced (~/bin/pkill-display).
+# daemon reads a directory of this display ($XDG_RUNTIME_DIR/eww/display0;
+# on sway of WAYLAND_DISPLAY: eww/wayland-1) that links the files of
+# ~/.config/eww. Only this display's watcher is replaced
+# (~/bin/pkill-display).
 #
 # Usage: bar          start (again: a new daemon, which reads the config,
 #                     and a new watcher, which opens the bars)
@@ -33,12 +39,30 @@ readonly OPEN_TRIES=3 SIZE_CHECK_S="${BAR_SIZE_CHECK_S:-1}"
 readonly OPEN_TIMEOUT_S="${BAR_OPEN_TIMEOUT_S:-10}" SETTLE_S="${BAR_SETTLE_S:-1}"
 readonly DAEMON_WAIT_TRIES=50
 readonly PKILL="${BAR_PKILL:-$HOME/bin/pkill-display}"
+readonly WM_MSG="$HOME/bin/wm-msg"
 
 eww_() { "$EWW" -c "$CONFIG" "$@"; }
 
+is_sway() { [[ -n "${SWAYSOCK:-}" ]]; }
+
+# The X server answers, or sway. sway does not restart in place: its IPC
+# goes only with the session.
+session_alive() {
+    if is_sway; then
+        "$WM_MSG" -t get_version >/dev/null 2>&1
+        return
+    fi
+    xset q >/dev/null 2>&1
+}
+
 # This display's config directory: links to the files in SOURCE.
 display_config() {
-    local dir="${XDG_RUNTIME_DIR:-/tmp}/eww/display${DISPLAY//[^0-9.]/}" file
+    local dir file
+    if is_sway; then
+        dir="${XDG_RUNTIME_DIR:-/tmp}/eww/${WAYLAND_DISPLAY##*/}"
+    else
+        dir="${XDG_RUNTIME_DIR:-/tmp}/eww/display${DISPLAY//[^0-9.]/}"
+    fi
     mkdir -p "$dir"
     for file in "$SOURCE"/*; do
         [[ -e "$file" ]] && ln -sfn "$file" "$dir/${file##*/}"
@@ -46,12 +70,15 @@ display_config() {
     echo "$dir"
 }
 
-# Bar height for the display scale (Xft.dpi, from ~/.Xresources).
+# Bar height for the display scale (Xft.dpi, from ~/.Xresources). sway
+# scales layer surfaces by the output scale itself.
 height() {
-    local dpi
-    dpi="$(xrdb -query 2>/dev/null | awk '/^Xft\.dpi:/ { print $2; exit }')"
-    dpi="${dpi%.*}"
-    [[ "$dpi" =~ ^[0-9]+$ ]] || dpi="$X_DEFAULT_DPI"
+    local dpi="$X_DEFAULT_DPI"
+    if ! is_sway; then
+        dpi="$(xrdb -query 2>/dev/null | awk '/^Xft\.dpi:/ { print $2; exit }')"
+        dpi="${dpi%.*}"
+        [[ "$dpi" =~ ^[0-9]+$ ]] || dpi="$X_DEFAULT_DPI"
+    fi
     echo $(((BASE_HEIGHT * dpi + BASE_DPI / 2) / BASE_DPI))
 }
 
@@ -60,10 +87,26 @@ height() {
 # stacked, or none: windows of a second eww daemon (see start_daemon).
 bars_ok() {
     local outputs
-    outputs="$(i3-msg -t get_outputs | jq -c '[.[] | select(.active) | .name] | sort')"
-    i3-msg -t get_tree | jq -e --argjson outputs "$outputs" '
+    if is_sway; then
+        sway_bars_ok
+        return
+    fi
+    outputs="$("$WM_MSG" -t get_outputs | jq -c '[.[] | select(.active) | .name] | sort')"
+    "$WM_MSG" -t get_tree | jq -e --argjson outputs "$outputs" '
         [.. | objects | select(.window_properties?.class? == "Eww")]
         | ([.[].output] | sort) == $outputs and all(.[]; .rect.height > 0)' >/dev/null
+}
+
+# sway has no layer surfaces in its tree. The exclusive zone of a bar moves
+# the visible workspace of its output down by the bar height: by 0 without
+# a bar, by twice that with two.
+sway_bars_ok() {
+    local outputs
+    outputs="$("$WM_MSG" -t get_outputs)"
+    "$WM_MSG" -t get_workspaces | jq -e --argjson outputs "$outputs" --argjson h "$(height)" '
+        . as $ws
+        | all($outputs[] | select(.active); .name as $name | .rect.y as $top
+            | any($ws[]; .visible and .output == $name and .rect.y - $top == $h))' >/dev/null
 }
 
 # Starts the daemon and waits until it answers. An `eww open` that finds
@@ -101,10 +144,11 @@ open_bars_checked() {
     echo "bar: no single bar with a height on every output after $OPEN_TRIES tries" >&2
 }
 
-# One bar per active output; the tray on the primary one, else the first.
+# One bar per active output; the tray on the primary one, else the first
+# (sway: no primary).
 open_bars() {
     local outputs h name tray=true
-    outputs="$(i3-msg -t get_outputs | jq -r '[.[] | select(.active)] | sort_by(.primary | not) | .[].name')"
+    outputs="$("$WM_MSG" -t get_outputs | jq -r '[.[] | select(.active)] | sort_by(.primary | not) | .[].name')"
     h="$(height)"
     eww_ close-all >/dev/null 2>&1 || true
     while read -r name; do
@@ -124,8 +168,8 @@ open_bars() {
 wait_for_i3() {
     local i
     for ((i = 0; i < I3_WAIT_TRIES; i++)); do
-        i3-msg -t get_version >/dev/null 2>&1 && return 0
-        xset q >/dev/null 2>&1 || return 1
+        "$WM_MSG" -t get_version >/dev/null 2>&1 && return 0
+        session_alive || return 1
         sleep 0.1
     done
     return 1
@@ -133,7 +177,7 @@ wait_for_i3() {
 
 # Output events (monitor added, removed, rearranged) reopen the bars.
 watch() {
-    while xset q >/dev/null 2>&1; do
+    while session_alive; do
         if wait_for_i3; then
             open_bars_checked
             while read -r _; do
@@ -141,14 +185,17 @@ watch() {
                 # they settle.
                 while read -r -t "$SETTLE_S" _; do :; done
                 open_bars_checked
-            done < <(i3-msg -t subscribe -m '["output"]' 2>/dev/null)
+            done < <("$WM_MSG" -t subscribe -m '["output"]' 2>/dev/null)
         fi
         sleep "$RETRY_S"
     done
 }
 
 main() {
-    [[ -n "${DISPLAY:-}" ]] || { echo "bar: DISPLAY is not set" >&2; exit 1; }
+    if ! is_sway && [[ -z "${DISPLAY:-}" ]]; then
+        echo "bar: no sway or X session (SWAYSOCK and DISPLAY are not set)" >&2
+        exit 1
+    fi
     CONFIG="$(display_config)"
     case "${1:-}" in
         watch) watch; return ;;

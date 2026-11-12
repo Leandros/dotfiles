@@ -4,9 +4,15 @@
 #
 # The i3 config reads its base colors from X resources (set_from_resource,
 # dark fallbacks); this script merges the palette with xrdb and reloads i3.
+# The sway config includes ~/.config/sway.d/*.conf after its dark
+# defaults: this script writes the palette to theme.conf there, and the
+# fuzzel colors to ~/.local/state/theme/fuzzel.ini (fuzzel.ini includes
+# it). It writes both in X sessions too, so the next sway login has the
+# colors. In sway (SWAYSOCK set) it sets them in the running sway instead
+# of xrdb and i3 (see sway_apply).
 # It also sets the freedesktop color-scheme, which Firefox and GTK 4 apps
 # read through xdg-desktop-portal, and gtk-application-prefer-dark-theme for
-# GTK 3 and plain GTK 4 apps, which on X11 read settings.ini when they start
+# GTK 3 and plain GTK 4 apps, which read settings.ini when they start
 # (running ones keep their theme). The gsettings key keeps the choice, and
 # ~/.xprofile runs `theme restore` before i3 starts.
 #
@@ -23,8 +29,25 @@ readonly KEY="color-scheme"
 readonly USAGE="usage: theme dark | light | toggle | show | restore"
 readonly GTK_KEY="gtk-application-prefer-dark-theme"
 readonly CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
-# Variables in the i3 config, in palette order.
+# Variables in the i3 and sway configs, in palette order.
 readonly NAMES=(baseA3 baseA2 baseA1 baseA0 baseB0 baseB1 baseB2 baseB3 custom)
+readonly WM_MSG="$HOME/bin/wm-msg"
+# Paths in the sway config and in .config/fuzzel/fuzzel.ini.
+readonly SWAY_THEME="$HOME/.config/sway.d/theme.conf"
+readonly SWAY_CONFIG="$HOME/.config/sway/config"
+readonly FUZZEL_THEME="$HOME/.local/state/theme/fuzzel.ini"
+readonly GREEN="#859900" ORANGE="#cb4b16"
+# fuzzel colors as the window titles (client.* in the i3 config): entries
+# as unfocused ones, the selection as the focused one. Values are palette
+# names or colors. fuzzel's defaults are Solarized light only, so every
+# key is set.
+readonly FUZZEL_COLORS=(
+    background=baseA2 text=baseB1 message=baseB1 prompt=baseB0 placeholder=baseA1
+    input=baseB1 match="$ORANGE" selection="$GREEN" selection-text=baseB3
+    selection-match=baseA3 counter=baseA1 border="$GREEN"
+)
+# fuzzel colors are RRGGBBAA.
+readonly OPAQUE="ff"
 
 die() { printf 'theme: %s\n' "$*" >&2; exit 1; }
 
@@ -43,6 +66,76 @@ resources() {
     for i in "${!NAMES[@]}"; do
         printf 'i3wm.%s: %s\n' "${NAMES[$i]}" "${colors[$i]}"
     done
+}
+
+sway_colors() {
+    local colors i
+    read -r -a colors <<< "$(palette "$1")"
+    for i in "${!NAMES[@]}"; do
+        # shellcheck disable=SC2016 # $ starts a sway variable.
+        printf 'set $%s %s\n' "${NAMES[$i]}" "${colors[$i]}"
+    done
+}
+
+# The color of palette NAME in THEME.
+color() {
+    local name="$1" colors i
+    read -r -a colors <<< "$(palette "$2")"
+    for i in "${!NAMES[@]}"; do
+        [[ "${NAMES[$i]}" == "$name" ]] || continue
+        echo "${colors[$i]}"
+        return
+    done
+}
+
+fuzzel_colors() {
+    local entry value
+    echo "[colors]"
+    for entry in "${FUZZEL_COLORS[@]}"; do
+        value="${entry#*=}"
+        [[ "$value" == "#"* ]] || value="$(color "$value" "$1")"
+        echo "${entry%%=*}=${value#\#}$OPAQUE"
+    done
+}
+
+# Top-level lines of the sway config that use a themed variable, continued
+# lines joined. Not comments, set, include and exec lines (they would
+# start programs again), and not blocks: a line of a block is no command
+# alone.
+sway_color_lines() {
+    [[ -r "$SWAY_CONFIG" ]] || return 0
+    awk -v names="${NAMES[*]}" '
+        BEGIN { gsub(/ /, "|", names); themed = "[$](" names ")([^A-Za-z0-9_]|$)" }
+        cont != "" { sub(/^[[:space:]]+/, ""); $0 = cont $0; cont = "" }
+        /\\$/ { cont = substr($0, 1, length($0) - 1); next }
+        /^[[:space:]]*(#|$)/ { next }
+        { opening = gsub(/[{]/, "{"); closing = gsub(/[}]/, "}") }
+        depth > 0 || opening > 0 || closing > 0 { depth += opening - closing; next }
+        /^[[:space:]]*(set|include|exec|exec_always)([[:space:]]|$)/ { next }
+        $0 ~ themed { sub(/^[[:space:]]+/, ""); print }
+    ' "$SWAY_CONFIG"
+}
+
+# sway: a reload would drop what was set at runtime (kanshi's monitor
+# layout, the keyboard layout, touchpad tapping). So the variables are set
+# again, then the config lines that use them run again. swaybar (the
+# fallback bar) has its colors in a block: they follow at the next login.
+sway_apply() {
+    local line
+    while IFS= read -r line; do
+        "$WM_MSG" -q "$line" || echo "theme: sway rejected: $line" >&2
+    done < <(sway_colors "$1"; sway_color_lines)
+}
+
+# Writes stdin to FILE through a temporary file, so sway and fuzzel never
+# read a half-written one. The name does not end in .conf: sway's include
+# glob does not match it.
+write_file() {
+    local file="$1" tmp
+    mkdir -p "$(dirname "$file")"
+    tmp="$(mktemp "$file.XXXXXX")"
+    cat > "$tmp"
+    mv -f "$tmp" "$file"
 }
 
 # Sets GTK_KEY right after the [Settings] header (added at the end when
@@ -74,15 +167,22 @@ show() {
 
 apply() {
     [[ " ${THEMES[*]} " == *" $1 "* ]] || die "unknown theme: $1 (one of: ${THEMES[*]})"
-    if [[ -n "${DISPLAY:-}" ]]; then
+    sway_colors "$1" | write_file "$SWAY_THEME"
+    fuzzel_colors "$1" | write_file "$FUZZEL_THEME"
+    # sway sets DISPLAY for Xwayland; its colors are in SWAY_THEME.
+    if [[ -z "${SWAYSOCK:-}" && -n "${DISPLAY:-}" ]]; then
         # -nocpp: the input is plain resources; no C preprocessor needed.
         resources "$1" | xrdb -nocpp -merge
     fi
     gsettings set "$SCHEMA" "$KEY" "prefer-$1" || echo "theme: color-scheme unchanged" >&2
     if [[ "$1" == dark ]]; then set_gtk 1; else set_gtk 0; fi
-    # Fails before i3 runs (restore from ~/.xprofile); i3 reads the
-    # resources when it starts.
-    i3-msg -q reload >/dev/null 2>&1 || true
+    if [[ -n "${SWAYSOCK:-}" ]]; then
+        sway_apply "$1"
+    else
+        # Fails before i3 runs (restore from ~/.xprofile); i3 reads the
+        # resources when it starts.
+        "$WM_MSG" -q reload >/dev/null 2>&1 || true
+    fi
     echo "theme: $1"
 }
 
