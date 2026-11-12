@@ -2049,7 +2049,7 @@ install_wayland_packages() {
     # util-linux: rfkill (flightmode); the container images have only
     # util-linux-core.
     $SUDO dnf install -y -q \
-        sway swaybg swayidle swaylock xorg-x11-server-Xwayland \
+        sway swaybg swayidle swaylock xorg-x11-server-Xwayland xrdb \
         xdg-desktop-portal-wlr xdg-desktop-portal-gtk \
         kanshi wdisplays wl-clipboard fuzzel i3status blueman gobject-introspection \
         alsa-utils pavucontrol brightnessctl util-linux cifs-utils samba-client btop remmina remmina-plugins-rdp firewall-config lxpolkit jq syncthing kbd terminus-fonts-console

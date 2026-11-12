@@ -113,6 +113,13 @@ main() {
         pkill -u "$UID" -x "$XREMAP" >/dev/null 2>&1 || true
     fi
 
+    # Xwayland: DPI 96, as sway scales its windows by the output scale.
+    # Without any resources Xlib reads ~/.Xdefaults instead, and an
+    # Xft.dpi there scaled X apps' text a second time (VMware, GTK 3).
+    if has xrdb; then
+        echo 'Xft.dpi: 96' | try xrdb -nocpp -merge
+    fi
+
     # The sway config sets de; kb records it for the status bar.
     [[ -x ~/bin/kb ]] && try ~/bin/kb de </dev/null >/dev/null
 

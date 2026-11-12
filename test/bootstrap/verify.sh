@@ -489,7 +489,7 @@ check_wayland() {
             ok "no swaybar (eww is the bar)"
         fi
     fi
-    for bin in sway swaybg swayidle swaylock swaymsg kanshi wdisplays fuzzel cliphist wl-copy wl-paste \
+    for bin in sway swaybg swayidle swaylock swaymsg xrdb kanshi wdisplays fuzzel cliphist wl-copy wl-paste \
         sway-easyfocus sway-audio-idle-inhibit Xwayland i3status jq amixer brightnessctl pavucontrol \
         rfkill smbclient mount.cifs btop remmina; do
         if command -v "$bin" >/dev/null; then ok "wayland bin $bin"; else fail "wayland bin missing: $bin"; fi
