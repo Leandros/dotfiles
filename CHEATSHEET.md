@@ -59,6 +59,8 @@ In X, xremap swaps the left Alt and Ctrl keys; in sway, the XKB option
 | `Mod+1` ... `Mod+0` | Go to workspace 1 ... 10 |
 | `Mod+Shift+1` ... `Mod+Shift+0` | Move window to workspace 1 ... 10 |
 | `Ctrl+digit`, `Ctrl+Shift+digit` | Same as `Mod` (physical left Alt; xremap) |
+| `Mod+Tab` | Back to the previous workspace |
+| `Mod+,` / `Mod+.` | Previous / next workspace on this screen |
 
 ### Scratchpad
 
@@ -84,6 +86,7 @@ In X, xremap swaps the left Alt and Ctrl keys; in sway, the XKB option
 | `Mod+Shift+w` | Reload config |
 | `Mod+Shift+a` | Restart i3, keep the layout |
 | `Mod+Shift+u` | Exit i3 (asks first) |
+| `Mod+Escape` | Lock the screen |
 | `Ctrl+Alt+Backspace` | Kill X at once |
 
 ### Mouse
@@ -104,6 +107,8 @@ In X, xremap swaps the left Alt and Ctrl keys; in sway, the XKB option
 | Volume up / down | +5% / -5% |
 | Mute | Mute on/off |
 | Mic mute | Selected microphone mute on/off |
+| Play/Pause, Next, Previous | Media player (playerctl) |
+| `Print` / `Shift+Print` | Screenshot of the screen / of an area to `~/Pictures/Screenshots` and the clipboard |
 | Display | Monitor layout (arandr) |
 | Brightness up / down | Screen brightness |
 | Keyboard light up / down | Keyboard backlight |

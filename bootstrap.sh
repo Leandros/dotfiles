@@ -1298,6 +1298,7 @@ install_xorg_packages() {
                 xorg xinit x11-xserver-utils \
                 i3 i3status suckless-tools i3lock xss-lock blueman arandr autorandr \
                 alsa-utils pavucontrol brightnessctl xclip xinput rfkill cifs-utils smbclient btop remmina remmina-plugin-rdp picom lxpolkit jq \
+                maim dunst playerctl libnotify-bin \
                 xrdp xorgxrdp syncthing \
                 kbd console-data console-setup
             ;;
@@ -1312,7 +1313,8 @@ install_xorg_packages() {
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap xrandr \
                 i3 i3status dmenu i3lock xss-lock blueman gobject-introspection copyq \
                 arandr autorandr gtk3 \
-                alsa-utils pavucontrol brightnessctl xclip xinput picom cifs-utils samba-client btop remmina remmina-plugins-rdp firewall-config lxpolkit jq xrdp xorgxrdp-glamor syncthing kbd terminus-fonts-console
+                alsa-utils pavucontrol brightnessctl xclip xinput picom cifs-utils samba-client btop remmina remmina-plugins-rdp firewall-config lxpolkit jq xrdp xorgxrdp-glamor syncthing kbd terminus-fonts-console \
+                maim dunst playerctl libnotify
             ;;
         rhel)
             $SUDO dnf install -y -q epel-release
@@ -1325,7 +1327,8 @@ install_xorg_packages() {
             $SUDO dnf install -y -q \
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap \
                 i3 i3status dmenu i3lock copyq \
-                alsa-utils pavucontrol brightnessctl xclip xorg-x11-server-utils cifs-utils samba-client btop remmina remmina-plugins-rdp jq xrdp xorgxrdp-glamor kbd terminus-fonts-console
+                alsa-utils pavucontrol brightnessctl xclip xorg-x11-server-utils cifs-utils samba-client btop remmina remmina-plugins-rdp jq xrdp xorgxrdp-glamor kbd terminus-fonts-console \
+                maim playerctl libnotify
             ;;
     esac
     install_copyq_deb
@@ -1951,6 +1954,7 @@ link_xorg_dotfiles() {
     link "$d/bin/xrdp-keys" "$HOME/bin/xrdp-keys"
     link "$d/bin/syncthing-status" "$HOME/bin/syncthing-status"
     link "$d/bin/wm-msg" "$HOME/bin/wm-msg"
+    link "$d/bin/screenshot" "$HOME/bin/screenshot"
     link "$d/.xinitrc" "$HOME/.xinitrc"
     link "$d/.xprofile" "$HOME/.xprofile"
     link "$d/.xsession" "$HOME/.xsession"
@@ -2053,6 +2057,7 @@ install_wayland_packages() {
         sway swaybg swayidle swaylock xorg-x11-server-Xwayland xrdb \
         xdg-desktop-portal-wlr xdg-desktop-portal-gtk \
         kanshi wdisplays wl-clipboard fuzzel i3status blueman gobject-introspection \
+        grim slurp dunst playerctl libnotify \
         alsa-utils pavucontrol brightnessctl util-linux cifs-utils samba-client btop remmina remmina-plugins-rdp firewall-config lxpolkit jq syncthing kbd terminus-fonts-console
 }
 
@@ -2121,7 +2126,7 @@ link_wayland_dotfiles() {
     local d="$DOTFILES_DIR" name
     link "$d/.wezterm.lua" "$HOME/.wezterm.lua"
     for name in kb i3status-kb pwr theme flightmode touchpad charge caffeinate smb bar \
-        pkill-display term syncthing-status wm-msg sway-autostart kanshi-save clip-pick; do
+        pkill-display term syncthing-status wm-msg screenshot sway-autostart kanshi-save clip-pick; do
         link "$d/bin/$name" "$HOME/bin/$name"
     done
     link "$d/.config/sway" "$HOME/.config/sway"

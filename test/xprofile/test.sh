@@ -36,7 +36,7 @@ expect() {
 write_stubs() {
     mkdir -p "$STUBS" "$TMP/home/bin" "$TMP/home/.config"
     local cmd
-    for cmd in systemctl autorandr xset setxkbmap xmodmap pkill xss-lock blueman-applet picom lxpolkit; do
+    for cmd in systemctl autorandr xset setxkbmap xmodmap pkill xss-lock blueman-applet picom lxpolkit dunst; do
         printf '#!/bin/sh\necho "%s $*" >> "%s"\n' "$cmd" "$CALLS" > "$STUBS/$cmd"
     done
     # xrdb -query prints the Xft.dpi of XFT_DPI (unset: none), like the
@@ -151,6 +151,9 @@ main() {
     # and other GUIs run as the user); a re-login replaces the old one.
     expect "polkit agent starts" "lxpolkit " "$(grep '^lxpolkit' "$CALLS")"
     if grep -qx 'pkill-display -x lxpolkit' "$CALLS"; then ok "the old polkit agent is stopped"; else fail "no pkill-display -x lxpolkit"; fi
+    # dunst: notifications (screenshot, notify-send); one per display.
+    expect "notification daemon starts" "dunst " "$(grep '^dunst' "$CALLS")"
+    if grep -qx 'pkill-display -x dunst' "$CALLS"; then ok "the old notification daemon is stopped"; else fail "no pkill-display -x dunst"; fi
 
     # The eww bar starts its tray before the tray apps register (blueman,
     # CopyQ); otherwise they use i3bar's, which bar hides.

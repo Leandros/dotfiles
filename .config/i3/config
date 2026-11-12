@@ -77,6 +77,20 @@ bindsym XF86AudioRaiseVolume exec amixer set Master 5%+
 bindsym XF86AudioMute exec amixer set Master toggle
 # Mute the selected microphone (Capture is the default source via PipeWire)
 bindsym XF86AudioMicMute exec amixer set Capture toggle
+
+# Media players (MPRIS: browsers, Spotify, mpv) through playerctl.
+bindsym XF86AudioPlay exec --no-startup-id playerctl play-pause
+bindsym XF86AudioPause exec --no-startup-id playerctl play-pause
+bindsym XF86AudioNext exec --no-startup-id playerctl next
+bindsym XF86AudioPrev exec --no-startup-id playerctl previous
+
+# Screenshot to ~/Pictures/Screenshots and the clipboard: the screen, or an
+# area chosen with the mouse (Escape cancels).
+bindsym Print exec --no-startup-id ~/bin/screenshot
+bindsym Shift+Print exec --no-startup-id ~/bin/screenshot --area
+
+# Lock the screen.
+bindsym $mod+Escape exec --no-startup-id ~/bin/pwr lock
 # Monitor layout
 bindsym XF86Display exec --no-startup-id arandr
 
@@ -218,6 +232,13 @@ bindsym $mod+Shift+u exec "i3-nagbar -t warning -m 'You pressed the exit shortcu
 # scratchpad
 bindsym $mod+Shift+z move scratchpad
 bindsym $mod+z scratchpad show
+
+# Back to the previous workspace.
+bindsym $mod+Tab workspace back_and_forth
+
+# Previous / next workspace of this screen (left / right in the bar).
+bindsym $mod+comma workspace prev_on_output
+bindsym $mod+period workspace next_on_output
 
 # resize window (you can also use the mouse for that)
 mode "resize" {

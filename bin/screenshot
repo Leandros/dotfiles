@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+#
+# screenshot - a PNG of the screen (or of an area) in sway and in X.
+#
+# Saves to ~/Pictures/Screenshots/<date>_<time>.png, copies it to the
+# clipboard and shows a notification. sway: grim (slurp for the area),
+# wl-copy; X: maim (-s for the area), xclip. A cancelled area selection
+# (Escape) saves nothing.
+#
+# Usage: screenshot           the outputs (X: the whole screen)
+#        screenshot --area    an area chosen with the mouse
+#
+set -euo pipefail
+
+readonly DIR="$HOME/Pictures/Screenshots"
+
+die() { printf 'screenshot: %s\n' "$*" >&2; exit 2; }
+
+main() {
+    local area=0
+    case "${1:-}" in
+        "") ;;
+        --area) area=1 ;;
+        *) die "usage: screenshot [--area]" ;;
+    esac
+
+    mkdir -p "$DIR"
+    local file geometry
+    file="$DIR/$(date +%Y-%m-%d_%H-%M-%S).png"
+
+    # sway sets DISPLAY too (Xwayland): check SWAYSOCK first.
+    if [[ -n "${SWAYSOCK:-}" ]]; then
+        if [[ "$area" -eq 1 ]]; then
+            geometry="$(slurp)" || exit 0
+            grim -g "$geometry" "$file"
+        else
+            grim "$file"
+        fi
+        wl-copy --type image/png < "$file"
+    else
+        if [[ "$area" -eq 1 ]]; then
+            maim -s "$file" || { rm -f "$file"; exit 0; }
+        else
+            maim "$file"
+        fi
+        xclip -selection clipboard -t image/png < "$file"
+    fi
+
+    if command -v notify-send >/dev/null; then
+        notify-send -a screenshot Screenshot "$file" || true
+    fi
+}
+
+main "$@"

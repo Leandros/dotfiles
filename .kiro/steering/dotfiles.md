@@ -41,7 +41,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `.zshrc` | `~/.zshrc`, rendered copy (`##NEWHOME##`, `##NEWUSER##`) |
 | `.Xresources` | `~/.Xresources`, rendered copy (`##XFT_DPI##`) |
 | `.wezterm.lua`, `.xinitrc`, `.xprofile`, `.xsession`, `.Xmodmap`, `.config/{i3,i3status,xremap,picom,eww}`, `.config/autorandr/postswitch` (the file only: profiles are per machine), `.config/systemd/user/i3-session.target` | `$HOME`, links, Xorg only |
-| `bin/{kb,i3status-kb,pwr,theme,flightmode,touchpad,charge,caffeinate,smb,input-restore,bar,pkill-display,term,xrdp-keys,syncthing-status}` | `~/bin`, links, Xorg only |
+| `bin/{kb,i3status-kb,pwr,theme,flightmode,touchpad,charge,caffeinate,smb,input-restore,bar,pkill-display,term,xrdp-keys,syncthing-status,screenshot}` | `~/bin`, links, Xorg only |
 | `bin/fzf-cache` | `~/bin`, link, always |
 | `.config/{sway,fuzzel,sway-easyfocus}`, `.config/systemd/user/sway-session.target`, `xkb` (as `~/.config/xkb`) | `$HOME`, links, desktop-wayland only |
 | `bin/{wm-msg,sway-autostart,kanshi-save,clip-pick}` | `~/bin`, links; `wm-msg` also for desktop (the eww scripts and i3status-kb use it) |
@@ -203,7 +203,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   an agent in i3, polkit refuses silently: firewall-config and other GUIs
   that run as the user cannot change anything. Not in EL9 EPEL (it has
   mate-polkit, polkit-gnome, xfce-polkit).
-- EL9 has no xss-lock, blueman, arandr, autorandr, picom, syncthing,
+- EL9 has no xss-lock, blueman, arandr, autorandr, picom, syncthing, dunst,
   lxpolkit, rrandr.
   `.xprofile` must work without them. RHEL 10 has no Xorg or i3.
 - CopyQ: Debian/Ubuntu only if the candidate is >= `COPYQ_MIN_VERSION`
@@ -271,7 +271,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   caller's server),
   `test/idle-settings/test.sh`, `test/caffeinate/test.sh`, `test/eww/test.sh`,
   `test/pkill-display/test.sh`, `test/i3-bar/test.sh`, `test/xrdp/test.sh`,
-  `test/xrdp-conf/test.sh`, `test/syncthing-status/test.sh`,
+  `test/xrdp-conf/test.sh`, `test/syncthing-status/test.sh`, `test/screenshot/test.sh`,
   `test/sway-easyfocus-patch/test.sh` (network, cargo, gtk4 headers),
   `test/autorandr-hook/test.sh`,
   `test/input-restore/test.sh`,
@@ -498,6 +498,16 @@ New link or system file: install function, `check_link` or `cmp` check in
   Test: `test/eww/test.sh`.
 - i3bar fallback (`.config/i3/i3bar.conf`): no `tray_output`: with `primary`, the tray vanishes when no output is
   primary. i3bar shows the tray on one output only.
+- Shared i3 and sway keys (same lines in both configs): `$mod+Escape`
+  `pwr lock`; `Print` / `Shift+Print` `bin/screenshot [--area]` (sway:
+  grim, slurp, wl-copy; X: maim, xclip; `~/Pictures/Screenshots`, then
+  notify-send; a cancelled selection saves nothing; test
+  `test/screenshot/test.sh`); media keys `playerctl`; `$mod+Tab`
+  `workspace back_and_forth`; `$mod+comma` / `$mod+period`
+  `workspace prev_on_output` / `next_on_output`; `$mod+Ctrl+direction` `move workspace to
+  output`. dunst (notifications) starts in `.xprofile` (`stop -x` first)
+  and `sway-autostart`; one owner of `org.freedesktop.Notifications` per
+  user bus, so with two sessions the newer dunst exits.
 - `i3-msg` exec needs one string: `i3-msg -q "exec --no-startup-id nmrs-gui"`.
 - `status_command` is `~/bin/i3status-kb`: adds `KB:`, `PWR:`, `☀:` (backlight, `I3STATUS_KB_SYSFS` for tests) and `VPN:`
   (NetworkManager `vpn`/`wireguard` connections via `nmcli`, Tailscale via

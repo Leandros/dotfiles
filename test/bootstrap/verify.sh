@@ -270,7 +270,7 @@ check_desktop_shared() {
     local name theme_out idle_want idle_have pwr_out enabled pair font_line font_want
     local kmscon_font kmscon_font_want status_line kb_out keymap wezterm_stamp eww_libs bin bt_enabled
     for name in kb i3status-kb pwr theme flightmode touchpad charge caffeinate smb bar \
-        pkill-display term syncthing-status wm-msg; do
+        pkill-display term syncthing-status wm-msg screenshot; do
         check_link "$HOME/bin/$name" "$D/bin/$name"
     done
     theme_out="$("$HOME/bin/theme" show 2>&1 || true)"
@@ -489,7 +489,7 @@ check_wayland() {
             ok "no swaybar (eww is the bar)"
         fi
     fi
-    for bin in sway swaybg swayidle swaylock swaymsg xrdb kanshi wdisplays fuzzel cliphist wl-copy wl-paste \
+    for bin in sway swaybg swayidle swaylock swaymsg xrdb grim slurp dunst playerctl notify-send kanshi wdisplays fuzzel cliphist wl-copy wl-paste \
         sway-easyfocus sway-audio-idle-inhibit Xwayland i3status jq amixer brightnessctl pavucontrol \
         rfkill smbclient mount.cifs btop remmina; do
         if command -v "$bin" >/dev/null; then ok "wayland bin $bin"; else fail "wayland bin missing: $bin"; fi
@@ -640,12 +640,12 @@ if [[ $xorg_expected -eq 1 ]]; then
             ok "rrandr libraries resolve"
         fi
     fi
-    for bin in i3 i3status dmenu xsetroot xset setxkbmap xmodmap amixer pavucontrol brightnessctl xinput rfkill smbclient mount.cifs btop remmina startx xclip i3lock jq; do
+    for bin in i3 i3status dmenu xsetroot xset setxkbmap xmodmap amixer pavucontrol brightnessctl xinput rfkill smbclient mount.cifs btop remmina startx xclip i3lock jq maim playerctl notify-send; do
         if command -v "$bin" >/dev/null; then ok "xorg bin $bin"; else fail "xorg bin missing: $bin"; fi
     done
     # Not packaged for EL9.
     if grep -qE '^ID=(debian|ubuntu|fedora)$' /etc/os-release; then
-        for bin in xss-lock picom; do
+        for bin in xss-lock picom dunst; do
             if command -v "$bin" >/dev/null; then ok "xorg bin $bin"; else fail "xorg bin missing: $bin"; fi
         done
         # The tray needs no primary output; arandr and autorandr use xrandr.

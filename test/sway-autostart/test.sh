@@ -54,7 +54,7 @@ write_stubs() {
     mkdir -p "$STUBS" "$FAKE_HOME/bin" "$FAKE_HOME/.config"
     local cmd
     for cmd in systemctl dbus-update-activation-environment kanshi swayidle sway-audio-idle-inhibit \
-        wl-paste cliphist blueman-applet lxpolkit pkill "${X_ONLY[@]}"; do
+        wl-paste cliphist blueman-applet lxpolkit dunst pkill "${X_ONLY[@]}"; do
         write_stub "$STUBS/$cmd" "$cmd"
     done
     for cmd in theme kb bar pkill-display pwr; do
@@ -176,6 +176,10 @@ main() {
     # The eww bar is the tray; the tray apps register with it.
     before "bar starts before blueman-applet" '^bar' '^blueman-applet'
     before "bar starts before lxpolkit" '^bar' '^lxpolkit'
+
+    # dunst: notifications (screenshot, notify-send); a Wayland client, so
+    # it ends with sway.
+    expect "notification daemon starts" "dunst" "$(grep '^dunst' "$CALLS")"
 
     # Xwayland: DPI 96 (sway scales its windows). Without resources Xlib
     # reads ~/.Xdefaults, whose Xft.dpi (192) made X apps' text 2x on top.

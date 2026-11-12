@@ -151,6 +151,12 @@ fi
 stop -x lxpolkit
 command -v lxpolkit >/dev/null && lxpolkit >/dev/null 2>&1 &
 
+# Notifications (~/bin/screenshot, notify-send). One owner of the D-Bus
+# name per user: with a second session running, the newer dunst exits and
+# the other session's shows them. EL9 has no dunst.
+stop -x dunst
+command -v dunst >/dev/null && dunst >/dev/null 2>&1 &
+
 # Compositor for tear-free drawing (vsync); ~/.config/picom/picom.conf.
 # EL9 has no picom. Not in xrdp: compositing there only costs bandwidth.
 if [ -n "$local_session" ]; then

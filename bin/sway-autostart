@@ -157,6 +157,12 @@ main() {
     if has lxpolkit; then
         lxpolkit >/dev/null 2>&1 &
     fi
+
+    # Notifications (~/bin/screenshot, notify-send). A Wayland client: it
+    # ends with sway.
+    if has dunst; then
+        dunst >/dev/null 2>&1 &
+    fi
 }
 
 main "$@"
