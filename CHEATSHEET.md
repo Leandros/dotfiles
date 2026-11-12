@@ -34,6 +34,7 @@ In X, xremap swaps the left Alt and Ctrl keys; in sway, the XKB option
 |---|---|
 | `Mod+b` / `n` / `r` / `s` | Focus left / down / up / right |
 | `Mod+Shift+b` / `n` / `r` / `s` | Move window left / down / up / right |
+| `Mod+Ctrl+b` / `n` / `r` / `s` (or arrows) | Move workspace to the screen left / down / up / right |
 | `Mod+arrow`, `Mod+Shift+arrow` | Same with arrow keys |
 | `Mod+m`, then `Mod+Shift+m` on another window | Swap the two windows (`Mod+m` again unmarks) |
 | `Mod+h` / `Mod+l` | Focus parent / child container |

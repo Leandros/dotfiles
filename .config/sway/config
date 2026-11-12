@@ -146,6 +146,16 @@ bindsym $mod+Shift+Down move down
 bindsym $mod+Shift+Up move up
 bindsym $mod+Shift+Right move right
 
+# move the focused workspace to the screen left / down / up / right
+bindsym $mod+Ctrl+b move workspace to output left
+bindsym $mod+Ctrl+n move workspace to output down
+bindsym $mod+Ctrl+r move workspace to output up
+bindsym $mod+Ctrl+s move workspace to output right
+bindsym $mod+Ctrl+Left move workspace to output left
+bindsym $mod+Ctrl+Down move workspace to output down
+bindsym $mod+Ctrl+Up move workspace to output up
+bindsym $mod+Ctrl+Right move workspace to output right
+
 # swap two windows: mark one ($mod+m again unmarks; the title shows
 # [swap], which sway hides for marks starting with "_"), focus the other,
 # then swap them
