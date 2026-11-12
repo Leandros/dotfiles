@@ -75,6 +75,18 @@ main() {
     "$DIR/toggle-dark-mode" > /dev/null
     expect "toggle-dark-mode without argument toggles" "$LIGHT" "$(opt status-style)"
 
+    # The current window keeps its powerline separators (U+E0B0, a private
+    # use glyph): dark is the format .tmux.conf sets, light has the same two.
+    local conf separator=$'\xee\x82\xb0' version
+    version="$(sed -n 's/^readonly TMUX_VERSION_LINUX="\(.*\)"$/\1/p' "$HERE/../../bootstrap.sh")"
+    conf="$(sed -n 's/^set-window-option -g window-status-current-format "\(.*\)"$/\1/p' \
+        "$HERE/../../tmux/tmux_linux_$version/.tmux.conf")"
+    "$DIR/toggle-dark-mode" dark > /dev/null
+    expect "dark: the current window as in .tmux.conf" "$conf" "$(opt window-status-current-format)"
+    "$DIR/toggle-dark-mode" light > /dev/null
+    expect "light: the powerline separators" "2" \
+        "$(opt window-status-current-format | grep -o "$separator" | wc -l | tr -d ' ')"
+
     # The watcher: light at start, then dark, then light again.
     echo "'prefer-light'" > "$SCHEME"
     printf "'prefer-dark'\n'prefer-light'\n" > "$CHANGES"

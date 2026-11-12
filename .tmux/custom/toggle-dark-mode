@@ -7,11 +7,15 @@
 #
 set -euo pipefail
 
+# Powerline separator U+E0B0, as bytes: a private-use character, which an
+# edit once dropped from this file without a trace.
+readonly SEPARATOR=$'\xee\x82\xb0'
+
 status_style_dark="fg=#93a1a1,bg=default"
-window_status_dark="#[fg=#002b36, bg=colour27]#[fg=colour255, bg=colour27] #I: #W #[fg=colour27, bg=#002b36]"
+window_status_dark="#[fg=#002b36, bg=colour27]$SEPARATOR#[fg=colour255, bg=colour27] #I: #W #[fg=colour27, bg=#002b36]$SEPARATOR"
 
 status_style_light="fg=#586e75,bg=default"
-window_status_light="#[fg=#fdf6e3, bg=colour27]#[fg=colour7, bg=colour27] #I: #W #[fg=colour27, bg=#fdf6e3]"
+window_status_light="#[fg=#fdf6e3, bg=colour27]$SEPARATOR#[fg=colour7, bg=colour27] #I: #W #[fg=colour27, bg=#fdf6e3]$SEPARATOR"
 
 dark() {
     tmux set -g status-style "$status_style_dark"
