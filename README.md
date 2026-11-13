@@ -66,6 +66,9 @@ Test the sleep hooks: `test/system-sleep/power-button-wake.sh`, `test/system-sle
 Sunshine (Fedora desktops) starts from its launcher (systemd user unit); `~/bin/sunshine-session`
 picks the capture for sway or X. Do not set `capture`, `encoder` or `adapter_name` in
 `~/.config/sunshine/sunshine.conf`. Test: `test/sunshine-session/test.sh`.
+Pair a Moonlight client from a terminal (e.g. over ssh): `sunshine-pin <PIN> [name]`; it asks
+for the web UI password (user: `SUNSHINE_USER`, default `$USER`). Test: `test/sunshine-pin/test.sh`.
+On firewalld machines (Fedora, EL) the desktop setup enables sshd and allows ssh in the `home` zone.
 Media keys (volume, mute, screen brightness) are bound in i3 only; check with `test/media-keys/test.sh`.
 
 

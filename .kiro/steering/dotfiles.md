@@ -45,7 +45,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `bin/fzf-cache` | `~/bin`, link, always |
 | `.config/{sway,fuzzel,sway-easyfocus}`, `.config/systemd/user/sway-session.target`, `xkb` (as `~/.config/xkb`) | `$HOME`, links, desktop-wayland only |
 | `bin/{wm-msg,sway-autostart,kanshi-save,clip-pick}` | `~/bin`, links; `wm-msg` also for desktop (the eww scripts and i3status-kb use it) |
-| `bin/sunshine-session`, `.config/systemd/user/app-dev.lizardbyte.app.Sunshine.service.d/session.conf` | `~/bin`, `~/.config/systemd/user/...`, links, Fedora desktops (`install_sunshine`) |
+| `bin/{sunshine-session,sunshine-pin}`, `.config/systemd/user/app-dev.lizardbyte.app.Sunshine.service.d/session.conf` | `~/bin`, `~/.config/systemd/user/...`, links, Fedora desktops (`install_sunshine`) |
 | `wayland-session/sway-session` | `/usr/local/bin/sway-session` (root copy, 0755; the lightdm session's wrapper) |
 | `wayland-session/sway-dotfiles.desktop` | `/usr/share/wayland-sessions/` (root copy, 0644; lightdm reads only `/usr/share`) |
 | `~/.config/sway.d/` | real directory, never a link: `output.conf` (bootstrap), `theme.conf` (`bin/theme`), `kb.conf` (`bin/kb`) |
@@ -210,10 +210,22 @@ New link or system file: install function, `check_link` or `cmp` check in
   session from the user manager: sway-autostart imports `SWAYSOCK` and
   unsets it when sway ends; Fedora's xinitrc.d `50-systemd-user.sh`
   imports `DISPLAY`. Restart Sunshine after switching sessions. Test:
-  `test/sunshine-session/test.sh`. Moonlight frame drops, constant `IDX_REQUEST_IDR_FRAME` and a
+  `test/sunshine-session/test.sh`. `bin/sunshine-pin PIN [NAME]` pairs a client
+  from a terminal: POST `{"pin","name"}` to `https://localhost:47990/api/pin`
+  (the web UI's PIN page; endpoint read from its JS), web UI user
+  `SUNSHINE_USER` (default `$USER`); curl asks for the password, the JSON
+  goes on stdin. Test: `test/sunshine-pin/test.sh`. Moonlight frame drops, constant `IDX_REQUEST_IDR_FRAME` and a
   black screen above some bitrate were the network (the client's
   Thunderbolt Ethernet dongle or its cable/port: iperf3 `-R -u -b 50M/200
   -l 1392` lost 66 %), not sway: test the path with iperf3 first.
+- ssh (`enable_sshd_home`, both desktops, only with `firewall-cmd`):
+  installs openssh-server if missing, enables (and starts, with systemd)
+  `sshd`, allows the `ssh` service in firewalld's `home` zone (permanent
+  and runtime; `firewall-offline-cmd` where firewalld is not running, as in
+  containers). Fedora's default zones already allow ssh in `home` and
+  `public`; bootstrap removes nothing. `firewall-offline-cmd
+  --remove-service` is a lokkit option for the default zone: with
+  `--zone` use `--remove-service-from-zone`.
 - Syncthing (desktop): distro package (Fedora 2.x; Debian 12 1.19, Ubuntu
   22.04 1.18; not in EPEL 9, so not on EL9). `enable_syncthing` enables
   the package's user unit `syncthing.service` (`systemctl --user enable`
@@ -299,7 +311,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   `test/fetch/test.sh` (`fetch_unpack` must die on a failed download: it runs
   in `$(...)`, where `set -e` does not apply),
   `test/system-sleep/power-button-wake.sh`, `test/system-sleep/vmware-suspend.sh`,
-  `test/sunshine-session/test.sh`. Add new tests in this style.
+  `test/sunshine-session/test.sh`, `test/sunshine-pin/test.sh`. Add new tests in this style.
 - X programs: Xorg dummy driver in a container. i3 bindings: Xvfb + i3 with
   the repo config in a Fedora image, `xdotool key super+j`, then read the
   started program's `/proc/<pid>/cmdline`. `test/i3-swap/test.sh` does this for the

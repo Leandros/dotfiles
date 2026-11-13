@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+#
+# sunshine-pin - pairs a Moonlight client with the PIN it shows, from the
+# command line (e.g. over ssh), as the PIN page of Sunshine's web UI does.
+#
+# Logs in to the web UI API as SUNSHINE_USER (default: $USER); curl asks
+# for the password on the terminal, so it is never in arguments or history.
+# The JSON goes to curl on stdin. Sunshine's certificate is self-signed
+# (-k); the API listens on localhost only by default.
+#
+# Usage: sunshine-pin PIN [NAME]   (NAME: the client's name, default: host name)
+#
+set -euo pipefail
+
+readonly URL="${SUNSHINE_URL:-https://localhost:47990}"
+readonly WEB_USER="${SUNSHINE_USER:-${USER:-$(id -un)}}"
+
+usage() {
+    echo "usage: sunshine-pin PIN [NAME]  (PIN: the 4 digits Moonlight shows)" >&2
+    exit 2
+}
+
+# JSON string: escapes backslash and double quote.
+json_string() {
+    local s="${1//\\/\\\\}"
+    printf '"%s"' "${s//\"/\\\"}"
+}
+
+main() {
+    [[ $# -ge 1 && $# -le 2 && "$1" =~ ^[0-9]{4}$ ]] || usage
+    local pin="$1" name="${2:-$(hostname)}" reply
+    reply="$(printf '{"pin":%s,"name":%s}' "$(json_string "$pin")" "$(json_string "$name")" |
+        curl -sSk --fail-with-body -u "$WEB_USER" -H 'Content-Type: application/json' \
+            --data-binary @- "$URL/api/pin")" || {
+        echo "sunshine-pin: request failed: $reply" >&2
+        exit 1
+    }
+    if [[ "$reply" =~ \"status\":[[:space:]]*true ]]; then
+        echo "paired: $name"
+    else
+        echo "sunshine-pin: not paired (wrong or expired PIN?): $reply" >&2
+        exit 1
+    fi
+}
+
+main "$@"

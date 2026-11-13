@@ -429,8 +429,19 @@ check_desktop_shared() {
             if command -v "$bin" >/dev/null; then ok "desktop bin $bin"; else fail "desktop bin missing: $bin"; fi
         done
         check_link "$HOME/bin/sunshine-session" "$D/bin/sunshine-session"
+        check_link "$HOME/bin/sunshine-pin" "$D/bin/sunshine-pin"
         local dropin=app-dev.lizardbyte.app.Sunshine.service.d/session.conf
         check_link "$HOME/.config/systemd/user/$dropin" "$D/.config/systemd/user/$dropin"
+    fi
+    # enable_sshd_home: where firewalld is installed (containers: not running).
+    if command -v firewall-cmd >/dev/null; then
+        if systemctl is-enabled -q sshd.service 2>/dev/null; then ok "sshd enabled"; else fail "sshd not enabled"; fi
+        if sudo -n firewall-cmd --permanent --zone=home --query-service=ssh >/dev/null 2>&1 ||
+            sudo -n firewall-offline-cmd --zone=home --query-service=ssh >/dev/null 2>&1; then
+            ok "firewalld: ssh in zone home"
+        else
+            fail "firewalld: ssh not in zone home"
+        fi
     fi
     # Not packaged for EL9.
     if grep -qE '^ID=(debian|ubuntu|fedora)$' /etc/os-release; then

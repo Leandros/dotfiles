@@ -1404,6 +1404,7 @@ install_sunshine() {
     quiet $SUDO dnf install -y -q Sunshine
     quiet $SUDO dnf upgrade -y -q Sunshine
     link "$d/bin/sunshine-session" "$HOME/bin/sunshine-session"
+    link "$d/bin/sunshine-pin" "$HOME/bin/sunshine-pin"
     link "$d/.config/systemd/user/$dropin" "$HOME/.config/systemd/user/$dropin"
     if systemctl --user show-environment >/dev/null 2>&1; then
         systemctl --user daemon-reload
@@ -1752,6 +1753,29 @@ install_sshd_conf() {
     log "installed $dst"
 }
 
+# ssh logins on trusted networks: sshd enabled, the ssh service allowed in
+# firewalld's home zone. Only where firewalld manages zones (Fedora, EL).
+enable_sshd_home() {
+    have firewall-cmd || return 0
+    if [[ ! -x /usr/sbin/sshd ]]; then
+        $SUDO dnf install -y -q openssh-server
+    fi
+    $SUDO systemctl enable -q sshd.service
+    if [[ -d /run/systemd/system ]]; then
+        $SUDO systemctl start sshd.service
+    fi
+    if $SUDO firewall-cmd --state >/dev/null 2>&1; then
+        if ! $SUDO firewall-cmd --permanent --zone=home --query-service=ssh >/dev/null; then
+            $SUDO firewall-cmd -q --permanent --zone=home --add-service=ssh
+            $SUDO firewall-cmd -q --zone=home --add-service=ssh
+            log "firewalld: ssh allowed in zone home"
+        fi
+    elif ! $SUDO firewall-offline-cmd --zone=home --query-service=ssh >/dev/null 2>&1; then
+        $SUDO firewall-offline-cmd --zone=home --add-service=ssh >/dev/null
+        log "firewalld: ssh allowed in zone home"
+    fi
+}
+
 install_logind_conf() {
     local src="$DOTFILES_DIR/logind-conf/$LOGIND_CONF_NAME" dst="$LOGIND_CONF_DIR/$LOGIND_CONF_NAME"
     cmp -s "$src" "$dst" 2>/dev/null && return
@@ -2022,6 +2046,7 @@ setup_xorg() {
     fi
     install_xorg_conf
     install_logind_conf
+    enable_sshd_home
     install_sleep_hook
     install_xprofile_hook
     install_power_modes
@@ -2225,6 +2250,7 @@ setup_wayland() {
     install_sway_audio_idle_inhibit
     install_eww
     install_logind_conf
+    enable_sshd_home
     install_sleep_hook
     install_power_modes
     install_sway_session
