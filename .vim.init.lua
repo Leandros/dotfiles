@@ -2699,6 +2699,11 @@ local spec = {
                 },
 
                 completion = {
+                  -- With `::`, nvim-cmp's insert on select (selectopts)
+                  -- writes `foo::` before the resolve. rust-analyzer then
+                  -- finds no matching item and drops the `use` edit
+                  -- (rust-analyzer#22564).
+                  addColonsToModule = false,
                   fullFunctionSignatures = {
                     enable = false,
                   },
