@@ -25,3 +25,5 @@ AppData/Roaming/Code/User/workspaceStorage
 .config/coc/extensions/node_modules
 _vimrc
 test/bootstrap/logs/
+# ~/.gitignore_global ignores *.d; systemd drop-in directories belong here.
+!.config/systemd/user/*.service.d/

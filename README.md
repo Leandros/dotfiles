@@ -63,6 +63,9 @@ Test in Docker: `test/bootstrap/run.sh [debian12|ubuntu2204|fedora43|fedora44|fe
 Test the category choice: `test/categories/test.sh`.
 Test the tmux plugin install: `test/tmux-plugins/test.sh`.
 Test the sleep hooks: `test/system-sleep/power-button-wake.sh`, `test/system-sleep/vmware-suspend.sh`.
+Sunshine (Fedora desktops) starts from its launcher (systemd user unit); `~/bin/sunshine-session`
+picks the capture for sway or X. Do not set `capture`, `encoder` or `adapter_name` in
+`~/.config/sunshine/sunshine.conf`. Test: `test/sunshine-session/test.sh`.
 Media keys (volume, mute, screen brightness) are bound in i3 only; check with `test/media-keys/test.sh`.
 
 

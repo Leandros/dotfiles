@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+#
+# sunshine-session - starts Sunshine with the capture settings of the
+# desktop session. The systemd user unit runs it (drop-in
+# .config/systemd/user/app-dev.lizardbyte.app.Sunshine.service.d/).
+#
+# sway: wlroots screencopy, VA-API on the render node of the boot GPU (the
+# one sway renders on). With the NVIDIA driver loaded Sunshine picks nvenc,
+# whose EGL cannot import sway's Intel dmabufs (no video); with
+# xdg-desktop-portal-wlr it tries the ScreenCast portal first, which waits
+# for an output picker. X: Sunshine's own choice (X11 capture, any
+# encoder). Settings from the command line override sunshine.conf, so do
+# not set capture, encoder or adapter_name there.
+#
+# Usage: sunshine-session [sunshine arguments]
+#
+set -euo pipefail
+
+# Overridable for test/sunshine-session/test.sh.
+readonly SUNSHINE="${SUNSHINE_BIN:-/usr/bin/sunshine}"
+readonly SYSFS="${SUNSHINE_SESSION_SYSFS:-/sys}"
+
+# Prints /dev/dri/renderD<N> of the boot GPU, if any.
+boot_render_node() {
+    local node
+    for node in "$SYSFS"/class/drm/renderD*; do
+        [[ "$(cat "$node/device/boot_vga" 2>/dev/null)" == 1 ]] || continue
+        echo "/dev/dri/${node##*/}"
+        return 0
+    done
+    return 1
+}
+
+main() {
+    local -a opts=()
+    local node
+    # SWAYSOCK before DISPLAY: sway sessions set both.
+    if [[ -n "${SWAYSOCK:-}" ]]; then
+        opts=(capture=wlr encoder=vaapi)
+        if node="$(boot_render_node)"; then
+            opts+=("adapter_name=$node")
+        fi
+    fi
+    exec "$SUNSHINE" ${opts[@]+"${opts[@]}"} "$@"
+}
+
+main "$@"

@@ -428,6 +428,9 @@ check_desktop_shared() {
         for bin in firewall-config sunshine; do
             if command -v "$bin" >/dev/null; then ok "desktop bin $bin"; else fail "desktop bin missing: $bin"; fi
         done
+        check_link "$HOME/bin/sunshine-session" "$D/bin/sunshine-session"
+        local dropin=app-dev.lizardbyte.app.Sunshine.service.d/session.conf
+        check_link "$HOME/.config/systemd/user/$dropin" "$D/.config/systemd/user/$dropin"
     fi
     # Not packaged for EL9.
     if grep -qE '^ID=(debian|ubuntu|fedora)$' /etc/os-release; then

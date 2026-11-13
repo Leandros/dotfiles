@@ -45,6 +45,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `bin/fzf-cache` | `~/bin`, link, always |
 | `.config/{sway,fuzzel,sway-easyfocus}`, `.config/systemd/user/sway-session.target`, `xkb` (as `~/.config/xkb`) | `$HOME`, links, desktop-wayland only |
 | `bin/{wm-msg,sway-autostart,kanshi-save,clip-pick}` | `~/bin`, links; `wm-msg` also for desktop (the eww scripts and i3status-kb use it) |
+| `bin/sunshine-session`, `.config/systemd/user/app-dev.lizardbyte.app.Sunshine.service.d/session.conf` | `~/bin`, `~/.config/systemd/user/...`, links, Fedora desktops (`install_sunshine`) |
 | `wayland-session/sway-session` | `/usr/local/bin/sway-session` (root copy, 0755; the lightdm session's wrapper) |
 | `wayland-session/sway-dotfiles.desktop` | `/usr/share/wayland-sessions/` (root copy, 0644; lightdm reads only `/usr/share`) |
 | `~/.config/sway.d/` | real directory, never a link: `output.conf` (bootstrap), `theme.conf` (`bin/theme`), `kb.conf` (`bin/kb`) |
@@ -190,9 +191,29 @@ New link or system file: install function, `check_link` or `cmp` check in
   modesetting has no TearFree, xf86-video-intel no Arrow Lake). Config keeps
   to options picom 9 (Debian/Ubuntu) and 13 (Fedora) share; `.xprofile`
   runs `picom -b`.
-- Sunshine (Moonlight remote-desktop host): Fedora + Xorg only, from the
+- Sunshine (Moonlight remote-desktop host): Fedora, both desktops, from the
   `lizardbyte/stable` copr (`SUNSHINE_COPR`, package `Sunshine`; chroots
-  fedora-43..45). Installed only: not started, no firewall ports opened.
+  fedora-43..45). Not started or enabled, no firewall ports opened; its
+  launcher starts the user unit `app-dev.lizardbyte.app.Sunshine.service`.
+  `install_sunshine` links `bin/sunshine-session` and the drop-in
+  `.config/systemd/user/app-dev.lizardbyte.app.Sunshine.service.d/session.conf`
+  (ExecStart = the wrapper). The wrapper passes settings on the command
+  line (they override `sunshine.conf`, so keep them out of it): with
+  `SWAYSOCK` set `capture=wlr encoder=vaapi adapter_name=<render node of
+  the boot_vga GPU>`, under X nothing (X11 capture, Sunshine's encoder
+  choice; checked in a fedora:45 Xvfb container). Why (2026-11, Sunshine
+  2026.914, P14s Gen 6): with the NVIDIA driver loaded Sunshine picks
+  nvenc, whose EGL cannot import sway's Intel dmabufs (`Couldn't import
+  RGB Image: 00003004`, no video); with xdg-desktop-portal-wlr running it
+  tries the ScreenCast portal first, which waits on a `slurp` output
+  picker; `capture = wlr` fails in an X session. The unit gets the
+  session from the user manager: sway-autostart imports `SWAYSOCK` and
+  unsets it when sway ends; Fedora's xinitrc.d `50-systemd-user.sh`
+  imports `DISPLAY`. Restart Sunshine after switching sessions. Test:
+  `test/sunshine-session/test.sh`. Moonlight frame drops, constant `IDX_REQUEST_IDR_FRAME` and a
+  black screen above some bitrate were the network (the client's
+  Thunderbolt Ethernet dongle or its cable/port: iperf3 `-R -u -b 50M/200
+  -l 1392` lost 66 %), not sway: test the path with iperf3 first.
 - Syncthing (desktop): distro package (Fedora 2.x; Debian 12 1.19, Ubuntu
   22.04 1.18; not in EPEL 9, so not on EL9). `enable_syncthing` enables
   the package's user unit `syncthing.service` (`systemctl --user enable`
@@ -277,7 +298,8 @@ New link or system file: install function, `check_link` or `cmp` check in
   `test/input-restore/test.sh`,
   `test/fetch/test.sh` (`fetch_unpack` must die on a failed download: it runs
   in `$(...)`, where `set -e` does not apply),
-  `test/system-sleep/power-button-wake.sh`, `test/system-sleep/vmware-suspend.sh`. Add new tests in this style.
+  `test/system-sleep/power-button-wake.sh`, `test/system-sleep/vmware-suspend.sh`,
+  `test/sunshine-session/test.sh`. Add new tests in this style.
 - X programs: Xorg dummy driver in a container. i3 bindings: Xvfb + i3 with
   the repo config in a Fedora image, `xdotool key super+j`, then read the
   started program's `/proc/<pid>/cmdline`. `test/i3-swap/test.sh` does this for the

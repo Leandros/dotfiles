@@ -1394,12 +1394,20 @@ install_wezterm_copr() {
 }
 
 # Game-stream host for remote desktop with Moonlight (VA-API/NVENC encoding).
-# Not started or opened in the firewall: run `sunshine`, pair in its web UI.
+# Not started or opened in the firewall: start it from the launcher (its
+# systemd user unit), pair in its web UI. The unit runs ~/bin/sunshine-session,
+# which picks the capture settings of the session (sway or X).
 install_sunshine() {
+    local d="$DOTFILES_DIR" dropin=app-dev.lizardbyte.app.Sunshine.service.d/session.conf
     $SUDO dnf install -y -q dnf-plugins-core
     quiet $SUDO dnf copr enable -y "$SUNSHINE_COPR"
     quiet $SUDO dnf install -y -q Sunshine
     quiet $SUDO dnf upgrade -y -q Sunshine
+    link "$d/bin/sunshine-session" "$HOME/bin/sunshine-session"
+    link "$d/.config/systemd/user/$dropin" "$HOME/.config/systemd/user/$dropin"
+    if systemctl --user show-environment >/dev/null 2>&1; then
+        systemctl --user daemon-reload
+    fi
 }
 
 # Key remapper below the keymap; the config swaps left Alt and Ctrl. Runs as
