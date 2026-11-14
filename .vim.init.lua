@@ -1077,10 +1077,8 @@ local _border = {
 local function make_lsp_defaults()
   local lspconfig = require("lspconfig")
   local lsp_defaults = lspconfig.util.default_config
-  local lsp_status = require("lsp-status")
 
-  lsp_defaults.capabilities =
-    vim.tbl_deep_extend("force", lsp_defaults.capabilities, require("cmp_nvim_lsp").default_capabilities(), lsp_status.capabilities)
+  lsp_defaults.capabilities = vim.tbl_deep_extend("force", lsp_defaults.capabilities, require("cmp_nvim_lsp").default_capabilities())
   lsp_defaults.capabilities["semanticTokensProvider"] = nil
   -- https://github.com/neovim/neovim/issues/23291
   lsp_defaults.capabilities.workspace.didChangeWatchedFiles.dynamicRegistration = false
@@ -1145,7 +1143,6 @@ local function on_attach(client, bufnr)
   end
 
   -- setup buffer keymaps etc.
-  require("lsp-status").on_attach(client)
   if client:supports_method("textDocument/documentSymbol", bufnr) and client.server_capabilities.documentSymbolProvider then
     require("nvim-navbuddy").attach(client, bufnr)
   end
@@ -2044,9 +2041,6 @@ local spec = {
   -- ━━ LSP Config ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   {
     "neovim/nvim-lspconfig",
-    dependencies = {
-      "nvim-lua/lsp-status.nvim",
-    },
     config = function()
       -- Starting from v0.11 nvim has builtin borders.
       if vim.fn.has("nvim-0.11") == 1 then vim.o.winborder = "rounded" end
@@ -2514,9 +2508,6 @@ local spec = {
     -- For development:
     -- dir = vim.fs.joinpath(os.getenv("HOME"), "/github/rustaceanvim"),
     lazy = false, -- This plugin is already lazy
-    dependencies = {
-      "nvim-lua/lsp-status.nvim",
-    },
     init = function()
       -- bootstrap.sh runs lspmux as a user service on this socket. lspmux has
       -- no authentication and spawns any server a client names, so it does
@@ -3054,30 +3045,11 @@ local spec = {
     },
   }, -- end lsp-colors
 
-  {
-    "nvim-lua/lsp-status.nvim",
-    config = function()
-      local lsp_status = require("lsp-status")
-      lsp_status.config({
-        --component_separator = ' │ ',
-        status_symbol = "",
-        indicator_errors = "E",
-        indicator_warnings = "W",
-        indicator_info = "i",
-        indicator_hint = "?",
-        indicator_ok = "",
-      })
-
-      lsp_status.register_progress()
-    end,
-  }, -- end lsp-status
-
   -- Statusline (bottom)
   {
     "nvim-lualine/lualine.nvim",
     dependencies = {
       "kyazdani42/nvim-web-devicons",
-      "nvim-lua/lsp-status.nvim",
     },
     config = function()
       local colors = {
@@ -3114,6 +3086,45 @@ local spec = {
         },
       }
 
+      -- Title and percentage of the LSP task that reported last, from nvim's
+      -- LspProgress event (lualine's lsp_status shows only a spinner).
+      -- Tasks without a percentage are not shown.
+      local lsp_tasks = {}
+      local lsp_progress_group = vim.api.nvim_create_augroup("lualine_lsp_percentage", {})
+      vim.api.nvim_create_autocmd("LspProgress", {
+        group = lsp_progress_group,
+        callback = function(ev)
+          local key = ev.data.client_id .. ":" .. tostring(ev.data.params.token)
+          local value = ev.data.params.value
+          if value.kind == "end" then
+            lsp_tasks[key] = nil
+            return
+          end
+          local task = lsp_tasks[key] or { client_id = ev.data.client_id }
+          task.title = value.title or task.title
+          task.percentage = value.percentage or task.percentage
+          task.at = vim.uv.hrtime()
+          lsp_tasks[key] = task
+        end,
+      })
+      -- A server that exits mid-task sends no `end`.
+      vim.api.nvim_create_autocmd("LspDetach", {
+        group = lsp_progress_group,
+        callback = function(ev)
+          for key, task in pairs(lsp_tasks) do
+            if task.client_id == ev.data.client_id then lsp_tasks[key] = nil end
+          end
+        end,
+      })
+      local function lsp_percentage()
+        local latest
+        for _, task in pairs(lsp_tasks) do
+          if task.percentage and (not latest or task.at > latest.at) then latest = task end
+        end
+        if not latest then return "" end
+        return string.format("%s %d%%%%", latest.title or "", latest.percentage)
+      end
+
       function _G.lualine_setup()
         require("lualine").setup({
           options = {
@@ -3128,7 +3139,10 @@ local spec = {
             lualine_b = { "branch", { "diagnostics", sources = { "nvim_diagnostic", "coc" } } },
             lualine_c = { { "filename", file_status = true, path = 1 } },
             --lualine_x = {"vim.fn['zoom#statusline']()", "require'lsp-status'.status()"},
-            lualine_x = { "require'lsp-status'.status()" },
+            -- LSP progress from nvim's LspProgress event: server names, spinner
+            -- while busy. Diagnostics are in lualine_b. lsp-status.nvim (2022,
+            -- unmaintained) failed on a progress `report` without its `begin`.
+            lualine_x = { lsp_percentage, "lsp_status" },
             lualine_y = {},
           },
         })
