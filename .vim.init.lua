@@ -3484,6 +3484,9 @@ local spec = {
         "zig",
       }
       local highlight_disabled = { typescript = true }
+      -- rust.vim's indent finds comments through syntax items. Without them
+      -- it counts "(" in comments as code and indents too far.
+      local regex_syntax = { rust = true }
       local headless_install_timeout_ms = 10 * 60 * 1000
 
       -- No jsonc grammar exists; the json one handles it.
@@ -3498,7 +3501,8 @@ local spec = {
         callback = function(ev)
           if highlight_disabled[ev.match] then return end
           -- Fails for filetypes without a parser.
-          pcall(vim.treesitter.start, ev.buf)
+          local started = pcall(vim.treesitter.start, ev.buf)
+          if started and regex_syntax[ev.match] then vim.bo[ev.buf].syntax = "ON" end
         end,
       })
     end,
