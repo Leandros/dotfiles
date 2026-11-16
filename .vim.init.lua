@@ -4633,7 +4633,17 @@ local spec = {
     dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' }, -- if you prefer nvim-web-devicons
     ---@module 'render-markdown'
     ---@type render.md.UserConfig
-    opts = {},
+    opts = {
+      overrides = {
+        buftype = {
+          -- LSP hover floats: keep the NormalFloat background.
+          nofile = {
+            code = { disable_background = true, highlight_border = false, inline = false },
+            heading = { backgrounds = {} },
+          },
+        },
+      },
+    },
   }, -- end render-markdown.nvim
 
   {
