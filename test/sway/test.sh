@@ -3,8 +3,8 @@
 # The sway config (.config/sway) in headless sway: it validates (with the
 # machine-local includes), the bindings run their commands (stubs on
 # sway's PATH record the calls), $mod+m / $mod+Shift+m swap two windows,
-# Ctrl+digit (the physical Alt key after ctrl:swap_lalt_lctl) switches
-# workspaces, window rules float by Wayland app_id, X11 programs run on
+# only $mod+digit switches workspaces (Ctrl+digit, the physical Alt key
+# after ctrl:swap_lalt_lctl, reaches the application), window rules float by Wayland app_id, X11 programs run on
 # xwayland-satellite (Wayland windows, output pixels, Xft.dpi of the
 # scale), the config's switch back to sway's Xwayland works (class and
 # instance rules), the session wrapper and ~/bin/sway-autostart start
@@ -125,7 +125,7 @@ fi
 expect "sway's Xwayland disabled in one line" "1" "$(grep -cx 'xwayland disable' "$CONFIG")"
 
 # The physical left Alt key (<LALT>) gives Control with the config's
-# layout and options, so Alt+digit is the Ctrl+digit binding.
+# layout and options (macOS layout of the left modifiers).
 layout="$(sed -n 's/^\s*xkb_layout //p' "$CONFIG")"
 options="$(sed -n 's/^\s*xkb_options //p' "$CONFIG")"
 xkbcli compile-keymap --layout "$layout" --options "$options" > /tmp/keymap
@@ -230,11 +230,13 @@ key -M logo m -m logo
 key -M logo m -m logo
 expect "Mod+m again removes the mark" "" "$(marks)"
 
-# Alt+digit as in X (xremap): Ctrl+digit after the swap of the modifiers.
+# Only $mod+digit switches workspaces; Ctrl+digit is the application's.
 focused_ws() { msg -t get_workspaces | py 'import json,sys; print(*[w["name"] for w in json.load(sys.stdin) if w["focused"]])'; }
 msg -q workspace number 3
 key -M ctrl 1 -m ctrl
-expect "Ctrl+1: workspace 1" "1" "$(focused_ws)"
+expect "Ctrl+1: no workspace switch" "3" "$(focused_ws)"
+key -M logo 1 -m logo
+expect "Mod+1: workspace 1" "1" "$(focused_ws)"
 msg -q '[title="^A$"] focus'
 key -M ctrl -M shift 2 -m shift -m ctrl
 ws_of() { msg -t get_tree | py "
@@ -244,7 +246,9 @@ def find(n, ws):
     if n.get('name') == '$1' and n.get('pid'): print(ws)
     for c in n.get('nodes', []) + n.get('floating_nodes', []): find(c, ws)
 find(json.load(sys.stdin), None)"; }
-expect "Ctrl+Shift+2: window to workspace 2" "2" "$(ws_of A)"
+expect "Ctrl+Shift+2: window stays on workspace 1" "1" "$(ws_of A)"
+key -M logo -M shift 2 -m shift -m logo
+expect "Mod+Shift+2: window to workspace 2" "2" "$(ws_of A)"
 
 # Window rules: Wayland app_id. X11 windows on xwayland-satellite are
 # Wayland windows with the WM_CLASS class as app_id.

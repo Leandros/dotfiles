@@ -58,7 +58,6 @@ In X, xremap swaps the left Alt and Ctrl keys; in sway, the XKB option
 |---|---|
 | `Mod+1` ... `Mod+0` | Go to workspace 1 ... 10 |
 | `Mod+Shift+1` ... `Mod+Shift+0` | Move window to workspace 1 ... 10 |
-| `Ctrl+digit`, `Ctrl+Shift+digit` | Same as `Mod` (physical left Alt; xremap) |
 | `Mod+Tab` | Back to the previous workspace |
 | `Mod+,` / `Mod+.` | Previous / next workspace on this screen |
 

@@ -258,29 +258,6 @@ bindsym $mod+Shift+8 move container to workspace number 8
 bindsym $mod+Shift+9 move container to workspace number 9
 bindsym $mod+Shift+0 move container to workspace number 10
 
-# The same with the Alt key next to Space (Control after the swap above),
-# as xremap does in X. Applications do not get Ctrl+digit.
-bindsym Ctrl+1 workspace number 1
-bindsym Ctrl+2 workspace number 2
-bindsym Ctrl+3 workspace number 3
-bindsym Ctrl+4 workspace number 4
-bindsym Ctrl+5 workspace number 5
-bindsym Ctrl+6 workspace number 6
-bindsym Ctrl+7 workspace number 7
-bindsym Ctrl+8 workspace number 8
-bindsym Ctrl+9 workspace number 9
-bindsym Ctrl+0 workspace number 10
-bindsym Ctrl+Shift+1 move container to workspace number 1
-bindsym Ctrl+Shift+2 move container to workspace number 2
-bindsym Ctrl+Shift+3 move container to workspace number 3
-bindsym Ctrl+Shift+4 move container to workspace number 4
-bindsym Ctrl+Shift+5 move container to workspace number 5
-bindsym Ctrl+Shift+6 move container to workspace number 6
-bindsym Ctrl+Shift+7 move container to workspace number 7
-bindsym Ctrl+Shift+8 move container to workspace number 8
-bindsym Ctrl+Shift+9 move container to workspace number 9
-bindsym Ctrl+Shift+0 move container to workspace number 10
-
 # reload the configuration file
 bindsym $mod+Shift+w reload
 # i3 restarts in place on this key; sway has no restart, and a reload

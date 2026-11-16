@@ -40,8 +40,7 @@ client.urgent               $yellow $yellow $baseB3 $orange
 #
 # Please see http://i3wm.org/docs/userguide.html for a complete reference!
 
-# Win key; Alt is remapped to Ctrl by xremap (~/.config/xremap/config.yml),
-# which also turns Alt+digit into $mod+digit.
+# Win key; Alt is remapped to Ctrl by xremap (~/.config/xremap/config.yml).
 # Mod1 = Alt
 # Mod4 = Win/Super
 set $mod Mod4

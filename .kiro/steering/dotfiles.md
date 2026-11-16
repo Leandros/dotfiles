@@ -328,7 +328,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   `packages home dotfiles rust lspmux`, then `verify.sh | grep lspmux`.
 - sway tests: `test/sway/test.sh` (fedora:45, headless sway, `docker
   create --cap-add SYS_NICE` + `docker cp`): config validation, bindings
-  through `wtype` with stubs on sway's PATH, swap, Ctrl+digit, window
+  through `wtype` with stubs on sway's PATH, swap, only $mod+digit switches workspaces, window
   rules by app_id and class, idle inhibit, swaybar fallback, fuzzel,
   Ctrl+Alt+Backspace. `test/eww-sway/test.sh` (image `dotfiles-eww-sway`,
   eww built at `EWW_REF`): one bar per output, tray on the first, reopen
@@ -625,8 +625,10 @@ New link or system file: install function, `check_link` or `cmp` check in
   kanshi's layout, touchpad tapping). Differences from i3: fuzzel
   (`$mod+i`), `clip-pick` (`$mod+c`, cliphist), sway-easyfocus (`$mod+j`),
   wdisplays (XF86Display), `$mod+Shift+a` reloads, swaynag exit,
-  `Ctrl+Alt+BackSpace` exits, `Ctrl+N` / `Ctrl+Shift+N` workspace bindings
-  (physical Alt+digit, which xremap maps in X).
+  `Ctrl+Alt+BackSpace` exits.
+- Workspaces switch only with `$mod+digit` (`$mod+Shift+digit` moves), in
+  both desktops: Ctrl+digit (physical Alt+digit after the swap) goes to the
+  application. Before, sway bound `Ctrl+N` and xremap mapped it to Super.
 - No xremap on sway: `xkb_options ctrl:swap_lalt_lctl` (applies to new
   keyboards too). sway applies `input type:...` settings, also runtime
   `swaymsg input` ones, to devices plugged in later: no `input-restore`.
