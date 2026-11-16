@@ -340,7 +340,13 @@ EOF
 echo "i3-msg \$*" >> "$CALLS"
 case "\$*" in
     "-t get_outputs") echo '[{"name":"HDMI-1","active":true,"primary":false},{"name":"eDP-1","active":true,"primary":true},{"name":"DP-1","active":false,"primary":false}]' ;;
-    "-t subscribe"*) printf '{"change":"unspecified"}\n{"change":"unspecified"}\n{"change":"unspecified"}\n' ;;
+    # TMP/hold: no output event for 1 s, then the stream ends.
+    "-t subscribe"*)
+        if [ -e "$TMP/hold" ]; then
+            sleep 1
+        else
+            printf '{"change":"unspecified"}\n{"change":"unspecified"}\n{"change":"unspecified"}\n'
+        fi ;;
     # The docked bars, one per active output: heights from TMP/heights,
     # one line per check (the last one repeats), 34 without the file.
     # TMP/zombie: once, a second bar on eDP-1 (one eww lost track of).
@@ -432,6 +438,28 @@ EOF
     XFT_DPI=144 BAR_RETRY_S=0 BAR_SIZE_CHECK_S=0 BAR_OPEN_TIMEOUT_S=0.2 run timeout 5 "$BAR" watch || true
     # At start and after the output change.
     expect "a hanging open: the next bar opens" "2" "$(grep -c 'open bar --id bar-HDMI-1 ' "$CALLS")"
+
+    # The daemon dies while no output changes (eww's tray crashed in
+    # libdbusmenu): after the first bars it stops answering until a new
+    # `eww daemon`. The watcher notices, starts one and opens the bars.
+    cat > "$STUBS/eww" <<EOF
+#!/bin/sh
+echo "eww \$*" >> "$CALLS"
+case "\$*" in
+    *" ping") [ -e "$TMP/dead" ] && exit 1 ;;
+    *" daemon") rm -f "$TMP/dead" ;;
+    *" update hover=") [ -e "$TMP/died" ] || touch "$TMP/died" "$TMP/dead" ;;
+esac
+exit 0
+EOF
+    : > "$CALLS"
+    rm -f "$TMP/x-gone" "$TMP/dead" "$TMP/died"
+    touch "$TMP/hold"
+    XFT_DPI=144 BAR_RETRY_S=0 BAR_SIZE_CHECK_S=0 BAR_ALIVE_CHECK_S=0.2 run timeout 5 "$BAR" watch || true
+    rm -f "$TMP/hold"
+    expect "dead daemon: a new one" "$cfg kill;pkill-display -f eww -c $TMP/run/eww/display7 ;$cfg daemon" \
+        "$(grep -E ' (kill|daemon)$|^pkill-display -f eww' "$CALLS" | paste -sd ';')"
+    expect "dead daemon: bars opened again" "2" "$(grep -c ' close-all' "$CALLS")"
     stub eww
 
     # One eww daemon per X display (two sessions: local and xrdp). eww
@@ -441,7 +469,7 @@ EOF
         "$(readlink "$TMP/run/eww/display7/eww.yuck")"
     : > "$CALLS"
     rm -f "$TMP/x-gone"
-    HOME="$HOME_DIR" DISPLAY=:10.0 XDG_RUNTIME_DIR="$TMP/run" PATH="$STUBS:$PATH" BAR_RETRY_S=0 BAR_SIZE_CHECK_S=0 \
+    env -u SWAYSOCK -u WAYLAND_DISPLAY HOME="$HOME_DIR" DISPLAY=:10.0 XDG_RUNTIME_DIR="$TMP/run" PATH="$STUBS:$PATH" BAR_RETRY_S=0 BAR_SIZE_CHECK_S=0 \
         timeout 5 "$BAR" watch || true
     # At start and after the output change of the stub.
     expect "another display, another config directory" "2" \

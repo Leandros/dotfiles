@@ -37,6 +37,8 @@ readonly RETRY_S="${BAR_RETRY_S:-1}"
 readonly I3_WAIT_TRIES=100
 readonly OPEN_TRIES=3 SIZE_CHECK_S="${BAR_SIZE_CHECK_S:-1}"
 readonly OPEN_TIMEOUT_S="${BAR_OPEN_TIMEOUT_S:-10}" SETTLE_S="${BAR_SETTLE_S:-1}"
+# How often the watcher checks that the daemon still answers.
+readonly ALIVE_CHECK_S="${BAR_ALIVE_CHECK_S:-5}"
 readonly DAEMON_WAIT_TRIES=50
 readonly PKILL="${BAR_PKILL:-$HOME/bin/pkill-display}"
 readonly WM_MSG="$HOME/bin/wm-msg"
@@ -175,16 +177,36 @@ wait_for_i3() {
     return 1
 }
 
-# Output events (monitor added, removed, rearranged) reopen the bars.
+# True while the daemon answers. A hung one counts as dead.
+daemon_alive() {
+    timeout "$OPEN_TIMEOUT_S" "$EWW" -c "$CONFIG" ping >/dev/null 2>&1
+}
+
+# Output events (monitor added, removed, rearranged) reopen the bars. A
+# daemon that died (eww's tray crashed in libdbusmenu once) is replaced
+# within ALIVE_CHECK_S: without output events nothing else would reopen
+# the bars.
 watch() {
+    local rc
     while session_alive; do
         if wait_for_i3; then
             open_bars_checked
-            while read -r _; do
-                # A monitor plugged in sends several events: reopen once
-                # they settle.
-                while read -r -t "$SETTLE_S" _; do :; done
-                open_bars_checked
+            while true; do
+                rc=0
+                read -r -t "$ALIVE_CHECK_S" _ || rc=$?
+                if [[ "$rc" -eq 0 ]]; then
+                    # A monitor plugged in sends several events: reopen
+                    # once they settle.
+                    while read -r -t "$SETTLE_S" _; do :; done
+                    open_bars_checked
+                elif [[ "$rc" -gt 128 ]]; then
+                    daemon_alive && continue
+                    echo "bar: the eww daemon does not answer; starting a new one" >&2
+                    restart_daemon
+                    open_bars_checked
+                else
+                    break
+                fi
             done < <("$WM_MSG" -t subscribe -m '["output"]' 2>/dev/null)
         fi
         sleep "$RETRY_S"

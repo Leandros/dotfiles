@@ -489,7 +489,11 @@ New link or system file: install function, `check_link` or `cmp` check in
   `bar` checks that i3 docks exactly one eww bar with a height per active
   output (a bar was sometimes 0 px high too), else restarts the daemon
   and opens again, at most 3 times. Output events are debounced
-  (`BAR_SETTLE_S`, 1 s): a plugged monitor sends several. Scripts in `scripts/`:
+  (`BAR_SETTLE_S`, 1 s): a plugged monitor sends several. Between events
+  the watcher pings the daemon every `BAR_ALIVE_CHECK_S` (5 s); one that
+  does not answer is replaced and the bars reopen (2026-11, sway: eww
+  0.6's tray crashed with SIGSEGV in `libdbusmenu` `root_changed` after a
+  resume, and the bar stayed gone). Scripts in `scripts/`:
   `status-blocks` reads `~/bin/i3status-kb` (own process group: it exits
   with `kill 0`) and keys the blocks by name: the bar draws each block in
   its own widget, in i3status order, hidden while missing. No `for` over
