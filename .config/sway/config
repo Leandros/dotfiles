@@ -46,7 +46,9 @@ input type:keyboard {
 # tap-and-drag, two- and three-finger clicks anywhere on the pad.
 #
 # Acceleration: the libinput custom curve of X (xorg-conf/40-touchpad.conf,
-# same step and points): slow motions stay precise, fast ones go far.
+# same step and points; test/touchpad/test.sh): slow motions stay precise,
+# fast ones go far. Slow motions
+# stay precise, fast ones go far.
 # sway 1.12 has only adaptive|flat (swaywm/sway#8488); the sway that
 # bootstrap.sh builds from a fork with pull request #8592 has custom.
 # Fedora's sway, which sway-session starts when that build does not
@@ -59,7 +61,7 @@ input type:touchpad {
     drag disabled
     click_method clickfinger
     accel_profile custom
-    pointer_accel_custom 0.5 0.0 0.567 1.896 3.999 6.939 9.807 13.009 16.521 20.319 24.389 28.716 33.287 38.094 43.126 48.375 53.835 59.499
+    pointer_accel_custom 0.5 0.0 0.482 1.563 3.195 5.244 7.001 8.759 10.860 13.036 15.266 17.531 19.814 22.103 24.383 26.642 28.870 31.059
     scroll_factor 0.5
 }
 

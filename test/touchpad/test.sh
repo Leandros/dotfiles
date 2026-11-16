@@ -3,7 +3,7 @@
 # Runs bin/touchpad with an xinput stub (a touchpad and a TrackPoint) and
 # checks that it switches tap-to-click on touchpads only; under sway the
 # same through a swaymsg stub. Also checks the macOS-style defaults in
-# xorg-conf.
+# xorg-conf and that its acceleration curve is the sway config's.
 #
 # Usage: test/touchpad/test.sh
 #
@@ -13,6 +13,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly SCRIPT="$HERE/../../bin/touchpad"
 readonly CONF="$HERE/../../xorg-conf/40-touchpad.conf"
 readonly WM_MSG="$HERE/../../bin/wm-msg"
+readonly SWAY_CONFIG="$HERE/../../.config/sway/config"
 TMP="$(mktemp -d)"
 readonly TMP
 trap 'rm -rf "$TMP"' EXIT
@@ -174,6 +175,12 @@ main() {
     for option in '"ClickMethod" "clickfinger"' '"Tapping" "off"' '"TappingDrag" "off"' '"AccelProfile" "custom"'; do
         if grep -q "Option $option" "$CONF"; then ok "xorg-conf $option"; else fail "xorg-conf misses $option"; fi
     done
+
+    # i3 and sway share the acceleration curve: step and points.
+    local x_curve sway_curve
+    x_curve="$(sed -n 's/.*"AccelStepMotion" "\([^"]*\)".*/\1/p' "$CONF") $(sed -n 's/.*"AccelPointsMotion" "\([^"]*\)".*/\1/p' "$CONF")"
+    sway_curve="$(sed -n 's/^ *pointer_accel_custom //p' "$SWAY_CONFIG")"
+    expect "X and sway: the same touchpad curve" "$sway_curve" "$x_curve"
 
     test_sway
     exit "$FAILED"

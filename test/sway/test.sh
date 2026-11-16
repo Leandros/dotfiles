@@ -113,7 +113,7 @@ chmod 0644 /tmp/bad.config
 check /tmp/bad.config && fail "sway -C accepts accel_profile bogus" || ok "sway -C checks the input blocks"
 touchpad="$(sed -n '/^input type:touchpad {/,/^}/p' "$CONFIG")"
 if grep -qx '    accel_profile custom' <<< "$touchpad" && grep -qE '^    pointer_accel_custom 0\.5 0\.0 ' <<< "$touchpad"; then
-    ok "touchpad: the custom curve of X"
+    ok "touchpad: a custom curve"
 else
     fail "touchpad block: $touchpad"
 fi

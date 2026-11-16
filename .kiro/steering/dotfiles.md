@@ -158,8 +158,12 @@ New link or system file: install function, `check_link` or `cmp` check in
     execs `/usr/bin/sway` when that fails (the config's custom lines then
     show in swaynag). Drop the fork once a sway release has the profile.
     The touchpad block has the X curve (`xorg-conf/40-touchpad.conf`:
-    step 0.5, the same points; user: adaptive was worse for small
-    targets); `pointer_accel` does not apply to a custom curve.
+    step 0.5, the same points, checked by `test/touchpad/test.sh`; user:
+    adaptive was worse for small targets). Tuned by feel on 2026-11-16
+    (the first curve was too fast on fast motions): 15 % below the
+    formula in the X file's comment up to speed 0.5, 20 % at 1.5, 33 % at
+    3 and 48 % at 8; the user's verdict: "That curve is good".
+    `pointer_accel` does not apply to a custom curve.
     TrackPoint and mice: adaptive, `pointer_accel -0.17` (by feel), both
     `scroll_factor 0.5`. The adaptive touchpad speed is a factor
     `(s+1)^2.38 * 0.95 + 0.05` (libinput 1.32): `pointer_accel 1` was 5
