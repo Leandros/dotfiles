@@ -33,6 +33,17 @@ set -uo pipefail
 dnf install -y -q --setopt=install_weak_deps=False sway wtype foot fuzzel xterm xorg-x11-server-Xwayland \
     xwayland-satellite xrdb xdpyinfo libxkbcommon-utils python3 python3-pyyaml util-linux procps-ng >/dev/null 2>&1 ||
     { echo "FAIL: dnf install"; exit 1; }
+# sway of the fork (custom pointer acceleration), built as bootstrap.sh
+# does (install_sway): /usr/local/bin comes first in PATH (/usr/local/sbin
+# for root: a link to it).
+dnf install -y -q --setopt=install_weak_deps=False $SWAY_BUILD_DEPS >/dev/null 2>&1 ||
+    { echo "FAIL: dnf install of the sway build dependencies"; exit 1; }
+curl -fsSL "https://github.com/Leandros/sway/archive/$SWAY_REF.tar.gz" | tar -xz -C /tmp &&
+    (cd "/tmp/sway-$SWAY_REF" && meson setup build --prefix=/usr/local --buildtype=release -Dwerror=false -Dman-pages=disabled &&
+        meson compile -C build && meson install -C build --no-rebuild) >/tmp/sway-build.log 2>&1 ||
+    { echo "FAIL: sway build: $(tail -n 5 /tmp/sway-build.log)"; exit 1; }
+[ "$(readlink -f "$(command -v sway)")" = /usr/local/bin/sway ] && echo "ok:   sway of the fork ($(sway --version))" ||
+    { echo "FAIL: sway is $(command -v sway)"; exit 1; }
 
 FAILED=0
 ok()   { echo "ok:   $*"; }
@@ -68,7 +79,7 @@ chmod +x "$H/bin/i3status-kb"
 chown -R t "$H"
 
 as_t() {
-    runuser -u t -- env HOME="$H" XDG_RUNTIME_DIR="$RUN" PATH="$H/stubs:/usr/bin" \
+    runuser -u t -- env HOME="$H" XDG_RUNTIME_DIR="$RUN" PATH="$H/stubs:/usr/local/bin:/usr/bin" \
         WLR_BACKENDS=headless WLR_RENDERER=pixman WLR_LIBINPUT_NO_DEVICES=1 \
         ${SWAYSOCK:+SWAYSOCK=$SWAYSOCK} ${WAYLAND_DISPLAY:+WAYLAND_DISPLAY=$WAYLAND_DISPLAY} \
         ${DISPLAY:+DISPLAY=$DISPLAY} "$@"
@@ -95,19 +106,26 @@ echo 'output * scale 1.5' > "$H/.config/sway.d/output.conf"
 chown -R t "$H/.config"
 check "$CONFIG" && ok "sway -C: with theme.conf and output.conf" || fail "sway -C with includes: $(grep -i error /tmp/check.log | head -3)"
 rm "$H/.config/sway.d/theme.conf" "$H/.config/sway.d/output.conf"
-# -C checks the input blocks too: sway 1.12 rejects a custom curve.
-sed 's/accel_profile adaptive/accel_profile custom/' "$CONFIG" > /tmp/bad.config
+# -C checks the input blocks too: the config passes above only with the
+# custom curve of the fork's sway; an unknown profile fails.
+sed 's/accel_profile custom/accel_profile bogus/' "$CONFIG" > /tmp/bad.config
 chmod 0644 /tmp/bad.config
-check /tmp/bad.config && fail "sway -C accepts accel_profile custom" || ok "sway -C checks the input blocks"
+check /tmp/bad.config && fail "sway -C accepts accel_profile bogus" || ok "sway -C checks the input blocks"
+touchpad="$(sed -n '/^input type:touchpad {/,/^}/p' "$CONFIG")"
+if grep -qx '    accel_profile custom' <<< "$touchpad" && grep -qE '^    pointer_accel_custom 0\.5 0\.0 ' <<< "$touchpad"; then
+    ok "touchpad: the custom curve of X"
+else
+    fail "touchpad block: $touchpad"
+fi
 if grep -qE '^\s*xkb_options ctrl:swap_lalt_lctl$' "$CONFIG" && grep -qE '^\s*(tap|drag) disabled$' "$CONFIG"; then
     ok "keyboard and touchpad blocks"
 else
     fail "input blocks: $(grep -nE 'xkb_|tap|drag' "$CONFIG")"
 fi
-# Pointer and scroll speeds, set on the laptop (ThinkPad P14s Gen 6): the
-# X touchpad curve cannot be set in sway 1.12.
+# Pointer and scroll speeds, set on the laptop (ThinkPad P14s Gen 6). The
+# touchpad has the custom curve: pointer_accel would not apply.
 block() { sed -n "/^input type:$1 {/,/^}/s/^\s*$2 //p" "$CONFIG"; }
-expect "touchpad pointer_accel" "0.3" "$(block touchpad pointer_accel)"
+expect "touchpad: no pointer_accel" "" "$(block touchpad pointer_accel)"
 expect "touchpad scroll_factor" "0.5" "$(block touchpad scroll_factor)"
 expect "pointer pointer_accel" "-0.17" "$(block pointer pointer_accel)"
 expect "pointer scroll_factor" "0.5" "$(block pointer scroll_factor)"
@@ -431,7 +449,14 @@ exit "$FAILED"
 EOF
 
 TMP="$(mktemp -d)"
-container="$(docker create --cap-add SYS_NICE "$IMAGE" bash -c "$INNER")"
+# The fork's commit and build dependencies, as bootstrap.sh pins them.
+sway_ref="$(sed -n 's/^readonly SWAY_REF="\(.*\)"$/\1/p' "$ROOT/bootstrap.sh")"
+sway_deps="$(sed -n 's/^readonly SWAY_BUILD_DEPS="\(.*\)"$/\1/p' "$ROOT/bootstrap.sh")"
+if [[ -z "$sway_ref" || -z "$sway_deps" ]]; then
+    echo "FAIL: SWAY_REF or SWAY_BUILD_DEPS missing in bootstrap.sh"
+    exit 1
+fi
+container="$(docker create --cap-add SYS_NICE -e SWAY_REF="$sway_ref" -e SWAY_BUILD_DEPS="$sway_deps" "$IMAGE" bash -c "$INNER")"
 trap 'docker rm -f "$container" >/dev/null 2>&1 || true; rm -rf "$TMP"' EXIT
 mkdir -p "$TMP/src"
 for dir in sway fuzzel sway-easyfocus; do

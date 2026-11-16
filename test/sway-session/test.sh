@@ -73,7 +73,27 @@ env
 EOF
     chmod +x "$TMP/bin/sway"
     mkdir -p "$TMP/x11/.X11-unix"
-    env -i PATH="$TMP/bin:/usr/bin:/bin" HOME="$TMP" X11_TMPDIR="$TMP/x11" "$@" /bin/sh "$WRAPPER" -d
+    # No build of the fork unless the caller names one (the machine's own
+    # /usr/local/bin/sway must not start).
+    env -i PATH="$TMP/bin:/usr/bin:/bin" HOME="$TMP" X11_TMPDIR="$TMP/x11" \
+        SWAY_SESSION_BUILD="$TMP/none/sway" SWAY_SESSION_PACKAGE="$TMP/package/sway" "$@" /bin/sh "$WRAPPER" -d
+}
+
+# The fork's build (bootstrap.sh, /usr/local/bin) when it starts; Fedora's
+# sway when it does not (a wlroots update removed the library it links).
+check_build_fallback() {
+    local out
+    mkdir -p "$TMP/build" "$TMP/package"
+    # shellcheck disable=SC2016 # the stub expands them
+    printf '#!/bin/sh\n[ "$1" = --version ] && exit 0\necho "build $*"\n' > "$TMP/build/sway"
+    printf '#!/bin/sh\necho "package $*"\n' > "$TMP/package/sway"
+    chmod +x "$TMP/build/sway" "$TMP/package/sway"
+    out="$(run_wrapper SWAY_SESSION_BUILD="$TMP/build/sway" | sed -n 1p)"
+    expect "starts the build of the fork" "build -d" "$out"
+    # As the loader fails: "error while loading shared libraries".
+    printf '#!/bin/sh\nexit 127\n' > "$TMP/build/sway"
+    out="$(run_wrapper SWAY_SESSION_BUILD="$TMP/build/sway" | sed -n 1p)"
+    expect "build that does not start: Fedora's sway" "package -d" "$out"
 }
 
 check_wrapper() {
@@ -209,6 +229,7 @@ main() {
     check_target
     check_entry
     check_wrapper
+    check_build_fallback
     check_container
     exit "$FAILED"
 }

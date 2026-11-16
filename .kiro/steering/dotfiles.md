@@ -143,15 +143,28 @@ New link or system file: install function, `check_link` or `cmp` check in
     permitted". verify.sh validates the config (`sway -C`) with a copy of
     the binary (no capabilities), a private 0700 `XDG_RUNTIME_DIR` and
     `WLR_BACKENDS=headless WLR_RENDERER=pixman` (else it fails on the DRM
-    session). `report` uses `rpm -q sway`. kanshi has no `--version`.
-  - sway 1.12 has no `accel_profile custom` (only adaptive|flat;
-    swaywm/sway#8488, PR #8592): the X touchpad curve is a comment in the
-    sway config. Speeds set by feel on the P14s Gen 6: touchpad
-    `pointer_accel 0.3`, TrackPoint and mice `pointer_accel -0.17`, both
-    `scroll_factor 0.5`. The touchpad's adaptive speed is a factor `(s+1)^2.38 *
-    0.95 + 0.05` (libinput 1.32): `pointer_accel 1` was 5 times the
-    default, "way too fast". swaymsg reads a negative value as an option:
-    `swaymsg -- input ... pointer_accel -0.2`.
+    session). `report` prints the sway stamp. kanshi has no `--version`.
+  - sway is built from the user's fork (`install_sway`, `SWAY_REF`:
+    <https://github.com/Leandros/sway/tree/v1.12>, 1.12 plus PR #8592
+    `accel_profile custom` / `pointer_accel_custom`; swaywm/sway#8488;
+    upstream 1.12 has only adaptive|flat). meson into `/usr/local`
+    (first in PATH), `-Dwerror=false`, deps in `SWAY_BUILD_DEPS` (test/sway
+    reads them and `SWAY_REF` from bootstrap.sh), `setcap cap_sys_nice=ep`
+    as Fedora's binary. Fedora's `sway` package stays (wlroots, portal
+    config, fallback). Stamp `<SWAY_REF>+wlroots-<version>`: a wlroots
+    update rebuilds; a failed build warns and keeps Fedora's. The build
+    links `libwlroots-0.20.so`: a Fedora wlroots update to a new soname
+    breaks it, so `sway-session` runs `/usr/local/bin/sway --version` and
+    execs `/usr/bin/sway` when that fails (the config's custom lines then
+    show in swaynag). Drop the fork once a sway release has the profile.
+    The touchpad block has the X curve (`xorg-conf/40-touchpad.conf`:
+    step 0.5, the same points; user: adaptive was worse for small
+    targets); `pointer_accel` does not apply to a custom curve.
+    TrackPoint and mice: adaptive, `pointer_accel -0.17` (by feel), both
+    `scroll_factor 0.5`. The adaptive touchpad speed is a factor
+    `(s+1)^2.38 * 0.95 + 0.05` (libinput 1.32): `pointer_accel 1` was 5
+    times the default, "way too fast". swaymsg reads a negative value as
+    an option: `swaymsg -- input ... pointer_accel -0.2`.
   - xremap of an i3 session outlives the logout (logind keeps the user's
     processes); in sway it cancels the XKB Alt/Ctrl swap (swapped twice).
     `sway-autostart` stops it (`pkill -u $UID -x xremap`, the one plain
@@ -328,7 +341,8 @@ New link or system file: install function, `check_link` or `cmp` check in
   `packages home dotfiles rust lspmux`, then `verify.sh | grep lspmux`.
 - sway tests: `test/sway/test.sh` (fedora:45, headless sway, `docker
   create --cap-add SYS_NICE` + `docker cp`): config validation, bindings
-  through `wtype` with stubs on sway's PATH, swap, only $mod+digit switches workspaces, window
+  through `wtype` with stubs on sway's PATH (sway built from the fork at
+  `SWAY_REF`; the config needs its custom profile), swap, only $mod+digit switches workspaces, window
   rules by app_id and class, idle inhibit, swaybar fallback, fuzzel,
   Ctrl+Alt+Backspace. `test/eww-sway/test.sh` (image `dotfiles-eww-sway`,
   eww built at `EWW_REF`): one bar per output, tray on the first, reopen
@@ -725,7 +739,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   Workstation's GTK 3 text came out 2x on top of the scale (icons normal).
 - Known gaps: with sway's Xwayland, X11 apps (Qt 5, DaVinci Resolve) are
   blurry at a fractional scale; no xrdp (it stays with the i3 session); no
-  mouse keys; the X touchpad curve. lxpolkit (GTK 2) runs on X11.
+  mouse keys. lxpolkit (GTK 2) runs on X11.
 
 ## tmux and wezterm
 

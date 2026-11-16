@@ -118,6 +118,13 @@ readonly RRANDR_REF="d1677ca9b538d489b75a8760a1848d780733083a"
 # https://crates.io/crates/sway-easyfocus (sway desktop only;
 # patches/sway-easyfocus-title-bar-x.patch must apply)
 readonly SWAY_EASYFOCUS_VERSION="1.0.1"
+# https://github.com/Leandros/sway/tree/v1.12 (sway desktop only): sway
+# 1.12 with pull request swaywm/sway#8592 (accel_profile custom). Built
+# against Fedora's wlroots; drop it once a sway release has the profile.
+readonly SWAY_REF="53c055d7fe37e8464049d64e36d4582812a75501"
+# What its meson build needs on Fedora (man pages: scdoc; file capability:
+# setcap from libcap).
+readonly SWAY_BUILD_DEPS="meson gcc scdoc libcap wlroots-devel wayland-devel wayland-protocols-devel libxkbcommon-devel cairo-devel pango-devel gdk-pixbuf2-devel json-c-devel pcre2-devel libinput-devel libevdev-devel systemd-devel pixman-devel libdrm-devel libxcb-devel xcb-util-wm-devel"
 # https://github.com/ErikReider/SwayAudioIdleInhibit/releases (sway desktop only)
 readonly SWAY_AUDIO_IDLE_INHIBIT_VERSION="0.2.0"
 # https://github.com/sentriz/cliphist/releases (sway desktop only; Fedora 43
@@ -2140,6 +2147,37 @@ install_sway_easyfocus() {
     mark_current sway-easyfocus "$stamp"
 }
 
+# sway with the custom pointer acceleration profile (the touchpad curve of
+# X; sway 1.12 has only adaptive and flat), built from the fork at
+# SWAY_REF into /usr/local, which comes first in PATH. Fedora's sway
+# package stays: it brings wlroots, the portal config and the fallback
+# that sway-session starts when this build does not load. The stamp names
+# the wlroots version: a wlroots update rebuilds. A failed build (a
+# wlroots that 1.12 does not support) warns and keeps Fedora's sway.
+install_sway() {
+    local stamp dir
+    stamp="$SWAY_REF+wlroots-$(rpm -q --qf '%{VERSION}' wlroots)"
+    is_current sway "$stamp" "$PREFIX/bin/sway" && return
+
+    # shellcheck disable=SC2086 # a list of package names
+    $SUDO dnf install -y -q $SWAY_BUILD_DEPS
+    dir="$(fetch_unpack "$GITHUB/Leandros/sway/archive/$SWAY_REF.tar.gz")"
+    dir="$(unpacked_root "$dir")"
+    # Upstream sets werror (see install_sway_audio_idle_inhibit). Built as
+    # the user; root only copies (see build_nvim).
+    if ! (cd "$dir" &&
+        quiet meson setup build --prefix="$PREFIX" --buildtype=release -Dwerror=false &&
+        quiet meson compile -C build); then
+        warn "sway: the fork at $SWAY_REF does not build here; Fedora's sway (no custom acceleration) stays"
+        return
+    fi
+    quiet $SUDO meson install -C "$dir/build" --no-rebuild
+    # As Fedora's binary: sway raises its scheduling priority, then drops
+    # the capability for its children.
+    $SUDO setcap cap_sys_nice=ep "$PREFIX/bin/sway"
+    mark_current sway "$stamp"
+}
+
 # Holds a logind idle inhibitor while audio plays or records, so swayidle
 # does not lock or suspend during a call. No distro packages it. It has no
 # systemd unit: ~/bin/sway-autostart starts it.
@@ -2242,6 +2280,7 @@ setup_wayland() {
         return
     fi
     install_wayland_packages
+    install_sway
     install_cliphist
     install_wezterm
     install_sunshine
@@ -2446,9 +2485,9 @@ report() {
         fi
     fi
     if wayland_requested && wayland_supported; then
-        # rpm, not sway --version: docker's bounding set lacks the
+        # The stamp, not sway --version: docker's bounding set lacks the
         # cap_sys_nice of the binary, so it does not start in the test images.
-        print_version sway rpm -q sway
+        print_version sway cat "$(stamp_path sway)"
         print_version sway-easyfocus sway-easyfocus --version
         print_version sway-audio-idle-inhibit cat "$(stamp_path sway-audio-idle-inhibit)"
         print_version fuzzel fuzzel --version

@@ -52,4 +52,14 @@ WLR_BACKENDS="${WLR_BACKENDS:-libinput,drm}"
 export LANG XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE \
     ELECTRON_OZONE_PLATFORM_HINT _JAVA_AWT_WM_NONREPARENTING DISPLAY WLR_BACKENDS
 
+# The sway that bootstrap.sh builds from the fork (custom pointer
+# acceleration), else Fedora's. A wlroots update can remove the library
+# the build links: then it does not start, and Fedora's sway still gives
+# a session (without the touchpad curve; swaynag shows the config lines it
+# rejects). Tests set both paths.
+build="${SWAY_SESSION_BUILD:-/usr/local/bin/sway}"
+if [ -x "$build" ]; then
+    "$build" --version >/dev/null 2>&1 && exec "$build" "$@"
+    exec "${SWAY_SESSION_PACKAGE:-/usr/bin/sway}" "$@"
+fi
 exec sway "$@"

@@ -467,7 +467,7 @@ check_desktop_shared() {
 
 # What only the sway desktop installs.
 check_wayland() {
-    local name path pair mode scale_line bin sway_rt sway_bin saii_libs
+    local name path pair mode scale_line bin sway_rt sway_bin saii_libs sway_libs
     for name in sway-autostart kanshi-save clip-pick; do
         check_link "$HOME/bin/$name" "$D/bin/$name"
     done
@@ -538,6 +538,24 @@ check_wayland() {
         ok "sway-audio-idle-inhibit libraries resolve"
     else
         fail "sway-audio-idle-inhibit libraries: $(grep -E 'pulse|not found' <<< "$saii_libs" | tr '\n' ' ')"
+    fi
+    # sway of the fork (custom pointer acceleration) in /usr/local, built
+    # against the installed wlroots, with the file capability of Fedora's.
+    if [[ "$(cat /usr/local/share/bootstrap/sway 2>/dev/null)" == "$SWAY_REF+wlroots-$(rpm -q --qf '%{VERSION}' wlroots)" ]]; then
+        ok "sway built from the fork at SWAY_REF"
+    else
+        fail "sway stamp: $(cat /usr/local/share/bootstrap/sway 2>/dev/null)"
+    fi
+    if [[ "$(readlink -f "$(command -v sway)")" == /usr/local/bin/sway ]] && getcap /usr/local/bin/sway | grep -q 'cap_sys_nice=ep'; then
+        ok "sway: /usr/local/bin first, cap_sys_nice"
+    else
+        fail "sway: $(command -v sway), $(getcap /usr/local/bin/sway 2>&1)"
+    fi
+    sway_libs="$(ldd /usr/local/bin/sway 2>&1 || true)"
+    if [[ "$sway_libs" == *"libwlroots"* && "$sway_libs" != *"not found"* ]]; then
+        ok "sway libraries resolve"
+    else
+        fail "sway libraries: $(grep -E 'wlroots|not found' <<< "$sway_libs" | tr '\n' ' ')"
     fi
     # sway validates its config without a seat on the headless backend.
     # XDG_RUNTIME_DIR: an owner-only directory as logind makes it. Fedora's
