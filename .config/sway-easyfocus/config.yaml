@@ -9,8 +9,8 @@
 # Bone 2 home row and its neighbors, as the X binding (wmfocus).
 chars: "nrsgbeitco"
 
-# Labels only; the windows are not dimmed (as wmfocus).
-window_background_opacity: 0.0
+# Windows are dimmed.
+window_background_opacity: 0.5
 
 # 72 device pixels at the output scale 1.5, as wmfocus in X.
 font_family: '"PragmataPro Mono", monospace'
