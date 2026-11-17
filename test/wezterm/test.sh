@@ -95,6 +95,12 @@ end
 
 local config = dofile(config_path)
 
+-- "freetype": "<freetype_load_target>|<freetype_load_flags>".
+if what == "freetype" then
+  io.write(tostring(config.freetype_load_target), "|", tostring(config.freetype_load_flags), "\n")
+  return
+end
+
 -- "copy" / "search": entries of the keys below in copy_mode / search_mode,
 -- "key[mods]=actions;".
 if what == "copy" or what == "search" then
@@ -162,6 +168,12 @@ main() {
     expect "gsettings dark, wezterm says Light: dark" "Solarized Dark|Solarized Light" "$(GS="'prefer-dark'" run "$linux" Light)"
     expect "gsettings light, wezterm says Dark: light" "Solarized Light|Solarized Dark" "$(GS="'prefer-light'" run "$linux" Dark)"
     expect "gsettings no preference: dark" "Solarized Dark|Solarized Light" "$(GS="'default'" run "$linux" Light)"
+
+    # Glyph rendering. Linux: FreeType's light autohinting, as ghostty, which
+    # looked sharper on the 4k monitor at scale 1 (wezterm's default below
+    # 100 dpi is the font's own full hinting). macOS keeps full hinting.
+    expect "Linux: light autohinting" "Light|FORCE_AUTOHINT" "$(run "$linux" Dark freetype)"
+    expect "macOS: full hinting" "nil|DEFAULT" "$(run "$mac" Dark freetype)"
 
     # Copy mode, as in tmux: y copies and stays (clears the selection), Y
     # copies and leaves; Shift+b / Shift+s by word; N / R one line, ( / )

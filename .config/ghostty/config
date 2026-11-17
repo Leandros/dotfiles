@@ -1,7 +1,6 @@
 # Font config
-font-family = "PragmataPro Mono"
-font-style = "Regular"
-font-synthetic-style = false
+font-family = "PragmataPro Mono Liga"
+font-synthetic-style = true
 font-feature = "-calt"
 font-feature = "-clig"
 font-feature = "-liga"

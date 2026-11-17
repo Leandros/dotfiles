@@ -420,6 +420,13 @@ if wezterm.target_triple:find('darwin') then
   config.freetype_load_flags = 'DEFAULT'
   config.freetype_interpreter_version = 35
 end
+-- Linux: FreeType's light autohinting (snaps only vertically), as ghostty
+-- does. With wezterm's default, the font's own full hinting below 100 dpi,
+-- text on the 4k monitor at scale 1 looked blurry next to ghostty.
+if wezterm.target_triple:find('linux') then
+  config.freetype_load_target = 'Light'
+  config.freetype_load_flags = 'FORCE_AUTOHINT'
+end
 
 -- Disable on newest nightlies (from 20230712-072601-f4abf8fd)
 -- config.anti_alias_custom_block_glyphs = false

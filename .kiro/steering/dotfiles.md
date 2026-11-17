@@ -825,7 +825,13 @@ New link or system file: install function, `check_link` or `cmp` check in
   config; `wezterm.gui.get_appearance()` only without gsettings: it returned
   Light in every other config evaluation on a dark desktop (nightly
   20261108). wezterm still reloads the config when the portal setting
-  changes. `test/wezterm/test.sh` loads `.wezterm.lua`
+  changes. Glyphs on Linux: `freetype_load_target = 'Light'`,
+  `freetype_load_flags = 'FORCE_AUTOHINT'` (ghostty's hinting; with
+  wezterm's default, the font's full hinting below 100 dpi, text on the
+  4k monitor at scale 1 looked blurry next to ghostty, 2026-11-17). On
+  the 1.5 panel wezterm draws at 2x and sway scales it down (no
+  fractional-scale support), ghostty draws at 1.5.
+  `test/wezterm/test.sh` loads `.wezterm.lua`
   with a fake `wezterm` module in `nvim -l`.
 - wezterm copy mode (`Leader+[`) mirrors tmux's copy-mode keys. `set_keys`
   replaces default entries with the same key and modifiers. While a search

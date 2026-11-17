@@ -88,6 +88,7 @@ main() {
         "keybind = alt+e>shift+r=resize_split:up,100" \
         "keybind = alt+e>z=toggle_split_zoom" \
         "keybind = alt+e>[=activate_key_table:copy" \
+        "keybind = alt+e>u=activate_key_table:copy" \
         "keybind = copy/catch_all=ignore" \
         "keybind = copy//=start_search" \
         "keybind = copy/?=navigate_search:previous"; do
@@ -95,7 +96,7 @@ main() {
     done
     local count
     count="$(grep -c '^keybind = alt+e>' <<< "$linux" || true)"
-    if [[ "$count" == 24 ]]; then ok "Linux: 24 leader bindings"; else fail "Linux: $count leader bindings, want 24"; fi
+    if [[ "$count" == 25 ]]; then ok "Linux: 25 leader bindings"; else fail "Linux: $count leader bindings, want 25"; fi
 
     check_themes
     exit "$FAILED"
