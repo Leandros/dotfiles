@@ -1510,7 +1510,7 @@ install_nmrs_gui() {
     mark_current nmrs-gui "$NMRS_GUI_VERSION"
 }
 
-# Window hints for $mod+j in i3. No distro packages it, so cargo builds it.
+# Window hints for $mod+q in i3. No distro packages it, so cargo builds it.
 # cairo-rs links cairo-gobject. With the expat and freetype headers, the font
 # crates do not build their own copies with cmake.
 install_wmfocus_deps() {
@@ -2146,7 +2146,7 @@ install_cliphist() {
     mark_current cliphist "$CLIPHIST_VERSION"
 }
 
-# Window hints for $mod+j in sway (wmfocus in i3). No distro packages it, so
+# Window hints for $mod+q in sway (wmfocus in i3). No distro packages it, so
 # cargo builds it. It draws with GTK 4 on a layer-shell surface.
 # Built from the crate with patches/sway-easyfocus-title-bar-x.patch: 1.0.1
 # adds sway's deco_rect.x, which is relative to the parent, to the absolute

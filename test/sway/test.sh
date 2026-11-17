@@ -70,10 +70,10 @@ printf '%s\n' "\$line" >> $CALLS
 S
     chmod +x "$1"
 }
-for c in fuzzel sway-easyfocus wdisplays amixer brightnessctl pkill swaynag systemctl; do
+for c in fuzzel sway-easyfocus wdisplays amixer brightnessctl pkill swaynag systemctl kanshictl; do
     stub "$H/stubs/$c"
 done
-for c in term clip-pick sway-autostart; do stub "$H/bin/$c"; done
+for c in term clip-pick sway-autostart touchpad; do stub "$H/bin/$c"; done
 printf '#!/bin/sh\nexec sleep 600\n' > "$H/bin/i3status-kb"
 chmod +x "$H/bin/i3status-kb"
 chown -R t "$H"
@@ -205,8 +205,8 @@ else
 fi
 
 # Window hints: the title colors of the config's variables.
-key -M logo j -m logo
-expect "Mod+j: sway-easyfocus, dark colors" \
+key -M logo q -m logo
+expect "Mod+q: sway-easyfocus, dark colors" \
     "sway-easyfocus|--label-background-color|#073642|--label-text-color|#93a1a1|--focused-background-color|#859900|--focused-text-color|#fdf6e3|focus" \
     "$(call_of sway-easyfocus)"
 
@@ -215,11 +215,19 @@ key -M logo -M shift u -m shift -m logo
 call_of swaynag | grep -qF '|systemctl --user stop sway-session.target; swaymsg exit' &&
     ok "Mod+Shift+u: swaynag, then stop the target and exit" || fail "Mod+Shift+u: $(call_of swaynag)"
 
-# sway has no restart: Mod+Shift+a reloads.
+# sway has no restart: Mod+Shift+a reloads. A reload drops runtime output
+# and input settings; the config applies kanshi's layout and the touchpad
+# tap choice again.
+count_calls() { grep -c "^$1\$" "$CALLS" || true; }
+kanshi_before="$(count_calls 'kanshictl|reload')"
+touchpad_before="$(count_calls 'touchpad|restore')"
 as_t swaymsg -t subscribe -m '["binding"]' > /tmp/bindings 2>&1 &
 sleep 0.3
 key -M logo -M shift a -m shift -m logo
 grep -q '"command": "reload"' /tmp/bindings && ok "Mod+Shift+a: reload" || fail "Mod+Shift+a: $(head -c 300 /tmp/bindings)"
+sleep 0.5
+expect "reload: kanshictl reload" "$((kanshi_before + 1))" "$(count_calls 'kanshictl|reload')"
+expect "reload: touchpad restore" "$((touchpad_before + 1))" "$(count_calls 'touchpad|restore')"
 
 # Two windows, left to right.
 order() {
@@ -350,8 +358,8 @@ expect "swaybar colors from the variables" "#859900ff" "$(field 'd["colors"]["fo
 expect "theme.conf reaches the bar" "#fdf6e3ff" "$(field 'd["colors"]["background"]')"
 pgrep -u t -a swaybg | grep -q -- '#eee8d5' && ok "theme.conf reaches the background" || fail "swaybg: $(pgrep -u t -a swaybg)"
 sed -i '/^sway-easyfocus/d' "$CALLS"
-key -M logo j -m logo
-expect "theme.conf reaches Mod+j" \
+key -M logo q -m logo
+expect "theme.conf reaches Mod+q" \
     "sway-easyfocus|--label-background-color|#eee8d5|--label-text-color|#586e75|--focused-background-color|#859900|--focused-text-color|#002b36|focus" \
     "$(call_of sway-easyfocus)"
 

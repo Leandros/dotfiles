@@ -153,7 +153,7 @@ bindsym $mod+Right focus right
 # window title colors; `theme` runs this line again, so they follow dark
 # and light. Labels and font: ~/.config/sway-easyfocus/config.yaml. Every
 # key exits.
-bindsym $mod+j exec sway-easyfocus --label-background-color '$baseA2' --label-text-color '$baseB1' \
+bindsym $mod+q exec sway-easyfocus --label-background-color '$baseA2' --label-text-color '$baseB1' \
     --focused-background-color '$green' --focused-text-color '$baseB3' focus
 
 # move focused window
@@ -309,6 +309,11 @@ bindsym $mod+a mode "resize"
 # The programs of the session (the bar, idle, clipboard history, ...); sway
 # runs it once, not on reload.
 exec ~/bin/sway-autostart
+
+# A reload (sway 1.12) drops runtime output and input settings: apply
+# kanshi's monitor layout and the session's touchpad tap choice again. At
+# login kanshi is not running yet, so kanshictl fails there; harmless.
+exec_always sh -c 'kanshictl reload; ~/bin/touchpad restore'
 
 # Status bar: eww (~/bin/bar, started by ~/bin/sway-autostart). Where
 # bootstrap.sh could not install eww it links swaybar.conf (swaybar with

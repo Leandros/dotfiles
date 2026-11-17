@@ -100,7 +100,7 @@ client.unfocused            $baseA2 $baseA2 $baseB1 $baseA1
   client.focused              $green  $green  $baseB3 $blue
 exec swaybg -c $baseA3
 exec_always notify-send $baseA3
-bindsym $mod+j exec sway-easyfocus --label-background-color '$baseA2' \
+bindsym $mod+q exec sway-easyfocus --label-background-color '$baseA2' \
     --focused-text-color '$baseB3' focus
 bindsym $mod+Return exec ~/bin/term
 input type:touchpad {
@@ -132,7 +132,7 @@ test_sway() {
 swaymsg -q output * bg \$baseA2 solid_color
 swaymsg -q client.unfocused            \$baseA2 \$baseA2 \$baseB1 \$baseA1
 swaymsg -q client.focused              \$green  \$green  \$baseB3 \$blue
-swaymsg -q bindsym \$mod+j exec sway-easyfocus --label-background-color '\$baseA2' --focused-text-color '\$baseB3' focus" \
+swaymsg -q bindsym \$mod+q exec sway-easyfocus --label-background-color '\$baseA2' --focused-text-color '\$baseB3' focus" \
         "$(grep -E '^(swaymsg|i3-msg)' "$CALLS")"
     expect "sway: light GTK 3" $'[Settings]\ngtk-application-prefer-dark-theme=0' "$(gtk_ini 3.0)"
 
