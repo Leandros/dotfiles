@@ -78,6 +78,10 @@ readonly CODELLDB_VERSION="1.12.3"
 readonly MISE_VERSION="2026.10.10"
 # https://github.com/direnv/direnv/releases
 readonly DIRENV_VERSION="2.38.2"
+# https://github.com/casey/just/releases
+readonly JUST_VERSION="1.59.0"
+# https://github.com/typst/typst/releases
+readonly TYPST_VERSION="0.15.1"
 # https://github.com/jarun/nnn/releases (nnn/nnn-keybindings.patch must apply)
 readonly NNN_VERSION="5.3"
 # https://nodejs.org/dist/index.json (v20.x)
@@ -441,7 +445,7 @@ category_selected() {
 
 category_label() {
     case "$1" in
-        devtools) echo "dev tools (lazygit, direnv, rust-analyzer, lspmux, codelldb)" ;;
+        devtools) echo "dev tools (lazygit, direnv, just, typst, rust-analyzer, lspmux, codelldb)" ;;
         desktop)  echo "desktop environment (Xorg, i3)" ;;
         desktop-wayland) echo "desktop environment (Wayland, sway)" ;;
     esac
@@ -997,6 +1001,26 @@ install_direnv() {
     fetch "$GITHUB/direnv/direnv/releases/download/v$DIRENV_VERSION/direnv.$os-$GO_ARCH" "$WORK_DIR/direnv"
     install_bin "$WORK_DIR/direnv" direnv
     mark_current direnv "$DIRENV_VERSION"
+}
+
+install_just() {
+    is_current just "$JUST_VERSION" "$PREFIX/bin/just" && return
+    local target="$RUST_TARGET_LINUX_MUSL"
+    [[ "$OS" == "macos" ]] && target="$RUST_TARGET_DARWIN"
+    local dir
+    dir="$(fetch_unpack "$GITHUB/casey/just/releases/download/$JUST_VERSION/just-$JUST_VERSION-$target.tar.gz")"
+    install_bin_from "$dir" just
+    mark_current just "$JUST_VERSION"
+}
+
+install_typst() {
+    is_current typst "$TYPST_VERSION" "$PREFIX/bin/typst" && return
+    local target="$RUST_TARGET_LINUX_MUSL"
+    [[ "$OS" == "macos" ]] && target="$RUST_TARGET_DARWIN"
+    local dir
+    dir="$(fetch_unpack "$GITHUB/typst/typst/releases/download/v$TYPST_VERSION/typst-$target.tar.xz")"
+    install_bin_from "$dir" typst
+    mark_current typst "$TYPST_VERSION"
 }
 
 # =============================================================================
@@ -2462,6 +2486,8 @@ report() {
     if category_selected devtools; then
         print_version lazygit lazygit --version
         print_version direnv direnv version
+        print_version just just --version
+        print_version typst typst --version
         print_version rust-analyzer "$CARGO_HOME_DIR/bin/rust-analyzer" --version
         print_version lspmux lspmux --version
         print_version codelldb cat "$(codelldb_dir)/.bootstrap-version"
@@ -2526,6 +2552,8 @@ run_all() {
     step bat install_bat
     step mise install_mise
     category_step devtools direnv install_direnv
+    category_step devtools just install_just
+    category_step devtools typst install_typst
     step rust install_rust
     category_step devtools rust-analyzer install_rust_analyzer
     step tree-sitter install_tree_sitter

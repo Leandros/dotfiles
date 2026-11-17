@@ -146,6 +146,8 @@ fi
 check_devtools() {
     check_version lazygit "version=$LAZYGIT_VERSION" lazygit --version
     check_version direnv  "$DIRENV_VERSION" direnv version
+    check_version just    "just $JUST_VERSION" just --version
+    check_version typst   "typst $TYPST_VERSION" typst --version
     check_version rust-analyzer "rust-analyzer " "$HOME/.cargo/bin/rust-analyzer" --version
     if "$HOME/.cargo/bin/rustup" component list --installed --toolchain stable 2>/dev/null \
         | grep -q '^llvm-tools'; then
@@ -221,6 +223,7 @@ check_devtools() {
 check_no_devtools() {
     local path
     for path in /usr/local/bin/lazygit /usr/local/bin/direnv /usr/local/bin/lspmux \
+        /usr/local/bin/just /usr/local/bin/typst \
         "$HOME/.config/lazygit/config.yml" "$HOME/.config/lspmux/config.toml" \
         /etc/systemd/system/lspmux.service "$HOME/.local/share/nvim/lazy/vimspector/gadgets/linux/CodeLLDB"; do
         check_absent devtools "$path"

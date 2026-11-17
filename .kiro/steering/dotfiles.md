@@ -78,7 +78,7 @@ Report, Main.
   steps. Env: `BOOTSTRAP_CATEGORIES`, `BOOTSTRAP_XORG=1` (adds `desktop`;
   the prompt still runs), `BOOTSTRAP_DPI_SCALE`, `BOOTSTRAP_NONINTERACTIVE=1`,
   `BOOTSTRAP_DOTFILES_REPO`, `BOOTSTRAP_DOTFILES_REF`.
-- Categories: `basic` always; `devtools` (lazygit, direnv, rust-analyzer,
+- Categories: `basic` always; `devtools` (lazygit, direnv, just, typst, rust-analyzer,
   lspmux, codelldb), `desktop` (the Xorg/i3 desktop) and `desktop-wayland`
   (sway, Fedora 43+ only: `wayland_supported`) are optional; both desktops
   can be installed together. `choose_categories` in `main` sets `CATEGORIES` from `BOOTSTRAP_CATEGORIES`
