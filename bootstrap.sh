@@ -103,6 +103,9 @@ readonly LIBEVENT_VERSION="2.1.12-stable"
 readonly WEZTERM_RELEASE="nightly"
 # Fedora/RHEL: https://copr.fedorainfracloud.org/coprs/wezfurlong/wezterm-nightly/
 readonly WEZTERM_COPR="wezfurlong/wezterm-nightly"
+# Desktops on Fedora only (no EL build). Tracks upstream releases.
+# https://copr.fedorainfracloud.org/coprs/scottames/ghostty/
+readonly GHOSTTY_COPR="scottames/ghostty"
 # Fedora only (desktops): https://copr.fedorainfracloud.org/coprs/lizardbyte/stable/
 readonly SUNSHINE_COPR="lizardbyte/stable"
 # https://github.com/xremap/xremap/releases (Xorg desktop only)
@@ -1424,6 +1427,27 @@ install_wezterm_copr() {
     mark_current wezterm "$(rpm -q --qf '%{VERSION}' wezterm)"
 }
 
+# Second terminal next to wezterm (wezterm stays $mod+Return). The config
+# is shared with macOS (linked by hand there); ghostty/linux.conf, linked
+# next to it only here, sets wezterm's keys and the window settings.
+install_ghostty() {
+    if [[ "$DISTRO" != fedora ]]; then
+        warn "ghostty: no package for $DISTRO, skipping"
+        return
+    fi
+    $SUDO dnf install -y -q dnf-plugins-core
+    quiet $SUDO dnf copr enable -y "$GHOSTTY_COPR"
+    quiet $SUDO dnf install -y -q ghostty
+    quiet $SUDO dnf upgrade -y -q ghostty
+    mark_current ghostty "$(rpm -q --qf '%{VERSION}' ghostty)"
+
+    local d="$DOTFILES_DIR" dir="${XDG_CONFIG_HOME:-$HOME/.config}/ghostty"
+    mkdir -p "$dir"
+    link "$d/.config/ghostty/config" "$dir/config"
+    link "$d/.config/ghostty/themes" "$dir/themes"
+    link "$d/ghostty/linux.conf" "$dir/linux.conf"
+}
+
 # Game-stream host for remote desktop with Moonlight (VA-API/NVENC encoding).
 # Not started or opened in the firewall: start it from the launcher (its
 # systemd user unit), pair in its web UI. The unit runs ~/bin/sunshine-session,
@@ -2064,6 +2088,7 @@ setup_xorg() {
     fi
     install_xorg_packages
     install_wezterm
+    install_ghostty
     if [[ "$DISTRO" == fedora ]]; then
         install_sunshine
     fi
@@ -2331,6 +2356,7 @@ setup_wayland() {
     install_sway
     install_cliphist
     install_wezterm
+    install_ghostty
     install_sunshine
     install_nmrs_gui
     install_sway_easyfocus
@@ -2522,6 +2548,7 @@ report() {
         print_version nmrs-gui nmrs-gui --version
         print_version eww eww --version
         if [[ "$DISTRO" == fedora ]]; then
+            print_version ghostty cat "$(stamp_path ghostty)"
             print_version sunshine rpm -q Sunshine
         fi
         if [[ "$DISTRO" != rhel ]]; then

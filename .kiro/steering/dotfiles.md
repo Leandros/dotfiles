@@ -48,6 +48,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `bin/{sunshine-session,sunshine-pin}`, `.config/systemd/user/app-dev.lizardbyte.app.Sunshine.service.d/session.conf` | `~/bin`, `~/.config/systemd/user/...`, links, Fedora desktops (`install_sunshine`) |
 | `wayland-session/sway-session` | `/usr/local/bin/sway-session` (root copy, 0755; the lightdm session's wrapper) |
 | `firefox/autoconfig.js`, `firefox/dotfiles.cfg` | `/usr/lib64/firefox/defaults/pref/dotfiles-autoconfig.js`, `/usr/lib64/firefox/dotfiles.cfg` (root copies, 0644, desktop-wayland: `install_firefox_prefs`) |
+| `.config/ghostty/{config,themes}`, `ghostty/linux.conf` | `~/.config/ghostty/{config,themes,linux.conf}`, links, Fedora desktops (`install_ghostty`); not linked on macOS (the user links it by hand there) |
 | `wayland-session/sway-dotfiles.desktop` | `/usr/share/wayland-sessions/` (root copy, 0644; lightdm reads only `/usr/share`) |
 | `~/.config/sway.d/` | real directory, never a link: `output.conf` (bootstrap), `theme.conf` (`bin/theme`), `kb.conf` (`bin/kb`) |
 | `xkb/symbols/bone2` | generated from `.Xmodmap` by `xkb/xmodmap-to-xkb.py`; regenerate when `.Xmodmap` changes |
@@ -222,6 +223,24 @@ New link or system file: install function, `check_link` or `cmp` check in
   modesetting has no TearFree, xf86-video-intel no Arrow Lake). Config keeps
   to options picom 9 (Debian/Ubuntu) and 13 (Fedora) share; `.xprofile`
   runs `picom -b`.
+- ghostty (both desktops, Fedora only: copr `GHOSTTY_COPR`
+  `scottames/ghostty`, 1.4.0 in 2026-11, no EL chroot): a second terminal,
+  wezterm stays `$mod+Return`. `.config/ghostty/config` is shared with
+  macOS (opt+ keys type Bone 2 symbols there) and ends with `config-file =
+  ?linux.conf`, resolved next to the link, so only machines where
+  bootstrap links `ghostty/linux.conf` get it (kept out of
+  `.config/ghostty` for a macOS link of the whole directory). linux.conf
+  does `keybind = clear` and binds wezterm's Linux keys (Alt = physical
+  Ctrl): tabs, clipboard, palette, the `alt+e>` leader (no timeout in
+  ghostty), resize in pixels (100). Copy mode is partial: key table `copy`
+  (`activate_key_table`, `catch_all=ignore`), `adjust_selection` needs a
+  selection, search with `/ ? -`; no QuickSelect, no launcher, no
+  runtime theme toggle (`theme = dark:...,light:...` follows the
+  desktop). Themes match `.wezterm.lua` (dark brights = normal colors).
+  `mouse-scroll-multiplier precision:5` for sway's scroll_factor 0.1.
+  `ghostty --version` prints several lines: report reads the stamp.
+  Test: `test/ghostty/test.sh` (copr in fedora:45, `+validate-config`,
+  `+list-keybinds`, which shows opt as alt; themes against the Lua).
 - Sunshine (Moonlight remote-desktop host): Fedora, both desktops, from the
   `lizardbyte/stable` copr (`SUNSHINE_COPR`, package `Sunshine`; chroots
   fedora-43..45). Not started or enabled, no firewall ports opened; its
@@ -342,7 +361,8 @@ New link or system file: install function, `check_link` or `cmp` check in
   `test/fetch/test.sh` (`fetch_unpack` must die on a failed download: it runs
   in `$(...)`, where `set -e` does not apply),
   `test/system-sleep/power-button-wake.sh`, `test/system-sleep/vmware-suspend.sh`,
-  `test/sunshine-session/test.sh`, `test/sunshine-pin/test.sh`. Add new tests in this style.
+  `test/sunshine-session/test.sh`, `test/sunshine-pin/test.sh`, `test/ghostty/test.sh`,
+  `test/firefox-prefs/test.sh`. Add new tests in this style.
 - X programs: Xorg dummy driver in a container. i3 bindings: Xvfb + i3 with
   the repo config in a Fedora image, `xdotool key super+j`, then read the
   started program's `/proc/<pid>/cmdline`. `test/i3-swap/test.sh` does this for the

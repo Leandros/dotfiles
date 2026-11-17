@@ -394,6 +394,18 @@ check_desktop_shared() {
     check_link "$HOME/.config/i3status" "$D/.config/i3status"
     check_link "$HOME/.config/eww" "$D/.config/eww"
     check_link "$HOME/.wezterm.lua" "$D/.wezterm.lua"
+    # ghostty: Fedora only (copr); the config is valid with the Linux part.
+    if [[ "$os_id" == fedora ]]; then
+        check_version ghostty "Ghostty $(cat /usr/local/share/bootstrap/ghostty 2>/dev/null)" ghostty --version
+        check_link "$HOME/.config/ghostty/config" "$D/.config/ghostty/config"
+        check_link "$HOME/.config/ghostty/themes" "$D/.config/ghostty/themes"
+        check_link "$HOME/.config/ghostty/linux.conf" "$D/ghostty/linux.conf"
+        if ghostty +validate-config >/dev/null 2>&1; then
+            ok "ghostty config valid"
+        else
+            fail "ghostty +validate-config: $(ghostty +validate-config 2>&1 | head -n 3)"
+        fi
+    fi
     wezterm_stamp="$(cat /usr/local/share/bootstrap/wezterm 2>/dev/null || true)"
     check_version wezterm "wezterm $wezterm_stamp" wezterm --version
     if [[ "$wezterm_stamp" == 2026* || "$wezterm_stamp" == 2027* ]]; then

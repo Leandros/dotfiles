@@ -14,25 +14,26 @@ palette = 5=#d33682
 palette = 6=#2aa198
 # white
 palette = 7=#fdf6e3
-# gray
-palette = 8=#002b36
+# bright black: wezterm's brights are the normal colors (bold only)
+palette = 8=#073642
 # bright red
-palette = 9=#cb4b16
+palette = 9=#dc322f
 # bright green
-palette = 10=#586e75
+palette = 10=#859900
 # bright yellow
-palette = 11=#657b83
+palette = 11=#b58900
 # bright blue
-palette = 12=#839496
+palette = 12=#268bd2
 # bright magenta
-palette = 13=#6c71c4
+palette = 13=#d33682
 # bright cyan
-palette = 14=#93a1a1
+palette = 14=#2aa198
 # bright white
 palette = 15=#fdf6e3
 
 background = 002b36
 foreground = 839496
 cursor-color = 93a1a1
+cursor-text = 002b36
 selection-background = fdf6e3
 selection-foreground = 586e75

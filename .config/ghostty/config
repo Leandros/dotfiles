@@ -1,5 +1,5 @@
 # Font config
-font-family = "PragmataPro Mono Liga"
+font-family = "PragmataPro Mono"
 font-style = "Regular"
 font-synthetic-style = false
 font-feature = "-calt"
@@ -35,12 +35,17 @@ window-theme = "system"
 window-colorspace = "display-p3"
 
 # Keybindings.
-keybind = opt+e=text:€
-keybind = opt+5=text:[
-keybind = opt+6=text:]
-keybind = opt+shift+/=text:\\
-keybind = opt+7=text:|
-keybind = opt+8=text:{
-keybind = opt+9=text:}
-keybind = opt+n=text:~
-keybind = opt+l=text:@
+#keybind = opt+e=text:€
+#keybind = opt+5=text:[
+#keybind = opt+6=text:]
+#keybind = opt+shift+/=text:\\
+#keybind = opt+7=text:|
+#keybind = opt+8=text:{
+#keybind = opt+9=text:}
+#keybind = opt+n=text:~
+#keybind = opt+l=text:@
+
+# Linux (Fedora desktops): bootstrap.sh links ghostty/linux.conf next to
+# this file; it clears the macOS keys above and sets wezterm's. Not there
+# on macOS, so nothing changes there.
+config-file = ?linux.conf
