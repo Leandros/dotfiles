@@ -74,6 +74,9 @@ On firewalld machines (Fedora, EL) the desktop setup enables sshd and allows ssh
 sway is built from <https://github.com/Leandros/sway/tree/v1.12> (1.12 with the custom pointer
 acceleration of sway PR #8592: the touchpad curve of X); `sway-session` starts Fedora's sway when
 that build does not load. Tests: `test/sway/test.sh`, `test/sway-session/test.sh`.
+The sway touchpad scrolls at `scroll_factor 0.1`; bootstrap installs a Firefox autoconfig
+(`firefox/`, next to Firefox, no profile touched) that scales Firefox's scrolling and back
+swipe to match, only when Firefox starts in sway. Test: `test/firefox-prefs/test.sh`.
 Media keys (volume, mute, screen brightness) are bound in i3 only; check with `test/media-keys/test.sh`.
 
 

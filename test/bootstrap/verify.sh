@@ -489,6 +489,16 @@ check_wayland() {
             fail "$path missing, differs, a link or not mode $mode"
         fi
     done
+    # Firefox's sway prefs: root copies next to Firefox, no profile touched.
+    for pair in "autoconfig.js:/usr/lib64/firefox/defaults/pref/dotfiles-autoconfig.js" \
+        "dotfiles.cfg:/usr/lib64/firefox/dotfiles.cfg"; do
+        IFS=: read -r name path <<< "$pair"
+        if cmp -s "$D/firefox/$name" "$path" && [[ ! -L "$path" ]]; then
+            ok "installed $path"
+        else
+            fail "$path missing, differs or a link"
+        fi
+    done
     # run.sh sets BOOTSTRAP_DPI_SCALE=1.5. ~/bin/theme writes into the same
     # directory, so it must not be a link into the repo.
     scale_line="$(grep -v '^#' "$HOME/.config/sway.d/output.conf" 2>/dev/null || true)"

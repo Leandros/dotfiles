@@ -47,6 +47,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `bin/{wm-msg,sway-autostart,kanshi-save,clip-pick}` | `~/bin`, links; `wm-msg` also for desktop (the eww scripts and i3status-kb use it) |
 | `bin/{sunshine-session,sunshine-pin}`, `.config/systemd/user/app-dev.lizardbyte.app.Sunshine.service.d/session.conf` | `~/bin`, `~/.config/systemd/user/...`, links, Fedora desktops (`install_sunshine`) |
 | `wayland-session/sway-session` | `/usr/local/bin/sway-session` (root copy, 0755; the lightdm session's wrapper) |
+| `firefox/autoconfig.js`, `firefox/dotfiles.cfg` | `/usr/lib64/firefox/defaults/pref/dotfiles-autoconfig.js`, `/usr/lib64/firefox/dotfiles.cfg` (root copies, 0644, desktop-wayland: `install_firefox_prefs`) |
 | `wayland-session/sway-dotfiles.desktop` | `/usr/share/wayland-sessions/` (root copy, 0644; lightdm reads only `/usr/share`) |
 | `~/.config/sway.d/` | real directory, never a link: `output.conf` (bootstrap), `theme.conf` (`bin/theme`), `kb.conf` (`bin/kb`) |
 | `xkb/symbols/bone2` | generated from `.Xmodmap` by `xkb/xmodmap-to-xkb.py`; regenerate when `.Xmodmap` changes |
@@ -159,13 +160,26 @@ New link or system file: install function, `check_link` or `cmp` check in
     show in swaynag). Drop the fork once a sway release has the profile.
     The touchpad block has the X curve (`xorg-conf/40-touchpad.conf`:
     step 0.5, the same points, checked by `test/touchpad/test.sh`; user:
-    adaptive was worse for small targets). Tuned by feel on 2026-11-16
-    (the first curve was too fast on fast motions): 15 % below the
-    formula in the X file's comment up to speed 0.5, 20 % at 1.5, 33 % at
-    3 and 48 % at 8; the user's verdict: "That curve is good".
+    adaptive was worse for small targets). Since 2026-11-17: macOS's
+    trackpad curve at tracking speed 0.6875 (the user: "the fourth lowest
+    setting"), Apple's parametric HIDAccelCurves converted to this
+    laptop (derivation in the X file's comment; libinput's custom profile
+    gets raw device units, 12/mm on this pad). Before: a hand-tuned power
+    curve, 10-15 % faster below 170 mm/s. X moves physical pixels, so i3
+    is 2/3 as fast as sway with the same points.
     `pointer_accel` does not apply to a custom curve.
     TrackPoint and mice: adaptive, `pointer_accel -0.17` (by feel), both
-    `scroll_factor 0.5`. The adaptive touchpad speed is a factor
+    `scroll_factor 0.5` (touchpad 0.1 since 2026-11-17: Proton Mail
+    (Electron) and wezterm scrolled too fast). Firefox: autoconfig
+    (`firefox/dotfiles.cfg`, sandboxed, `getenv("SWAYSOCK")`) sets
+    `defaultPref`s only in sway: `mousewheel.default.delta_multiplier_y`
+    500, `widget.swipe.page-size` "8.0" and `pixel-size` "220.0" (5x, for
+    0.5 -> 0.1; float prefs are strings in Firefox's store, a number makes
+    an int pref). No profile in the repo (personal data). Fedora's Firefox
+    does not read `/etc/firefox/pref` (tested); `defaults/pref` works.
+    Values set in about:config win. Test: `test/firefox-prefs/test.sh`
+    (Fedora 45 Firefox headless, a probe appended to the .cfg saves the
+    values with `pref()` to prefs.js). The adaptive touchpad speed is a factor
     `(s+1)^2.38 * 0.95 + 0.05` (libinput 1.32): `pointer_accel 1` was 5
     times the default, "way too fast". swaymsg reads a negative value as
     an option: `swaymsg -- input ... pointer_accel -0.2`.

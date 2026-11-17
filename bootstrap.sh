@@ -2295,6 +2295,30 @@ install_sway_session() {
     done
 }
 
+# Firefox prefs for the touchpad's scroll_factor in sway: an autoconfig
+# file that sets them only when Firefox starts in sway. Both files go into
+# Firefox's install directory (Fedora's /etc/firefox/pref is not read;
+# files the package does not own survive its updates). Root copies, so no
+# Firefox profile (it holds personal data) is touched.
+readonly FIREFOX_PREF_FILES=(
+    "autoconfig.js:/usr/lib64/firefox/defaults/pref/dotfiles-autoconfig.js:0644"
+    "dotfiles.cfg:/usr/lib64/firefox/dotfiles.cfg:0644"
+)
+
+install_firefox_prefs() {
+    local entry src dst mode
+    for entry in "${FIREFOX_PREF_FILES[@]}"; do
+        IFS=: read -r src dst mode <<< "$entry"
+        src="$DOTFILES_DIR/firefox/$src"
+        cmp -s "$src" "$dst" 2>/dev/null && continue
+        $SUDO install -D -m "$mode" "$src" "$dst"
+        if have restorecon; then
+            $SUDO restorecon "$dst"
+        fi
+        log "installed $dst; applies at Firefox's next start"
+    done
+}
+
 setup_wayland() {
     if ! wayland_requested; then
         return
@@ -2317,6 +2341,7 @@ setup_wayland() {
     install_sleep_hook
     install_power_modes
     install_sway_session
+    install_firefox_prefs
     enable_bluetooth
     enable_syncthing
     link_wayland_dotfiles
