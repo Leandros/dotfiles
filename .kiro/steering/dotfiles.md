@@ -43,6 +43,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `.wezterm.lua`, `.xinitrc`, `.xprofile`, `.xsession`, `.Xmodmap`, `.config/{i3,i3status,xremap,picom,eww}`, `.config/autorandr/postswitch` (the file only: profiles are per machine), `.config/systemd/user/i3-session.target` | `$HOME`, links, Xorg only |
 | `bin/{kb,i3status-kb,pwr,theme,flightmode,touchpad,charge,caffeinate,smb,input-restore,bar,pkill-display,term,xrdp-keys,syncthing-status,screenshot}` | `~/bin`, links, Xorg only |
 | `bin/fzf-cache` | `~/bin`, link, always |
+| `bin/{pbcopy,pbpaste}` | `~/bin`, links, Linux (macOS has its own) |
 | `.config/{sway,fuzzel,sway-easyfocus}`, `.config/systemd/user/sway-session.target`, `xkb` (as `~/.config/xkb`) | `$HOME`, links, desktop-wayland only |
 | `bin/{wm-msg,sway-autostart,kanshi-save,clip-pick}` | `~/bin`, links; `wm-msg` also for desktop (the eww scripts and i3status-kb use it) |
 | `bin/{sunshine-session,sunshine-pin}`, `.config/systemd/user/app-dev.lizardbyte.app.Sunshine.service.d/session.conf` | `~/bin`, `~/.config/systemd/user/...`, links, Fedora desktops (`install_sunshine`) |
@@ -425,7 +426,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   in `$(...)`, where `set -e` does not apply),
   `test/system-sleep/power-button-wake.sh`, `test/system-sleep/vmware-suspend.sh`,
   `test/sunshine-session/test.sh`, `test/sunshine-pin/test.sh`, `test/ghostty/test.sh`, `test/rio/test.sh`, `test/alacritty/test.sh`,
-  `test/firefox-prefs/test.sh`. Add new tests in this style.
+  `test/firefox-prefs/test.sh`, `test/zsh-clipboard/test.sh`. Add new tests in this style.
 - X programs: Xorg dummy driver in a container. i3 bindings: Xvfb + i3 with
   the repo config in a Fedora image, `xdotool key super+j`, then read the
   started program's `/proc/<pid>/cmdline`. `test/i3-swap/test.sh` does this for the
@@ -951,6 +952,16 @@ New link or system file: install function, `check_link` or `cmp` check in
   `load:unbind(load)+reload-sync(fzf-cache update ...)`. `fzf-cache` refreshes
   in its own process group (fzf kills the reload group), locks per directory
   and command, and prunes caches older than `MAX_AGE_DAYS`.
+- Clipboard in zsh (vi mode `y`/`Y`/`p`, fzf's CTRL-Y): `bin/pbcopy` and
+  `bin/pbpaste` (`--primary`), scripts, not zsh functions or aliases: fzf
+  runs CTRL-Y with `$SHELL -c`, which reads no .zshrc. They decide at each
+  call, `WAYLAND_DISPLAY` (wl-copy/wl-paste) before `DISPLAY` (xclip),
+  else tmux's buffer; `.zshrc` keeps `_clip_paste` (p). Under sway `DISPLAY` is
+  xwayland-satellite's, whose X clipboard did not hold what Wayland
+  programs copied: xclip printed nothing and succeeded, so `p` pasted
+  nothing. An empty clipboard falls back to the primary selection, then
+  zsh's CUTBUFFER. Test: `test/zsh-clipboard/test.sh` (stubs). `~/.zshrc`
+  is a rendered copy: changes need bootstrap (`write_zshrc`).
 - `.zshrc` loads the oh-my-zsh `direnv` plugin only when `direnv` is on
   PATH (`${commands[direnv]:+direnv}` in `plugins`): without the devtools
   category the plugin printed a warning in every shell. `verify.sh` checks

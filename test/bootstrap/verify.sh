@@ -107,6 +107,8 @@ check_link "$HOME/.tmux.conf" "$D/tmux/tmux_linux_$TMUX_VERSION_LINUX/.tmux.conf
 check_link "$HOME/.tmux/custom" "$D/.tmux/custom"
 check_link "$HOME/.config/yazi" "$D/.config/yazi"
 check_link "$HOME/bin/fzf-cache" "$D/bin/fzf-cache"
+check_link "$HOME/bin/pbcopy" "$D/bin/pbcopy"
+check_link "$HOME/bin/pbpaste" "$D/bin/pbpaste"
 check_link "$HOME/.vsnip" "$D/.vsnip"
 vsnip_internal="$HOME/.vsnip-internal"
 if [[ -d "$vsnip_internal" && ! -L "$vsnip_internal" && "$(stat -c %a "$vsnip_internal")" == "700" ]]; then

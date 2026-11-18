@@ -70,15 +70,19 @@ if [[ "Darwin" == "`uname`" ]]; then
 # =============================================================================
 elif [[ "Linux" == "`uname`" ]]; then
     alias startx='startx -- -dpi 144'
-    if [ -z ${DISPLAY+x} ]; then
-        # X is not running
-        # TODO: Do we want to detect that tmux is running?
-        alias pbpaste='tmux save-buffer -'
-        alias pbcopy='tmux load-buffer -w -'
-    else
-        alias pbpaste='xclip -selection clipboard -o'
-        alias pbcopy='xclip -selection clipboard -i'
-    fi
+    # Clipboard: pbcopy and pbpaste are scripts in ~/bin (bin/pbcopy,
+    # bin/pbpaste): Wayland first, then X, else tmux's buffer, decided at
+    # each call. Not functions, so fzf's CTRL-Y below (`$SHELL -c`) finds
+    # them too. test/zsh-clipboard/test.sh.
+    # The clipboard, else the primary selection (vi mode's p). An empty
+    # clipboard counts as none: xclip prints nothing and succeeds when no
+    # program owns it.
+    _clip_paste() {
+        local text
+        text="$(pbpaste 2>/dev/null)"
+        [[ -z $text ]] && text="$(pbpaste --primary 2>/dev/null)"
+        print -rn -- "$text"
+    }
 
     # LOL! Free C-s
     stty -ixon -ixoff
@@ -462,12 +466,10 @@ x-cut() {
 zle -N x-cut
 
 x-paste() {
-    # Try CLIPBOARD, then PRIMARY, then zsh's own kill buffer. xclip fails
-    # when no running program owns the selection (no clipboard manager).
+    # The clipboard, then the primary selection, then zsh's own kill buffer.
     local PASTE
-    if (( $+commands[xclip] )) && [[ -n $DISPLAY ]]; then
-        PASTE=$(xclip -selection clipboard -o 2>/dev/null) ||
-            PASTE=$(xclip -selection primary -o 2>/dev/null)
+    if (( $+functions[_clip_paste] )); then
+        PASTE=$(_clip_paste)
     else
         PASTE=$(pbpaste 2>/dev/null)
     fi

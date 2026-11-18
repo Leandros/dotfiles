@@ -1304,6 +1304,12 @@ link_dotfiles() {
     fi
     # fzf CTRL-T list cache, used by .zshrc.
     link "$d/bin/fzf-cache" "$HOME/bin/fzf-cache"
+    # Clipboard for zsh (vi mode y/p, fzf's CTRL-Y): Wayland, X or tmux.
+    # macOS has its own pbcopy and pbpaste.
+    if [[ "$OS" == linux ]]; then
+        link "$d/bin/pbcopy" "$HOME/bin/pbcopy"
+        link "$d/bin/pbpaste" "$HOME/bin/pbpaste"
+    fi
 }
 
 # =============================================================================

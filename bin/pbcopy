@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+#
+# pbcopy - copy stdin to the clipboard, as macOS's pbcopy (Linux; ~/bin,
+# linked by bootstrap). A script, not a zsh function, so programs that run
+# it through `$SHELL -c` (fzf's CTRL-Y in .zshrc) find it too.
+#
+# Decided at each call: Wayland (sway) first, as DISPLAY is set there too
+# (xwayland-satellite) and its X clipboard does not hold what Wayland
+# programs copy; then X; else tmux's buffer (ssh, console).
+# Test: test/zsh-clipboard/test.sh.
+#
+set -euo pipefail
+
+if [[ -n "${WAYLAND_DISPLAY:-}" ]] && command -v wl-copy >/dev/null; then
+    exec wl-copy
+elif [[ -n "${DISPLAY:-}" ]] && command -v xclip >/dev/null; then
+    exec xclip -selection clipboard -i
+else
+    exec tmux load-buffer -w -
+fi
