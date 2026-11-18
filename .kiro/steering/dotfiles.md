@@ -48,6 +48,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `bin/{sunshine-session,sunshine-pin}`, `.config/systemd/user/app-dev.lizardbyte.app.Sunshine.service.d/session.conf` | `~/bin`, `~/.config/systemd/user/...`, links, Fedora desktops (`install_sunshine`) |
 | `wayland-session/sway-session` | `/usr/local/bin/sway-session` (root copy, 0755; the lightdm session's wrapper) |
 | `firefox/autoconfig.js`, `firefox/dotfiles.cfg` | `/usr/lib64/firefox/defaults/pref/dotfiles-autoconfig.js`, `/usr/lib64/firefox/dotfiles.cfg` (root copies, 0644, desktop-wayland: `install_firefox_prefs`) |
+| `.config/rio` | `~/.config/rio`, link, Linux desktops (Rio installed by hand) |
 | `.config/ghostty/{config,themes}`, `ghostty/linux.conf` | `~/.config/ghostty/{config,themes,linux.conf}`, links, Fedora desktops (`install_ghostty`); not linked on macOS (the user links it by hand there) |
 | `wayland-session/sway-dotfiles.desktop` | `/usr/share/wayland-sessions/` (root copy, 0644; lightdm reads only `/usr/share`) |
 | `~/.config/sway.d/` | real directory, never a link: `output.conf` (bootstrap), `theme.conf` (`bin/theme`), `kb.conf` (`bin/kb`) |
@@ -243,6 +244,21 @@ New link or system file: install function, `check_link` or `cmp` check in
   `ghostty --version` prints several lines: report reads the stamp.
   Test: `test/ghostty/test.sh` (copr in fedora:45, `+validate-config`,
   `+list-keybinds`, which shows opt as alt; themes against the Lua).
+- Rio (`.config/rio`, both desktops, config only: no Fedora package;
+  upstream ships separate Wayland and X11 rpms, the user installs it):
+  `.wezterm.lua`'s Linux keys (Alt = physical Ctrl). Rio 0.5.32 has no key
+  sequences, so the Alt+e leader keys are Alt+Shift+key (split right
+  `i`, down `u` because Alt+Shift+t opens a tab, previous/next split
+  `b`/`s`, close `d`, dividers Alt+Shift+arrows); no way to drop all
+  default keys, no split zoom, no move by direction, no QuickSelect,
+  vi-mode keys fixed (hjkl; Rio's vi mode, Alt+Shift+Space, is the copy
+  mode). `theme = "solarized-dark"` as fallback: without a desktop
+  appearance Rio ignores `[adaptive-theme]` and used its black default.
+  Config errors show only in Rio's window (nothing on stderr or in its
+  log file); checked once in a fedora:45 container with headless sway and
+  grim (the only warning: PragmataPro missing). Test: `test/rio/test.sh`
+  (tomllib; actions, key names, modifiers and modes from Rio's source,
+  `frontends/rioterm/src/bindings/mod.rs`; themes against the Lua).
 - Sunshine (Moonlight remote-desktop host): Fedora, both desktops, from the
   `lizardbyte/stable` copr (`SUNSHINE_COPR`, package `Sunshine`; chroots
   fedora-43..45). Not started or enabled, no firewall ports opened; its
@@ -363,7 +379,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   `test/fetch/test.sh` (`fetch_unpack` must die on a failed download: it runs
   in `$(...)`, where `set -e` does not apply),
   `test/system-sleep/power-button-wake.sh`, `test/system-sleep/vmware-suspend.sh`,
-  `test/sunshine-session/test.sh`, `test/sunshine-pin/test.sh`, `test/ghostty/test.sh`,
+  `test/sunshine-session/test.sh`, `test/sunshine-pin/test.sh`, `test/ghostty/test.sh`, `test/rio/test.sh`,
   `test/firefox-prefs/test.sh`. Add new tests in this style.
 - X programs: Xorg dummy driver in a container. i3 bindings: Xvfb + i3 with
   the repo config in a Fedora image, `xdotool key super+j`, then read the

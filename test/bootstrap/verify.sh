@@ -394,6 +394,7 @@ check_desktop_shared() {
     check_link "$HOME/.config/i3status" "$D/.config/i3status"
     check_link "$HOME/.config/eww" "$D/.config/eww"
     check_link "$HOME/.wezterm.lua" "$D/.wezterm.lua"
+    check_link "$HOME/.config/rio" "$D/.config/rio"
     # ghostty: Fedora only (copr); the config is valid with the Linux part.
     if [[ "$os_id" == fedora ]]; then
         check_version ghostty "Ghostty $(cat /usr/local/share/bootstrap/ghostty 2>/dev/null)" ghostty --version

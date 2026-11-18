@@ -2028,6 +2028,8 @@ write_xresources() {
 link_xorg_dotfiles() {
     local d="$DOTFILES_DIR"
     link "$d/.wezterm.lua" "$HOME/.wezterm.lua"
+    # Rio is installed by hand (no Fedora package); its config is ready.
+    link "$d/.config/rio" "$HOME/.config/rio"
     # Layout switcher: `kb` (us, de, bone2) for X and the console; ~/bin is on
     # PATH in .zshrc. The bone2 console map is read from the clone.
     link "$d/bin/kb" "$HOME/bin/kb"
@@ -2251,6 +2253,8 @@ install_sway_audio_idle_inhibit() {
 link_wayland_dotfiles() {
     local d="$DOTFILES_DIR" name
     link "$d/.wezterm.lua" "$HOME/.wezterm.lua"
+    # Rio is installed by hand (no Fedora package); its config is ready.
+    link "$d/.config/rio" "$HOME/.config/rio"
     for name in kb i3status-kb pwr theme flightmode touchpad charge caffeinate smb bar \
         pkill-display term syncthing-status wm-msg screenshot sway-autostart kanshi-save clip-pick; do
         link "$d/bin/$name" "$HOME/bin/$name"

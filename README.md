@@ -79,6 +79,8 @@ The sway touchpad scrolls at `scroll_factor 0.1`; bootstrap installs a Firefox a
 swipe to match, only when Firefox starts in sway. Test: `test/firefox-prefs/test.sh`.
 ghostty (Fedora desktops, from copr) is installed next to wezterm with wezterm's keys and
 colors (`.config/ghostty`, Linux part `ghostty/linux.conf`). Test: `test/ghostty/test.sh`.
+Rio config (`.config/rio`, linked on Linux desktops; install Rio by hand): wezterm's keys,
+with the Alt+e leader keys as Alt+Shift+key. Test: `test/rio/test.sh`.
 Media keys (volume, mute, screen brightness) are bound in i3 only; check with `test/media-keys/test.sh`.
 
 

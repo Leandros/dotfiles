@@ -1,0 +1,100 @@
+# Rio (https://rioterm.com): the Linux features of .wezterm.lua, where Rio
+# has them. bootstrap.sh links this directory to ~/.config/rio on Linux
+# desktops; Rio itself is installed by hand (no Fedora package). Test:
+# test/rio/test.sh.
+#
+# Not in Rio 0.5.32: key sequences (wezterm's Alt+e leader; its keys are
+# Alt+Shift+key here), disabling all default keys, split zoom, moving to a
+# split by direction (only previous/next), QuickSelect, the launcher, and
+# custom vi-mode keys (Rio's vi mode keeps h j k l).
+#
+# Alt is the physical Ctrl key: XKB (sway) and xremap (i3) swap left Alt
+# and Ctrl, and Super belongs to the window manager (wezterm's `ctrlkey`).
+
+confirm-before-quit = true
+# wezterm: bold_brightens_ansi_colors = 'BrightAndBold'.
+draw-bold-text-with-light-colors = true
+# Dark when Rio cannot read the desktop's light or dark setting (wezterm's
+# default); [adaptive-theme] below follows it otherwise.
+theme = "solarized-dark"
+
+[fonts]
+size = 14
+hinting = true
+# PragmataPro: no ligatures; ss13 draws git trees.
+features = ["-calt", "-clig", "-liga", "+ss13"]
+
+[fonts.regular]
+family = "PragmataPro Mono Liga"
+style = "Normal"
+weight = 400
+
+[fonts.bold]
+family = "PragmataPro Mono Liga"
+style = "Normal"
+weight = 700
+
+[fonts.italic]
+family = "PragmataPro Mono Liga"
+style = "Italic"
+weight = 400
+
+[fonts.bold-italic]
+family = "PragmataPro Mono Liga"
+style = "Italic"
+weight = 700
+
+# Follows the desktop's light or dark setting (~/bin/theme); the command
+# palette's appearance toggle flips it, as wezterm's "Toggle Dark Mode".
+[adaptive-theme]
+light = "solarized-light"
+dark = "solarized-dark"
+
+# Tabs; the tab bar only with a second tab (i3 and sway manage windows).
+[navigation]
+mode = "Tab"
+use-split = true
+hide-if-single = true
+
+# No bell, as wezterm's (no visual bell).
+[bell]
+visual = false
+audio = false
+
+# i3 and sway draw the window frames.
+[window]
+decorations = "Disabled"
+
+[bindings]
+keys = [
+    # Tabs, windows, clipboard (wezterm's general keys).
+    { key = "1", with = "alt", action = "SelectTab(0)" },
+    { key = "2", with = "alt", action = "SelectTab(1)" },
+    { key = "3", with = "alt", action = "SelectTab(2)" },
+    { key = "4", with = "alt", action = "SelectTab(3)" },
+    { key = "5", with = "alt", action = "SelectTab(4)" },
+    { key = "6", with = "alt", action = "SelectTab(5)" },
+    { key = "7", with = "alt", action = "SelectTab(6)" },
+    { key = "8", with = "alt", action = "SelectTab(7)" },
+    { key = "9", with = "alt", action = "SelectLastTab" },
+    { key = "t", with = "alt | shift", action = "CreateTab" },
+    { key = "w", with = "alt | shift", action = "CloseTab" },
+    { key = "n", with = "alt | shift", action = "CreateWindow" },
+    { key = "q", with = "alt | shift", action = "Quit" },
+    { key = "p", with = "control | shift", action = "OpenCommandPalette" },
+    { key = "c", with = "alt | shift", action = "Copy" },
+    { key = "v", with = "alt | shift", action = "Paste" },
+    { key = "insert", with = "shift", action = "Paste" },
+    # wezterm's leader keys (Alt+e, then the key) as Alt+Shift+key. Split
+    # down is u: Alt+Shift+t opens a tab. Copy mode is Rio's vi mode,
+    # Alt+Shift+Space (its default).
+    { key = "i", with = "alt | shift", mode = "~vi", action = "SplitRight" },
+    { key = "u", with = "alt | shift", mode = "~vi", action = "SplitDown" },
+    { key = "b", with = "alt | shift", mode = "~vi", action = "SelectPrevSplit" },
+    { key = "s", with = "alt | shift", mode = "~vi", action = "SelectNextSplit" },
+    { key = "d", with = "alt | shift", mode = "~vi", action = "CloseSplitOrTab" },
+    { key = "left", with = "alt | shift", mode = "~vi", action = "MoveDividerLeft" },
+    { key = "right", with = "alt | shift", mode = "~vi", action = "MoveDividerRight" },
+    { key = "up", with = "alt | shift", mode = "~vi", action = "MoveDividerUp" },
+    { key = "down", with = "alt | shift", mode = "~vi", action = "MoveDividerDown" },
+]
