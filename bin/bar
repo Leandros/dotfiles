@@ -147,17 +147,26 @@ open_bars_checked() {
 }
 
 # One bar per active output; the tray on the primary one, else the first
-# (sway: no primary).
+# (sway: no primary). On sway an output at scale 1 below 4k (a conventional
+# screen, about 110 ppi) gets the smaller font (small=true): there a
+# logical pixel is larger than on the 4k monitor. X has one Xft.dpi for
+# all outputs and no small font.
 open_bars() {
-    local outputs h name tray=true
-    outputs="$("$WM_MSG" -t get_outputs | jq -r '[.[] | select(.active)] | sort_by(.primary | not) | .[].name')"
+    local outputs h name small args tray=true
+    # shellcheck disable=SC2016
+    outputs="$("$WM_MSG" -t get_outputs | jq -r '[.[] | select(.active)] | sort_by(.primary | not) | .[]
+        | "\(.name) \(.scale == 1 and ([.current_mode.width, .current_mode.height] | max) < 3840)"')"
     h="$(height)"
     eww_ close-all >/dev/null 2>&1 || true
-    while read -r name; do
+    while read -r name small; do
         [[ -n "$name" ]] || continue
+        args=(--arg "output=$name" --arg "height=$h" --arg "tray=$tray")
+        if is_sway; then
+            args+=(--arg "small=$small")
+        fi
         # An open that never returned blocked the watcher for good.
         timeout "$OPEN_TIMEOUT_S" "$EWW" -c "$CONFIG" --no-daemonize open bar --id "bar-$name" --screen "$name" \
-            --arg "output=$name" --arg "height=$h" --arg "tray=$tray" >/dev/null || true
+            "${args[@]}" >/dev/null || true
         tray=false
     done <<< "$outputs"
     # eww starts every poll a window uses when it opens, ignoring

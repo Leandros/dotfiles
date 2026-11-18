@@ -135,7 +135,7 @@
 ;; X11: a dock window, i3 reserves the strip, as for i3bar. Wayland: a
 ;; layer surface with an exclusive zone, without keyboard focus. eww reads
 ;; the properties of its backend.
-(defwindow bar [output height tray]
+(defwindow bar [output height tray ?small]
   :monitor output
   :windowtype "dock"
   :geometry (geometry :x "0%" :y "0%" :width "100%" :height "${height}px" :anchor "top center")
@@ -143,7 +143,7 @@
   :exclusive true
   :focusable "none"
   :namespace "eww-bar"
-  (centerbox :class "bar ${theme}"
+  (centerbox :class "bar ${theme} ${small == "true" ? "small" : ""}"
     ;; The mode after the workspaces, as i3bar shows it.
     (box :space-evenly false :halign "start"
       (workspace-buttons :output output)

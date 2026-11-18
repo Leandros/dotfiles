@@ -526,7 +526,8 @@ test_yuck() {
 # sway 1.12, headless: HEADLESS-1, HEADLESS-2 at scale 1.5, HEADLESS-3
 # disabled; a 23 px bar on each output). No primary output: the tray goes
 # on the first one. sway scales layer surfaces, so the height is for 96
-# dpi. Bars are not in sway's tree: their exclusive zone moves the
+# dpi. HEADLESS-1 (scale 1, below 4k) is a conventional screen: its bar
+# gets the smaller font (small=true). Bars are not in sway's tree: their exclusive zone moves the
 # workspaces down by the bar height.
 test_bar_sway() {
     stub eww
@@ -539,8 +540,8 @@ test_bar_sway() {
     local cfg="eww -c $TMP/run/eww/wayland-1"
     : > "$CALLS"
     XFT_DPI=144 BAR_RETRY_S=0 BAR_SIZE_CHECK_S=0 run_sway timeout 5 "$BAR" watch || true
-    expect "sway: bars per active output, tray on the first, 96 dpi height" \
-        "$cfg --no-daemonize open bar --id bar-HEADLESS-1 --screen HEADLESS-1 --arg output=HEADLESS-1 --arg height=23 --arg tray=true;$cfg --no-daemonize open bar --id bar-HEADLESS-2 --screen HEADLESS-2 --arg output=HEADLESS-2 --arg height=23 --arg tray=false" \
+    expect "sway: bars per active output, tray on the first, 96 dpi height, small font at scale 1 below 4k" \
+        "$cfg --no-daemonize open bar --id bar-HEADLESS-1 --screen HEADLESS-1 --arg output=HEADLESS-1 --arg height=23 --arg tray=true --arg small=true;$cfg --no-daemonize open bar --id bar-HEADLESS-2 --screen HEADLESS-2 --arg output=HEADLESS-2 --arg height=23 --arg tray=false --arg small=false" \
         "$(grep ' open ' "$CALLS" | head -n 2 | paste -sd ';')"
     expect "sway: bars reopened once when outputs change" "2" "$(grep -c ' close-all' "$CALLS")"
     expect "sway: bars in place, no new daemon" "0" "$(grep -c ' kill$' "$CALLS")"

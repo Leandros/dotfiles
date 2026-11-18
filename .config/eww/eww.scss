@@ -8,6 +8,9 @@ $yellow: #b58900;
 $red: #dc322f;
 
 * { all: unset; font-family: "Menlo", monospace; font-size: 10pt; }
+// sway: outputs at scale 1 below 4k (bin/bar's small=true), about 110 ppi
+// against the 4k monitor's 137: 10pt * 110 / 137.
+.bar.small, .bar.small * { font-size: 8pt; }
 
 @mixin palette($baseA3, $baseA2, $baseB2, $baseB3, $custom) {
   background-color: $baseA3;

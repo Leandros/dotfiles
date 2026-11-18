@@ -712,7 +712,11 @@ New link or system file: install function, `check_link` or `cmp` check in
   refused meanwhile (lid close still suspends).
 - Bar: the same eww config (Wayland properties `:exclusive`, `:focusable`,
   `:namespace` next to the X11 ones). On sway: 23 logical px high (sway
-  scales), tray on the first active output, `bars_ok` checks that each
+  scales), tray on the first active output, `small=true` (8pt instead of
+  10pt, class `small`) on outputs at scale 1 below 4k (conventional
+  ~110 ppi screens, where a logical pixel is larger than on the 4k
+  monitor; sway's IPC has no physical size, so mode and scale decide;
+  optional window arg `?small`, not passed on X), `bars_ok` checks that each
   output's workspace rect starts one bar height below the output top
   (assumes no top gaps).
 - Keyboard: `xkb/symbols/bone2` (one group, eight levels; Neo Mod3 =
