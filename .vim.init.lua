@@ -4638,6 +4638,67 @@ local spec = {
     ---@module 'render-markdown'
     ---@type render.md.UserConfig
     opts = {
+      -- Glyphs PragmataPro Mono draws itself. It has no Material Design icons,
+      -- the plugin's defaults; wezterm drew those from a fallback font, too low.
+      heading = {
+        icons = { "① ", "② ", "③ ", "④ ", "⑤ ", "⑥ " },
+        signs = { " " },
+      },
+      checkbox = {
+        unchecked = { icon = " " },
+        checked = { icon = " " },
+        custom = { todo = { rendered = " " } },
+      },
+      callout = {
+        note = { rendered = " Note" },
+        tip = { rendered = " Tip" },
+        important = { rendered = " Important" },
+        warning = { rendered = " Warning" },
+        caution = { rendered = " Caution" },
+        abstract = { rendered = " Abstract" },
+        summary = { rendered = " Summary" },
+        tldr = { rendered = " Tldr" },
+        info = { rendered = " Info" },
+        todo = { rendered = " Todo" },
+        hint = { rendered = " Hint" },
+        success = { rendered = " Success" },
+        check = { rendered = " Check" },
+        done = { rendered = " Done" },
+        question = { rendered = " Question" },
+        help = { rendered = " Help" },
+        faq = { rendered = " Faq" },
+        attention = { rendered = " Attention" },
+        failure = { rendered = " Failure" },
+        fail = { rendered = " Fail" },
+        missing = { rendered = " Missing" },
+        danger = { rendered = " Danger" },
+        error = { rendered = " Error" },
+        bug = { rendered = " Bug" },
+        example = { rendered = " Example" },
+        quote = { rendered = " Quote" },
+        cite = { rendered = " Cite" },
+      },
+      link = {
+        footnote = { icon = " " },
+        image = " ",
+        email = " ",
+        hyperlink = " ",
+        wiki = { icon = " " },
+        custom = {
+          web = { icon = " " },
+          discord = { icon = " " },
+          github = { icon = " " },
+          gitlab = { icon = " " },
+          google = { icon = " " },
+          linkedin = { icon = " " },
+          reddit = { icon = " " },
+          slack = { icon = " " },
+          stackoverflow = { icon = " " },
+          wikipedia = { icon = " " },
+          youtube = { icon = " " },
+          youtube_short = { icon = " " },
+        },
+      },
       overrides = {
         buftype = {
           -- LSP hover floats: keep the NormalFloat background.
