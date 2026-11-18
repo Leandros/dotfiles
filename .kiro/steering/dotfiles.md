@@ -778,7 +778,14 @@ New link or system file: install function, `check_link` or `cmp` check in
   draws only part of its area (the first buffer keeps a stale height or
   width; the rest shows swaybg's `#073642`) until the next repaint, e.g.
   a keypress. Under Xwayland (`enable_wayland = false`) it fills, but
-  blurry. Not fixed; no upstream issue found.
+  blurry. Upstream: issue #6463, fix PR #7966 (open in 2026-11): the
+  window learns its scale after the first configure, the DPI change
+  (96 -> 192) counts as "simple", and `apply_dimensions` resizes itself
+  with `set_inner_size` to keep rows/cols, overriding sway's tile size;
+  the PR adds `WindowState::TILED` so `can_resize()` is false when tiled.
+  No config option avoids it (that path ignores
+  `adjust_window_size_when_changing_font_size`); only scale 1 outputs,
+  where the DPI stays 96, are spared.
 - X11 programs: xwayland-satellite (Fedora package; 0.8.3 on F45), not
   sway's Xwayland, which draws X windows at scale 1 and lets sway scale
   them up (blurry at 1.5; VMware). Switch: `xwayland disable` in the sway
