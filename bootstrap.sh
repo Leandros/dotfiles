@@ -106,9 +106,6 @@ readonly WEZTERM_COPR="wezfurlong/wezterm-nightly"
 # Desktops on Fedora only (no EL build). Tracks upstream releases.
 # https://copr.fedorainfracloud.org/coprs/scottames/ghostty/
 readonly GHOSTTY_COPR="scottames/ghostty"
-# https://github.com/raphamorim/rio/releases (desktops; the release
-# packages need glibc 2.35, so not on EL9)
-readonly RIO_VERSION="0.5.32"
 # Fedora only (desktops): https://copr.fedorainfracloud.org/coprs/lizardbyte/stable/
 readonly SUNSHINE_COPR="lizardbyte/stable"
 # https://github.com/xremap/xremap/releases (Xorg desktop only)
@@ -1451,54 +1448,6 @@ install_ghostty() {
     link "$d/ghostty/linux.conf" "$dir/linux.conf"
 }
 
-# Third terminal (Rio), config .config/rio. Upstream ships one package per
-# backend, both named rioterm and with the same /usr/bin/rio, and the
-# Wayland build does not run under X. So both binaries are unpacked into
-# $PREFIX/libexec/rio, and rio/rio ($PREFIX/bin/rio) starts the session's.
-# The desktop entry and icon are the same in both. The terminfo entry is
-# compiled from the tag's misc/rio.terminfo: only the rpms ship it.
-install_rio() {
-    if [[ "$DISTRO" == rhel ]]; then
-        warn "rio: release packages need glibc 2.35, skipping on $DISTRO $DISTRO_MAJOR"
-        return
-    fi
-    local libexec="$PREFIX/libexec/rio" launcher="$DOTFILES_DIR/rio/rio"
-    if is_current rio "$RIO_VERSION" "$libexec/rio-wayland" && cmp -s "$launcher" "$PREFIX/bin/rio"; then
-        return
-    fi
-    local url="$GITHUB/raphamorim/rio/releases/download/v$RIO_VERSION" build pkg dir
-    if [[ "$DISTRO" == fedora ]]; then
-        $SUDO dnf install -y -q cpio ncurses
-    fi
-    for build in wayland x11; do
-        dir="$WORK_DIR/rio-$build"
-        mkdir -p "$dir"
-        case "$DISTRO" in
-            fedora)
-                pkg="$dir/rio.rpm"
-                fetch "$url/rioterm-$RIO_VERSION-1.${ARCH}_$build.rpm" "$pkg"
-                (cd "$dir" && rpm2cpio "$pkg" | cpio -idm --quiet) || die "rio: unpack failed: $pkg"
-                ;;
-            *)
-                pkg="$dir/rio.deb"
-                fetch "$url/rioterm_${RIO_VERSION}_${GO_ARCH}_$build.deb" "$pkg"
-                dpkg-deb -x "$pkg" "$dir" || die "rio: unpack failed: $pkg"
-                ;;
-        esac
-        $SUDO install -D -m 0755 "$dir/usr/bin/rio" "$libexec/rio-$build"
-    done
-    $SUDO install -D -m 0755 "$launcher" "$PREFIX/bin/rio"
-    $SUDO install -D -m 0644 "$dir/usr/share/applications/rio.desktop" "$PREFIX/share/applications/rio.desktop"
-    $SUDO install -D -m 0644 "$dir/usr/share/icons/hicolor/scalable/apps/rio.svg" "$PREFIX/share/icons/hicolor/scalable/apps/rio.svg"
-    # ncurses does not search $PREFIX/share/terminfo.
-    fetch "https://raw.githubusercontent.com/raphamorim/rio/v$RIO_VERSION/misc/rio.terminfo" "$WORK_DIR/rio.terminfo"
-    $SUDO tic -x -o /usr/share/terminfo "$WORK_DIR/rio.terminfo"
-    if have restorecon; then
-        $SUDO restorecon -R "$libexec" "$PREFIX/bin/rio"
-    fi
-    mark_current rio "$RIO_VERSION"
-}
-
 # Game-stream host for remote desktop with Moonlight (VA-API/NVENC encoding).
 # Not started or opened in the firewall: start it from the launcher (its
 # systemd user unit), pair in its web UI. The unit runs ~/bin/sunshine-session,
@@ -2079,7 +2028,7 @@ write_xresources() {
 link_xorg_dotfiles() {
     local d="$DOTFILES_DIR"
     link "$d/.wezterm.lua" "$HOME/.wezterm.lua"
-    # Rio's config (Rio itself: install_rio).
+    # Rio is installed by hand (no Fedora package); its config is ready.
     link "$d/.config/rio" "$HOME/.config/rio"
     # Layout switcher: `kb` (us, de, bone2) for X and the console; ~/bin is on
     # PATH in .zshrc. The bone2 console map is read from the clone.
@@ -2142,7 +2091,6 @@ setup_xorg() {
     install_xorg_packages
     install_wezterm
     install_ghostty
-    install_rio
     if [[ "$DISTRO" == fedora ]]; then
         install_sunshine
     fi
@@ -2305,7 +2253,7 @@ install_sway_audio_idle_inhibit() {
 link_wayland_dotfiles() {
     local d="$DOTFILES_DIR" name
     link "$d/.wezterm.lua" "$HOME/.wezterm.lua"
-    # Rio's config (Rio itself: install_rio).
+    # Rio is installed by hand (no Fedora package); its config is ready.
     link "$d/.config/rio" "$HOME/.config/rio"
     for name in kb i3status-kb pwr theme flightmode touchpad charge caffeinate smb bar \
         pkill-display term syncthing-status wm-msg screenshot sway-autostart kanshi-save clip-pick; do
@@ -2413,7 +2361,6 @@ setup_wayland() {
     install_cliphist
     install_wezterm
     install_ghostty
-    install_rio
     install_sunshine
     install_nmrs_gui
     install_sway_easyfocus
@@ -2609,7 +2556,6 @@ report() {
             print_version sunshine rpm -q Sunshine
         fi
         if [[ "$DISTRO" != rhel ]]; then
-            print_version rio cat "$(stamp_path rio)"
             print_version syncthing syncthing --version
         fi
     fi

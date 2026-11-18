@@ -19,7 +19,9 @@ draw-bold-text-with-light-colors = true
 theme = "solarized-dark"
 
 [fonts]
-size = 14
+# Logical pixels (times the output scale); wezterm's 14 is in points at
+# 96 dpi: 14 * 96 / 72.
+size = 18.67
 hinting = true
 # PragmataPro: no ligatures; ss13 draws git trees.
 features = ["-calt", "-clig", "-liga", "+ss13"]

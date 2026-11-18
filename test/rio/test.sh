@@ -85,6 +85,15 @@ for key, mods, action in want:
 # Themes: the ones the config names exist, with wezterm's colors.
 lua = open(lua_path).read()
 names = dict(re.findall(r"^local (\w+)\s*=\s*'(#\w+)'", lua, re.M))
+
+# Font size: wezterm's is in points at 96 dpi, Rio's in logical pixels.
+wez_pt = float(re.search(r"^config\.font_size = ([\d.]+)", lua, re.M).group(1))
+want_px = round(wez_pt * 96 / 72, 2)
+got_px = config.get("fonts", {}).get("size")
+if got_px == want_px:
+    ok(f"font size {got_px} px = wezterm's {wez_pt} pt")
+else:
+    fail(f"font size: want {want_px} px (wezterm {wez_pt} pt), got {got_px}")
 def lst(scheme, field):
     m = re.search(scheme + r"\." + field + r" = \{(.*?)\}", lua, re.S)
     return [names[n] for n in re.findall(r"^\s*(\w+),", m.group(1), re.M)]
