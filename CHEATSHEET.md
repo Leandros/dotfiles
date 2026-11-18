@@ -21,7 +21,7 @@ In X, xremap swaps the left Alt and Ctrl keys; in sway, the XKB option
 
 | Key | Action |
 |---|---|
-| `Mod+Return` | Terminal (wezterm; in xrdp a process of its own) |
+| `Mod+Return` | Terminal (wezterm, a process of its own per window) |
 | `Mod+i` | Program menu (i3-dmenu-desktop) |
 | `Mod+c` | Clipboard history (CopyQ), at the pointer |
 | `Mod+Shift+j` | Close window |

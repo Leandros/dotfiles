@@ -103,7 +103,7 @@ font pango:Menlo 10
 # Use Mouse+$mod to drag floating windows to their wanted position
 floating_modifier $mod normal
 
-# start a terminal (wezterm, ~/bin/term)
+# start a terminal (wezterm, a process of its own per window: ~/bin/term)
 bindsym $mod+Return exec ~/bin/term
 
 # Increase screen brightness

@@ -521,9 +521,11 @@ New link or system file: install function, `check_link` or `cmp` check in
   for the physical right Shift; `bin/xrdp-keys` removes Shift_R from Shift,
   makes keycode 62 Super_L in Mod4 and checks `xmodmap -pm` every 2 s
   (xrdp loads a fresh keymap per connect; xev has no mapping mask and gets
-  no core MappingNotify under XKB). `bin/term` ($mod+Return): `wezterm start
-  --always-new-process` in xrdp, else plain `wezterm` (joins the running
-  GUI, which may be the other session's). Test: `test/xrdp/test.sh`.
+  no core MappingNotify under XKB). `bin/term` ($mod+Return, fuzzel): always `wezterm start
+  --always-new-process` (`-e PROG` becomes `-- PROG`): joining the running
+  GUI opened xrdp windows on the local screen, and under sway a process
+  with several windows crashed when they moved between scale 1 and 1.5
+  outputs (wezterm#2445, fix PR #8250 open), taking every window with it. Test: `test/xrdp/test.sh`.
   `kb` keeps its state per display
   (`kb-layout-$DISPLAY`). eww: one daemon per display, see Bar. xrdp needs
   `xorgxrdp` (or `xorgxrdp-glamor`), else Xorg finds no `xrdp/xorg.conf`

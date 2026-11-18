@@ -90,7 +90,12 @@ main() {
     expect "xrdp: wezterm as a process of its own" "wezterm start --always-new-process" "$(cat "$CALLS")"
     : > "$CALLS"
     env -u XRDP_SESSION DISPLAY=:0 PATH="$STUBS:$PATH" "$BIN/term"
-    expect "local: wezterm as usual (joins the running GUI)" "wezterm " "$(cat "$CALLS")"
+    expect "local: wezterm as a process of its own too" "wezterm start --always-new-process" "$(cat "$CALLS")"
+    # fuzzel runs terminal programs as `term -e PROG ARGS`; wezterm's -e is
+    # an alias of start, so the program goes after --.
+    : > "$CALLS"
+    env -u XRDP_SESSION DISPLAY=:0 PATH="$STUBS:$PATH" "$BIN/term" -e prog --flag
+    expect "term -e: the program after --" "wezterm start --always-new-process -- prog --flag" "$(cat "$CALLS")"
 
     # ~/.xsession, which xrdp's session script starts: .xprofile once (Fedora's
     # Xsession loads it already and sets XPROFILE_LOADED; Debian's does not),
