@@ -68,10 +68,21 @@ input type:touchpad {
 }
 
 # TrackPoint and mice: speeds set on the laptop, as for the touchpad.
+# -0.27 is 25% slower than the earlier -0.17 on the TrackPoint: libinput
+# multiplies its whole curve by a factor of the speed (0.495 against 0.660).
+# On a mouse the speed moves only the acceleration threshold and the
+# maximum, not slow movements.
 input type:pointer {
     accel_profile adaptive
-    pointer_accel -0.17
+    pointer_accel -0.27
     scroll_factor 0.5
+}
+
+# The ThinkPad's TrackPoint another 25% slower than mice (factor 0.374
+# against 0.499). sway has no TrackPoint type: settings by identifier win
+# over the type:pointer block.
+input "2:10:TPPS/2_Elan_TrackPoint" {
+    pointer_accel -0.36
 }
 
 # X11 programs (VMware) run on xwayland-satellite, which ~/bin/sway-autostart

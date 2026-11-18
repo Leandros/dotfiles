@@ -170,7 +170,13 @@ New link or system file: install function, `check_link` or `cmp` check in
     curve, 10-15 % faster below 170 mm/s. X moves physical pixels, so i3
     is 2/3 as fast as sway with the same points.
     `pointer_accel` does not apply to a custom curve.
-    TrackPoint and mice: adaptive, `pointer_accel -0.17` (by feel), both
+    TrackPoint and mice: adaptive, `pointer_accel -0.27` (2026-11-18: 25 %
+    slower than -0.17 on the TrackPoint, whose libinput curve is scaled by
+    `speed_factor(s)` in filter-trackpoint.c; a mouse's speed changes only
+    threshold, incline and maximum, so slow mouse moves stay the same);
+    the laptop's TrackPoint another 25 % slower, `pointer_accel -0.36` in
+    an `input "2:10:TPPS/2_Elan_TrackPoint"` block (sway has no TrackPoint
+    type; identifier settings win over the type block), both
     `scroll_factor 0.5` (touchpad 0.1 since 2026-11-17: Proton Mail
     (Electron) and wezterm scrolled too fast). Firefox: autoconfig
     (`firefox/dotfiles.cfg`, sandboxed, `getenv("SWAYSOCK")`) sets
