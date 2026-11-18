@@ -178,7 +178,9 @@ New link or system file: install function, `check_link` or `cmp` check in
     0.5 -> 0.1; float prefs are strings in Firefox's store, a number makes
     an int pref). No profile in the repo (personal data). Fedora's Firefox
     does not read `/etc/firefox/pref` (tested); `defaults/pref` works.
-    Values set in about:config win. Test: `test/firefox-prefs/test.sh`
+    Values set in about:config win. In every session (outside the
+    SWAYSOCK block): `general.autoScroll` true, `middlemouse.paste`
+    false (the user's choice). Test: `test/firefox-prefs/test.sh`
     (Fedora 45 Firefox headless, a probe appended to the .cfg saves the
     values with `pref()` to prefs.js). The adaptive touchpad speed is a factor
     `(s+1)^2.38 * 0.95 + 0.05` (libinput 1.32): `pointer_accel 1` was 5

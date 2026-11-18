@@ -2,7 +2,8 @@
 #
 # Firefox's scroll and swipe prefs for sway (firefox/): bootstrap installs
 # an autoconfig file that sets them only when Firefox starts in sway
-# (SWAYSOCK set), where the touchpad's scroll_factor is 0.1. Runs Fedora
+# (SWAYSOCK set), where the touchpad's scroll_factor is 0.1, and the
+# middle-button prefs in every session. Runs Fedora
 # 45's Firefox headless with the files at bootstrap's paths, once with and
 # once without SWAYSOCK, and reads the prefs it ended up with.
 #
@@ -35,7 +36,7 @@ dnf install -y -q firefox >/dev/null 2>&1
 # prefs, which Firefox writes to prefs.js on exit.
 if [ -f "$CFG_DST" ]; then
     cat >> "$CFG_DST" <<'P'
-var names = ["mousewheel.default.delta_multiplier_y", "widget.swipe.page-size", "widget.swipe.pixel-size"];
+var names = ["mousewheel.default.delta_multiplier_y", "widget.swipe.page-size", "widget.swipe.pixel-size", "general.autoScroll", "middlemouse.paste"];
 pref("dotfiles.probe", names.map(function (n) { return n + "=" + getPref(n); }).join(" "));
 P
 fi
@@ -65,14 +66,14 @@ main() {
         fail "bootstrap.sh: no paths for autoconfig.js and dotfiles.cfg"
     fi
 
-    want="mousewheel.default.delta_multiplier_y=500 widget.swipe.page-size=8.0 widget.swipe.pixel-size=220.0"
+    want="mousewheel.default.delta_multiplier_y=500 widget.swipe.page-size=8.0 widget.swipe.pixel-size=220.0 general.autoScroll=true middlemouse.paste=false"
     got="$(sed -n 's/^sway: //p' <<< "$out")"
     [[ -n "$got" ]] || printf '%s\n' "$out"
-    expect "sway: scroll 500, swipe 8 / 220" "$want" "$got"
+    expect "sway: scroll 500, swipe 8 / 220, autoscroll, no middle-click paste" "$want" "$got"
 
-    want="mousewheel.default.delta_multiplier_y=100 widget.swipe.page-size=40.0 widget.swipe.pixel-size=1100.0"
+    want="mousewheel.default.delta_multiplier_y=100 widget.swipe.page-size=40.0 widget.swipe.pixel-size=1100.0 general.autoScroll=true middlemouse.paste=false"
     got="$(sed -n 's/^other: //p' <<< "$out")"
-    expect "other sessions: Firefox's defaults" "$want" "$got"
+    expect "other sessions: Firefox's scroll and swipe, autoscroll, no middle-click paste" "$want" "$got"
     exit "$FAILED"
 }
 
