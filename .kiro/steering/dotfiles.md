@@ -48,7 +48,8 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `bin/{sunshine-session,sunshine-pin}`, `.config/systemd/user/app-dev.lizardbyte.app.Sunshine.service.d/session.conf` | `~/bin`, `~/.config/systemd/user/...`, links, Fedora desktops (`install_sunshine`) |
 | `wayland-session/sway-session` | `/usr/local/bin/sway-session` (root copy, 0755; the lightdm session's wrapper) |
 | `firefox/autoconfig.js`, `firefox/dotfiles.cfg` | `/usr/lib64/firefox/defaults/pref/dotfiles-autoconfig.js`, `/usr/lib64/firefox/dotfiles.cfg` (root copies, 0644, desktop-wayland: `install_firefox_prefs`) |
-| `.config/rio` | `~/.config/rio`, link, Linux desktops (Rio installed by hand) |
+| `.config/rio` | `~/.config/rio`, link, Linux desktops |
+| `rio/rio` | `/usr/local/bin/rio` (root copy, 0755; `install_rio`, both desktops, not EL9) |
 | `.config/ghostty/{config,themes}`, `ghostty/linux.conf` | `~/.config/ghostty/{config,themes,linux.conf}`, links, Fedora desktops (`install_ghostty`); not linked on macOS (the user links it by hand there) |
 | `wayland-session/sway-dotfiles.desktop` | `/usr/share/wayland-sessions/` (root copy, 0644; lightdm reads only `/usr/share`) |
 | `~/.config/sway.d/` | real directory, never a link: `output.conf` (bootstrap), `theme.conf` (`bin/theme`), `kb.conf` (`bin/kb`) |
@@ -250,8 +251,19 @@ New link or system file: install function, `check_link` or `cmp` check in
   `ghostty --version` prints several lines: report reads the stamp.
   Test: `test/ghostty/test.sh` (copr in fedora:45, `+validate-config`,
   `+list-keybinds`, which shows opt as alt; themes against the Lua).
-- Rio (`.config/rio`, both desktops, config only: no Fedora package;
-  upstream ships separate Wayland and X11 rpms, the user installs it):
+- Rio (`install_rio`, `RIO_VERSION`, both desktops; Fedora, Debian,
+  Ubuntu; not EL9: the builds need glibc 2.35). No distro package;
+  upstream ships one rpm/deb per backend, both named `rioterm` with the
+  same `/usr/bin/rio`, and the Wayland build fails under X ("neither
+  WAYLAND_DISPLAY nor WAYLAND_SOCKET is set; note: enable the `winit/x11`
+  feature"). So bootstrap unpacks both binaries (rpm2cpio + cpio, or
+  `dpkg-deb -x`) to `/usr/local/libexec/rio/rio-{wayland,x11}`, and the
+  launcher `rio/rio` (`/usr/local/bin/rio`) picks by `WAYLAND_DISPLAY` /
+  `WAYLAND_SOCKET` (test `test/rio-launcher/test.sh`). Desktop entry and
+  icon from the package into `/usr/local/share`; terminfo (`rio`,
+  `xterm-rio`) compiled with `tic -x` from the tag's `misc/rio.terminfo`
+  into `/usr/share/terminfo` (the debs have none). Stamp only for the
+  report. Config (`.config/rio`):
   `.wezterm.lua`'s Linux keys (Alt = physical Ctrl). Rio 0.5.32 has no key
   sequences, so the Alt+e leader keys are Alt+Shift+key (split right
   `i`, down `u` because Alt+Shift+t opens a tab, previous/next split
@@ -385,7 +397,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   `test/fetch/test.sh` (`fetch_unpack` must die on a failed download: it runs
   in `$(...)`, where `set -e` does not apply),
   `test/system-sleep/power-button-wake.sh`, `test/system-sleep/vmware-suspend.sh`,
-  `test/sunshine-session/test.sh`, `test/sunshine-pin/test.sh`, `test/ghostty/test.sh`, `test/rio/test.sh`,
+  `test/sunshine-session/test.sh`, `test/sunshine-pin/test.sh`, `test/ghostty/test.sh`, `test/rio/test.sh`, `test/rio-launcher/test.sh`,
   `test/firefox-prefs/test.sh`. Add new tests in this style.
 - X programs: Xorg dummy driver in a container. i3 bindings: Xvfb + i3 with
   the repo config in a Fedora image, `xdotool key super+j`, then read the

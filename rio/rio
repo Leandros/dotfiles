@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+#
+# rio - start the Rio build of the session ($PREFIX/bin/rio, root copy made
+# by bootstrap's install_rio).
+#
+# Rio's release builds support one backend each: the Wayland build fails
+# under X ("neither WAYLAND_DISPLAY nor WAYLAND_SOCKET is set"), and the X11
+# build would run sway's windows through xwayland-satellite. bootstrap
+# installs both into $PREFIX/libexec/rio; this picks the session's.
+#
+set -euo pipefail
+
+dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../libexec/rio"
+if [[ -n "${WAYLAND_DISPLAY:-}${WAYLAND_SOCKET:-}" ]]; then
+    exec "$dir/rio-wayland" "$@"
+fi
+exec "$dir/rio-x11" "$@"

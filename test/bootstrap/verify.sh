@@ -267,6 +267,9 @@ else
     check_absent desktop-wayland "$HOME/.config/sway"
     check_absent desktop-wayland /usr/local/bin/sway-easyfocus
 fi
+if ! has_category desktop && ! has_category desktop-wayland; then
+    check_absent "desktop or desktop-wayland" /usr/local/bin/rio
+fi
 
 # What both desktops (Xorg and sway) install.
 check_desktop_shared() {
@@ -395,6 +398,18 @@ check_desktop_shared() {
     check_link "$HOME/.config/eww" "$D/.config/eww"
     check_link "$HOME/.wezterm.lua" "$D/.wezterm.lua"
     check_link "$HOME/.config/rio" "$D/.config/rio"
+    # Rio: both release builds and the launcher that picks one (not on EL9:
+    # the builds need glibc 2.35).
+    case "$os_id" in
+        debian|ubuntu|fedora)
+            check_version "rio (wayland build)" "rioterm $RIO_VERSION" /usr/local/libexec/rio/rio-wayland --version
+            check_version "rio (x11 build)" "rioterm $RIO_VERSION" /usr/local/libexec/rio/rio-x11 --version
+            check_version "rio launcher, X" "rioterm $RIO_VERSION" env -u WAYLAND_DISPLAY rio --version
+            if cmp -s "$D/rio/rio" /usr/local/bin/rio; then ok "rio launcher installed"; else fail "/usr/local/bin/rio missing or differs"; fi
+            if infocmp rio >/dev/null 2>&1; then ok "terminfo rio"; else fail "no terminfo entry for rio"; fi
+            if [[ -f /usr/local/share/applications/rio.desktop ]]; then ok "rio desktop entry"; else fail "rio.desktop missing"; fi
+            ;;
+    esac
     # ghostty: Fedora only (copr); the config is valid with the Linux part.
     if [[ "$os_id" == fedora ]]; then
         check_version ghostty "Ghostty $(cat /usr/local/share/bootstrap/ghostty 2>/dev/null)" ghostty --version
