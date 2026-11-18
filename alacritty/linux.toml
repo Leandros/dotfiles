@@ -1,0 +1,97 @@
+# The Linux part of .config/alacritty/alacritty.toml, which imports it.
+# bootstrap links it next to that file (~/.config/alacritty/linux.toml) on
+# Linux desktops only; a macOS link of .config/alacritty lacks it.
+#
+# .wezterm.lua's Linux settings where Alacritty 0.17 has them. Not in
+# Alacritty: tabs, splits and wezterm's Alt+e leader (i3 and sway manage
+# the windows), the launcher and the command palette, a theme toggle,
+# ligatures and font features (no text shaping, so no PragmataPro ss13),
+# and FreeType hinting options (fontconfig decides).
+#
+# Alt is the physical Ctrl key: XKB (sway) and xremap (i3) swap left Alt
+# and Ctrl, and Super belongs to the window manager (wezterm's `ctrlkey`).
+
+# i3 and sway draw the window frames.
+[window]
+decorations = "None"
+
+# Hints. A list here replaces Alacritty's default URL hint, so that comes
+# first, as the default (Alt+Shift+o, or a click). Alt+Shift+t copies, as
+# wezterm's QuickSelect (leader, Ctrl+t): URLs, paths, git hashes, IPv4
+# addresses, UUIDs and numbers. Labels from the Bone 2 home row.
+[hints]
+alphabet = "ctieobnrsgdua"
+
+[[hints.enabled]]
+regex = '(ipfs:|ipns:|magnet:|mailto:|gemini://|gopher://|https://|http://|news:|file:|git://|ssh:|ftp://)[^\x00-\x1F\x7F-\x9F<>"\s{-}\^⟨⟩`\\]+'
+hyperlinks = true
+post_processing = true
+command = "xdg-open"
+mouse = { enabled = true }
+binding = { key = "O", mods = "Alt|Shift" }
+
+[[hints.enabled]]
+regex = '(https?|file|ssh|git)://[^\s<>"`]+|[\w.~-]*/[\w./~@+-]+|\b[0-9a-f]{7,40}\b|\b\d{1,3}(\.\d{1,3}){3}\b|\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b|\b\d{4,}\b'
+action = "Copy"
+post_processing = true
+binding = { key = "T", mods = "Alt|Shift" }
+
+[keyboard]
+bindings = [
+    # wezterm's general keys (Alt = physical Ctrl).
+    { key = "N", mods = "Alt|Shift", action = "CreateNewWindow" },
+    { key = "Q", mods = "Alt|Shift", action = "Quit" },
+    { key = "C", mods = "Alt|Shift", action = "Copy" },
+    { key = "V", mods = "Alt|Shift", mode = "~Vi", action = "Paste" },
+    { key = "V", mods = "Alt|Shift", mode = "Vi|Search", action = "Paste" },
+    # The clipboard, as wezterm (Alacritty's default: the primary selection).
+    { key = "Insert", mods = "Shift", action = "Paste" },
+    # wezterm had no default keys; these Alacritty defaults would take
+    # Ctrl+Shift+key (physical Alt+Shift) and Ctrl+0/=/+/- from programs.
+    { key = "C", mods = "Control|Shift", action = "ReceiveChar" },
+    { key = "V", mods = "Control|Shift", action = "ReceiveChar" },
+    { key = "F", mods = "Control|Shift", action = "ReceiveChar" },
+    { key = "B", mods = "Control|Shift", action = "ReceiveChar" },
+    { key = "Space", mods = "Control|Shift", action = "ReceiveChar" },
+    { key = "0", mods = "Control", action = "ReceiveChar" },
+    { key = "=", mods = "Control", action = "ReceiveChar" },
+    { key = "+", mods = "Control", action = "ReceiveChar" },
+    { key = "-", mods = "Control", action = "ReceiveChar" },
+    { key = "NumpadAdd", mods = "Control", action = "ReceiveChar" },
+    { key = "NumpadSubtract", mods = "Control", action = "ReceiveChar" },
+
+    # Copy mode is Alacritty's vi mode, Alt+Shift+Space (as Rio; wezterm:
+    # leader, [). The same key leaves it.
+    { key = "Space", mods = "Alt|Shift", mode = "~Search", action = "ToggleViMode" },
+    { key = "Space", mods = "Alt|Shift", mode = "Vi|~Search", action = "ScrollToBottom" },
+    # wezterm's copy mode keys, which follow tmux's. Bone 2 movement, as in
+    # nvim: b r n s, Shift+b / Shift+s by word.
+    { key = "B", mode = "Vi|~Search", action = "Left" },
+    { key = "N", mode = "Vi|~Search", action = "Down" },
+    { key = "R", mode = "Vi|~Search", action = "Up" },
+    { key = "S", mode = "Vi|~Search", action = "Right" },
+    { key = "B", mods = "Shift", mode = "Vi|~Search", action = "SemanticLeft" },
+    { key = "S", mods = "Shift", mode = "Vi|~Search", action = "SemanticRight" },
+    # One line (N / R) and one page (( / )) down / up.
+    { key = "N", mods = "Shift", mode = "Vi|~Search", action = "ScrollLineDown" },
+    { key = "R", mods = "Shift", mode = "Vi|~Search", action = "ScrollLineUp" },
+    { key = "(", mode = "Vi|~Search", action = "ScrollPageDown" },
+    { key = ")", mode = "Vi|~Search", action = "ScrollPageUp" },
+    # y copies and stays (Alacritty's default). Y copies and leaves.
+    { key = "Y", mods = "Shift", mode = "Vi|~Search", action = "Copy" },
+    { key = "Y", mods = "Shift", mode = "Vi|~Search", action = "ClearSelection" },
+    { key = "Y", mods = "Shift", mode = "Vi|~Search", action = "ScrollToBottom" },
+    { key = "Y", mods = "Shift", mode = "Vi|~Search", action = "ToggleViMode" },
+    # The ways out: q and Ctrl+g. (Alacritty's Ctrl+c is gone: the shared
+    # file's Ctrl+C binding replaces it.)
+    { key = "Q", mode = "Vi|~Search", action = "ScrollToBottom" },
+    { key = "Q", mode = "Vi|~Search", action = "ToggleViMode" },
+    { key = "G", mods = "Control", mode = "Vi|~Search", action = "ScrollToBottom" },
+    { key = "G", mods = "Control", mode = "Vi|~Search", action = "ToggleViMode" },
+    # Search: / searches up (tmux's search-backward), ? repeats in that
+    # direction, - goes the other way. Enter jumps, Escape cancels
+    # (Alacritty's defaults). Escape in vi mode clears the selection.
+    { key = "/", mode = "Vi|~Search", action = "SearchBackward" },
+    { key = "?", mods = "Shift", mode = "Vi|~Search", action = "SearchNext" },
+    { key = "-", mode = "Vi|~Search", action = "SearchPrevious" },
+]

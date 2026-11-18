@@ -49,6 +49,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `wayland-session/sway-session` | `/usr/local/bin/sway-session` (root copy, 0755; the lightdm session's wrapper) |
 | `firefox/autoconfig.js`, `firefox/dotfiles.cfg` | `/usr/lib64/firefox/defaults/pref/dotfiles-autoconfig.js`, `/usr/lib64/firefox/dotfiles.cfg` (root copies, 0644, desktop-wayland: `install_firefox_prefs`) |
 | `.config/rio` | `~/.config/rio`, link, Linux desktops (Rio installed by hand) |
+| `.config/alacritty/{alacritty.toml,themes}`, `alacritty/linux.toml`, `bin/alacritty-theme`, `.config/systemd/user/alacritty-theme.service` | `~/.config/alacritty/{alacritty.toml,themes,linux.toml}`, `~/bin`, `~/.config/systemd/user`, links, both desktops (`install_alacritty`); `alacritty.toml` is shared with macOS (linked by hand there) |
 | `.config/ghostty/{config,themes}`, `ghostty/linux.conf` | `~/.config/ghostty/{config,themes,linux.conf}`, links, Fedora desktops (`install_ghostty`); not linked on macOS (the user links it by hand there) |
 | `wayland-session/sway-dotfiles.desktop` | `/usr/share/wayland-sessions/` (root copy, 0644; lightdm reads only `/usr/share`) |
 | `~/.config/sway.d/` | real directory, never a link: `output.conf` (bootstrap), `theme.conf` (`bin/theme`), `kb.conf` (`bin/kb`) |
@@ -250,6 +251,38 @@ New link or system file: install function, `check_link` or `cmp` check in
   `ghostty --version` prints several lines: report reads the stamp.
   Test: `test/ghostty/test.sh` (copr in fedora:45, `+validate-config`,
   `+list-keybinds`, which shows opt as alt; themes against the Lua).
+- Alacritty (`install_alacritty`, `ALACRITTY_VERSION`, both desktops, all
+  their distros): `cargo install --locked` (Debian 12 packages 0.11, before
+  the TOML config; Ubuntu 22.04 none), deps from its INSTALL.md; desktop
+  entry and icon from the crate in cargo's registry. TERM is
+  `xterm-256color` (the shared config), so no terminfo. Being evaluated
+  against wezterm's sway bug (#6463, see sway): wezterm stays
+  `$mod+Return`. Layout as ghostty: `.config/alacritty/alacritty.toml` is
+  the user's old config, shared with macOS (colors moved to `themes/`);
+  it imports `themes/solarized-dark.toml`, the link
+  `~/.local/state/alacritty/theme.toml`, then `linux.toml` (linked from
+  `alacritty/linux.toml`, so a macOS link of the directory lacks it).
+  Alacritty loads imports first and the importing file last (so no theme
+  colors in it), appends arrays (bindings, hints) and skips missing
+  imports. `bin/alacritty-theme watch` (`gsettings monitor`; user unit
+  `alacritty-theme.service`, WantedBy `graphical-session.target`, which
+  both session targets bind) points the link at the desktop's theme with a
+  rename (Alacritty watches the imports' directories and reloads; a
+  removed link would show a config error). Bootstrap makes the first link,
+  so it is watched from the first start. linux.toml: wezterm's Linux keys
+  (Alt = physical Ctrl), Alacritty defaults wezterm did not have given
+  back (`ReceiveChar`: Ctrl+Shift+C/V/F/B/Space, Ctrl+0/=/+/-), vi mode
+  (Alt+Shift+Space) with wezterm's copy-mode keys: Alacritty binds vi
+  motions (`Left`, `Up`, ...), and a user binding removes the defaults
+  with the same key, mods and mode; several bindings on one key run in
+  order. The shared Ctrl+C `chars` binding replaces Alacritty's vi-mode
+  Ctrl+c exit. Hints: URL (Alt+Shift+o, click) and copy (Alt+Shift+t,
+  QuickSelect). No tabs, splits, leader, launcher, palette, theme toggle,
+  ligatures or font features. Font size in points, as wezterm. Test:
+  `test/alacritty/test.sh` (tomllib; follower with a stub gsettings;
+  Fedora 45's alacritty under Xvfb: no `[WARN`/`[ERROR` in `-vv` output,
+  `alacritty msg get-config`, reload on a theme flip). winit dlopens
+  libXcursor/libXi/libXrandr: a bare container needs them.
 - Rio (`.config/rio`, both desktops, config only; the user installs Rio,
   bootstrap did from 2026-11-18 until the user removed it the same day).
   No distro package; upstream ships one rpm/deb per backend, both named
@@ -391,7 +424,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   `test/fetch/test.sh` (`fetch_unpack` must die on a failed download: it runs
   in `$(...)`, where `set -e` does not apply),
   `test/system-sleep/power-button-wake.sh`, `test/system-sleep/vmware-suspend.sh`,
-  `test/sunshine-session/test.sh`, `test/sunshine-pin/test.sh`, `test/ghostty/test.sh`, `test/rio/test.sh`,
+  `test/sunshine-session/test.sh`, `test/sunshine-pin/test.sh`, `test/ghostty/test.sh`, `test/rio/test.sh`, `test/alacritty/test.sh`,
   `test/firefox-prefs/test.sh`. Add new tests in this style.
 - X programs: Xorg dummy driver in a container. i3 bindings: Xvfb + i3 with
   the repo config in a Fedora image, `xdotool key super+j`, then read the

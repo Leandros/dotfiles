@@ -1,0 +1,15 @@
+# Alacritty follows the desktop's light or dark setting (~/bin/alacritty-theme).
+# Linked and enabled by bootstrap (install_alacritty); i3-session.target and
+# sway-session.target start graphical-session.target.
+[Unit]
+Description=Point Alacritty's theme at the desktop's light or dark setting
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+ExecStart=%h/bin/alacritty-theme watch
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical-session.target

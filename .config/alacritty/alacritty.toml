@@ -1,51 +1,24 @@
+# Shared with macOS (linked by hand there). On Linux desktops bootstrap
+# (install_alacritty) links this file, themes/ and alacritty/linux.toml,
+# which holds .wezterm.lua's Linux keys. Checked by test/alacritty/test.sh.
+
 [general]
 live_config_reload = true
+# Imports load first, this file last. The dark theme, then the link that
+# ~/bin/alacritty-theme points at the desktop's light or dark scheme
+# (Linux; without it the theme stays dark), then the Linux part. Missing
+# imports are skipped; Alacritty reloads when one changes.
+import = [
+    "themes/solarized-dark.toml",
+    "~/.local/state/alacritty/theme.toml",
+    "linux.toml",
+]
 
 [bell]
 duration = 0
 
 [colors]
 draw_bold_text_with_bright_colors = true
-
-[colors.bright]
-black = "#073642"
-blue = "#268bd2"
-cyan = "#2aa198"
-green = "#859900"
-magenta = "#d33682"
-red = "#dc322f"
-white = "#fdf6e3"
-yellow = "#b58900"
-#black = "#002b36"
-#blue = "#839496"
-#cyan = "#93a1a1"
-#green = "#586e75"
-#magenta = "#6c71c4"
-#red = "#cb4b16"
-#white = "#fdf6e3"
-#yellow = "#657b83"
-
-[colors.cursor]
-cursor = "CellForeground"
-text = "CellBackground"
-
-[colors.normal]
-black = "#073642"
-blue = "#268bd2"
-cyan = "#2aa198"
-green = "#859900"
-magenta = "#d33682"
-red = "#dc322f"
-white = "#fdf6e3"
-yellow = "#b58900"
-
-[colors.primary]
-background = "#002b36"
-foreground = "#839496"
-
-[colors.vi_mode_cursor]
-cursor = "CellForeground"
-text = "CellBackground"
 
 [cursor.style]
 blinking = "Off"
@@ -88,6 +61,7 @@ dynamic_title = true
 padding = { x = 10, y = 10 }
 dimensions = { columns = 120, lines = 30 }
 
+# Imports add their bindings to these (arrays are appended).
 [keyboard]
 bindings = [
     { key = "C", mods = "Control", chars = "\u0003" },

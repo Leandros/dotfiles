@@ -1,0 +1,38 @@
+# The dark scheme of .wezterm.lua (Solarized, with its changes): the bright
+# colors are the normal ones (bold only). Imported by ../alacritty.toml.
+
+[colors.primary]
+background = "#002b36"
+foreground = "#839496"
+
+[colors.cursor]
+cursor = "#93a1a1"
+text = "#002b36"
+
+[colors.vi_mode_cursor]
+cursor = "#93a1a1"
+text = "#002b36"
+
+[colors.selection]
+background = "#fdf6e3"
+text = "#586e75"
+
+[colors.normal]
+black = "#073642"
+red = "#dc322f"
+green = "#859900"
+yellow = "#b58900"
+blue = "#268bd2"
+magenta = "#d33682"
+cyan = "#2aa198"
+white = "#fdf6e3"
+
+[colors.bright]
+black = "#073642"
+red = "#dc322f"
+green = "#859900"
+yellow = "#b58900"
+blue = "#268bd2"
+magenta = "#d33682"
+cyan = "#2aa198"
+white = "#fdf6e3"

@@ -106,6 +106,9 @@ readonly WEZTERM_COPR="wezfurlong/wezterm-nightly"
 # Desktops on Fedora only (no EL build). Tracks upstream releases.
 # https://copr.fedorainfracloud.org/coprs/scottames/ghostty/
 readonly GHOSTTY_COPR="scottames/ghostty"
+# https://crates.io/crates/alacritty (desktops; cargo, as Debian 12 has
+# 0.11, before the TOML config, and Ubuntu 22.04 none; needs Rust 1.85)
+readonly ALACRITTY_VERSION="0.17.0"
 # Fedora only (desktops): https://copr.fedorainfracloud.org/coprs/lizardbyte/stable/
 readonly SUNSHINE_COPR="lizardbyte/stable"
 # https://github.com/xremap/xremap/releases (Xorg desktop only)
@@ -1448,6 +1451,64 @@ install_ghostty() {
     link "$d/ghostty/linux.conf" "$dir/linux.conf"
 }
 
+# Third terminal (Alacritty), being evaluated next to wezterm, which stays
+# $mod+Return. The build needs the font and xcb headers (alacritty's
+# INSTALL.md); one binary has both the X11 and the Wayland backend.
+install_alacritty_deps() {
+    case "$DISTRO" in
+        debian|ubuntu)
+            $SUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
+                -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold \
+                cmake g++ pkg-config libfontconfig1-dev libxcb-xfixes0-dev libxkbcommon-dev python3
+            ;;
+        fedora|rhel)
+            $SUDO dnf install -y -q \
+                cmake gcc-c++ freetype-devel fontconfig-devel libxcb-devel libxkbcommon-devel
+            ;;
+    esac
+}
+
+# The config: .config/alacritty/alacritty.toml is shared with macOS, so the
+# directory is not linked as a whole: alacritty/linux.toml goes next to it
+# only here. ~/bin/alacritty-theme (user unit alacritty-theme.service, in
+# every graphical session) points the imported theme link at the desktop's
+# light or dark scheme; the first link is made here, so Alacritty watches
+# it from its first start.
+install_alacritty() {
+    if ! is_current alacritty "$ALACRITTY_VERSION" "$PREFIX/bin/alacritty"; then
+        install_alacritty_deps
+        export CARGO_HOME="$CARGO_HOME_DIR" RUSTUP_HOME="$RUSTUP_HOME_DIR"
+        quiet "$CARGO_HOME_DIR/bin/cargo" "+$RUST_TOOLCHAIN" install -q --locked \
+            --root "$WORK_DIR/alacritty" "alacritty@$ALACRITTY_VERSION"
+        install_bin "$WORK_DIR/alacritty/bin/alacritty" alacritty
+
+        # Desktop entry and icon (Icon=Alacritty) from the crate in cargo's
+        # registry.
+        local src
+        src="$(find "$CARGO_HOME_DIR/registry/src" -mindepth 2 -maxdepth 2 -type d \
+            -name "alacritty-$ALACRITTY_VERSION" | head -n 1)"
+        [[ -f "$src/extra/linux/Alacritty.desktop" ]] || die "alacritty: Alacritty.desktop not found in the cargo registry"
+        $SUDO install -D -m 0644 "$src/extra/linux/Alacritty.desktop" "$PREFIX/share/applications/Alacritty.desktop"
+        $SUDO install -D -m 0644 "$src/extra/logo/alacritty-term.svg" "$PREFIX/share/icons/hicolor/scalable/apps/Alacritty.svg"
+        mark_current alacritty "$ALACRITTY_VERSION"
+    fi
+
+    local d="$DOTFILES_DIR" dir="${XDG_CONFIG_HOME:-$HOME/.config}/alacritty"
+    mkdir -p "$dir"
+    link "$d/.config/alacritty/alacritty.toml" "$dir/alacritty.toml"
+    link "$d/.config/alacritty/themes" "$dir/themes"
+    link "$d/alacritty/linux.toml" "$dir/linux.toml"
+    link "$d/bin/alacritty-theme" "$HOME/bin/alacritty-theme"
+    link "$d/.config/systemd/user/alacritty-theme.service" "$HOME/.config/systemd/user/alacritty-theme.service"
+    "$HOME/bin/alacritty-theme" apply
+    if have systemctl; then
+        systemctl --user enable -q alacritty-theme.service
+        if systemctl --user show-environment >/dev/null 2>&1; then
+            systemctl --user daemon-reload
+        fi
+    fi
+}
+
 # Game-stream host for remote desktop with Moonlight (VA-API/NVENC encoding).
 # Not started or opened in the firewall: start it from the launcher (its
 # systemd user unit), pair in its web UI. The unit runs ~/bin/sunshine-session,
@@ -2091,6 +2152,7 @@ setup_xorg() {
     install_xorg_packages
     install_wezterm
     install_ghostty
+    install_alacritty
     if [[ "$DISTRO" == fedora ]]; then
         install_sunshine
     fi
@@ -2361,6 +2423,7 @@ setup_wayland() {
     install_cliphist
     install_wezterm
     install_ghostty
+    install_alacritty
     install_sunshine
     install_nmrs_gui
     install_sway_easyfocus
@@ -2551,6 +2614,7 @@ report() {
         print_version wezterm wezterm --version
         print_version nmrs-gui nmrs-gui --version
         print_version eww eww --version
+        print_version alacritty alacritty --version
         if [[ "$DISTRO" == fedora ]]; then
             print_version ghostty cat "$(stamp_path ghostty)"
             print_version sunshine rpm -q Sunshine

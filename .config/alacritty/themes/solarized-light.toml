@@ -1,0 +1,39 @@
+# The light scheme of .wezterm.lua (Solarized Light (Gogh) with its
+# changes); the bright colors are Gogh's. Imported through the link
+# that ~/bin/alacritty-theme sets.
+
+[colors.primary]
+background = "#fdf6e3"
+foreground = "#657b83"
+
+[colors.cursor]
+cursor = "#586e75"
+text = "#fdf6e3"
+
+[colors.vi_mode_cursor]
+cursor = "#586e75"
+text = "#fdf6e3"
+
+[colors.selection]
+background = "#002b36"
+text = "#93a1a1"
+
+[colors.normal]
+black = "#eee8d5"
+red = "#dc322f"
+green = "#859900"
+yellow = "#b58900"
+blue = "#268bd2"
+magenta = "#d33682"
+cyan = "#2aa198"
+white = "#fdf6e3"
+
+[colors.bright]
+black = "#002b36"
+red = "#cb4b16"
+green = "#586e75"
+yellow = "#657b83"
+blue = "#839496"
+magenta = "#6c71c4"
+cyan = "#93a1a1"
+white = "#fdf6e3"

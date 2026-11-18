@@ -267,6 +267,9 @@ else
     check_absent desktop-wayland "$HOME/.config/sway"
     check_absent desktop-wayland /usr/local/bin/sway-easyfocus
 fi
+if ! has_category desktop && ! has_category desktop-wayland; then
+    check_absent "desktop or desktop-wayland" /usr/local/bin/alacritty
+fi
 
 # What both desktops (Xorg and sway) install.
 check_desktop_shared() {
@@ -395,6 +398,25 @@ check_desktop_shared() {
     check_link "$HOME/.config/eww" "$D/.config/eww"
     check_link "$HOME/.wezterm.lua" "$D/.wezterm.lua"
     check_link "$HOME/.config/rio" "$D/.config/rio"
+    # Alacritty (cargo): the shared config, its Linux part and the theme
+    # follower, with the first theme link made by bootstrap (dark: no desktop).
+    check_version alacritty "alacritty $ALACRITTY_VERSION" alacritty --version
+    check_link "$HOME/.config/alacritty/alacritty.toml" "$D/.config/alacritty/alacritty.toml"
+    check_link "$HOME/.config/alacritty/themes" "$D/.config/alacritty/themes"
+    check_link "$HOME/.config/alacritty/linux.toml" "$D/alacritty/linux.toml"
+    check_link "$HOME/bin/alacritty-theme" "$D/bin/alacritty-theme"
+    check_link "$HOME/.config/systemd/user/alacritty-theme.service" "$D/.config/systemd/user/alacritty-theme.service"
+    if [[ "$(readlink "$HOME/.local/state/alacritty/theme.toml" 2>/dev/null)" == "$HOME/.config/alacritty/themes/solarized-dark.toml" ]]; then
+        ok "alacritty theme link (dark)"
+    else
+        fail "alacritty theme link: $(readlink "$HOME/.local/state/alacritty/theme.toml" 2>/dev/null || echo MISSING)"
+    fi
+    if [[ "$(systemctl --user is-enabled alacritty-theme.service 2>/dev/null || true)" == enabled ]]; then
+        ok "alacritty-theme user unit enabled"
+    else
+        fail "alacritty-theme user unit not enabled"
+    fi
+    if [[ -f /usr/local/share/applications/Alacritty.desktop ]]; then ok "Alacritty desktop entry"; else fail "Alacritty.desktop missing"; fi
     # ghostty: Fedora only (copr); the config is valid with the Linux part.
     if [[ "$os_id" == fedora ]]; then
         check_version ghostty "Ghostty $(cat /usr/local/share/bootstrap/ghostty 2>/dev/null)" ghostty --version

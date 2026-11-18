@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+#
+# alacritty-theme - keep Alacritty's colors in step with the desktop's light
+# or dark setting (gsettings color-scheme, which ~/bin/theme sets), as
+# wezterm, tmux and nvim read it. Alacritty cannot follow it itself.
+#
+# ~/.config/alacritty/alacritty.toml imports ~/.local/state/alacritty/
+# theme.toml; this points that link at the light or dark theme in
+# ~/.config/alacritty/themes, and Alacritty reloads on the change. The link
+# is replaced with a rename: Alacritty never sees it missing.
+#
+# Usage: alacritty-theme [watch]   apply now, then on every change
+#        alacritty-theme apply     apply once
+#
+# The systemd user unit alacritty-theme.service runs `watch` while a
+# graphical session (i3 or sway) runs. Without gsettings: dark.
+#
+set -euo pipefail
+
+readonly SCHEMA="org.gnome.desktop.interface"
+readonly KEY="color-scheme"
+THEMES="${ALACRITTY_THEMES:-${XDG_CONFIG_HOME:-$HOME/.config}/alacritty/themes}"
+LINK="${ALACRITTY_THEME_LINK:-${XDG_STATE_HOME:-$HOME/.local/state}/alacritty/theme.toml}"
+readonly THEMES LINK
+
+mode() {
+    case "$(gsettings get "$SCHEMA" "$KEY" 2>/dev/null || true)" in
+        *prefer-light*) echo light ;;
+        *) echo dark ;;
+    esac
+}
+
+apply() {
+    local target tmp
+    target="$THEMES/solarized-$(mode).toml"
+    [[ "$(readlink "$LINK" 2>/dev/null || true)" == "$target" ]] && return
+    mkdir -p "$(dirname "$LINK")"
+    tmp="$LINK.tmp.$$"
+    ln -sfn "$target" "$tmp"
+    mv -fT "$tmp" "$LINK"
+}
+
+case "${1:-watch}" in
+    apply)
+        apply
+        ;;
+    watch)
+        apply
+        command -v gsettings >/dev/null || exit 0
+        # One line per change; the loop ends with the monitor (session bus
+        # gone), and systemd restarts it while the session runs.
+        gsettings monitor "$SCHEMA" "$KEY" | while read -r _; do
+            apply
+        done
+        ;;
+    *)
+        echo "usage: alacritty-theme [watch|apply]" >&2
+        exit 2
+        ;;
+esac
