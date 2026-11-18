@@ -5,7 +5,9 @@
 # terminal font, PragmataPro Mono Liga 0.903 (the font's own coverage file,
 # pinned commit). PragmataPro has no Material Design icons, the plugin's
 # defaults: wezterm took them from a fallback font and drew them too low.
-# Heading icons are the circled digits.
+# Heading icons are the negative circled sans-serif digits (U+278A-U+278F).
+# PragmataPro Mono draws the circle of the circled digits (U+2460-U+2465)
+# open on the left, so they looked cut off.
 #
 # Needs the plugins installed (lazy.nvim data dir) and the network.
 #
@@ -87,7 +89,7 @@ main() {
         --cmd "autocmd VimEnter * ++once lua vim.defer_fn(function() dofile('$CHECK') end, 100)" \
         > /dev/null 2>&1 || true
 
-    expect "heading icons are circled digits" "① |② |③ |④ |⑤ |⑥ " "$(sed -n 1p "$OUT")"
+    expect "heading icons are negative circled digits" "➊ |➋ |➌ |➍ |➎ |➏ " "$(sed -n 1p "$OUT")"
     expect "every render-markdown glyph is in PragmataPro Mono" "none" "$(sed -n 2p "$OUT")"
 
     exit "$FAILED"

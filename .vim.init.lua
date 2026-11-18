@@ -4641,7 +4641,9 @@ local spec = {
       -- Glyphs PragmataPro Mono draws itself. It has no Material Design icons,
       -- the plugin's defaults; wezterm drew those from a fallback font, too low.
       heading = {
-        icons = { "① ", "② ", "③ ", "④ ", "⑤ ", "⑥ " },
+        -- PragmataPro Mono draws the circle of the circled digits (①) open on
+        -- the left. The negative circled digits are closed.
+        icons = { "➊ ", "➋ ", "➌ ", "➍ ", "➎ ", "➏ " },
         signs = { " " },
       },
       checkbox = {
