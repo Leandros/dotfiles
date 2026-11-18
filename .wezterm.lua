@@ -410,6 +410,11 @@ config.font = wezterm.font_with_fallback {
     --     harfbuzz_features = { 'calt=0', 'clig=0', 'liga=0' },
     -- },
     'Apple Color Emoji',
+    -- Nerd Font icons (PragmataPro has none). They are 1 em wide: 2 cells.
+    -- wezterm shrinks an icon wider than 1.25 cells toward the baseline, so
+    -- it sat too low; with overflow it stays 2 cells and touches the text.
+    -- Scaled to 1.2 cells it fits, and wezterm moves a scaled font up.
+    { family = 'Symbols Nerd Font Mono', scale = 0.6 },
 }
 config.bold_brightens_ansi_colors = 'BrightAndBold'
 config.font_size = 14.0
