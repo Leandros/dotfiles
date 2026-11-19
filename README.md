@@ -68,6 +68,7 @@ Test the zsh clipboard (`bin/pbcopy`/`bin/pbpaste` for vi mode `y`/`p` and fzf's
 less key bindings (`.lesskey`, Bone 2: `b`/`s` scroll left/right, `n`/`r` a line, `(`/`)` a page, `?`/`-` next/previous match) are linked to `~/.lesskey` on every machine; less before 582 (AL2) gets them compiled into `~/.less`. Test: `test/lesskey/test.sh [image ...]`.
 Console (kmscon, Fedora 45+): `/etc/kmscon/kmscon.conf` from bootstrap (font size, Solarized, PragmataPro where installed, no mouse). kmscon draws a beam cursor over the character under it, so on `TERM=kmscon` zsh, nvim and tmux use an underline in insert mode instead. Test: `test/kmscon-cursor/test.sh`. Left Ctrl and Alt are swapped on the console as in the sessions: `ctrl:swap_lalt_lctl` in localectl's X11 options (bootstrap, `kb --console`); the X login screen gets it too.
 Test the sleep hooks: `test/system-sleep/power-button-wake.sh`, `test/system-sleep/vmware-suspend.sh`.
+NVIDIA GPU (desktops): `/etc/modprobe.d/nvidia-power.conf` from `modprobe-conf/` (S0ix, video memory saved to `/var/tmp` across suspend), and the driver's `nvidia-suspend`/`nvidia-resume`/`nvidia-hibernate` units enabled where installed; applies after a reboot. Test: `test/nvidia-power/test.sh`.
 Sunshine (Fedora desktops) starts from its launcher (systemd user unit); `~/bin/sunshine-session`
 picks the capture for sway or X. Do not set `capture`, `encoder` or `adapter_name` in
 `~/.config/sunshine/sunshine.conf`. Test: `test/sunshine-session/test.sh`.

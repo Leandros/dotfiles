@@ -312,6 +312,22 @@ check_desktop_shared() {
     else
         fail "logind.conf.d/50-lid-suspend.conf missing or differs"
     fi
+    # Containers see the host's PCI devices: the same test as has_nvidia_gpu.
+    local dev nvidia=0
+    for dev in /sys/bus/pci/devices/*; do
+        [[ "$(cat "$dev/vendor" 2>/dev/null)" == 0x10de && "$(cat "$dev/class" 2>/dev/null)" == 0x03* ]] && nvidia=1
+    done
+    if ((nvidia)); then
+        if cmp -s "$D/modprobe-conf/nvidia-power.conf" /etc/modprobe.d/nvidia-power.conf; then
+            ok "modprobe.d nvidia-power.conf installed"
+        else
+            fail "modprobe.d/nvidia-power.conf missing or differs (NVIDIA GPU present)"
+        fi
+    elif [[ -e /etc/modprobe.d/nvidia-power.conf ]]; then
+        fail "modprobe.d/nvidia-power.conf installed without an NVIDIA GPU"
+    else
+        ok "no NVIDIA GPU: no nvidia-power.conf"
+    fi
     local hook
     for hook in power-button-wake vmware-suspend; do
         if cmp -s "$D/system-sleep/$hook" "/usr/lib/systemd/system-sleep/$hook" \

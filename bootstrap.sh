@@ -1951,6 +1951,44 @@ install_logind_conf() {
     log "installed $dst; applies after a reboot"
 }
 
+# NVIDIA power options (modprobe-conf/nvidia-power.conf): S0ix and saved
+# video memory, so the GPU powers off in suspend. Only where an NVIDIA
+# display controller (PCI class 0x03xxxx) exists. The saved video memory
+# needs the driver's suspend units: enabled where the driver ships them
+# (RPM Fusion: xorg-x11-drv-nvidia-power).
+readonly NVIDIA_MODPROBE_CONF_NAME="nvidia-power.conf"
+readonly MODPROBE_CONF_DIR="/etc/modprobe.d"
+readonly PCI_DEVICES_DIR="/sys/bus/pci/devices"
+readonly SYSTEMD_UNIT_DIR="/usr/lib/systemd/system"
+
+has_nvidia_gpu() {
+    local dev
+    for dev in "$PCI_DEVICES_DIR"/*; do
+        [[ "$(cat "$dev/vendor" 2>/dev/null)" == 0x10de ]] || continue
+        [[ "$(cat "$dev/class" 2>/dev/null)" == 0x03* ]] && return 0
+    done
+    return 1
+}
+
+install_nvidia_power() {
+    has_nvidia_gpu || return 0
+    local src="$DOTFILES_DIR/modprobe-conf/$NVIDIA_MODPROBE_CONF_NAME" dst="$MODPROBE_CONF_DIR/$NVIDIA_MODPROBE_CONF_NAME"
+    if ! cmp -s "$src" "$dst" 2>/dev/null; then
+        $SUDO install -D -m 0644 "$src" "$dst"
+        if have restorecon; then
+            $SUDO restorecon "$dst"
+        fi
+        log "installed $dst; applies after a reboot"
+    fi
+    local unit units=()
+    for unit in nvidia-suspend.service nvidia-resume.service nvidia-hibernate.service; do
+        [[ -e "$SYSTEMD_UNIT_DIR/$unit" ]] && units+=("$unit")
+    done
+    if ((${#units[@]})); then
+        $SUDO systemctl enable "${units[@]}"
+    fi
+}
+
 # systemd-sleep runs the hooks in this directory before and after every sleep.
 # power-button-wake: only the power button wakes from suspend or hibernation.
 # vmware-suspend: suspends running VMware VMs, which run slow after a resume.
@@ -2220,6 +2258,7 @@ setup_xorg() {
     install_logind_conf
     enable_sshd_home
     install_sleep_hook
+    install_nvidia_power
     install_xprofile_hook
     install_power_modes
     enable_bluetooth
@@ -2484,6 +2523,7 @@ setup_wayland() {
     install_logind_conf
     enable_sshd_home
     install_sleep_hook
+    install_nvidia_power
     install_power_modes
     install_sway_session
     install_firefox_prefs

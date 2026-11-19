@@ -59,6 +59,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `xorg-conf/*.conf` | `/etc/X11/xorg.conf.d/` (root copy) |
 | `sshd-conf/50-color-scheme.conf` | `/etc/ssh/sshd_config.d/` (root copy, Linux, where sshd_config includes the directory; not AL2) |
 | `logind-conf/50-lid-suspend.conf` | `/etc/systemd/logind.conf.d/` (root copy, applies after reboot) |
+| `modprobe-conf/nvidia-power.conf` | `/etc/modprobe.d/` (root copy, both desktops, only with an NVIDIA display controller: PCI vendor `0x10de`, class `0x03*`; `install_nvidia_power` also enables the driver's suspend units where installed: `PreserveVideoMemoryAllocations` needs them; applies after reboot) |
 | `system-sleep/{power-button-wake,vmware-suspend}` | `/usr/lib/systemd/system-sleep/` (root copies) |
 | `xinitrc-d/90-xprofile.sh` | `/etc/X11/xinit/xinitrc.d/` (root copy, Fedora/EL) |
 | `power-mode/*` | `/usr/local/libexec`, `/etc/systemd/system`, `/etc/udev/rules.d` (root copies, Fedora/EL) |
@@ -451,7 +452,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   in `$(...)`, where `set -e` does not apply),
   `test/system-sleep/power-button-wake.sh`, `test/system-sleep/vmware-suspend.sh`,
   `test/sunshine-session/test.sh`, `test/sunshine-pin/test.sh`, `test/ghostty/test.sh`, `test/rio/test.sh`, `test/alacritty/test.sh`,
-  `test/firefox-prefs/test.sh`, `test/zsh-clipboard/test.sh`, `test/lesskey/test.sh`, `test/kmscon-cursor/test.sh`
+  `test/firefox-prefs/test.sh`, `test/zsh-clipboard/test.sh`, `test/lesskey/test.sh`, `test/kmscon-cursor/test.sh`, `test/nvidia-power/test.sh`
   (less in a pseudo terminal in fedora:45, debian:12, amazonlinux:2). Add new tests in this style.
 - X programs: Xorg dummy driver in a container. i3 bindings: Xvfb + i3 with
   the repo config in a Fedora image, `xdotool key super+j`, then read the
