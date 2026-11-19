@@ -77,6 +77,18 @@ bindings = [
     { key = "R", mods = "Shift", mode = "Vi|~Search", action = "ScrollLineUp" },
     { key = "(", mode = "Vi|~Search", action = "ScrollPageDown" },
     { key = ")", mode = "Vi|~Search", action = "ScrollPageUp" },
+    { key = "(", mods = "Shift", mode = "Vi|~Search", action = "ScrollPageDown" },
+    { key = ")", mods = "Shift", mode = "Vi|~Search", action = "ScrollPageUp" },
+    # Alacritty's symbol motions require Shift (us, de). Bone 2 types these
+    # symbols on its Mod3 layer, which Alacritty does not see as a
+    # modifier, so they come without Shift and need these copies.
+    { key = "$", mode = "Vi|~Search", action = "Last" },
+    { key = "^", mode = "Vi|~Search", action = "FirstOccupied" },
+    { key = "%", mode = "Vi|~Search", action = "Bracket" },
+    { key = "{", mode = "Vi|~Search", action = "ParagraphUp" },
+    { key = "}", mode = "Vi|~Search", action = "ParagraphDown" },
+    { key = "*", mode = "Vi|~Search", action = "SemanticSearchForward" },
+    { key = "#", mode = "Vi|~Search", action = "SemanticSearchBackward" },
     # y copies and stays (Alacritty's default). Y copies and leaves.
     { key = "Y", mods = "Shift", mode = "Vi|~Search", action = "Copy" },
     { key = "Y", mods = "Shift", mode = "Vi|~Search", action = "ClearSelection" },
@@ -91,7 +103,10 @@ bindings = [
     # Search: / searches up (tmux's search-backward), ? repeats in that
     # direction, - goes the other way. Enter jumps, Escape cancels
     # (Alacritty's defaults). Escape in vi mode clears the selection.
+    # Each with and without Shift: Bone 2 (Mod3), us and de differ.
     { key = "/", mode = "Vi|~Search", action = "SearchBackward" },
+    { key = "/", mods = "Shift", mode = "Vi|~Search", action = "SearchBackward" },
+    { key = "?", mode = "Vi|~Search", action = "SearchNext" },
     { key = "?", mods = "Shift", mode = "Vi|~Search", action = "SearchNext" },
     { key = "-", mode = "Vi|~Search", action = "SearchPrevious" },
 ]

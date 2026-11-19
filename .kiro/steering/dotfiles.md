@@ -278,7 +278,10 @@ New link or system file: install function, `check_link` or `cmp` check in
   motions (`Left`, `Up`, ...), and a user binding removes the defaults
   with the same key, mods and mode; several bindings on one key run in
   order. The shared Ctrl+C `chars` binding replaces Alacritty's vi-mode
-  Ctrl+c exit. Hints: URL (Alt+Shift+o, click) and copy (Alt+Shift+t,
+  Ctrl+c exit. Bone 2's Mod3 layer (Level3) is no modifier to Alacritty:
+  its symbols (`$ ^ % { } * # ? ( )`) arrive without Shift, and the vi
+  defaults for them require Shift (us, de), so linux.toml binds each
+  vi-mode symbol key with and without Shift. Hints: URL (Alt+Shift+o, click) and copy (Alt+Shift+t,
   QuickSelect). No tabs, splits, leader, launcher, palette, theme toggle,
   ligatures or font features. Font size in points, as wezterm. Test:
   `test/alacritty/test.sh` (tomllib; follower with a stub gsettings;

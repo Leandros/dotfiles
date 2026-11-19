@@ -111,6 +111,14 @@ expected = [
     ("G", "Control", VI, ["ScrollToBottom", "ToggleViMode"]),
     ("/", None, VI, ["SearchBackward"]), ("?", "Shift", VI, ["SearchNext"]),
     ("-", None, VI, ["SearchPrevious"]),
+    # Symbols on Bone 2's Mod3 layer (Level3) come without Shift, which
+    # Alacritty's defaults require; on us and de they need Shift.
+    ("?", None, VI, ["SearchNext"]), ("/", "Shift", VI, ["SearchBackward"]),
+    ("(", "Shift", VI, ["ScrollPageDown"]), (")", "Shift", VI, ["ScrollPageUp"]),
+    ("$", None, VI, ["Last"]), ("^", None, VI, ["FirstOccupied"]),
+    ("%", None, VI, ["Bracket"]),
+    ("{", None, VI, ["ParagraphUp"]), ("}", None, VI, ["ParagraphDown"]),
+    ("*", None, VI, ["SemanticSearchForward"]), ("#", None, VI, ["SemanticSearchBackward"]),
 ]
 for key, mods, mode, want in expected:
     got = actions(key, mods, mode)
