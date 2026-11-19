@@ -236,6 +236,12 @@ for_window [app_id="^wdisplays$"] floating enable
 for_window [app_id="^org\.pulseaudio\.pavucontrol$"] floating enable
 for_window [instance="^pavucontrol$"] floating enable
 
+# LANDrop (file transfer on the LAN; AppImage in ~/Applications, Electron):
+# on Wayland Electron's app_id is its program or product name
+# (landrop-v2-electron, LANDrop), on X the WM_CLASS class is "LANDrop".
+for_window [app_id="(?i)^landrop"] floating enable
+for_window [class="^LANDrop$"] floating enable
+
 # No idle lock or suspend while a window is full screen (video).
 for_window [all] inhibit_idle fullscreen
 
@@ -311,6 +317,16 @@ mode "resize" {
         bindsym Down resize grow height 10 px or 10 ppt
         bindsym Up resize shrink height 10 px or 10 ppt
         bindsym Right resize grow width 10 px or 10 ppt
+
+        # Shift: larger steps.
+        bindsym Shift+b resize shrink width 50 px or 25 ppt
+        bindsym Shift+n resize grow height 50 px or 25 ppt
+        bindsym Shift+r resize shrink height 50 px or 25 ppt
+        bindsym Shift+s resize grow width 50 px or 25 ppt
+        bindsym Shift+Left resize shrink width 50 px or 25 ppt
+        bindsym Shift+Down resize grow height 50 px or 25 ppt
+        bindsym Shift+Up resize shrink height 50 px or 25 ppt
+        bindsym Shift+Right resize grow width 50 px or 25 ppt
 
         # back to normal: Enter or Escape
         bindsym Return mode "default"

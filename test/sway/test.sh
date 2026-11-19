@@ -259,6 +259,22 @@ key -M logo m -m logo
 key -M logo m -m logo
 expect "Mod+m again removes the mark" "" "$(marks)"
 
+# Resize mode: s grows the width by 10 %, Shift+s by 25 % (tiled: ppt).
+pct() { msg -t get_tree | py '
+import json, sys
+def find(n):
+    if n.get("name") == "A" and n.get("pid"): print(round(n["percent"] * 100))
+    for c in n.get("nodes", []): find(c)
+find(json.load(sys.stdin))'; }
+p0="$(pct)"
+key -M logo a -m logo
+key s
+p1="$(pct)"
+key -M shift s -m shift
+p2="$(pct)"
+key -k Escape
+expect "resize mode: s grows by 10 %, Shift+s by 25 %" "10 25" "$((p1 - p0)) $((p2 - p1))"
+
 # Only $mod+digit switches workspaces; Ctrl+digit is the application's.
 focused_ws() { msg -t get_workspaces | py 'import json,sys; print(*[w["name"] for w in json.load(sys.stdin) if w["focused"]])'; }
 msg -q workspace number 3
@@ -293,7 +309,7 @@ def find(n):
     if n.get('name') == '$1' and n.get('pid'): print(n.get('shell'), n.get('app_id'))
     for c in n.get('nodes', []) + n.get('floating_nodes', []): find(c)
 find(json.load(sys.stdin))"; }
-for id in nmrs blueman-manager blueman-services org.pulseaudio.pavucontrol wdisplays; do
+for id in nmrs blueman-manager blueman-services org.pulseaudio.pavucontrol wdisplays landrop-v2-electron LANDrop; do
     as_t foot --app-id "$id" -T "W-$id" sleep 600 >/dev/null 2>&1 &
 done
 as_t foot --app-id other -T W-other sleep 600 >/dev/null 2>&1 &
@@ -328,10 +344,10 @@ for _ in $(seq 1 20); do [ "$(xft_dpi)" = 144 ] && break; sleep 0.2; done
 expect "satellite: Xft.dpi of scale 1.5" "144" "$(xft_dpi)"
 
 for _ in $(seq 1 50); do
-    [ "$(msg -t get_tree | grep -cE '"name": "W-')" -ge 6 ] && break
+    [ "$(msg -t get_tree | grep -cE '"name": "W-')" -ge 8 ] && break
     sleep 0.2
 done
-for t in W-nmrs W-blueman-manager W-blueman-services W-org.pulseaudio.pavucontrol W-wdisplays X-nmrs; do
+for t in W-nmrs W-blueman-manager W-blueman-services W-org.pulseaudio.pavucontrol W-wdisplays W-landrop-v2-electron W-LANDrop X-nmrs; do
     expect "$t floats" "floating_con" "$(floats "$t")"
 done
 expect "other windows tile" "con" "$(floats W-other)"
@@ -405,7 +421,8 @@ fi
 start_x X-nmrs -class nmrs
 start_x X-blueman -name blueman-manager
 start_x X-pavucontrol -name pavucontrol
-for t in X-nmrs X-blueman X-pavucontrol; do
+start_x X-landrop -class LANDrop
+for t in X-nmrs X-blueman X-pavucontrol X-landrop; do
     expect "switch: $t floats" "floating_con" "$(floats "$t")"
 done
 expect "switch: X11 window on Xwayland" "xwayland" "$(app_of X-nmrs | cut -d' ' -f1)"

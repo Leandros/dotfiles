@@ -77,6 +77,7 @@ In X, xremap swaps the left Alt and Ctrl keys; in sway, the XKB option
 | `b` / `s` | Width -10 / +10 |
 | `r` / `n` | Height -10 / +10 |
 | arrows | Same |
+| `Shift` + any of these | Larger steps: 50 px or 25 % instead of 10 |
 
 ### Session
 

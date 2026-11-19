@@ -608,7 +608,10 @@ New link or system file: install function, `check_link` or `cmp` check in
   and fails on the real GPU. Tests: `test/pkill-display/test.sh` (real
   processes), `test/xprofile/test.sh`, `test/kb/test.sh`.
 - Floating windows need `for_window` rules: nmrs (`class`), `blueman-*`,
-  copyq (`move position mouse`), arandr, rrandr and pavucontrol (`instance`).
+  copyq (`move position mouse`), arandr, rrandr and pavucontrol (`instance`),
+  LANDrop (AppImage, not installed by bootstrap: class `LANDrop`; on sway
+  also app_id `(?i)^landrop`, Electron's program or product name, not seen
+  on a real window yet).
 - Bar: eww (`.config/eww`, linked; `install_eww`, desktop, commit
   `EWW_REF`, `--no-default-features --features x11`: release 0.6.0 pins
   Rust 1.76). `bin/bar` (run by `.xprofile` before the tray apps) starts the

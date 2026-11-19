@@ -188,6 +188,10 @@ for_window [instance="^rrandr$"] floating enable
 # Audio devices and per-app streams; opened from the bar's volume block.
 for_window [instance="^pavucontrol$"] floating enable
 
+# LANDrop (file transfer on the LAN; AppImage in ~/Applications, Electron):
+# WM_CLASS class "LANDrop" (its desktop file's StartupWMClass).
+for_window [class="^LANDrop$"] floating enable
+
 # change focus between tiling / floating windows
 bindsym $mod+space focus mode_toggle
 
@@ -257,6 +261,16 @@ mode "resize" {
         bindsym Down resize grow height 10 px or 10 ppt
         bindsym Up resize shrink height 10 px or 10 ppt
         bindsym Right resize grow width 10 px or 10 ppt
+
+        # Shift: larger steps.
+        bindsym Shift+b resize shrink width 50 px or 25 ppt
+        bindsym Shift+n resize grow height 50 px or 25 ppt
+        bindsym Shift+r resize shrink height 50 px or 25 ppt
+        bindsym Shift+s resize grow width 50 px or 25 ppt
+        bindsym Shift+Left resize shrink width 50 px or 25 ppt
+        bindsym Shift+Down resize grow height 50 px or 25 ppt
+        bindsym Shift+Up resize shrink height 50 px or 25 ppt
+        bindsym Shift+Right resize grow width 50 px or 25 ppt
 
         # back to normal: Enter or Escape
         bindsym Return mode "default"
