@@ -238,7 +238,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   runs `picom -b`.
 - ghostty (both desktops, Fedora only: copr `GHOSTTY_COPR`
   `scottames/ghostty`, 1.4.0 in 2026-11, no EL chroot): a second terminal,
-  wezterm stays `$mod+Return`. `.config/ghostty/config` is shared with
+  `bin/term` ($mod+Return) starts Alacritty or wezterm. `.config/ghostty/config` is shared with
   macOS (opt+ keys type Bone 2 symbols there) and ends with `config-file =
   ?linux.conf`, resolved next to the link, so only machines where
   bootstrap links `ghostty/linux.conf` get it (kept out of
@@ -259,8 +259,8 @@ New link or system file: install function, `check_link` or `cmp` check in
   the TOML config; Ubuntu 22.04 none), deps from its INSTALL.md; desktop
   entry and icon from the crate in cargo's registry. TERM is
   `xterm-256color` (the shared config), so no terminfo. Being evaluated
-  against wezterm's sway bug (#6463, see sway): wezterm stays
-  `$mod+Return`. Layout as ghostty: `.config/alacritty/alacritty.toml` is
+  against wezterm's sway bug (#6463, see sway): the default of `bin/term`
+  ($mod+Return) since 2026-11-19. Layout as ghostty: `.config/alacritty/alacritty.toml` is
   the user's old config, shared with macOS (colors moved to `themes/`);
   it imports `themes/solarized-dark.toml`, the link
   `~/.local/state/alacritty/theme.toml`, then `linux.toml` (linked from
@@ -452,7 +452,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   in `$(...)`, where `set -e` does not apply),
   `test/system-sleep/power-button-wake.sh`, `test/system-sleep/vmware-suspend.sh`,
   `test/sunshine-session/test.sh`, `test/sunshine-pin/test.sh`, `test/ghostty/test.sh`, `test/rio/test.sh`, `test/alacritty/test.sh`,
-  `test/firefox-prefs/test.sh`, `test/zsh-clipboard/test.sh`, `test/lesskey/test.sh`, `test/kmscon-cursor/test.sh`, `test/nvidia-power/test.sh`
+  `test/firefox-prefs/test.sh`, `test/zsh-clipboard/test.sh`, `test/lesskey/test.sh`, `test/kmscon-cursor/test.sh`, `test/nvidia-power/test.sh`, `test/term/test.sh`
   (less in a pseudo terminal in fedora:45, debian:12, amazonlinux:2). Add new tests in this style.
 - X programs: Xorg dummy driver in a container. i3 bindings: Xvfb + i3 with
   the repo config in a Fedora image, `xdotool key super+j`, then read the
@@ -594,11 +594,14 @@ New link or system file: install function, `check_link` or `cmp` check in
   for the physical right Shift; `bin/xrdp-keys` removes Shift_R from Shift,
   makes keycode 62 Super_L in Mod4 and checks `xmodmap -pm` every 2 s
   (xrdp loads a fresh keymap per connect; xev has no mapping mask and gets
-  no core MappingNotify under XKB). `bin/term` ($mod+Return, fuzzel): always `wezterm start
+  no core MappingNotify under XKB). `bin/term` ($mod+Return, fuzzel):
+  Alacritty (default) or wezterm, chosen with `term --use alacritty|wezterm`
+  (`$XDG_STATE_HOME/term`; the other one when the chosen is missing). Every
+  window a process of its own: Alacritty is by default; wezterm `start
   --always-new-process` (`-e PROG` becomes `-- PROG`): joining the running
   GUI opened xrdp windows on the local screen, and under sway a process
   with several windows crashed when they moved between scale 1 and 1.5
-  outputs (wezterm#2445, fix PR #8250 open), taking every window with it. Test: `test/xrdp/test.sh`.
+  outputs (wezterm#2445, fix PR #8250 open), taking every window with it. Test: `test/term/test.sh`.
   `kb` keeps its state per display
   (`kb-layout-$DISPLAY`). eww: one daemon per display, see Bar. xrdp needs
   `xorgxrdp` (or `xorgxrdp-glamor`), else Xorg finds no `xrdp/xorg.conf`

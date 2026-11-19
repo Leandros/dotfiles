@@ -85,7 +85,7 @@ ghostty (Fedora desktops, from copr) is installed next to wezterm with wezterm's
 colors (`.config/ghostty`, Linux part `ghostty/linux.conf`). Test: `test/ghostty/test.sh`.
 Rio config (`.config/rio`, linked on Linux desktops; install Rio by hand): wezterm's keys,
 with the Alt+e leader keys as Alt+Shift+key. Test: `test/rio/test.sh`.
-Alacritty (both desktops, built with cargo; wezterm stays `$mod+Return`) with wezterm's keys and
+Alacritty (both desktops, built with cargo; the default of `$mod+Return`: `term --use wezterm|alacritty` switches, `term --show` prints the choice; test: `test/term/test.sh`) with wezterm's keys and
 colors: `.config/alacritty/alacritty.toml` (shared with macOS) and its Linux part
 `alacritty/linux.toml`. Copy mode is vi mode (Alt+Shift+Space) with the Bone 2 keys (b r n s);
 Alt+Shift+t copies a URL, path or hash (QuickSelect). No tabs or splits. The colors follow the

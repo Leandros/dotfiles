@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 #
-# term - the terminal for $mod+Return (i3 and sway) and fuzzel.
+# term - the terminal for $mod+Return (i3 and sway) and fuzzel: Alacritty by
+# default, or wezterm. The choice is stored in $XDG_STATE_HOME/term; when the
+# chosen terminal is not installed, the other one starts.
 #
-# Every window is a wezterm process of its own. By default wezterm hands a
-# new window to the user's running GUI instance:
+# Every window is a process of its own. Alacritty does this unless asked
+# (`alacritty msg create-window`). wezterm by default hands a new window to
+# the user's running GUI instance:
 #   - in an xrdp session that may be the local session's, and the window
 #     opened on the local screen;
 #   - under sway a process with several windows crashed when they moved
@@ -12,9 +15,47 @@
 #     and took every window with it.
 #
 # Usage: term [-e PROG [ARGS...]]
+#        term --use alacritty|wezterm
+#        term --show
 #
 set -euo pipefail
 
+STATE="${XDG_STATE_HOME:-$HOME/.local/state}/term"
+readonly STATE DEFAULT=alacritty
+
+chosen() {
+    local t
+    t="$(cat "$STATE" 2>/dev/null)" || t="$DEFAULT"
+    case "$t" in
+        alacritty|wezterm) echo "$t" ;;
+        *) echo "$DEFAULT" ;;
+    esac
+}
+
+case "${1:-}" in
+    --use)
+        case "${2:-}" in
+            alacritty|wezterm) ;;
+            *) echo "usage: term --use alacritty|wezterm" >&2; exit 2 ;;
+        esac
+        mkdir -p "$(dirname "$STATE")"
+        echo "$2" > "$STATE.tmp"
+        mv "$STATE.tmp" "$STATE"
+        exit 0
+        ;;
+    --show)
+        chosen
+        exit 0
+        ;;
+esac
+
+t="$(chosen)"
+if ! command -v "$t" >/dev/null; then
+    [[ "$t" == alacritty ]] && t=wezterm || t=alacritty
+fi
+if [[ "$t" == alacritty ]]; then
+    exec alacritty "$@"
+fi
 # wezterm's -e is an alias of start; fuzzel passes `-e PROG ARGS`.
 if [[ "${1:-}" == -e ]]; then
     shift
