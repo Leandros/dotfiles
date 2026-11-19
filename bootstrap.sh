@@ -1985,10 +1985,12 @@ install_nvidia_power() {
     local src="$DOTFILES_DIR/modprobe-conf/$NVIDIA_MODPROBE_CONF_NAME" dst="$MODPROBE_CONF_DIR/$NVIDIA_MODPROBE_CONF_NAME"
     if ! cmp -s "$src" "$dst" 2>/dev/null; then
         $SUDO install -D -m 0644 "$src" "$dst"
-        if have restorecon; then
-            $SUDO restorecon "$dst"
-        fi
         log "installed $dst; applies after a reboot"
+    fi
+    # Also for a current file: one made by hand (cp or mv from $HOME) keeps
+    # user_home_t, which systemd-modules-load may not read.
+    if have restorecon; then
+        $SUDO restorecon "$dst"
     fi
     local unit units=()
     for unit in nvidia-suspend.service nvidia-resume.service nvidia-hibernate.service; do

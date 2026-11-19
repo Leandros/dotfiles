@@ -59,7 +59,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `xorg-conf/*.conf` | `/etc/X11/xorg.conf.d/` (root copy) |
 | `sshd-conf/50-color-scheme.conf` | `/etc/ssh/sshd_config.d/` (root copy, Linux, where sshd_config includes the directory; not AL2) |
 | `logind-conf/50-lid-suspend.conf` | `/etc/systemd/logind.conf.d/` (root copy, applies after reboot) |
-| `modprobe-conf/nvidia-power.conf` | `/etc/modprobe.d/` (root copy, both desktops, only with an NVIDIA display controller: PCI vendor `0x10de`, class `0x03*`; `install_nvidia_power` also enables the driver's suspend units where installed: `PreserveVideoMemoryAllocations` needs them; applies after reboot) |
+| `modprobe-conf/nvidia-power.conf` | `/etc/modprobe.d/` (root copy, both desktops, only with an NVIDIA display controller: PCI vendor `0x10de`, class `0x03*`; `install_nvidia_power` also enables the driver's suspend units where installed: `PreserveVideoMemoryAllocations` needs them; applies after reboot; `restorecon` on every run, also when the file is current: a copy made by hand kept `user_home_t`, which SELinux keeps from `systemd-modules-load`) |
 | `system-sleep/{power-button-wake,vmware-suspend}` | `/usr/lib/systemd/system-sleep/` (root copies) |
 | `xinitrc-d/90-xprofile.sh` | `/etc/X11/xinit/xinitrc.d/` (root copy, Fedora/EL) |
 | `power-mode/*` | `/usr/local/libexec`, `/etc/systemd/system`, `/etc/udev/rules.d` (root copies, Fedora/EL) |
