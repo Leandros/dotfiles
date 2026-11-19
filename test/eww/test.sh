@@ -513,11 +513,11 @@ test_yuck() {
         ':namespace "eww-bar"'; do
         if [[ "$window" == *"$prop"* ]]; then ok "bar window: $prop"; else fail "bar window misses $prop"; fi
     done
-    # shellcheck disable=SC2016 # An eww expression, not the shell's.
-    if grep -qF ':onclick "~/bin/wm-msg -q workspace number ${ws.num}"' "$YUCK"; then
-        ok "workspace click through wm-msg"
+    # By name: a workspace without a number (num -1) has no `number` to go to.
+    if grep -qF ":onclick \"~/bin/ws-pick --go '\${ws.name}'\"" "$YUCK"; then
+        ok "workspace click by name through ws-pick"
     else
-        fail "workspace click not through ~/bin/wm-msg"
+        fail "workspace click not ~/bin/ws-pick --go '\${ws.name}'"
     fi
     # Commands only: comments may name i3-msg.
     expect "no i3-msg in the eww config" "" "$(grep -rl 'i3-msg -' "$YUCK" "$SCRIPTS" || true)"

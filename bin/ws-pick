@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+#
+# ws-pick - go to a workspace, or rename the focused one, by name or number
+# (i3 and sway).
+#
+# The menu is fuzzel under sway, dmenu under X. It lists the workspaces;
+# typed text that matches none goes to (creates) a workspace of that name.
+# A bare number goes by number, so 3 reaches "3: web" as $mod+3 does in
+# sway; any other name goes to exactly that workspace. Cancel (Escape) or
+# empty input changes nothing.
+#
+# Usage: ws-pick            pick a workspace and go there ($mod+e)
+#        ws-pick --rename   rename the focused workspace ($mod+Shift+e;
+#                           a number moves it, with its windows, there)
+#        ws-pick --go NAME  go to NAME, no menu (the eww bar's click)
+#
+set -euo pipefail
+
+readonly WM_MSG="$HOME/bin/wm-msg"
+readonly NUMBER_PATTERN='^[0-9]+$'
+
+usage() {
+    sed -n '/^# Usage:/,/^#$/{/^#$/d;s/^# \{0,1\}//;p}' "$0" >&2
+    exit 2
+}
+
+# A workspace name as an i3/sway command string: quoted, \ and " escaped.
+quote() {
+    local s="${1//\\/\\\\}"
+    printf '"%s"' "${s//\"/\\\"}"
+}
+
+# The menu of the session (SWAYSOCK first: sway sets DISPLAY too). Reads
+# the entries on stdin; prints the pick, empty when cancelled.
+menu() {
+    local prompt="$1" only="$2"
+    if [[ -n "${SWAYSOCK:-}" ]]; then
+        if [[ "$only" == 1 ]]; then
+            fuzzel --dmenu --prompt-only="$prompt: " || true
+        else
+            fuzzel --dmenu --prompt="$prompt: " || true
+        fi
+    else
+        dmenu -p "$prompt:" || true
+    fi
+}
+
+go() {
+    local name="$1"
+    if [[ "$name" =~ $NUMBER_PATTERN ]]; then
+        "$WM_MSG" -q "workspace number $name"
+    else
+        "$WM_MSG" -q "workspace $(quote "$name")"
+    fi
+}
+
+main() {
+    local pick
+    case "${1:-}" in
+        "")
+            pick="$("$WM_MSG" -t get_workspaces | jq -r '.[].name' | menu workspace 0)"
+            [[ -z "$pick" ]] || go "$pick"
+            ;;
+        --rename)
+            pick="$(menu "rename to" 1 < /dev/null)"
+            [[ -z "$pick" ]] || "$WM_MSG" -q "rename workspace to $(quote "$pick")"
+            ;;
+        --go)
+            [[ $# -eq 2 && -n "$2" ]] || usage
+            go "$2"
+            ;;
+        *) usage ;;
+    esac
+}
+
+main "$@"

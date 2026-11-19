@@ -47,7 +47,7 @@ In X, xremap swaps the left Alt and Ctrl keys; in sway, the XKB option
 |---|---|
 | `Mod+v` | Next window opens to the right |
 | `Mod+f` | Next window opens below |
-| `Mod+e` | Fullscreen on/off |
+| `Mod+z` | Fullscreen on/off |
 | `Mod+d` | Tabbed layout |
 | `Mod+u` | Split layout, toggle direction |
 | `Mod+Shift+space` | Floating on/off |
@@ -60,13 +60,16 @@ In X, xremap swaps the left Alt and Ctrl keys; in sway, the XKB option
 | `Mod+Shift+1` ... `Mod+Shift+0` | Move window to workspace 1 ... 10 |
 | `Mod+Tab` | Back to the previous workspace |
 | `Mod+,` / `Mod+.` | Previous / next workspace on this screen |
+| `Mod+e` | Go to a workspace: type or pick its name or number (fuzzel in sway, dmenu in X); a new name creates it |
+| `Mod+Shift+e` | Rename the workspace; a number moves it (and its windows) there |
+| Click a workspace in the bar | Go there |
 
 ### Scratchpad
 
 | Key | Action |
 |---|---|
-| `Mod+Shift+z` | Move window to the scratchpad |
-| `Mod+z` | Show / hide / cycle scratchpad windows |
+| `Mod+Shift+k` | Move window to the scratchpad |
+| `Mod+k` | Show / hide / cycle scratchpad windows |
 
 ### Resize mode
 

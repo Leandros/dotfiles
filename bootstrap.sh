@@ -2209,6 +2209,7 @@ link_xorg_dotfiles() {
     link "$d/bin/xrdp-keys" "$HOME/bin/xrdp-keys"
     link "$d/bin/syncthing-status" "$HOME/bin/syncthing-status"
     link "$d/bin/wm-msg" "$HOME/bin/wm-msg"
+    link "$d/bin/ws-pick" "$HOME/bin/ws-pick"
     link "$d/bin/screenshot" "$HOME/bin/screenshot"
     link "$d/.xinitrc" "$HOME/.xinitrc"
     link "$d/.xprofile" "$HOME/.xprofile"
@@ -2419,7 +2420,7 @@ link_wayland_dotfiles() {
     # Rio is installed by hand (no Fedora package); its config is ready.
     link "$d/.config/rio" "$HOME/.config/rio"
     for name in kb i3status-kb pwr theme flightmode touchpad charge caffeinate smb bar \
-        pkill-display term syncthing-status wm-msg screenshot sway-autostart kanshi-save clip-pick; do
+        pkill-display term syncthing-status wm-msg ws-pick screenshot sway-autostart kanshi-save clip-pick; do
         link "$d/bin/$name" "$HOME/bin/$name"
     done
     link "$d/.config/sway" "$HOME/.config/sway"

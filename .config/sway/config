@@ -204,7 +204,7 @@ bindsym $mod+v split h
 bindsym $mod+f split v
 
 # enter fullscreen mode for the focused container
-bindsym $mod+e fullscreen
+bindsym $mod+z fullscreen
 
 # change container layout (tabbed, toggle split); no stacking binding: it
 # was easy to hit by accident
@@ -289,11 +289,18 @@ bindsym $mod+Shift+u exec swaynag -t warning -m 'You pressed the exit shortcut. 
 bindsym Ctrl+Alt+BackSpace exec systemctl --user stop sway-session.target; exit
 
 # scratchpad
-bindsym $mod+Shift+z move scratchpad
-bindsym $mod+z scratchpad show
+bindsym $mod+Shift+k move scratchpad
+bindsym $mod+k scratchpad show
 
 # Back to the previous workspace.
 bindsym $mod+Tab workspace back_and_forth
+
+# Go to a workspace by name or number, from a menu of them (ws-pick:
+# fuzzel in sway, dmenu in X); rename the focused one (a number moves it
+# there, with its windows).
+bindsym $mod+e exec ~/bin/ws-pick
+bindsym $mod+Shift+e exec ~/bin/ws-pick --rename
+
 
 # Previous / next workspace of this screen (left / right in the bar).
 bindsym $mod+comma workspace prev_on_output

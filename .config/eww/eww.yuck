@@ -34,7 +34,7 @@
     (for ws in workspaces
       (button :visible {ws.output == output}
               :class "ws ${ws.focused ? 'focused' : ws.visible ? 'active' : ''} ${ws.urgent ? 'urgent' : ''}"
-              :onclick "~/bin/wm-msg -q workspace number ${ws.num}"
+              :onclick "~/bin/ws-pick --go '${ws.name}'"
         "${ws.name}"))))
 
 (defwidget cpu-tip []

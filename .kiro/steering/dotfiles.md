@@ -41,7 +41,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `.zshrc` | `~/.zshrc`, rendered copy (`##NEWHOME##`, `##NEWUSER##`) |
 | `.Xresources` | `~/.Xresources`, rendered copy (`##XFT_DPI##`) |
 | `.wezterm.lua`, `.xinitrc`, `.xprofile`, `.xsession`, `.Xmodmap`, `.config/{i3,i3status,xremap,picom,eww}`, `.config/autorandr/postswitch` (the file only: profiles are per machine), `.config/systemd/user/i3-session.target` | `$HOME`, links, Xorg only |
-| `bin/{kb,i3status-kb,pwr,theme,flightmode,touchpad,charge,caffeinate,smb,input-restore,bar,pkill-display,term,xrdp-keys,syncthing-status,screenshot}` | `~/bin`, links, Xorg only |
+| `bin/{kb,i3status-kb,pwr,theme,flightmode,touchpad,charge,caffeinate,smb,input-restore,bar,pkill-display,term,xrdp-keys,syncthing-status,screenshot,ws-pick}` | `~/bin`, links, Xorg only |
 | `bin/fzf-cache` | `~/bin`, link, always |
 | `.lesskey` | `~/.lesskey`, link, always (`install_lesskey` in `link_dotfiles`); less < 582 also gets `~/.less` compiled by `lesskey` |
 | `bin/{pbcopy,pbpaste}` | `~/bin`, links, Linux (macOS has its own) |
@@ -489,7 +489,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   wrapper runs sway in English; `~/.xprofile` does not run).
   `test/xkb-bone2/test.sh` (regenerate check, libxkbcommon levels against
   `.Xmodmap`). Stub tests: `test/sway-autostart`, `test/wm-msg`,
-  `test/kanshi-save`, `test/clip-pick`, `test/pwr-lock`.
+  `test/kanshi-save`, `test/clip-pick`, `test/pwr-lock`, `test/ws-pick`.
 - Headless sway in a container: `WLR_BACKENDS=headless WLR_RENDERER=pixman
   WLR_LIBINPUT_NO_DEVICES=1`, a user with a 0700 `XDG_RUNTIME_DIR`,
   `--cap-add SYS_NICE`. `wtype -M logo j -m logo` triggers bindings; a
@@ -706,7 +706,13 @@ New link or system file: install function, `check_link` or `cmp` check in
   notify-send; a cancelled selection saves nothing; test
   `test/screenshot/test.sh`); media keys `playerctl`; `$mod+Tab`
   `workspace back_and_forth`; `$mod+comma` / `$mod+period`
-  `workspace prev_on_output` / `next_on_output`; `$mod+Ctrl+direction` `move workspace to
+  `workspace prev_on_output` / `next_on_output`; `$mod+e` `bin/ws-pick` (a menu of the
+  workspaces: fuzzel in sway, dmenu in X; a bare number goes by `number`,
+  so 3 reaches "3: web", any other text to exactly that name, quoted),
+  `$mod+Shift+e` `ws-pick --rename` (a number moves the workspace there);
+  the eww bar's workspace click is `ws-pick --go '${ws.name}'` (a
+  workspace without a number has num -1); `$mod+z` fullscreen;
+  `$mod+k` / `$mod+Shift+k` scratchpad show / move; `$mod+Ctrl+direction` `move workspace to
   output`. dunst (notifications) starts in `.xprofile` (`stop -x` first)
   and `sway-autostart`; one owner of `org.freedesktop.Notifications` per
   user bus, so with two sessions the newer dunst exits.

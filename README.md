@@ -94,6 +94,7 @@ desktop through `bin/alacritty-theme` (user unit `alacritty-theme.service`). Tes
 Scrolling: `multiplier = 5` against sway's slow scroll factors, and a patch
 (`patches/alacritty-touchpad-scroll.patch`) so the touchpad also scrolls faster in programs
 that read the mouse (Claude Code, nvim, less). Test: `test/alacritty-patch/test.sh`.
+Workspaces by name (i3 and sway): `$mod+e` goes to one from a menu of them (`bin/ws-pick`; fuzzel in sway, dmenu in X; a number goes by number, a new name creates it), `$mod+Shift+e` renames the focused one, and a click in the bar goes by name. Test: `test/ws-pick/test.sh`.
 Media keys (volume, mute, screen brightness) are bound in i3 only; check with `test/media-keys/test.sh`.
 
 

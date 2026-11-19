@@ -290,7 +290,7 @@ check_desktop_shared() {
     local name theme_out idle_want idle_have pwr_out enabled pair font_line font_want
     local kmscon_font kmscon_font_want status_line kb_out keymap wezterm_stamp eww_libs bin bt_enabled
     for name in kb i3status-kb pwr theme flightmode touchpad charge caffeinate smb bar \
-        pkill-display term syncthing-status wm-msg screenshot; do
+        pkill-display term syncthing-status wm-msg ws-pick screenshot; do
         check_link "$HOME/bin/$name" "$D/bin/$name"
     done
     theme_out="$("$HOME/bin/theme" show 2>&1 || true)"
