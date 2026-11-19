@@ -112,6 +112,9 @@ main() {
 
     run
     expect "logs in with de" "kb de" "$(grep '^kb ' "$CALLS" | head -n 1)"
+    # The server's options come from localed and hold the console's Ctrl/Alt
+    # swap (xremap swaps in X): replaced, not added to.
+    expect "X options replaced" "setxkbmap -option  -option terminate:ctrl_alt_bksp" "$(grep '^setxkbmap -option' "$CALLS")"
     if grep -q '^kb bone2' "$CALLS"; then fail "still selects bone2"; else ok "no bone2 at login"; fi
     local ready layout
     ready="$(line_of '^xremap device ready')"

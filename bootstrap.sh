@@ -1750,12 +1750,39 @@ readonly KMSCON_CONF_MARKER="# Written by bootstrap.sh; edit the dotfiles instea
 readonly KMSCON_PALETTE="solarized"
 readonly KMSCON_FONT="PragmataPro Mono"
 
-# The managed kmscon.conf for a font size in pixels.
+# The managed kmscon.conf for a font size in pixels. no-mouse: no mouse
+# pointer or selection on the console (the user's choice).
 kmscon_conf() {
-    printf '%s\nfont-size=%s\npalette=%s\n' "$KMSCON_CONF_MARKER" "$1" "$KMSCON_PALETTE"
+    printf '%s\nfont-size=%s\npalette=%s\nno-mouse\n' "$KMSCON_CONF_MARKER" "$1" "$KMSCON_PALETTE"
     if [[ -n "$(fc-list ":family=$KMSCON_FONT" 2>/dev/null)" ]]; then
         printf 'font-name=%s\n' "$KMSCON_FONT"
     fi
+}
+
+# The consoles swap left Ctrl and Alt, as the sessions do (xremap in X,
+# xkb_options in sway). kmscon takes its whole keymap from localed (bin/kb
+# sets the layout there, with the same option) and none of it when
+# kmscon.conf sets any xkb- option, so the option goes into localed's X11
+# options, keeping its layout, model and variant. They are also the X
+# server's defaults: .xprofile and kb replace them in X sessions.
+readonly CONSOLE_XKB_OPTIONS="ctrl:swap_lalt_lctl"
+
+kmscon_swap_ctrl_alt() {
+    have localectl || return 0
+    local status layout model variant options
+    status="$(localectl status 2>/dev/null)" || { warn "kmscon: localed not reachable, Ctrl/Alt not swapped"; return 0; }
+    layout="$(sed -n 's/^ *X11 Layout: //p' <<<"$status")"
+    model="$(sed -n 's/^ *X11 Model: //p' <<<"$status")"
+    variant="$(sed -n 's/^ *X11 Variant: //p' <<<"$status")"
+    options="$(sed -n 's/^ *X11 Options: //p' <<<"$status")"
+    if [[ -z "$layout" || "$layout" == n/a ]]; then
+        warn "kmscon: no X11 layout in localed (run kb --console bone2), Ctrl/Alt not swapped"
+        return 0
+    fi
+    [[ "$options" == "$CONSOLE_XKB_OPTIONS" ]] && return 0
+    $SUDO localectl --no-convert set-x11-keymap "$layout" "$model" "$variant" "$CONSOLE_XKB_OPTIONS" \
+        || { warn "kmscon: localectl failed, Ctrl/Alt not swapped"; return 0; }
+    log "console: left Ctrl and Alt swapped ($layout${variant:+($variant)})"
 }
 
 # xrdp: a remote desktop session of its own next to the local one
@@ -1841,6 +1868,7 @@ configure_console_font() {
     # also gets the palette and font (kmscon_conf). Only a file written by
     # this script is replaced.
     [[ -d "$(dirname "$KMSCON_CONF")" ]] || return 0
+    kmscon_swap_ctrl_alt
     if [[ -f "$KMSCON_CONF" ]] && ! head -n 1 "$KMSCON_CONF" | grep -qxF "$KMSCON_CONF_MARKER"; then
         warn "kmscon: $KMSCON_CONF exists and is not managed; set font-size=$px yourself"
         return

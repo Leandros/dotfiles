@@ -49,7 +49,14 @@ readonly XKB_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/kb"
 die() { printf 'kb: %s\n' "$*" >&2; exit 1; }
 
 # ~/.xprofile sets this; a plain `setxkbmap <layout>` call would clear it.
+# setxkbmap adds -option values to the server's options, which come from
+# localed (00-keyboard.conf) and hold the console's Ctrl/Alt swap: the
+# empty -option first replaces them (xremap already swaps in X).
 readonly XKB_OPTIONS="terminate:ctrl_alt_bksp"
+
+# The consoles (kmscon) swap left Ctrl and Alt, as xremap (X) and sway's
+# xkb_options do in the sessions.
+readonly CONSOLE_XKB_OPTIONS="ctrl:swap_lalt_lctl"
 
 # Compiled bone2 keymap, keyed by the xmodmap content so edits invalidate it.
 bone2_xkb_cache() {
@@ -66,7 +73,7 @@ apply_x_bone2() {
         xkbcomp -w0 "$cache" "$DISPLAY"
         return
     fi
-    setxkbmap -layout de -option "$XKB_OPTIONS"
+    setxkbmap -layout de -option "" -option "$XKB_OPTIONS"
     xmodmap "$XMODMAP_FILE"
     mkdir -p "$XKB_CACHE_DIR"
     xkbcomp -w0 "$DISPLAY" "$cache.tmp" && mv "$cache.tmp" "$cache"
@@ -74,8 +81,8 @@ apply_x_bone2() {
 
 apply_x() {
     case "$1" in
-        us)    setxkbmap -layout us -option "$XKB_OPTIONS" ;;
-        de)    setxkbmap -layout de -option "$XKB_OPTIONS" ;;
+        us)    setxkbmap -layout us -option "" -option "$XKB_OPTIONS" ;;
+        de)    setxkbmap -layout de -option "" -option "$XKB_OPTIONS" ;;
         bone2) apply_x_bone2 ;;
     esac
 }
@@ -125,13 +132,14 @@ kmscon_active() {
 
 # kmscon follows the X11 keymap published by localed. There is no system xkb
 # file for the custom bone2 (xkb/symbols/bone2 is the user's), so the stock
-# de(bone) variant stands in for it.
+# de(bone) variant stands in for it. Arguments: layout, model, variant,
+# options.
 apply_console_kmscon() {
     local args
     case "$1" in
-        us)    args=(us) ;;
-        de)    args=(de) ;;
-        bone2) args=(de "" bone) ;;
+        us)    args=(us "" "" "$CONSOLE_XKB_OPTIONS") ;;
+        de)    args=(de "" "" "$CONSOLE_XKB_OPTIONS") ;;
+        bone2) args=(de "" bone "$CONSOLE_XKB_OPTIONS") ;;
     esac
     # --no-convert: leave the fbcon keymap in /etc/vconsole.conf alone.
     as_root localectl --no-convert set-x11-keymap "${args[@]}" 2>/dev/null \

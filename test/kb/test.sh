@@ -121,7 +121,7 @@ main() {
 
     # Inside X: the session's X keyboard only.
     run x de
-    expect "X: de sets the X layout" "setxkbmap -layout de -option terminate:ctrl_alt_bksp" "$(calls setxkbmap)"
+    expect "X: de sets the X layout" "setxkbmap -layout de -option  -option terminate:ctrl_alt_bksp" "$(calls setxkbmap)"
     expect "X: no console keymap" "" "$(calls loadkeys)$(calls localectl)"
     expect "X: the bar's state" "de" "$(cat "$STATE")"
 
@@ -131,7 +131,7 @@ main() {
 
     # Inside X with --console: X and the console (fbcon: loadkeys).
     run x --console de
-    expect "X --console: X layout" "setxkbmap -layout de -option terminate:ctrl_alt_bksp" "$(calls setxkbmap)"
+    expect "X --console: X layout" "setxkbmap -layout de -option  -option terminate:ctrl_alt_bksp" "$(calls setxkbmap)"
     expect "X --console: fbcon keymap" "loadkeys -u -q de-latin1" "$(calls loadkeys)"
     run x bone2 --console
     expect "X --console after the layout works too" "loadkeys -u -q $(cd "$HERE/../.." && pwd)/console/bone2.map" "$(calls loadkeys)"
@@ -141,7 +141,10 @@ main() {
     run x de
     expect "X, kmscon: localectl untouched" "" "$(calls localectl)"
     run x --console bone2
-    expect "X --console, kmscon: localectl de bone" "localectl --no-convert set-x11-keymap de  bone" "$(calls localectl)"
+    expect "X --console, kmscon: localectl de bone" "localectl --no-convert set-x11-keymap de  bone ctrl:swap_lalt_lctl" "$(calls localectl)"
+    # The console swaps left Ctrl and Alt for every layout, as the sessions do.
+    run x --console us
+    expect "X --console, kmscon: localectl us, Ctrl/Alt swapped" "localectl --no-convert set-x11-keymap us   ctrl:swap_lalt_lctl" "$(calls localectl)"
     rm -f "$TMP/kmscon"
 
     # Another X session (display :98) keeps its own layout.
@@ -194,7 +197,7 @@ main() {
     expect "sway --console: fbcon keymap" "loadkeys -u -q de-latin1" "$(calls loadkeys)"
     touch "$TMP/kmscon"
     run sway --console bone2
-    expect "sway --console, kmscon: localectl de bone" "localectl --no-convert set-x11-keymap de  bone" "$(calls localectl)"
+    expect "sway --console, kmscon: localectl de bone" "localectl --no-convert set-x11-keymap de  bone ctrl:swap_lalt_lctl" "$(calls localectl)"
     run sway us
     expect "sway, kmscon: localectl untouched" "" "$(calls localectl)"
     rm -f "$TMP/kmscon"

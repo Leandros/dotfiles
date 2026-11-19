@@ -337,6 +337,16 @@ unset RPROMPT
 # Uncomment this, and the lines below using it to re-enable the RPROMPT.
 # export _RPS1="%(?.%{$fg[green]%}✓%{$reset_color%}.%{$fg[red]%}✗ %?%{$reset_color%})"
 
+# Insert mode cursor: a beam (DECSCUSR 6). kmscon (TERM=kmscon, the
+# console) draws its beam in place of the character under it, so there an
+# underline (4), which keeps the character. Inside tmux, tmux's override
+# for kmscon clients does the same.
+if [[ $TERM == kmscon ]]; then
+    _cursor_ins='\e[4 q'
+else
+    _cursor_ins='\e[6 q'
+fi
+
 function zle-line-init {
     # local insert="%{$fg[blue]%}INSERT%{$reset_color%}"
     # RPS1="${${KEYMAP/vicmd/NORMAL}/(main|viins)/$insert} $_RPS1"
@@ -344,7 +354,7 @@ function zle-line-init {
 
     # Use beam shape cursor.
     # https://vt100.net/docs/vt510-rm/DECSCUSR
-    echo -ne "\e[6 q"
+    echo -ne "$_cursor_ins"
 }
 zle -N zle-line-init
 
@@ -355,13 +365,13 @@ function zle-keymap-select {
 
     case $KEYMAP in
         vicmd) echo -ne '\e[2 q';; # block
-        viins|main) echo -ne '\e[6 q';; # beam
+        viins|main) echo -ne "$_cursor_ins";; # beam
     esac
 }
 zle -N zle-keymap-select
 
-echo -ne '\e[6 q' # Use beam shape cursor on startup.
-preexec() { echo -ne '\e[6 q' ;} # Use beam shape cursor for each new prompt.
+echo -ne "$_cursor_ins" # Use beam shape cursor on startup.
+preexec() { echo -ne "$_cursor_ins" ;} # Use beam shape cursor for each new prompt.
 
 # =============================================================================
 # General Config

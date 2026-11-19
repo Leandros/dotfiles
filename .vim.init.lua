@@ -97,6 +97,11 @@ end
 -- Recently vim (nvim > 0.5.0) can merge signcolumn and number column into one
 vim.o.signcolumn = "number"
 
+-- kmscon (the console, TERM=kmscon) draws a beam cursor in place of the
+-- character under it: underline instead of the beam in insert mode. Inside
+-- tmux, tmux's override for kmscon clients does the same.
+if vim.env.TERM == "kmscon" then vim.o.guicursor = vim.o.guicursor:gsub("ver25", "hor20") end
+
 vim.cmd("syntax enable")
 vim.o.hidden = true -- Hide buffer, instead of closing it.
 vim.o.hlsearch = true -- Hightlight found searches.

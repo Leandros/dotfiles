@@ -65,8 +65,9 @@ xset -b
 # (from the dotfiles xorg-conf/); `xset r rate` here would not reach the
 # xremap device created below.
 
-# Kill X with Ctrl+Alt+Backspace
-setxkbmap -option terminate:ctrl_alt_bksp
+# Kill X with Ctrl+Alt+Backspace. The empty -option replaces the server's
+# options (from localed: the console's Ctrl/Alt swap; xremap swaps in X).
+setxkbmap -option "" -option terminate:ctrl_alt_bksp
 
 # Left modifier remap (Alt -> Ctrl, Ctrl -> Alt); needs the input group and
 # the uinput udev rule from bootstrap.sh. --watch follows new keyboards.
@@ -92,7 +93,7 @@ while [ -n "$xremap_pid" ] && [ "$i" -lt 30 ] && kill -0 "$xremap_pid" 2>/dev/nu
 done
 # In xrdp the RDP client's keyboard layout stays.
 if [ -n "$local_session" ]; then
-    ~/bin/kb de </dev/null 2>/dev/null || setxkbmap -layout de -option terminate:ctrl_alt_bksp
+    ~/bin/kb de </dev/null 2>/dev/null || setxkbmap -layout de -option "" -option terminate:ctrl_alt_bksp
 else
     # $mod over RDP: right Shift (keycode 62; the Mac sends it for Cmd, see
     # ~/bin/xrdp-keys). Set again after each reconnect.

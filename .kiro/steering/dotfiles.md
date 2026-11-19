@@ -377,7 +377,28 @@ New link or system file: install function, `check_link` or `cmp` check in
   built-in; also `solarized-black`, `solarized-white`), and
   `font-name=PragmataPro Mono` only where `fc-list` finds it (commercial font;
   Mono: the console does no shaping). kmscon reads it at console start and
-  does not follow `theme`. Test: `test/kmscon-conf/test.sh`.
+  does not follow `theme`. `no-mouse` (the user's choice; booleans take a
+  `no-` prefix in the file, `mouse=off` is no option). Test:
+  `test/kmscon-conf/test.sh`.
+- kmscon cursor (10.1.1, upstream main in 2026-11): a beam (DECSCUSR 5/6)
+  replaces the character under it (`src/render/text.c`, `cursor.cell.ch =
+  FONT_VBAR`); an underline keeps it. On `TERM=kmscon` (kmscon's default)
+  the insert cursor is an underline: `.zshrc` (`_cursor_ins`), nvim
+  (`guicursor` ver25 -> hor20), and tmux's `terminal-overrides` for
+  `kmscon` clients (`Ss` maps 5/6 to 3/4; zsh and nvim inside tmux see
+  tmux's TERM). Test: `test/kmscon-cursor/test.sh`.
+- kmscon Ctrl/Alt swap: `ctrl:swap_lalt_lctl` in localed's X11 options
+  (`CONSOLE_XKB_OPTIONS` in bootstrap's `kmscon_swap_ctrl_alt`, which keeps
+  localed's layout, model and variant, and in `bin/kb`'s localectl call).
+  kmscon takes the whole keymap from localed (at start and on every
+  change) and none of it once kmscon.conf sets any `xkb-*` option, so the
+  option cannot go into kmscon.conf without losing `kb --console`. The
+  same options are the X server's defaults (`00-keyboard.conf`): the
+  login screen swaps too, and every X-side `setxkbmap` (`.xprofile`,
+  `kb`) passes `-option ""` first (setxkbmap adds to the server's
+  options), else xremap swaps a second time. sway sets its own
+  `xkb_options`. Tests: `test/kmscon-conf/test.sh`, `test/kb/test.sh`,
+  `test/xprofile/test.sh`.
 - tree-sitter CLI: built with cargo; release binaries need glibc 2.39.
 - Rust is not pinned: `install_rust` runs `rustup toolchain install stable`
   (installs or updates) and `rustup default stable` on every run. The
@@ -430,7 +451,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   in `$(...)`, where `set -e` does not apply),
   `test/system-sleep/power-button-wake.sh`, `test/system-sleep/vmware-suspend.sh`,
   `test/sunshine-session/test.sh`, `test/sunshine-pin/test.sh`, `test/ghostty/test.sh`, `test/rio/test.sh`, `test/alacritty/test.sh`,
-  `test/firefox-prefs/test.sh`, `test/zsh-clipboard/test.sh`, `test/lesskey/test.sh`
+  `test/firefox-prefs/test.sh`, `test/zsh-clipboard/test.sh`, `test/lesskey/test.sh`, `test/kmscon-cursor/test.sh`
   (less in a pseudo terminal in fedora:45, debian:12, amazonlinux:2). Add new tests in this style.
 - X programs: Xorg dummy driver in a container. i3 bindings: Xvfb + i3 with
   the repo config in a Fedora image, `xdotool key super+j`, then read the

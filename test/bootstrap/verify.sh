@@ -374,6 +374,11 @@ check_desktop_shared() {
         else
             fail "kmscon.conf has no palette=solarized"
         fi
+        if grep -qx 'no-mouse' /etc/kmscon/kmscon.conf 2>/dev/null; then
+            ok "kmscon.conf no-mouse"
+        else
+            fail "kmscon.conf has no no-mouse"
+        fi
         # PragmataPro only where fontconfig finds it (not in the test images).
         kmscon_font="$(grep '^font-name=' /etc/kmscon/kmscon.conf 2>/dev/null || true)"
         if [[ -n "$(fc-list ':family=PragmataPro Mono' 2>/dev/null)" ]]; then
