@@ -661,7 +661,10 @@ New link or system file: install function, `check_link` or `cmp` check in
   and system errors, devices, folder states). It reads address and API
   key with `syncthing cli config gui dump-json` and gives the key to curl
   on stdin (`-H @-`), never in arguments. Tooltips are their own windows, so one
-  look for both themes. Tray: StatusNotifierItem only (eww is the watcher).
+  look for both themes. Tray menus too (GTK menus in popup windows): eww's CSS reaches
+  them, and `* { all: unset; }` stripped their background; `menu` rules
+  in eww.scss give them the tooltip look (test: `test_tray_menu_style`,
+  GTK 3 from Python on the caller's display). Tray: StatusNotifierItem only (eww is the watcher).
   CPU, RAM and time have widget tooltips (`tooltip`: content built once,
   so the CPU `graph` keeps 5 min of history from the i3status value, via
   `replace(blocks?.cpu_usage?.full_text, ...)`, no extra polling). The

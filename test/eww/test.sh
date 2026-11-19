@@ -17,6 +17,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly SCRIPTS="$HERE/../../.config/eww/scripts"
 readonly BAR="$HERE/../../bin/bar"
 readonly WM_MSG="$HERE/../../bin/wm-msg" YUCK="$HERE/../../.config/eww/eww.yuck"
+readonly SCSS="$HERE/../../.config/eww/eww.scss"
 TMP="$(mktemp -d)"
 readonly TMP
 trap 'rm -rf "$TMP"' EXIT
@@ -529,6 +530,45 @@ test_yuck() {
 # dpi. HEADLESS-1 (scale 1, below 4k) is a conventional screen: its bar
 # gets the smaller font (small=true). Bars are not in sway's tree: their exclusive zone moves the
 # workspaces down by the bar height.
+# Tray menus (right click on a tray icon) are GTK menus in popup windows of
+# their own. eww's CSS reaches them too, and `* { all: unset; }` left them
+# without a background. The rules from the "// Tray menus" block of
+# eww.scss (variables replaced), after the reset, must give menus a solid
+# background. Needs PyGObject with GTK 3 and a display (X or Wayland).
+test_tray_menu_style() {
+    if [[ -z "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]] \
+        || ! python3 -c 'import gi; gi.require_version("Gtk", "3.0")' 2>/dev/null; then
+        echo "skip: tray menu style (no display or no GTK 3 for Python)"
+        return
+    fi
+    local got
+    got="$(python3 -I - "$SCSS" <<'PY'
+import re, sys
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, Gdk
+scss = open(sys.argv[1]).read()
+var = dict(re.findall(r"^\$([a-z]+): ([^;]+);", scss, re.M))
+m = re.search(r"^// Tray menus.*?\n\n", scss, re.M | re.S)
+if not m:
+    print("no tray menu block")
+    sys.exit()
+block = re.sub(r"//[^\n]*", "", m.group(0))
+block = re.sub(r"\$([a-z]+)", lambda v: var[v.group(1)], block)
+css = Gtk.CssProvider()
+css.load_from_data(("* { all: unset; }\n" + block).encode())
+Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), css, 800)
+menu = Gtk.Menu()
+item = Gtk.MenuItem(label="x")
+menu.append(item)
+bg = menu.get_style_context().get_property("background-color", Gtk.StateFlags.NORMAL)
+hover = item.get_style_context().get_property("background-color", Gtk.StateFlags.PRELIGHT)
+print("menu alpha %.0f, hover alpha %.0f" % (bg.alpha, hover.alpha))
+PY
+)"
+    expect "tray menu: solid background, highlighted item on hover" "menu alpha 1, hover alpha 1" "$got"
+}
+
 test_bar_sway() {
     stub eww
     sway_stub
@@ -591,6 +631,7 @@ main() {
     test_i3_mode
     test_bar
     test_bar_sway
+    test_tray_menu_style
     exit "$FAILED"
 }
 

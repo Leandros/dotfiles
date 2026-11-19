@@ -38,6 +38,20 @@ $red: #dc322f;
 // Tooltips are windows of their own, outside .bar: one look for both themes.
 tooltip { background-color: #073642; color: #eee8d5; padding: 6px; border: 1px solid $blue; }
 
+// Tray menus (right click on a tray icon) are GTK menus in popup windows of
+// their own, outside .bar. The reset above strips their background, the
+// item highlight and the check, radio and submenu marks; the tooltip look
+// gives them back. Test: test/eww/test.sh.
+menu { background-color: #073642; color: #eee8d5; border: 1px solid $blue; padding: 4px 0; }
+menu menuitem { padding: 4px 12px; }
+menu menuitem:hover { background-color: $blue; color: #fdf6e3; }
+menu menuitem:disabled { color: #586e75; }
+menu separator { min-height: 1px; margin: 4px 0; background-color: #586e75; }
+menu check, menu radio { min-width: 10px; min-height: 10px; margin-right: 8px; border: 1px solid #93a1a1; }
+menu radio { border-radius: 50%; }
+menu check:checked, menu radio:checked { background-color: $green; }
+menu arrow { min-width: 16px; min-height: 16px; -gtk-icon-source: -gtk-icontheme("pan-end-symbolic"); }
+
 // Widget tooltips (CPU, RAM, time).
 .tip { padding: 2px; }
 .cpu-graph { color: $blue; background-color: rgba(38, 139, 210, 0.15); }
