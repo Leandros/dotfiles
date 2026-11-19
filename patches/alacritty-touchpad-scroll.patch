@@ -1,0 +1,66 @@
+--- a/src/input/mod.rs
++++ b/src/input/mod.rs
+@@ -731,7 +731,7 @@
+                 self.scroll_terminal(
+                     new_scroll_px_x as f64,
+                     new_scroll_px_y as f64,
+-                    multiplier as f64,
++                    scroll_multiplier(self.ctx.mouse_mode(), false, multiplier as f64),
+                 );
+             },
+             MouseScrollDelta::PixelDelta(mut lpos) => {
+@@ -749,7 +749,9 @@
+                             lpos.x = 0.;
+                         }
+ 
+-                        self.scroll_terminal(lpos.x, lpos.y, multiplier as f64);
++                        let multiplier =
++                            scroll_multiplier(self.ctx.mouse_mode(), true, multiplier as f64);
++                        self.scroll_terminal(lpos.x, lpos.y, multiplier);
+                     },
+                     _ => (),
+                 }
+@@ -766,8 +768,6 @@
+         let width = f64::from(self.ctx.size_info().cell_width());
+         let height = f64::from(self.ctx.size_info().cell_height());
+ 
+-        let multiplier = if self.ctx.mouse_mode() { 1. } else { multiplier };
+-
+         self.ctx.mouse_mut().accumulated_scroll.x += new_scroll_x_px * multiplier;
+         self.ctx.mouse_mut().accumulated_scroll.y += new_scroll_y_px * multiplier;
+ 
+@@ -1148,6 +1148,17 @@
+     }
+ }
+ 
++/// The scroll multiplier for a wheel event.
++///
++/// Programs that read the mouse (mouse mode) get one report per line of
++/// scroll and scroll their own amount per report, so a wheel notch stays one
++/// report. Touchpad (pixel) deltas get the multiplier there too: a compositor
++/// that scales scrolling down (sway's `scroll_factor`) otherwise leaves a
++/// touchpad swipe a report or two.
++fn scroll_multiplier(mouse_mode: bool, pixels: bool, multiplier: f64) -> f64 {
++    if mouse_mode && !pixels { 1. } else { multiplier }
++}
++
+ #[cfg(test)]
+ mod tests {
+     use super::*;
+@@ -1163,6 +1174,16 @@
+ 
+     const KEY: Key<&'static str> = Key::Character("0");
+ 
++    #[test]
++    fn scroll_multiplier_in_mouse_mode() {
++        // Scrollback: the multiplier for wheels and touchpads.
++        assert_eq!(scroll_multiplier(false, false, 5.), 5.);
++        assert_eq!(scroll_multiplier(false, true, 5.), 5.);
++        // Mouse mode: a wheel notch stays one report, a touchpad scales.
++        assert_eq!(scroll_multiplier(true, false, 5.), 1.);
++        assert_eq!(scroll_multiplier(true, true, 5.), 5.);
++    }
++
+     struct MockEventProxy;
+     impl EventListener for MockEventProxy {}
+ 

@@ -283,7 +283,16 @@ New link or system file: install function, `check_link` or `cmp` check in
   its symbols (`$ ^ % { } * # ? ( )`) arrive without Shift, and the vi
   defaults for them require Shift (us, de), so linux.toml binds each
   vi-mode symbol key with and without Shift. Hints: URL (Alt+Shift+o, click) and copy (Alt+Shift+t,
-  QuickSelect). No tabs, splits, leader, launcher, palette, theme toggle,
+  QuickSelect). `[scrolling] multiplier = 5` in linux.toml (sway's scroll_factor:
+  touchpad 0.1, mice 0.5; one multiplier for both, default 3). Alacritty
+  0.17 ignores the multiplier in mouse mode (Claude Code, nvim, less read
+  the wheel), so a touchpad swipe there gave a report or two:
+  `patches/alacritty-touchpad-scroll.patch` (`ALACRITTY_PATCH`, stamp
+  `<version>+touchpad-scroll`; built from the `.crate` with `cargo install
+  --path`) keeps it for pixel (touchpad) deltas, a wheel notch stays one
+  report. Test: `test/alacritty-patch/test.sh` (crate download, patch,
+  `cargo test -- input::`; the font and xcb headers). Check the patch on
+  every version bump. No tabs, splits, leader, launcher, palette, theme toggle,
   ligatures or font features. Font size in points, as wezterm. Test:
   `test/alacritty/test.sh` (tomllib; follower with a stub gsettings;
   Fedora 45's alacritty under Xvfb: no `[WARN`/`[ERROR` in `-vv` output,
@@ -452,6 +461,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   in `$(...)`, where `set -e` does not apply),
   `test/system-sleep/power-button-wake.sh`, `test/system-sleep/vmware-suspend.sh`,
   `test/sunshine-session/test.sh`, `test/sunshine-pin/test.sh`, `test/ghostty/test.sh`, `test/rio/test.sh`, `test/alacritty/test.sh`,
+  `test/alacritty-patch/test.sh` (network, cargo, font and xcb headers),
   `test/firefox-prefs/test.sh`, `test/zsh-clipboard/test.sh`, `test/lesskey/test.sh`, `test/kmscon-cursor/test.sh`, `test/nvidia-power/test.sh`, `test/term/test.sh`
   (less in a pseudo terminal in fedora:45, debian:12, amazonlinux:2). Add new tests in this style.
 - X programs: Xorg dummy driver in a container. i3 bindings: Xvfb + i3 with

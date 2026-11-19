@@ -107,7 +107,8 @@ readonly WEZTERM_COPR="wezfurlong/wezterm-nightly"
 # https://copr.fedorainfracloud.org/coprs/scottames/ghostty/
 readonly GHOSTTY_COPR="scottames/ghostty"
 # https://crates.io/crates/alacritty (desktops; cargo, as Debian 12 has
-# 0.11, before the TOML config, and Ubuntu 22.04 none; needs Rust 1.85)
+# 0.11, before the TOML config, and Ubuntu 22.04 none; needs Rust 1.85;
+# patches/alacritty-touchpad-scroll.patch must apply)
 readonly ALACRITTY_VERSION="0.17.0"
 # Fedora only (desktops): https://copr.fedorainfracloud.org/coprs/lizardbyte/stable/
 readonly SUNSHINE_COPR="lizardbyte/stable"
@@ -1498,23 +1499,32 @@ install_alacritty_deps() {
 # every graphical session) points the imported theme link at the desktop's
 # light or dark scheme; the first link is made here, so Alacritty watches
 # it from its first start.
+# Built from the crate with patches/alacritty-touchpad-scroll.patch: 0.17
+# drops scrolling.multiplier for programs that read the mouse (Claude Code,
+# nvim, less), and with sway's touchpad scroll_factor 0.1 a swipe there was
+# a report or two. The patch keeps it for touchpad (pixel) deltas; a wheel
+# notch stays one report. The stamp names the patch, so a machine with the
+# plain build rebuilds once.
+readonly ALACRITTY_PATCH="touchpad-scroll"
+
 install_alacritty() {
-    if ! is_current alacritty "$ALACRITTY_VERSION" "$PREFIX/bin/alacritty"; then
+    local stamp="$ALACRITTY_VERSION+$ALACRITTY_PATCH"
+    if ! is_current alacritty "$stamp" "$PREFIX/bin/alacritty"; then
         install_alacritty_deps
+        local src
+        src="$(fetch_unpack "https://static.crates.io/crates/alacritty/alacritty-$ALACRITTY_VERSION.crate")"
+        src="$(unpacked_root "$src")"
+        patch -d "$src" -p1 -s < "$DOTFILES_DIR/patches/alacritty-$ALACRITTY_PATCH.patch" ||
+            die "alacritty: patch does not apply to $ALACRITTY_VERSION"
         export CARGO_HOME="$CARGO_HOME_DIR" RUSTUP_HOME="$RUSTUP_HOME_DIR"
         quiet "$CARGO_HOME_DIR/bin/cargo" "+$RUST_TOOLCHAIN" install -q --locked \
-            --root "$WORK_DIR/alacritty" "alacritty@$ALACRITTY_VERSION"
+            --root "$WORK_DIR/alacritty" --path "$src"
         install_bin "$WORK_DIR/alacritty/bin/alacritty" alacritty
 
-        # Desktop entry and icon (Icon=Alacritty) from the crate in cargo's
-        # registry.
-        local src
-        src="$(find "$CARGO_HOME_DIR/registry/src" -mindepth 2 -maxdepth 2 -type d \
-            -name "alacritty-$ALACRITTY_VERSION" | head -n 1)"
-        [[ -f "$src/extra/linux/Alacritty.desktop" ]] || die "alacritty: Alacritty.desktop not found in the cargo registry"
+        # Desktop entry and icon (Icon=Alacritty) from the crate.
         $SUDO install -D -m 0644 "$src/extra/linux/Alacritty.desktop" "$PREFIX/share/applications/Alacritty.desktop"
         $SUDO install -D -m 0644 "$src/extra/logo/alacritty-term.svg" "$PREFIX/share/icons/hicolor/scalable/apps/Alacritty.svg"
-        mark_current alacritty "$ALACRITTY_VERSION"
+        mark_current alacritty "$stamp"
     fi
 
     local d="$DOTFILES_DIR" dir="${XDG_CONFIG_HOME:-$HOME/.config}/alacritty"

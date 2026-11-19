@@ -436,6 +436,13 @@ check_desktop_shared() {
     # Alacritty (cargo): the shared config, its Linux part and the theme
     # follower, with the first theme link made by bootstrap (dark: no desktop).
     check_version alacritty "alacritty $ALACRITTY_VERSION" alacritty --version
+    # Built with patches/alacritty-touchpad-scroll.patch (touchpad scrolling
+    # in programs that read the mouse).
+    if [[ "$(cat /usr/local/share/bootstrap/alacritty 2>/dev/null)" == "$ALACRITTY_VERSION+touchpad-scroll" ]]; then
+        ok "alacritty patched (touchpad scroll)"
+    else
+        fail "alacritty not built with the touchpad scroll patch"
+    fi
     check_link "$HOME/.config/alacritty/alacritty.toml" "$D/.config/alacritty/alacritty.toml"
     check_link "$HOME/.config/alacritty/themes" "$D/.config/alacritty/themes"
     check_link "$HOME/.config/alacritty/linux.toml" "$D/alacritty/linux.toml"

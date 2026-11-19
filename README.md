@@ -91,6 +91,9 @@ colors: `.config/alacritty/alacritty.toml` (shared with macOS) and its Linux par
 Alt+Shift+t copies a URL, path or hash (QuickSelect). No tabs or splits. The colors follow the
 desktop through `bin/alacritty-theme` (user unit `alacritty-theme.service`). Test:
 `test/alacritty/test.sh` (runs Alacritty under Xvfb in docker).
+Scrolling: `multiplier = 5` against sway's slow scroll factors, and a patch
+(`patches/alacritty-touchpad-scroll.patch`) so the touchpad also scrolls faster in programs
+that read the mouse (Claude Code, nvim, less). Test: `test/alacritty-patch/test.sh`.
 Media keys (volume, mute, screen brightness) are bound in i3 only; check with `test/media-keys/test.sh`.
 
 

@@ -144,6 +144,10 @@ if linux["window"]["decorations"] == "None":
     ok("no window decorations")
 else:
     fail("decorations")
+if linux.get("scrolling", {}).get("multiplier") == 5:
+    ok("scroll multiplier 5 (sway's scroll_factor)")
+else:
+    fail(f"scrolling: {linux.get('scrolling')}")
 
 # Themes: .wezterm.lua's colors.
 lua = open(f"{root}/.wezterm.lua").read()

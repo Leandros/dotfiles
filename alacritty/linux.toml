@@ -15,6 +15,12 @@
 [window]
 decorations = "None"
 
+# sway's scroll_factor (touchpad 0.1, mice 0.5) shrinks the scroll deltas.
+# Alacritty has one multiplier for both (default 3): 5 scrolls the touchpad
+# at half its distance, as ghostty's precision:5; a wheel notch 2.5 lines.
+[scrolling]
+multiplier = 5
+
 # Hints. A list here replaces Alacritty's default URL hint, so that comes
 # first, as the default (Alt+Shift+o, or a click). Alt+Shift+t copies, as
 # wezterm's QuickSelect (leader, Ctrl+t): URLs, paths, git hashes, IPv4
