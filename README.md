@@ -65,6 +65,7 @@ Test the tmux plugin install: `test/tmux-plugins/test.sh`.
 Test markdown backgrounds in nvim hover popups: `test/nvim-markdown-float/test.sh`.
 Test nvim Rust indent after comments: `test/nvim-rust-indent/test.sh`.
 Test the zsh clipboard (`bin/pbcopy`/`bin/pbpaste` for vi mode `y`/`p` and fzf's CTRL-Y; Wayland, X, tmux): `test/zsh-clipboard/test.sh`.
+less key bindings (`.lesskey`, Bone 2: `b`/`s` scroll left/right, `n`/`r` a line, `(`/`)` a page, `?`/`-` next/previous match) are linked to `~/.lesskey` on every machine; less before 582 (AL2) gets them compiled into `~/.less`. Test: `test/lesskey/test.sh [image ...]`.
 Test the sleep hooks: `test/system-sleep/power-button-wake.sh`, `test/system-sleep/vmware-suspend.sh`.
 Sunshine (Fedora desktops) starts from its launcher (systemd user unit); `~/bin/sunshine-session`
 picks the capture for sway or X. Do not set `capture`, `encoder` or `adapter_name` in

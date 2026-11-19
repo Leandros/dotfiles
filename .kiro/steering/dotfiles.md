@@ -43,6 +43,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `.wezterm.lua`, `.xinitrc`, `.xprofile`, `.xsession`, `.Xmodmap`, `.config/{i3,i3status,xremap,picom,eww}`, `.config/autorandr/postswitch` (the file only: profiles are per machine), `.config/systemd/user/i3-session.target` | `$HOME`, links, Xorg only |
 | `bin/{kb,i3status-kb,pwr,theme,flightmode,touchpad,charge,caffeinate,smb,input-restore,bar,pkill-display,term,xrdp-keys,syncthing-status,screenshot}` | `~/bin`, links, Xorg only |
 | `bin/fzf-cache` | `~/bin`, link, always |
+| `.lesskey` | `~/.lesskey`, link, always (`install_lesskey` in `link_dotfiles`); less < 582 also gets `~/.less` compiled by `lesskey` |
 | `bin/{pbcopy,pbpaste}` | `~/bin`, links, Linux (macOS has its own) |
 | `.config/{sway,fuzzel,sway-easyfocus}`, `.config/systemd/user/sway-session.target`, `xkb` (as `~/.config/xkb`) | `$HOME`, links, desktop-wayland only |
 | `bin/{wm-msg,sway-autostart,kanshi-save,clip-pick}` | `~/bin`, links; `wm-msg` also for desktop (the eww scripts and i3status-kb use it) |
@@ -426,7 +427,8 @@ New link or system file: install function, `check_link` or `cmp` check in
   in `$(...)`, where `set -e` does not apply),
   `test/system-sleep/power-button-wake.sh`, `test/system-sleep/vmware-suspend.sh`,
   `test/sunshine-session/test.sh`, `test/sunshine-pin/test.sh`, `test/ghostty/test.sh`, `test/rio/test.sh`, `test/alacritty/test.sh`,
-  `test/firefox-prefs/test.sh`, `test/zsh-clipboard/test.sh`. Add new tests in this style.
+  `test/firefox-prefs/test.sh`, `test/zsh-clipboard/test.sh`, `test/lesskey/test.sh`
+  (less in a pseudo terminal in fedora:45, debian:12, amazonlinux:2). Add new tests in this style.
 - X programs: Xorg dummy driver in a container. i3 bindings: Xvfb + i3 with
   the repo config in a Fedora image, `xdotool key super+j`, then read the
   started program's `/proc/<pid>/cmdline`. `test/i3-swap/test.sh` does this for the
@@ -962,6 +964,12 @@ New link or system file: install function, `check_link` or `cmp` check in
   nothing. An empty clipboard falls back to the primary selection, then
   zsh's CUTBUFFER. Test: `test/zsh-clipboard/test.sh` (stubs). `~/.zshrc`
   is a rendered copy: changes need bootstrap (`write_zshrc`).
+- less keys: `.lesskey` (source format). less 582+ reads `~/.lesskey`
+  (`$XDG_CONFIG_HOME/lesskey` or `~/.config/lesskey` first) and ignores
+  `~/.less`; older less (AL2: 458) reads only the binary `~/.less`, so
+  `install_lesskey` runs `lesskey` there (`LESSKEY_SOURCE_MIN_VERSION`).
+  Fedora's less has no `lesskey` program. `less` is in every distro's
+  package list (minimal images lack it). Test: `test/lesskey/test.sh`.
 - `.zshrc` loads the oh-my-zsh `direnv` plugin only when `direnv` is on
   PATH (`${commands[direnv]:+direnv}` in `plugins`): without the devtools
   category the plugin printed a warning in every shell. `verify.sh` checks

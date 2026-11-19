@@ -608,7 +608,7 @@ install_system_packages() {
                 -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold \
                 build-essential autoconf automake pkg-config cmake bison \
                 git rsync openssh-client tree wget curl ca-certificates \
-                file unzip xz-utils patch gettext locales \
+                file unzip xz-utils patch gettext locales less \
                 libevent-dev libncurses-dev libreadline-dev
             ensure_locale
             ;;
@@ -616,7 +616,7 @@ install_system_packages() {
             $SUDO yum install -y -q \
                 gcc gcc-c++ make binutils autoconf automake pkgconfig cmake3 bison \
                 git rsync openssh-clients tree wget curl \
-                file unzip xz tar gzip patch gettext gettext-devel which \
+                file unzip xz tar gzip patch gettext gettext-devel which less \
                 ncurses-devel readline-devel
             ;;
         amzn2023|fedora|rhel)
@@ -624,7 +624,7 @@ install_system_packages() {
             $SUDO dnf install -y -q \
                 gcc gcc-c++ make binutils autoconf automake pkgconf-pkg-config cmake bison \
                 git rsync openssh-clients tree wget \
-                file unzip xz tar gzip patch gettext gettext-devel which \
+                file unzip xz tar gzip patch gettext gettext-devel which less \
                 glibc-langpack-en libevent-devel ncurses-devel readline-devel
             ;;
         macos)
@@ -1278,6 +1278,23 @@ tmux_conf_dir() {
 
 readonly VSNIP_INTERNAL_DIR="$HOME/.vsnip-internal"
 
+# less key bindings (Bone 2). less 582+ reads the source file ~/.lesskey
+# (and then ignores ~/.less); older less (AL2: 458) reads only the binary
+# ~/.less, which lesskey compiles from the source. Fedora's less 6xx+ has
+# no lesskey program.
+readonly LESSKEY_SOURCE_MIN_VERSION=582
+
+install_lesskey() {
+    link "$DOTFILES_DIR/.lesskey" "$HOME/.lesskey"
+    local version
+    version="$(less --version 2>/dev/null | sed -n 's/^less \([0-9][0-9]*\).*/\1/p')"
+    [[ -n "$version" ]] || { warn "less not found: key bindings not installed"; return 0; }
+    if (( version < LESSKEY_SOURCE_MIN_VERSION )); then
+        lesskey -o "$HOME/.less" "$HOME/.lesskey" >/dev/null \
+            || warn "lesskey failed: less $version keeps its default keys"
+    fi
+}
+
 link_dotfiles() {
     local d="$DOTFILES_DIR"
 
@@ -1299,6 +1316,7 @@ link_dotfiles() {
     link "$d/.tmux/custom" "$HOME/.tmux/custom"
 
     link "$d/.config/yazi" "$HOME/.config/yazi"
+    install_lesskey
     if category_selected devtools; then
         link "$d/AppData/Roaming/lazygit/config.yml" "$(lazygit_config_dir)/config.yml"
     fi

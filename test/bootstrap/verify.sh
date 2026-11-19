@@ -110,6 +110,18 @@ check_link "$HOME/bin/fzf-cache" "$D/bin/fzf-cache"
 check_link "$HOME/bin/pbcopy" "$D/bin/pbcopy"
 check_link "$HOME/bin/pbpaste" "$D/bin/pbpaste"
 check_link "$HOME/.vsnip" "$D/.vsnip"
+check_link "$HOME/.lesskey" "$D/.lesskey"
+# less before 582 reads only the binary ~/.less (install_lesskey compiles it).
+less_version="$(less --version 2>/dev/null | sed -n 's/^less \([0-9][0-9]*\).*/\1/p')"
+if [[ -z "$less_version" ]]; then
+    fail "less not installed"
+elif (( less_version >= 582 )); then
+    ok "less $less_version reads ~/.lesskey"
+elif [[ -s "$HOME/.less" && ! "$HOME/.less" -ot "$D/.lesskey" ]]; then
+    ok "less $less_version: ~/.less compiled from .lesskey"
+else
+    fail "less $less_version: ~/.less missing or older than .lesskey"
+fi
 vsnip_internal="$HOME/.vsnip-internal"
 if [[ -d "$vsnip_internal" && ! -L "$vsnip_internal" && "$(stat -c %a "$vsnip_internal")" == "700" ]]; then
     ok "internal snippet directory $vsnip_internal"
