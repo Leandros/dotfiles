@@ -58,7 +58,7 @@ echo "qt \${QT_SCALE_FACTOR:-unset} \${QT_FONT_DPI:-unset}" >> "$CALLS"
 echo "lang \${LANG:-unset}" >> "$CALLS"
 echo "loaded \${XPROFILE_LOADED:-unset}" >> "$CALLS"
 EOF
-    for cmd in kb input-restore bar pkill-display xrdp-keys; do
+    for cmd in kb input-restore bar pkill-display xrdp-keys idle-timeout; do
         printf '#!/bin/sh\necho "%s $*" >> "%s"\n' "$cmd" "$CALLS" > "$TMP/home/bin/$cmd"
     done
     printf '#!/bin/sh\nexec /usr/bin/sleep "$@"\n' > "$STUBS/sleep"
@@ -169,14 +169,10 @@ main() {
         fail "bar line $bar, blueman line $blueman"
     fi
 
-    # Idle: xidlehook locks after 5 min and suspends 7 min later (12 in
-    # all), not while audio plays or a window is fullscreen (video). The X
+    # Idle: ~/bin/idle-timeout starts xidlehook (test/idle-timeout). The X
     # screensaver timer is off: xss-lock would lock on it regardless.
-    expect "idle timers" \
-        "xidlehook|--not-when-audio|--not-when-fullscreen|--detect-sleep|--socket|$TMP/run/xidlehook.sock|--timer|300|loginctl lock-session||--timer|420|systemctl suspend|" \
-        "$(grep '^xidlehook' "$CALLS")"
+    expect "idle daemon through idle-timeout" "idle-timeout start" "$(grep '^idle-timeout' "$CALLS")"
     if grep -qx 'xset s off' "$CALLS"; then ok "X screensaver timer off"; else fail "no xset s off: $(grep '^xset' "$CALLS" | tr '\n' ';')"; fi
-    if grep -qx 'pkill-display -x xidlehook' "$CALLS"; then ok "the old xidlehook is stopped"; else fail "no pkill-display -x xidlehook"; fi
     if grep -q '^pkill ' "$CALLS"; then fail "plain pkill (all displays): $(grep '^pkill ' "$CALLS" | tr '\n' ';')"; else ok "no plain pkill"; fi
 
     # Marks itself loaded for ~/.xsession (xrdp), which loads it only where

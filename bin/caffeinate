@@ -4,7 +4,9 @@
 #
 # Runs in the foreground until Ctrl-C. Idle lock and suspend come from
 # xidlehook (~/.xprofile): timer 0 locks, timer 1 suspends. This disables
-# the suspend timer through xidlehook's socket and enables it again on exit.
+# the suspend timer through xidlehook's socket, again every interval
+# (`idle-timeout set` restarts xidlehook with all timers on), and enables it
+# again on exit.
 # A logind inhibitor would not help: logind before systemd 257 lets a
 # user's own `systemctl suspend` pass that user's inhibitors.
 #
@@ -97,6 +99,8 @@ main() {
 
     while true; do
         [[ -n "$display" ]] && xset s reset
+        # Quiet: the first call above reported a missing xidlehook.
+        timers disable || true
         # In the background so a signal ends `wait` at once.
         sleep "$INTERVAL_S" &
         SLEEP_PID=$!

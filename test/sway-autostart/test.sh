@@ -61,7 +61,7 @@ write_stubs() {
         wl-paste cliphist blueman-applet lxpolkit dunst pkill "${X_ONLY[@]}"; do
         write_stub "$STUBS/$cmd" "$cmd"
     done
-    for cmd in theme kb bar pkill-display pwr; do
+    for cmd in theme kb bar pkill-display pwr idle-timeout; do
         write_stub "$FAKE_HOME/bin/$cmd" "$cmd"
     done
     # swaymsg: the subscription returns at once, and sway is gone.
@@ -157,12 +157,8 @@ main() {
     expect "keyboard layout de" "kb|de" "$(grep -m 1 '^kb' "$CALLS")"
     before "theme after the session target" '\|start\|sway-session' '^theme\|restore'
 
-    # Idle: lock after 5 min, suspend at 12 min. swayidle counts each
-    # timeout from the last input, so the suspend timeout is not the
-    # difference (as for the chained xidlehook timers).
-    expect "idle timeouts from idle.conf" \
-        "swayidle|-w|timeout|300|loginctl lock-session|timeout|720|systemctl suspend|lock|~/bin/pwr lock|before-sleep|~/bin/pwr lock" \
-        "$(grep '^swayidle' "$CALLS")"
+    # Idle: ~/bin/idle-timeout starts swayidle (test/idle-timeout).
+    expect "idle daemon through idle-timeout" "idle-timeout|start" "$(grep '^idle-timeout' "$CALLS")"
 
     # sway-audio-idle-inhibit holds a logind idle lock while audio plays.
     # It has no Wayland connection and stays after a logout: the old one
@@ -227,13 +223,6 @@ main() {
     : > "$FAKE_HOME/.config/kanshi/config"
     run >/dev/null
     if called '^kanshi'; then ok "kanshi with a config"; else fail "no kanshi with a config"; fi
-
-    # Without idle.conf: no timeouts, but still the locker before sleep and
-    # on `loginctl lock-session` (as xss-lock in X).
-    rm "$FAKE_HOME/.config/idle.conf"
-    run >/dev/null
-    expect "no idle.conf: only the locker" \
-        "swayidle|-w|lock|~/bin/pwr lock|before-sleep|~/bin/pwr lock" "$(grep '^swayidle' "$CALLS")"
 
     # Every optional program missing: the rest still runs.
     for cmd in kanshi swayidle sway-audio-idle-inhibit wl-paste cliphist blueman-applet lxpolkit \

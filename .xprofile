@@ -110,31 +110,18 @@ if [ -n "$local_session" ]; then
     [ -x ~/bin/input-restore ] && ~/bin/input-restore >/dev/null 2>&1 &
 fi
 
-# Idle timeouts in minutes, from the IDLE_* settings in bootstrap.sh.
-# shellcheck source=/dev/null
-[ -f ~/.config/idle.conf ] && . ~/.config/idle.conf
-
 # The locker: runs before suspend and on `loginctl lock-session`
 # (~/bin/pwr, xidlehook below). Not on X's screensaver timer, which locks
 # whatever plays: it is off.
 xset s off
 xss-lock --transfer-sleep-lock -- ~/bin/pwr lock --nofork >/dev/null 2>&1 &
 
-# Lock, then suspend, on idle; not while audio plays or a window is
-# fullscreen (video: Firefox's idle inhibit reaches no service in i3).
-# Timers run one after the other, so the suspend timer is the difference.
-# logind IdleAction cannot see X input in a startx session. --detect-sleep
-# restarts the count after resume. caffeinate controls the timers through
-# the socket: 0 locks, 1 suspends. Not in xrdp: an idle remote session
-# would suspend the machine (and drop the connection).
-[ -n "$local_session" ] && stop -x xidlehook
-if [ -n "$local_session" ] && [ -n "${IDLE_LOCK_MINUTES:-}" ] && [ -n "${IDLE_SUSPEND_MINUTES:-}" ]; then
-    xidlehook --not-when-audio --not-when-fullscreen --detect-sleep \
-        --socket "$XDG_RUNTIME_DIR/xidlehook.sock" \
-        --timer $((IDLE_LOCK_MINUTES * 60)) 'loginctl lock-session' '' \
-        --timer $(((IDLE_SUSPEND_MINUTES - IDLE_LOCK_MINUTES) * 60)) 'systemctl suspend' '' \
-        >/dev/null 2>&1 &
-fi
+# Lock, then suspend, on idle: xidlehook, started (and restarted by
+# `idle-timeout set`) by ~/bin/idle-timeout with the times of
+# ~/.config/idle.conf or the user's override; none in xrdp. Firefox's idle
+# inhibit reaches no service in i3, and logind IdleAction cannot see X
+# input in a startx session.
+[ -x ~/bin/idle-timeout ] && ~/bin/idle-timeout start
 
 # Status bar: eww (~/bin/bar; without eww bootstrap sets up i3bar), one
 # daemon per display. Before the tray apps below: its tray must be there

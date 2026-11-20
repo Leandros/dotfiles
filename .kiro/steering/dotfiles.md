@@ -41,7 +41,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `.zshrc` | `~/.zshrc`, rendered copy (`##NEWHOME##`, `##NEWUSER##`) |
 | `.Xresources` | `~/.Xresources`, rendered copy (`##XFT_DPI##`) |
 | `.wezterm.lua`, `.xinitrc`, `.xprofile`, `.xsession`, `.Xmodmap`, `.config/{i3,i3status,xremap,picom,eww}`, `.config/autorandr/postswitch` (the file only: profiles are per machine), `.config/systemd/user/i3-session.target` | `$HOME`, links, Xorg only |
-| `bin/{kb,i3status-kb,pwr,theme,flightmode,touchpad,charge,caffeinate,smb,input-restore,bar,pkill-display,term,xrdp-keys,syncthing-status,screenshot,ws-pick}` | `~/bin`, links, Xorg only |
+| `bin/{kb,i3status-kb,pwr,theme,flightmode,touchpad,charge,caffeinate,smb,input-restore,bar,pkill-display,term,xrdp-keys,syncthing-status,screenshot,ws-pick,idle-timeout}` | `~/bin`, links, Xorg only |
 | `bin/fzf-cache` | `~/bin`, link, always |
 | `.lesskey` | `~/.lesskey`, link, always (`install_lesskey` in `link_dotfiles`); less < 582 also gets `~/.less` compiled by `lesskey` |
 | `bin/{pbcopy,pbpaste}` | `~/bin`, links, Linux (macOS has its own) |
@@ -489,7 +489,8 @@ New link or system file: install function, `check_link` or `cmp` check in
   wrapper runs sway in English; `~/.xprofile` does not run).
   `test/xkb-bone2/test.sh` (regenerate check, libxkbcommon levels against
   `.Xmodmap`). Stub tests: `test/sway-autostart`, `test/wm-msg`,
-  `test/kanshi-save`, `test/clip-pick`, `test/pwr-lock`, `test/ws-pick`.
+  `test/kanshi-save`, `test/clip-pick`, `test/pwr-lock`, `test/ws-pick`,
+  `test/idle-timeout`.
 - Headless sway in a container: `WLR_BACKENDS=headless WLR_RENDERER=pixman
   WLR_LIBINPUT_NO_DEVICES=1`, a user with a 0700 `XDG_RUNTIME_DIR`,
   `--cap-add SYS_NICE`. `wtype -M logo j -m logo` triggers bindings; a
@@ -745,9 +746,17 @@ New link or system file: install function, `check_link` or `cmp` check in
   of the current profile skips hooks ("Config already loaded").
 - Key repeat is set in `xorg-conf/50-keyboard-repeat.conf`; `xset r rate` does
   not reach the xremap device.
-- Idle: `.xprofile` sources `~/.config/idle.conf` (written from the
-  `IDLE_*` settings; `check_idle_settings` needs suspend > lock, test
-  `test/idle-settings/test.sh`). xidlehook (cargo, desktop) runs both
+- Idle: `bin/idle-timeout start` (run by `.xprofile` and
+  `sway-autostart`) starts the session's idle daemon, xidlehook or
+  swayidle (stopping the old one with `pkill-display`, detached with
+  `setsid -f`; none in xrdp), with the times of `~/.config/idle.conf`
+  (written from the `IDLE_*` settings; `check_idle_settings` needs suspend
+  > lock, test `test/idle-settings/test.sh`) or the override that
+  `idle-timeout set LOCK [SUSPEND]` keeps in `$XDG_STATE_HOME/idle-timeout`
+  (bootstrap leaves it alone; `reset` removes it). `set` restarts the
+  daemon of the calling session; from a tty it applies at the next login.
+  caffeinate disables its timers again every interval, as a restart turns
+  them on. Test: `test/idle-timeout/test.sh`. xidlehook (cargo, desktop) runs both
   timers, `--not-when-audio --not-when-fullscreen --detect-sleep`: timer 0
   `loginctl lock-session` after the lock minutes, timer 1 `systemctl
   suspend` after the difference (timers chain). Socket
@@ -765,7 +774,11 @@ New link or system file: install function, `check_link` or `cmp` check in
   busctl `org.freedesktop.UPower.PowerProfiles` (tuned-ppd).
   `power-mode-auto` selects performance on AC and battery on battery, only
   when the AC state changed since its last run (`/run/power-mode-auto/ac`), so
-  a replayed udev event keeps a mode set with `pwr`.
+  a replayed udev event keeps a mode set with `pwr`. It also starts
+  `nvidia-powerd` (Dynamic Boost, where its unit exists) on AC and stops it
+  on battery (`--no-block`; the unit is ordered after it, so a boot on
+  battery stops it). 2026-11: on battery it was a top wake-up source, and
+  is reported to keep the GPU from runtime D3.
 - Sleep hook: only LNXPWRBN, PNP0C0C, intel-hid and intel-vbtn may wake.
 - VMware sleep hook (`vmware-suspend`, `pre`): `runuser -u <owner> -- vmrun
   -T ws suspend <vmx> hard` for each `vmware-vmx` (vmx path = last argument),

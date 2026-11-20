@@ -65,7 +65,11 @@ main() {
     rc="$(run INT)"
     expect "Ctrl-C exit code" "130" "$rc"
     # Only the suspend timer: the screen still locks.
-    expect "disables idle suspend once" "1" "$(count "$CLIENT --action disable --timer 1")"
+    # Again every interval: `idle-timeout set` restarts xidlehook with all
+    # timers on.
+    local disables
+    disables="$(count "$CLIENT --action disable --timer 1")"
+    if [[ "$disables" -ge 3 ]]; then ok "disables idle suspend every interval ($disables times)"; else fail "disabled $disables times"; fi
     expect "enables idle suspend on exit" "1" "$(count "$CLIENT --action enable --timer 1")"
     expect "enable comes last" "$CLIENT --action enable --timer 1" "$(tail -n 1 "$CALLS")"
     expect "leaves the lock alone" "0" "$(grep -c -e 'disable$' -e 'timer 0' "$CALLS" || true)"
@@ -76,7 +80,8 @@ main() {
     resets="$(count 'xset s reset')"
     if [[ "$resets" -ge 3 ]]; then ok "display resets the screensaver ($resets times)"; else fail "display: $resets resets"; fi
     # All timers: no lock and no suspend.
-    expect "display disables lock and suspend" "1" "$(count "$CLIENT --action disable")"
+    disables="$(count "$CLIENT --action disable")"
+    if [[ "$disables" -ge 3 ]]; then ok "display disables lock and suspend every interval"; else fail "display: disabled $disables times"; fi
     expect "display enables them on exit" "$CLIENT --action enable" "$(tail -n 1 "$CALLS")"
 
     rc="$(run HUP)"

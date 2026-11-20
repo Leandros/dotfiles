@@ -2112,10 +2112,11 @@ enable_syncthing() {
     fi
 }
 
-# Idle timeouts for .xprofile and ~/bin/sway-autostart. Settings are static,
+# Idle timeouts for ~/bin/idle-timeout (the defaults; `idle-timeout set`
+# overrides them in $XDG_STATE_HOME, which bootstrap leaves alone). Settings are static,
 # so check them before minutes of installs.
 readonly IDLE_CONF="$HOME/.config/idle.conf"
-readonly IDLE_CONF_MARKER="# Written by bootstrap.sh; edit the IDLE_* settings there."
+readonly IDLE_CONF_MARKER="# Written by bootstrap.sh from its IDLE_* settings; \`idle-timeout set\` overrides them."
 
 check_idle_settings() {
     local name
@@ -2212,6 +2213,7 @@ link_xorg_dotfiles() {
     link "$d/bin/syncthing-status" "$HOME/bin/syncthing-status"
     link "$d/bin/wm-msg" "$HOME/bin/wm-msg"
     link "$d/bin/ws-pick" "$HOME/bin/ws-pick"
+    link "$d/bin/idle-timeout" "$HOME/bin/idle-timeout"
     link "$d/bin/screenshot" "$HOME/bin/screenshot"
     link "$d/.xinitrc" "$HOME/.xinitrc"
     link "$d/.xprofile" "$HOME/.xprofile"
@@ -2422,7 +2424,7 @@ link_wayland_dotfiles() {
     # Rio is installed by hand (no Fedora package); its config is ready.
     link "$d/.config/rio" "$HOME/.config/rio"
     for name in kb i3status-kb pwr theme flightmode touchpad charge caffeinate smb bar \
-        pkill-display term syncthing-status wm-msg ws-pick screenshot sway-autostart kanshi-save clip-pick; do
+        pkill-display term syncthing-status wm-msg ws-pick idle-timeout screenshot sway-autostart kanshi-save clip-pick; do
         link "$d/bin/$name" "$HOME/bin/$name"
     done
     link "$d/.config/sway" "$HOME/.config/sway"

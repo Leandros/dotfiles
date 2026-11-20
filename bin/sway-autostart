@@ -17,12 +17,7 @@ readonly SESSION_TARGET="sway-session.target"
 # How often the end-of-session watcher checks that sway still answers.
 readonly SWAY_POLL_S=5
 readonly CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
-readonly IDLE_CONF="$CONFIG_HOME/idle.conf"
 readonly KANSHI_CONF="$CONFIG_HOME/kanshi/config"
-readonly SECONDS_PER_MINUTE=60
-# swayidle runs its commands in sh, which expands the tilde.
-# shellcheck disable=SC2088
-readonly LOCK_CMD='~/bin/pwr lock'
 # Uses a logind idle lock, not Wayland, so it stays after a logout. pgrep
 # -x sees only 15 characters of a process name: match the command line.
 readonly AUDIO_INHIBIT="sway-audio-idle-inhibit"
@@ -86,26 +81,12 @@ end_session_with_sway() {
     fi
 }
 
-# Lock and suspend on idle; lock before sleep and on `loginctl
-# lock-session`. Each timeout counts from the last input: they do not
-# chain as the xidlehook timers do. Full-screen windows inhibit idle
-# (sway config), audio through the logind lock of AUDIO_INHIBIT.
+# Lock and suspend on idle, lock before sleep and on `loginctl
+# lock-session`: swayidle, started (and restarted by `idle-timeout set`) by
+# ~/bin/idle-timeout.
 start_idle() {
-    has swayidle || return 0
-
-    # shellcheck source=/dev/null
-    [[ -f "$IDLE_CONF" ]] && . "$IDLE_CONF"
-    local timeouts=()
-    if [[ -n "${IDLE_LOCK_MINUTES:-}" && -n "${IDLE_SUSPEND_MINUTES:-}" ]]; then
-        timeouts=(
-            timeout $((IDLE_LOCK_MINUTES * SECONDS_PER_MINUTE)) 'loginctl lock-session'
-            timeout $((IDLE_SUSPEND_MINUTES * SECONDS_PER_MINUTE)) 'systemctl suspend'
-        )
-    fi
-
-    # -w: suspend waits until the screen is locked.
-    swayidle -w ${timeouts[@]+"${timeouts[@]}"} lock "$LOCK_CMD" before-sleep "$LOCK_CMD" \
-        >/dev/null 2>&1 &
+    [[ -x ~/bin/idle-timeout ]] || return 0
+    ~/bin/idle-timeout start
 }
 
 x11_socket() { printf '%s/X%s' "$X11_SOCKET_DIR" "${DISPLAY#:}"; }

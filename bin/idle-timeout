@@ -1,0 +1,161 @@
+#!/usr/bin/env bash
+#
+# idle-timeout - show or change when the idle session locks and suspends,
+# and start the session's idle daemon.
+#
+# The times come from ~/.config/idle.conf (bootstrap.sh writes it from its
+# IDLE_* settings). `set` keeps an override in $XDG_STATE_HOME/idle-timeout,
+# for this and later sessions, until `reset`; bootstrap never touches it.
+# `set` and `reset` restart the daemon of the calling session; without one
+# (a tty, ssh) the times apply from the next login.
+#
+# The daemon: in X xidlehook, whose timers chain (lock, then suspend after
+# the difference), not while audio plays or a window is fullscreen; caffeinate
+# holds its timers off through the socket. In sway swayidle, each timeout
+# counting from the last input; it also locks on `loginctl lock-session` and
+# before sleep (-w: suspend waits for the lock). Fullscreen windows inhibit
+# idle there through the sway config, audio through
+# sway-audio-idle-inhibit. --detect-sleep: xidlehook restarts the count
+# after a resume. No daemon in xrdp: an idle remote session would suspend
+# the machine (and drop the connection).
+#
+# Usage: idle-timeout [show]               the times in use
+#        idle-timeout set LOCK [SUSPEND]   minutes; SUSPEND (kept when not
+#                                          given) must be after LOCK
+#        idle-timeout reset                back to ~/.config/idle.conf
+#        idle-timeout start                start the idle daemon (.xprofile,
+#                                          sway-autostart)
+#
+set -euo pipefail
+
+readonly CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/idle.conf"
+readonly OVERRIDE="${XDG_STATE_HOME:-$HOME/.local/state}/idle-timeout"
+readonly SOCKET="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/xidlehook.sock"
+readonly PKILL_DISPLAY="$HOME/bin/pkill-display"
+readonly SECONDS_PER_MINUTE=60
+readonly MINUTES_PATTERN='^[1-9][0-9]*$'
+# swayidle runs its commands in sh, which expands the tilde.
+# shellcheck disable=SC2088
+readonly LOCK_CMD='~/bin/pwr lock'
+
+LOCK="" SUSPEND=""
+
+die() { printf 'idle-timeout: %s\n' "$*" >&2; exit 1; }
+
+usage() {
+    sed -n '/^# Usage:/,/^#$/{/^#$/d;s/^# \{0,1\}//;p}' "$0" >&2
+    exit 2
+}
+
+is_sway() { [[ -n "${SWAYSOCK:-}" ]]; }
+is_xrdp() { [[ -n "${XRDP_SESSION:-}" ]]; }
+in_session() { is_sway || [[ -n "${DISPLAY:-}" ]]; }
+
+# Reads the IDLE_* lines of FILE into LOCK and SUSPEND; data, not sourced.
+read_times() {
+    local key value
+    while IFS='=' read -r key value; do
+        [[ "$value" =~ $MINUTES_PATTERN ]] || continue
+        case "$key" in
+            IDLE_LOCK_MINUTES)    LOCK="$value" ;;
+            IDLE_SUSPEND_MINUTES) SUSPEND="$value" ;;
+        esac
+    done < "$1"
+}
+
+load() {
+    LOCK="" SUSPEND=""
+    [[ -f "$CONFIG" ]] && read_times "$CONFIG"
+    [[ -f "$OVERRIDE" ]] && read_times "$OVERRIDE"
+    return 0
+}
+
+times() {
+    if [[ -n "$LOCK" && -n "$SUSPEND" ]]; then
+        printf 'lock after %s min, suspend after %s min' "$LOCK" "$SUSPEND"
+    else
+        printf 'no idle lock or suspend (no %s)' "$CONFIG"
+    fi
+}
+
+show() {
+    load
+    if [[ -f "$OVERRIDE" ]]; then
+        local mine="$LOCK/$SUSPEND"
+        LOCK="" SUSPEND=""
+        [[ -f "$CONFIG" ]] && read_times "$CONFIG"
+        local defaults="$LOCK/$SUSPEND"
+        LOCK="${mine%/*}" SUSPEND="${mine#*/}"
+        echo "$(times) (set; idle-timeout reset for $defaults)"
+    else
+        times; echo
+    fi
+}
+
+# Stops this session's daemon (pkill-display: another session keeps its
+# own) and starts it again with the times; detached, so closing the
+# terminal that ran `set` does not end it.
+start() {
+    in_session || return 0
+    is_xrdp && return 0
+    load
+    if is_sway; then
+        "$PKILL_DISPLAY" -x swayidle >/dev/null 2>&1 || true
+        local timeouts=()
+        if [[ -n "$LOCK" && -n "$SUSPEND" ]]; then
+            timeouts=(
+                timeout $((LOCK * SECONDS_PER_MINUTE)) 'loginctl lock-session'
+                timeout $((SUSPEND * SECONDS_PER_MINUTE)) 'systemctl suspend'
+            )
+        fi
+        setsid -f swayidle -w ${timeouts[@]+"${timeouts[@]}"} lock "$LOCK_CMD" before-sleep "$LOCK_CMD" \
+            >/dev/null 2>&1
+        return
+    fi
+    "$PKILL_DISPLAY" -x xidlehook >/dev/null 2>&1 || true
+    [[ -n "$LOCK" && -n "$SUSPEND" ]] || return 0
+    setsid -f xidlehook --not-when-audio --not-when-fullscreen --detect-sleep \
+        --socket "$SOCKET" \
+        --timer $((LOCK * SECONDS_PER_MINUTE)) 'loginctl lock-session' '' \
+        --timer $(((SUSPEND - LOCK) * SECONDS_PER_MINUTE)) 'systemctl suspend' '' \
+        >/dev/null 2>&1
+}
+
+# Prints the result and where it applies.
+applied() {
+    if ! in_session; then
+        echo "$(times) (from the next login)"
+    elif is_xrdp; then
+        echo "$(times) (no idle daemon in xrdp)"
+    else
+        start
+        times; echo
+    fi
+}
+
+set_times() {
+    local lock="$1" suspend="${2:-}"
+    load
+    suspend="${suspend:-$SUSPEND}"
+    [[ "$lock" =~ $MINUTES_PATTERN ]] || die "LOCK must be a positive number of minutes: $lock"
+    [[ "$suspend" =~ $MINUTES_PATTERN ]] || die "SUSPEND must be a positive number of minutes: ${suspend:-none set}"
+    # xidlehook's suspend timer starts when the lock timer fires.
+    [[ "$suspend" -gt "$lock" ]] || die "suspend ($suspend min) must be after the lock ($lock min)"
+
+    mkdir -p "$(dirname "$OVERRIDE")"
+    printf 'IDLE_LOCK_MINUTES=%s\nIDLE_SUSPEND_MINUTES=%s\n' "$lock" "$suspend" > "$OVERRIDE"
+    LOCK="$lock" SUSPEND="$suspend"
+    applied
+}
+
+main() {
+    case "${1:-show}" in
+        show)  [[ $# -le 1 ]] || usage; show ;;
+        set)   [[ $# -ge 2 && $# -le 3 ]] || usage; set_times "$2" "${3:-}" ;;
+        reset) [[ $# -eq 1 ]] || usage; rm -f "$OVERRIDE"; load; applied ;;
+        start) [[ $# -eq 1 ]] || usage; start ;;
+        *)     usage ;;
+    esac
+}
+
+main "$@"
