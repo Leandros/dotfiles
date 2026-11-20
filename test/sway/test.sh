@@ -127,9 +127,12 @@ fi
 block() { sed -n "/^input type:$1 {/,/^}/s/^\s*$2 //p" "$CONFIG"; }
 expect "touchpad: no pointer_accel" "" "$(block touchpad pointer_accel)"
 expect "touchpad scroll_factor" "0.1" "$(block touchpad scroll_factor)"
-expect "pointer pointer_accel" "-0.27" "$(block pointer pointer_accel)"
+# Mice: a custom curve (test/mouse-accel/test.sh checks its points).
+expect "pointer accel_profile" "custom" "$(block pointer accel_profile)"
 expect "pointer scroll_factor" "0.5" "$(block pointer scroll_factor)"
-# The laptop's TrackPoint is slower than mice: its own block by identifier.
+# The laptop's TrackPoint: its own block by identifier, adaptive.
+expect "TrackPoint accel_profile" "adaptive" \
+    "$(sed -n '/^input "2:10:TPPS\/2_Elan_TrackPoint" {/,/^}/s/^\s*accel_profile //p' "$CONFIG")"
 expect "TrackPoint pointer_accel" "-0.36" \
     "$(sed -n '/^input "2:10:TPPS\/2_Elan_TrackPoint" {/,/^}/s/^\s*pointer_accel //p' "$CONFIG")"
 # ~/bin/kb writes the session's layout into sway.d/kb.conf, so a reload

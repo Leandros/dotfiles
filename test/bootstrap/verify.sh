@@ -711,6 +711,11 @@ if [[ $xorg_expected -eq 1 ]]; then
     else
         fail "xorg.conf.d/40-touchpad.conf missing or differs"
     fi
+    if cmp -s "$D/xorg-conf/45-mouse.conf" /etc/X11/xorg.conf.d/45-mouse.conf; then
+        ok "xorg.conf.d mouse curve installed"
+    else
+        fail "xorg.conf.d/45-mouse.conf missing or differs"
+    fi
     if cmp -s "$D/xorg-conf/50-keyboard-repeat.conf" /etc/X11/xorg.conf.d/50-keyboard-repeat.conf; then
         ok "xorg.conf.d keyboard repeat installed"
     else

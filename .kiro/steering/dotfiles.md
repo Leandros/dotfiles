@@ -174,13 +174,20 @@ New link or system file: install function, `check_link` or `cmp` check in
     curve, 10-15 % faster below 170 mm/s. X moves physical pixels, so i3
     is 2/3 as fast as sway with the same points.
     `pointer_accel` does not apply to a custom curve.
-    TrackPoint and mice: adaptive, `pointer_accel -0.27` (2026-11-18: 25 %
-    slower than -0.17 on the TrackPoint, whose libinput curve is scaled by
-    `speed_factor(s)` in filter-trackpoint.c; a mouse's speed changes only
-    threshold, incline and maximum, so slow mouse moves stay the same);
-    the laptop's TrackPoint another 25 % slower, `pointer_accel -0.36` in
-    an `input "2:10:TPPS/2_Elan_TrackPoint"` block (sway has no TrackPoint
-    type; identifier settings win over the type block), both
+    Mice (since 2026-11-20): 15 % slower at every speed, a custom curve
+    of 0.85 times libinput's adaptive mouse profile (filter-mouse.c) at
+    the speed they had (sway -0.27, X 0 in `xorg-conf/45-mouse.conf`,
+    `NoMatchProduct "TrackPoint"`): a mouse's speed changes only
+    threshold, incline and maximum, so slow mouse moves stayed the same.
+    Custom curves get raw units, adaptive 1000 dpi units: equal for mice
+    without hwdb `MOUSE_DPI` (the MX Vertical). Test:
+    `test/mouse-accel/test.sh` (recomputes the points). The laptop's
+    TrackPoint: adaptive, `pointer_accel -0.36` in an `input
+    "2:10:TPPS/2_Elan_TrackPoint"` block after the type block (sway has no
+    TrackPoint type; identifier settings win over the type block in the
+    config, but a later runtime `swaymsg input type:pointer` overrides
+    them; libinput scales the TrackPoint's whole curve by
+    `speed_factor(s)`, filter-trackpoint.c), both
     `scroll_factor 0.5` (touchpad 0.1 since 2026-11-17: Proton Mail
     (Electron) and wezterm scrolled too fast). Firefox: autoconfig
     (`firefox/dotfiles.cfg`, sandboxed, `getenv("SWAYSOCK")`) sets
@@ -469,7 +476,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   `test/system-sleep/power-button-wake.sh`, `test/system-sleep/vmware-suspend.sh`,
   `test/sunshine-session/test.sh`, `test/sunshine-pin/test.sh`, `test/ghostty/test.sh`, `test/rio/test.sh`, `test/alacritty/test.sh`,
   `test/alacritty-patch/test.sh` (network, cargo, font and xcb headers),
-  `test/firefox-prefs/test.sh`, `test/zsh-clipboard/test.sh`, `test/lesskey/test.sh`, `test/kmscon-cursor/test.sh`, `test/nvidia-power/test.sh`, `test/term/test.sh`
+  `test/firefox-prefs/test.sh`, `test/mouse-accel/test.sh`, `test/zsh-clipboard/test.sh`, `test/lesskey/test.sh`, `test/kmscon-cursor/test.sh`, `test/nvidia-power/test.sh`, `test/term/test.sh`
   (less in a pseudo terminal in fedora:45, debian:12, amazonlinux:2). Add new tests in this style.
 - X programs: Xorg dummy driver in a container. i3 bindings: Xvfb + i3 with
   the repo config in a Fedora image, `xdotool key super+j`, then read the

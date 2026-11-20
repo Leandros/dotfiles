@@ -179,7 +179,7 @@ main() {
     # i3 and sway share the acceleration curve: step and points.
     local x_curve sway_curve
     x_curve="$(sed -n 's/.*"AccelStepMotion" "\([^"]*\)".*/\1/p' "$CONF") $(sed -n 's/.*"AccelPointsMotion" "\([^"]*\)".*/\1/p' "$CONF")"
-    sway_curve="$(sed -n 's/^ *pointer_accel_custom //p' "$SWAY_CONFIG")"
+    sway_curve="$(sed -n '/^input type:touchpad {/,/^}/s/^ *pointer_accel_custom //p' "$SWAY_CONFIG")"
     expect "X and sway: the same touchpad curve" "$sway_curve" "$x_curve"
 
     test_sway
