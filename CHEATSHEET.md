@@ -317,8 +317,8 @@ With cursors active:
 | `]` / `[` | Go to next / previous cursor |
 | `q` / `Q` | Skip / remove current cursor |
 | `u` / `j` | Undo / redo |
-| `Ctrl+a` / `Ctrl+x` | Same increment at every cursor |
-| `g Ctrl+a` / `g Ctrl+x` | Sequence: first cursor stays, next +1, +2, ... |
+| `Ctrl+a` / `Ctrl+x` | Sequence: first cursor stays, next +1, +2, ... |
+| `g Ctrl+a` / `g Ctrl+x` | Same increment at every cursor |
 | `Enter` | Multi-cursor keys on/off |
 | `Ctrl+c` | Stop |
 
