@@ -147,6 +147,9 @@ readonly RUST_TOOLCHAIN="stable"
 # https://github.com/tree-sitter/tree-sitter/releases
 # Release binaries need glibc 2.39; built with cargo instead.
 readonly TREE_SITTER_VERSION="0.27.1"
+# https://github.com/eza-community/eza/releases
+# No macOS or aarch64 musl release binaries; built with cargo instead.
+readonly EZA_VERSION="0.23.5"
 # https://crates.io/crates/lspmux
 readonly LSPMUX_VERSION="0.3.0"
 
@@ -1069,6 +1072,17 @@ install_tree_sitter() {
         --root "$WORK_DIR/tree-sitter" "tree-sitter-cli@$TREE_SITTER_VERSION"
     install_bin "$WORK_DIR/tree-sitter/bin/tree-sitter" tree-sitter
     mark_current tree-sitter "$TREE_SITTER_VERSION"
+}
+
+# ls replacement; .zshrc aliases ls and l to it when it is installed.
+install_eza() {
+    is_current eza "$EZA_VERSION" "$PREFIX/bin/eza" && return
+
+    export CARGO_HOME="$CARGO_HOME_DIR" RUSTUP_HOME="$RUSTUP_HOME_DIR"
+    quiet "$CARGO_HOME_DIR/bin/cargo" "+$RUST_TOOLCHAIN" install -q --locked \
+        --root "$WORK_DIR/eza" "eza@$EZA_VERSION"
+    install_bin "$WORK_DIR/eza/bin/eza" eza
+    mark_current eza "$EZA_VERSION"
 }
 
 # lspmux shares one language server per workspace between all editors. It has
@@ -2703,6 +2717,7 @@ report() {
     print_version mise mise --version
     print_version rustc "$CARGO_HOME_DIR/bin/rustc" --version
     print_version tree-sitter tree-sitter --version
+    print_version eza bash -c 'eza --version | sed -n 2p'
     print_version node node --version
     print_version python "$PREFIX/bin/python$PYTHON_VERSION" --version
     if [[ "$OS" == "linux" ]]; then
@@ -2784,6 +2799,7 @@ run_all() {
     step rust install_rust
     category_step devtools rust-analyzer install_rust_analyzer
     step tree-sitter install_tree_sitter
+    step eza install_eza
     category_step devtools lspmux setup_lspmux
     step sshd install_sshd_conf
     step node install_node

@@ -90,6 +90,7 @@ check_version mise    "$MISE_VERSION" mise --version
 check_version rustc   "rustc " "$HOME/.cargo/bin/rustc" --version
 check_version "rust default" "stable-" "$HOME/.cargo/bin/rustup" default
 check_version tree-sitter "tree-sitter $TREE_SITTER_VERSION" tree-sitter --version
+check_version eza     "v$EZA_VERSION" eza --version
 check_version node    "v$node_want" node --version
 check_version python  "Python $PYTHON_VERSION" "/usr/local/bin/python$PYTHON_VERSION" --version
 check_version nnn     "$NNN_VERSION" nnn -V
