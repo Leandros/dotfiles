@@ -3,7 +3,8 @@
 [Unit]
 Description=Power mode for the power source
 Wants=tuned-ppd.service
-After=tuned-ppd.service
+# After nvidia-powerd (enabled by its package), so a boot on battery stops it.
+After=tuned-ppd.service nvidia-powerd.service
 
 [Service]
 Type=oneshot

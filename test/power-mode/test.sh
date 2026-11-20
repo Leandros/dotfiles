@@ -43,7 +43,16 @@ case "\${args[0]}" in
 esac
 EOF
     printf '#!/bin/sh\necho "pkill $*" >> "%s"\n' "$CALLS" > "$STUBS/pkill"
-    chmod +x "$STUBS/busctl" "$STUBS/pkill"
+    # systemctl: lists nvidia-powerd.service only where $TMP/powerd exists.
+    cat > "$STUBS/systemctl" <<EOF
+#!/usr/bin/env bash
+if [[ "\$1" == list-unit-files ]]; then
+    [[ -f "$TMP/powerd" ]] && echo "nvidia-powerd.service enabled enabled"
+    exit 0
+fi
+echo "systemctl \$*" >> "$CALLS"
+EOF
+    chmod +x "$STUBS/busctl" "$STUBS/pkill" "$STUBS/systemctl"
 }
 
 pwr() { PATH="$STUBS:$PATH" "$PWR" "$@" || fail "pwr $* exited $?"; }
@@ -139,10 +148,39 @@ test_auto() {
     expect "without an AC adapter busctl is not called" "" "$(cat "$CALLS")"
 }
 
+# nvidia-powerd (Dynamic Boost) runs only on AC: on battery it has nothing
+# to boost and keeps waking the machine.
+test_nvidia_powerd() {
+    rm -rf "$SYSFS" "$TMP/last-ac"
+    add_supply BAT0 Battery 1
+    add_supply AC Mains 1
+    : > "$CALLS"
+    auto
+    expect "no nvidia-powerd unit: not touched" "" "$(grep '^systemctl' "$CALLS" || true)"
+
+    touch "$TMP/powerd"
+    rm -f "$TMP/last-ac"
+    : > "$CALLS"
+    auto
+    expect "on AC: nvidia-powerd started" "systemctl start --no-block nvidia-powerd.service" \
+        "$(grep '^systemctl' "$CALLS" || true)"
+
+    echo 0 > "$SYSFS/class/power_supply/AC/online"
+    : > "$CALLS"
+    auto
+    expect "on battery: nvidia-powerd stopped" "systemctl stop --no-block nvidia-powerd.service" \
+        "$(grep '^systemctl' "$CALLS" || true)"
+
+    : > "$CALLS"
+    auto
+    expect "same AC state again: nvidia-powerd left alone" "" "$(grep '^systemctl' "$CALLS" || true)"
+}
+
 main() {
     write_stubs
     test_pwr
     test_auto
+    test_nvidia_powerd
     exit "$FAILED"
 }
 

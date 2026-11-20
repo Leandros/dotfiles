@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 #
 # power-mode-auto - performance mode on AC, battery mode on battery.
+# NVIDIA's nvidia-powerd (Dynamic Boost), where installed, runs only on AC:
+# on battery it has nothing to boost, keeps waking the machine and was
+# reported to keep the GPU from runtime suspend.
 #
 # Runs as root from power-mode-auto.service: at boot, and from
 # 90-power-mode-auto.rules when the AC adapter is plugged in or out.
@@ -18,6 +21,7 @@ readonly STATE_FILE="${POWER_MODE_STATE:-/run/power-mode-auto/ac}"
 readonly PPD_NAME="org.freedesktop.UPower.PowerProfiles"
 readonly PPD_PATH="/org/freedesktop/UPower/PowerProfiles"
 readonly PPD_TIMEOUT_S=10
+readonly POWERD_UNIT="nvidia-powerd.service"
 
 # Prints "online", "offline", or nothing without an AC adapter. USB-C
 # sources (type USB) can be devices the laptop powers, so only Mains counts.
@@ -34,6 +38,15 @@ ac_state() {
     echo "$found"
 }
 
+# Starts (online) or stops (offline) nvidia-powerd where its unit exists.
+# --no-block: at boot this service is ordered after it.
+nvidia_powerd() {
+    local action=start
+    [[ "$1" == online ]] || action=stop
+    [[ -n "$(systemctl list-unit-files --no-legend "$POWERD_UNIT" 2>/dev/null)" ]] || return 0
+    systemctl "$action" --no-block "$POWERD_UNIT"
+}
+
 main() {
     local profile ac last=""
     ac="$(ac_state)"
@@ -47,6 +60,7 @@ main() {
 
     busctl --timeout="$PPD_TIMEOUT_S" set-property \
         "$PPD_NAME" "$PPD_PATH" "$PPD_NAME" ActiveProfile s "$profile"
+    nvidia_powerd "$ac"
     mkdir -p "$(dirname "$STATE_FILE")"
     echo "$ac" > "$STATE_FILE"
     echo "power-mode-auto: $profile"
