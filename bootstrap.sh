@@ -121,6 +121,9 @@ readonly WMFOCUS_VERSION="1.5.0"
 # https://github.com/elkowar/eww (desktops only). A commit: release
 # 0.6.0 pins Rust 1.76, and its old dependencies do not build with stable.
 readonly EWW_REF="48f5aa8b379adf29da0b0bb9ca04164f65d8bdaa"
+# https://github.com/sebastian-de/easyeffects-thinkpad-unsuck (desktops,
+# ThinkPads only): EasyEffects speaker preset, made for the P14s Gen 2 AMD.
+readonly EASYEFFECTS_THINKPAD_REF="a14f11afcba9f1d1d2a75de3155e7de3293dae90"
 # https://crates.io/crates/xidlehook (Xorg desktop only; last release 2021)
 readonly XIDLEHOOK_VERSION="0.10.0"
 # https://github.com/brofi/rrandr (Xorg desktop only; no releases or crate,
@@ -1375,7 +1378,7 @@ install_xorg_packages() {
                 i3 i3status suckless-tools i3lock xss-lock blueman arandr autorandr \
                 alsa-utils pavucontrol brightnessctl xclip xinput rfkill cifs-utils smbclient btop remmina remmina-plugin-rdp picom lxpolkit jq \
                 maim dunst playerctl libnotify-bin \
-                xrdp xorgxrdp syncthing \
+                xrdp xorgxrdp syncthing easyeffects \
                 kbd console-data console-setup
             ;;
         fedora)
@@ -1389,17 +1392,18 @@ install_xorg_packages() {
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap xrandr \
                 i3 i3status dmenu i3lock xss-lock blueman gobject-introspection copyq \
                 arandr autorandr gtk3 \
-                alsa-utils pavucontrol brightnessctl xclip xinput picom cifs-utils samba-client btop remmina remmina-plugins-rdp firewall-config lxpolkit jq xrdp xorgxrdp-glamor syncthing kbd terminus-fonts-console \
+                alsa-utils pavucontrol brightnessctl xclip xinput picom cifs-utils samba-client btop remmina remmina-plugins-rdp firewall-config lxpolkit jq xrdp xorgxrdp-glamor syncthing easyeffects kbd terminus-fonts-console \
                 maim dunst playerctl libnotify
             ;;
         rhel)
             $SUDO dnf install -y -q epel-release
             $SUDO dnf config-manager --set-enabled crb
-            # xss-lock, blueman, arandr, autorandr, picom, lxpolkit and
-            # syncthing are not packaged for EL9; .xprofile tolerates their
-            # absence. Without them there is no lock before suspend, no
-            # Bluetooth GUI, no saved monitor layouts, no polkit password
-            # prompt and no file sync; ~/bin/pwr still locks.
+            # xss-lock, blueman, arandr, autorandr, picom, lxpolkit,
+            # syncthing and easyeffects are not packaged for EL9; .xprofile
+            # tolerates their absence. Without them there is no lock before
+            # suspend, no Bluetooth GUI, no saved monitor layouts, no polkit
+            # password prompt, no file sync and no speaker preset; ~/bin/pwr
+            # still locks.
             $SUDO dnf install -y -q \
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap \
                 i3 i3status dmenu i3lock copyq \
@@ -2117,6 +2121,44 @@ enable_autorandr() {
 # default.target): runs from login on, in no X session, so a second
 # session (xrdp) shares it. enable needs no running user manager; start
 # only where one answers (not in containers). Web UI on 127.0.0.1:8384.
+is_thinkpad() {
+    grep -qs ThinkPad /sys/class/dmi/id/product_version
+}
+
+# Version of the installed EasyEffects package; fails without one.
+easyeffects_version() {
+    case "$DISTRO" in
+        debian|ubuntu) dpkg-query -W -f='${Version}' easyeffects 2>/dev/null ;;
+        *) rpm -q --qf '%{VERSION}' easyeffects 2>/dev/null ;;
+    esac
+}
+
+# EasyEffects preset for ThinkPad speakers (`thinkpad-unsuck` in its output
+# presets; not loaded automatically). The preset format is EasyEffects 7's;
+# 6 (Ubuntu 22.04) gets none. 7 reads ~/.config/easyeffects/output, 8 the XDG
+# data directory (it moves the old directory there). Written once per ref,
+# so changes made in EasyEffects stay until the ref changes.
+install_easyeffects_preset() {
+    is_thinkpad || return 0
+    local major dir stamp
+    major="$(easyeffects_version || true)"
+    major="${major%%.*}"
+    [[ -n "$major" && "$major" -ge 7 ]] || return 0
+    if [[ "$major" -ge 8 ]]; then
+        dir="${XDG_DATA_HOME:-$HOME/.local/share}/easyeffects/output"
+    else
+        dir="$HOME/.config/easyeffects/output"
+    fi
+    stamp="$(stamp_path easyeffects-thinkpad)"
+    if [[ -f "$dir/thinkpad-unsuck.json" && "$(cat "$stamp" 2>/dev/null)" == "$EASYEFFECTS_THINKPAD_REF" ]]; then
+        return 0
+    fi
+    fetch "https://raw.githubusercontent.com/sebastian-de/easyeffects-thinkpad-unsuck/$EASYEFFECTS_THINKPAD_REF/thinkpad-unsuck.json" \
+        "$WORK_DIR/thinkpad-unsuck.json"
+    install -D -m 0644 "$WORK_DIR/thinkpad-unsuck.json" "$dir/thinkpad-unsuck.json"
+    mark_current easyeffects-thinkpad "$EASYEFFECTS_THINKPAD_REF"
+}
+
 enable_syncthing() {
     have syncthing || return 0
     have systemctl || return 0
@@ -2293,6 +2335,7 @@ setup_xorg() {
     enable_bluetooth
     enable_autorandr
     enable_syncthing
+    install_easyeffects_preset
     link_xorg_dotfiles
     select_bar
     install_xrdp
@@ -2337,7 +2380,7 @@ install_wayland_packages() {
         xdg-desktop-portal-wlr xdg-desktop-portal-gtk \
         kanshi wdisplays wl-clipboard fuzzel i3status blueman gobject-introspection \
         grim slurp dunst playerctl libnotify \
-        alsa-utils pavucontrol brightnessctl util-linux cifs-utils samba-client btop remmina remmina-plugins-rdp firewall-config lxpolkit jq syncthing kbd terminus-fonts-console
+        alsa-utils pavucontrol brightnessctl util-linux cifs-utils samba-client btop remmina remmina-plugins-rdp firewall-config lxpolkit jq syncthing easyeffects kbd terminus-fonts-console
 }
 
 # Clipboard history (~/bin/clip-pick). Fedora packages it only from 44 on, so
@@ -2558,6 +2601,7 @@ setup_wayland() {
     install_firefox_prefs
     enable_bluetooth
     enable_syncthing
+    install_easyeffects_preset
     link_wayland_dotfiles
     select_sway_bar
     write_sway_output_conf "$DPI_SCALE"
@@ -2743,6 +2787,7 @@ report() {
         fi
         if [[ "$DISTRO" != rhel ]]; then
             print_version syncthing syncthing --version
+            print_version easyeffects easyeffects_version
         fi
     fi
     if xorg_requested && xorg_supported; then

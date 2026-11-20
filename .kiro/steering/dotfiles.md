@@ -360,6 +360,13 @@ New link or system file: install function, `check_link` or `cmp` check in
   works without a running user manager) and starts it only where the
   user manager answers. One instance per user, outside the X sessions.
   Devices and folders are set up by hand in its web UI (127.0.0.1:8384).
+- EasyEffects (both desktops; distro package, not in EPEL 9). On a
+  ThinkPad (`ThinkPad` in DMI `product_version`) `install_easyeffects_preset`
+  writes `thinkpad-unsuck.json` (`EASYEFFECTS_THINKPAD_REF`, made for the
+  P14s Gen 2 AMD) once per ref: EasyEffects 7 reads
+  `~/.config/easyeffects/output`, 8 `~/.local/share/easyeffects/output` (8
+  moves the old directory there); 6 (Ubuntu 22.04) has another preset
+  format and gets none. Not loaded or autostarted by bootstrap.
 - lxpolkit: polkit agent, started by `.xprofile` (`pkill -x` first). Without
   an agent in i3, polkit refuses silently: firewall-config and other GUIs
   that run as the user cannot change anything. Not in EL9 EPEL (it has

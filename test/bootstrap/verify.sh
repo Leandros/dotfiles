@@ -499,6 +499,26 @@ check_desktop_shared() {
             fail "syncthing user unit not enabled"
         fi
     fi
+    # EasyEffects: the distro package (not in EPEL 9); on a ThinkPad the
+    # speaker preset where EasyEffects is 7 or newer (Ubuntu 22.04 has 6).
+    if [[ "$os_id" != rocky ]]; then
+        local ee_version ee_dir
+        if [[ "$os_id" == fedora ]]; then
+            ee_version="$(rpm -q --qf '%{VERSION}' easyeffects 2>/dev/null || true)"
+        else
+            ee_version="$(dpkg-query -W -f='${Version}' easyeffects 2>/dev/null || true)"
+        fi
+        if [[ -n "$ee_version" ]]; then ok "easyeffects $ee_version installed"; else fail "easyeffects missing"; fi
+        if grep -qs ThinkPad /sys/class/dmi/id/product_version && [[ "${ee_version%%.*}" -ge 7 ]] 2>/dev/null; then
+            ee_dir="$HOME/.config/easyeffects/output"
+            [[ "${ee_version%%.*}" -ge 8 ]] && ee_dir="$HOME/.local/share/easyeffects/output"
+            if grep -qs '"output"' "$ee_dir/thinkpad-unsuck.json"; then
+                ok "easyeffects ThinkPad preset in $ee_dir"
+            else
+                fail "easyeffects ThinkPad preset missing in $ee_dir"
+            fi
+        fi
+    fi
     if grep -qx 'Exec=nmrs-gui' /usr/local/share/applications/nmrs.desktop 2>/dev/null; then
         ok "nmrs.desktop installed"
     else
