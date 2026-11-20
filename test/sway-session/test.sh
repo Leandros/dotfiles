@@ -120,6 +120,12 @@ check_wrapper() {
     # Java AWT draws empty windows on Xwayland without it (sway does not
     # reparent).
     expect "Java AWT" "1" "$(get _JAVA_AWT_WM_NONREPARENTING)"
+    # GTK 4 draws with GL: its default Vulkan renderer asks every Vulkan
+    # driver for devices, which wakes the suspended NVIDIA GPU (1.5 s before
+    # sway-easyfocus showed its labels). The caller's value stays.
+    expect "GTK 4 renderer GL" "ngl" "$(get GSK_RENDERER)"
+    out="$(run_wrapper GSK_RENDERER=vulkan)"
+    expect "GSK_RENDERER of the caller kept" "vulkan" "$(get GSK_RENDERER)"
     # Qt 5.12+ and 6 select "wayland;xcb" from XDG_SESSION_TYPE; Qt before
     # 5.12 (bundled in some programs) aborts on a QT_QPA_PLATFORM list.
     expect "QT_QPA_PLATFORM not set" "" "$(get QT_QPA_PLATFORM)"

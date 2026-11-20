@@ -39,7 +39,7 @@ In X, xremap swaps the left Alt and Ctrl keys; in sway, the XKB option
 | `Mod+m`, then `Mod+Shift+m` on another window | Swap the two windows (`Mod+m` again unmarks) |
 | `Mod+h` / `Mod+l` | Focus parent / child container |
 | `Mod+space` | Focus between tiling and floating windows |
-| `Mod+q` | Label every window; type a label (`n r s g b e i t c o`) to focus it, `Escape` cancels |
+| `Mod+g` | Label every window; type a label (`n r s g b e i t c o`) to focus it, `Escape` cancels |
 
 ### Layout
 
@@ -145,7 +145,7 @@ same, except these:
 |---|---|
 | `Mod+i` | Program menu (fuzzel) |
 | `Mod+c` | Clipboard history (cliphist in fuzzel); `Escape` keeps the clipboard |
-| `Mod+q` | Label every window (sway-easyfocus, `n r s g b e i t c o`); any other key cancels |
+| `Mod+g` | Label every window (sway-easyfocus, `n r s g b e i t c o`); any other key cancels |
 | `Mod+Shift+a` | Reload config (sway has no restart) |
 | `Mod+Shift+u` | Exit sway (asks first) |
 | `Ctrl+Alt+Backspace` | Exit sway at once |

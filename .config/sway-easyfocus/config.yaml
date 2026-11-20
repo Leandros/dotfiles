@@ -1,4 +1,4 @@
-# sway-easyfocus ($mod+q): a label on each window of the workspace; its key
+# sway-easyfocus ($mod+g): a label on each window of the workspace; its key
 # focuses the window. The colors come from the sway binding (window title
 # colors, so they follow ~/bin/theme): this file cannot read sway variables.
 #

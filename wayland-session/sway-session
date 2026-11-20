@@ -29,6 +29,12 @@ ELECTRON_OZONE_PLATFORM_HINT=auto
 # reparent windows.
 _JAVA_AWT_WM_NONREPARENTING=1
 
+# GTK 4 draws with GL, not its default Vulkan: the Vulkan loader asks every
+# driver for its devices, which wakes the suspended NVIDIA GPU, and GTK 4
+# programs started 1.5 s late (sway-easyfocus, $mod+g). GL stays on the GPU
+# the session runs on. The caller's value stays.
+GSK_RENDERER="${GSK_RENDERER:-ngl}"
+
 # X11 programs: xwayland-satellite (~/bin/sway-autostart) listens on this
 # display when the sway config disables sway's own Xwayland. sway cannot
 # change its environment later, so its bindings and fuzzel get DISPLAY
@@ -50,7 +56,8 @@ DISPLAY=":$display"
 WLR_BACKENDS="${WLR_BACKENDS:-libinput,drm}"
 
 export LANG XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE \
-    ELECTRON_OZONE_PLATFORM_HINT _JAVA_AWT_WM_NONREPARENTING DISPLAY WLR_BACKENDS
+    ELECTRON_OZONE_PLATFORM_HINT _JAVA_AWT_WM_NONREPARENTING GSK_RENDERER DISPLAY \
+    WLR_BACKENDS
 
 # The sway that bootstrap.sh builds from the fork (custom pointer
 # acceleration), else Fedora's. A wlroots update can remove the library

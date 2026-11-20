@@ -74,6 +74,7 @@ for c in fuzzel sway-easyfocus wdisplays amixer brightnessctl pkill swaynag syst
     stub "$H/stubs/$c"
 done
 for c in term clip-pick sway-autostart touchpad; do stub "$H/bin/$c"; done
+cp /src/theme /src/wm-msg "$H/bin/"
 printf '#!/bin/sh\nexec sleep 600\n' > "$H/bin/i3status-kb"
 chmod +x "$H/bin/i3status-kb"
 chown -R t "$H"
@@ -211,9 +212,9 @@ else
 fi
 
 # Window hints: the title colors of the config's variables.
-key -M logo q -m logo
-expect "Mod+q: sway-easyfocus, dark colors" \
-    "sway-easyfocus|--label-background-color|#073642|--label-text-color|#93a1a1|--focused-background-color|#859900|--focused-text-color|#fdf6e3|focus" \
+key -M logo g -m logo
+expect "Mod+g: sway-easyfocus, dark colors" \
+    "sway-easyfocus|--label-background-color=#073642|--label-text-color=#93a1a1|--focused-background-color=#859900|--focused-text-color=#fdf6e3|focus" \
     "$(call_of sway-easyfocus)"
 
 # Exit asks first; yes stops the session target, then sway.
@@ -380,9 +381,19 @@ expect "swaybar colors from the variables" "#859900ff" "$(field 'd["colors"]["fo
 expect "theme.conf reaches the bar" "#fdf6e3ff" "$(field 'd["colors"]["background"]')"
 pgrep -u t -a swaybg | grep -q -- '#eee8d5' && ok "theme.conf reaches the background" || fail "swaybg: $(pgrep -u t -a swaybg)"
 sed -i '/^sway-easyfocus/d' "$CALLS"
-key -M logo q -m logo
-expect "theme.conf reaches Mod+q" \
-    "sway-easyfocus|--label-background-color|#eee8d5|--label-text-color|#586e75|--focused-background-color|#859900|--focused-text-color|#002b36|focus" \
+key -M logo g -m logo
+expect "theme.conf reaches Mod+g" \
+    "sway-easyfocus|--label-background-color=#eee8d5|--label-text-color=#586e75|--focused-background-color=#859900|--focused-text-color=#002b36|focus" \
+    "$(call_of sway-easyfocus)"
+# ~/bin/theme (also at every login: sway-autostart runs theme restore) sends
+# the lines that use the colors again over IPC, where sway strips the
+# quotes of bindsym arguments: a color must not start a shell word, or #
+# starts a comment.
+sed -i '/^sway-easyfocus/d' "$CALLS"
+as_t "$H/bin/theme" dark >/tmp/theme.log 2>&1 || fail "theme dark: $(cat /tmp/theme.log)"
+key -M logo g -m logo
+expect "theme dark at runtime reaches Mod+g" \
+    "sway-easyfocus|--label-background-color=#073642|--label-text-color=#93a1a1|--focused-background-color=#859900|--focused-text-color=#fdf6e3|focus" \
     "$(call_of sway-easyfocus)"
 
 # fuzzel runs Terminal=true programs in ~/bin/term. Without exit on focus
@@ -497,7 +508,7 @@ for dir in sway fuzzel sway-easyfocus; do
     fi
     cp -r "$ROOT/.config/$dir" "$TMP/src/"
 done
-cp "$ROOT/wayland-session/sway-session" "$ROOT/bin/sway-autostart" "$TMP/src/"
+cp "$ROOT/wayland-session/sway-session" "$ROOT/bin/sway-autostart" "$ROOT/bin/theme" "$ROOT/bin/wm-msg" "$TMP/src/"
 # docker cp, not a bind mount: SELinux hosts would deny the container.
 docker cp "$TMP/src" "$container:/src"
 docker start -a "$container"

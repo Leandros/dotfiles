@@ -175,9 +175,11 @@ bindsym $mod+Right focus right
 # Focus a window by its label, like tmux prefix q. The hint colors are the
 # window title colors; `theme` runs this line again, so they follow dark
 # and light. Labels and font: ~/.config/sway-easyfocus/config.yaml. Every
-# key exits.
-bindsym $mod+q exec sway-easyfocus --label-background-color '$baseA2' --label-text-color '$baseB1' \
-    --focused-background-color '$green' --focused-text-color '$baseB3' focus
+# key exits. Options as --name=$color, without quotes: swaymsg (theme)
+# strips the quotes of bindsym arguments, and a # at the start of a shell
+# word starts a comment.
+bindsym $mod+g exec sway-easyfocus --label-background-color=$baseA2 --label-text-color=$baseB1 \
+    --focused-background-color=$green --focused-text-color=$baseB3 focus
 
 # move focused window
 bindsym $mod+Shift+b move left

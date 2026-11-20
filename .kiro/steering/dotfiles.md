@@ -387,7 +387,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   Skip if `tlp` is installed.
 - nmrs-gui: built with `cargo install` (needs Rust 1.95+); desktop file in
   `/usr/local/share/applications/nmrs.desktop`.
-- wmfocus (`$mod+q`): `cargo install --features i3`. Build needs the
+- wmfocus (`$mod+g`): `cargo install --features i3`. Build needs the
   cairo-gobject, fontconfig, freetype and expat headers; without the last two
   its crates build them with cmake. Escape is hard-coded as exit; with
   `--exit-keys` set, a wrong key no longer closes it. Missing font family:
@@ -810,7 +810,10 @@ New link or system file: install function, `check_link` or `cmp` check in
 
 - Session: lightdm, entry "Sway (dotfiles)" -> `/usr/local/bin/sway-session`
   (exports LANG=en_US.UTF-8, the XDG desktop/session variables, Electron
-  and Java hints, `DISPLAY` and `WLR_BACKENDS` for xwayland-satellite (see
+  and Java hints, `GSK_RENDERER=ngl` (GTK 4's default Vulkan renderer
+  enumerates every Vulkan driver, which wakes the runtime-suspended NVIDIA
+  GPU: sway-easyfocus took 1.5 s to show its labels, 0.05 s with ngl,
+  2026-11-20), `DISPLAY` and `WLR_BACKENDS` for xwayland-satellite (see
   below); not `QT_QPA_PLATFORM`: Qt picks Wayland from
   `XDG_SESSION_TYPE`, and old bundled Qt 5 aborts on a list). lightdm runs
   Wayland sessions through `/etc/X11/xinit/Xsession` too, so
@@ -824,8 +827,11 @@ New link or system file: install function, `check_link` or `cmp` check in
   sets the variables at runtime and runs those lines again, without
   `reload` (a sway 1.12 reload drops runtime output and input settings:
   kanshi's layout, touchpad tapping; an `exec_always` runs `kanshictl
-  reload` and `touchpad restore` after each reload). Differences from i3: fuzzel
-  (`$mod+i`), `clip-pick` (`$mod+c`, cliphist), sway-easyfocus (`$mod+q`),
+  reload` and `touchpad restore` after each reload). Over IPC sway strips
+  the quotes of `bindsym` arguments, so a color in a binding is
+  `--opt=$var`, never a quoted shell word that starts with `#` (a comment
+  once unquoted; sway-easyfocus got no colors so). Differences from i3: fuzzel
+  (`$mod+i`), `clip-pick` (`$mod+c`, cliphist), sway-easyfocus (`$mod+g`),
   wdisplays (XF86Display), `$mod+Shift+a` reloads, swaynag exit,
   `Ctrl+Alt+BackSpace` exits.
 - Workspaces switch only with `$mod+digit` (`$mod+Shift+digit` moves), in
