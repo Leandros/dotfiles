@@ -84,6 +84,9 @@ Where NVIDIA's EGL is installed, both sessions (`sway-session`, `.xprofile`) loa
 NVIDIA's wakes the GPU (1.5 s for Electron apps, Firefox, Alacritty, Xwayland). To run a program on the
 NVIDIA GPU: `env -u __EGL_VENDOR_LIBRARY_FILENAMES __NV_PRIME_RENDER_OFFLOAD=1 <program>`. Tests:
 `test/sway-session/test.sh`, `test/xprofile/test.sh`.
+swaytiles (<https://github.com/sertacartun/swaytiles>, pinned `SWAYTILES_REF`; user unit
+`swaytiles.service` with the sway session, `--no-keys`): a tiling layout per workspace, only where one is
+picked with `$mod+t` (fuzzel); `$mod+Shift+Return` swaps with the master. Test: `test/sway/test.sh`.
 sway is built from <https://github.com/Leandros/sway/tree/v1.12> (1.12 with the custom pointer
 acceleration of sway PR #8592: the touchpad curve of X); `sway-session` starts Fedora's sway when
 that build does not load. Tests: `test/sway/test.sh`, `test/sway-session/test.sh`.

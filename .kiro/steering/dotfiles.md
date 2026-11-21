@@ -49,6 +49,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `bin/{wm-msg,sway-autostart,kanshi-save,clip-pick}` | `~/bin`, links; `wm-msg` also for desktop (the eww scripts and i3status-kb use it) |
 | `bin/{sunshine-session,sunshine-pin}`, `.config/systemd/user/app-dev.lizardbyte.app.Sunshine.service.d/session.conf` | `~/bin`, `~/.config/systemd/user/...`, links, Fedora desktops (`install_sunshine`) |
 | `wayland-session/sway-session` | `/usr/local/bin/sway-session` (root copy, 0755; the lightdm session's wrapper) |
+| `wayland-session/swaytiles`, `.config/systemd/user/swaytiles.service` | `/usr/local/bin/swaytiles` (root copy, 0755; launcher of `/usr/local/lib/swaytiles/swaytiles.py`), user unit (link, enabled), desktop-wayland (`install_swaytiles`) |
 | `firefox/autoconfig.js`, `firefox/dotfiles.cfg` | `/usr/lib64/firefox/defaults/pref/dotfiles-autoconfig.js`, `/usr/lib64/firefox/dotfiles.cfg` (root copies, 0644, desktop-wayland: `install_firefox_prefs`) |
 | `.config/rio` | `~/.config/rio`, link, Linux desktops (Rio installed by hand) |
 | `.config/alacritty/{alacritty.toml,themes}`, `alacritty/linux.toml`, `bin/alacritty-theme`, `.config/systemd/user/alacritty-theme.service` | `~/.config/alacritty/{alacritty.toml,themes,linux.toml}`, `~/bin`, `~/.config/systemd/user`, links, both desktops (`install_alacritty`); `alacritty.toml` is shared with macOS (linked by hand there) |
@@ -227,6 +228,24 @@ New link or system file: install function, `check_link` or `cmp` check in
     dependency (`--locked`). Test: `test/sway-easyfocus-patch/test.sh`
     (crate download, patch, `cargo test`). Drop the patch once upstream
     releases a fix.
+  - swaytiles (`SWAYTILES_REF`, a commit: no releases or tags; started
+    2026-10, one author): per-workspace layouts, one Python file
+    (standard library, 3.10+) in `/usr/local/lib/swaytiles`, precompiled
+    (upstream's launcher imports it so the daemon does not keep the
+    compile's memory; ours points at `/usr/local/lib`). User unit
+    `swaytiles.service`, `PartOf`/`WantedBy` `sway-session.target`, not
+    upstream's `--wait` from `default.target` (would idle in i3 sessions).
+    `--no-keys` (the user's choice): without it the daemon rebinds the
+    move, kill, float, scratchpad and move-to-workspace keys at runtime.
+    No default layout (the user's choice): workspaces stay sway's own until
+    one is picked (`swaytiles default LAYOUT` would change that; state in
+    `~/.local/state/swaytiles.json`). It follows workspace renames
+    (`ws-pick --rename` is safe). `$mod+Shift+Return` is `nop layout
+    master`, read by the daemon from binding events. Upstream suggests
+    `$mod+m` for the swap: that is the mark key here. No `--version`:
+    verify checks the stamp, the launcher and `--help`. Test: the
+    swaytiles block of `test/sway/test.sh` (installs the pinned commit,
+    runs the unit's ExecStart, master layout, swap, `--no-keys`).
   - sway-audio-idle-inhibit (`SWAY_AUDIO_IDLE_INHIBIT_VERSION`, meson from
     the tag, `-Dwerror=false`; libpulse, libsystemd): no `--version` (stamp
     and `ldd`), no systemd unit; holds a logind idle lock (not Wayland), so
@@ -837,7 +856,8 @@ New link or system file: install function, `check_link` or `cmp` check in
   the quotes of `bindsym` arguments, so a color in a binding is
   `--opt=$var`, never a quoted shell word that starts with `#` (a comment
   once unquoted; sway-easyfocus got no colors so). Differences from i3: fuzzel
-  (`$mod+i`), `clip-pick` (`$mod+c`, cliphist), sway-easyfocus (`$mod+g`),
+  (`$mod+i`), `clip-pick` (`$mod+c`, cliphist), sway-easyfocus (`$mod+g`), swaytiles (`$mod+t`
+  layout menu, `$mod+Shift+Return` swap with the master),
   wdisplays (XF86Display), `$mod+Shift+a` reloads, swaynag exit,
   `Ctrl+Alt+BackSpace` exits.
 - Workspaces switch only with `$mod+digit` (`$mod+Shift+digit` moves), in

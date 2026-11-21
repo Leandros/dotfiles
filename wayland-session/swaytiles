@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+# swaytiles - starts swaytiles (https://github.com/sertacartun/swaytiles),
+# per-workspace tiling layouts for sway. bootstrap.sh installs it as
+# /usr/local/bin/swaytiles and the program as
+# /usr/local/lib/swaytiles/swaytiles.py (install_swaytiles); upstream's
+# launcher looks in ~/.local/lib instead. Imported as a module, the program
+# is compiled once (bootstrap precompiles it); run as a script, it would be
+# compiled at every start, and the daemon would keep the memory that took.
+import sys
+
+sys.path.insert(0, "/usr/local/lib/swaytiles")
+import swaytiles  # noqa: E402
+
+sys.exit(swaytiles.cli())

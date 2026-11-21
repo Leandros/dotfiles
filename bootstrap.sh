@@ -141,6 +141,9 @@ readonly SWAY_REF="53c055d7fe37e8464049d64e36d4582812a75501"
 readonly SWAY_BUILD_DEPS="meson gcc scdoc libcap wlroots-devel wayland-devel wayland-protocols-devel libxkbcommon-devel cairo-devel pango-devel gdk-pixbuf2-devel json-c-devel pcre2-devel libinput-devel libevdev-devel systemd-devel pixman-devel libdrm-devel libxcb-devel xcb-util-wm-devel"
 # https://github.com/ErikReider/SwayAudioIdleInhibit/releases (sway desktop only)
 readonly SWAY_AUDIO_IDLE_INHIBIT_VERSION="0.2.0"
+# https://github.com/sertacartun/swaytiles (sway desktop only; no releases:
+# a commit, bump with git ls-remote)
+readonly SWAYTILES_REF="160c2aa436933301bead3089d469ba669391f4c5"
 # https://github.com/sentriz/cliphist/releases (sway desktop only; Fedora 43
 # does not package it)
 readonly CLIPHIST_VERSION="0.7.0"
@@ -2475,6 +2478,32 @@ install_sway_audio_idle_inhibit() {
     mark_current sway-audio-idle-inhibit "$version"
 }
 
+# Per-workspace tiling layouts for sway: one Python file (standard library,
+# Python 3.10+) in $PREFIX/lib/swaytiles, precompiled, started by
+# wayland-session/swaytiles. The user unit runs it with --no-keys for the
+# sway session; layouts only on workspaces where one is picked.
+install_swaytiles() {
+    local d="$DOTFILES_DIR" dir lib="$PREFIX/lib/swaytiles"
+    if ! is_current swaytiles "$SWAYTILES_REF" "$PREFIX/bin/swaytiles" ||
+        ! cmp -s "$d/wayland-session/swaytiles" "$PREFIX/bin/swaytiles"; then
+        dir="$(fetch_unpack "$GITHUB/sertacartun/swaytiles/archive/$SWAYTILES_REF.tar.gz")"
+        $SUDO install -D -m 0644 "$(unpacked_root "$dir")/swaytiles.py" "$lib/swaytiles.py"
+        $SUDO python3 -m py_compile "$lib/swaytiles.py"
+        $SUDO install -D -m 0755 "$d/wayland-session/swaytiles" "$PREFIX/bin/swaytiles"
+        if have restorecon; then
+            $SUDO restorecon -R "$lib" "$PREFIX/bin/swaytiles"
+        fi
+        mark_current swaytiles "$SWAYTILES_REF"
+    fi
+    link "$d/.config/systemd/user/swaytiles.service" "$HOME/.config/systemd/user/swaytiles.service"
+    if have systemctl; then
+        systemctl --user enable -q swaytiles.service
+        if systemctl --user show-environment >/dev/null 2>&1; then
+            systemctl --user daemon-reload
+        fi
+    fi
+}
+
 link_wayland_dotfiles() {
     local d="$DOTFILES_DIR" name
     link "$d/.wezterm.lua" "$HOME/.wezterm.lua"
@@ -2591,6 +2620,7 @@ setup_wayland() {
     install_nmrs_gui
     install_sway_easyfocus
     install_sway_audio_idle_inhibit
+    install_swaytiles
     install_eww
     install_logind_conf
     enable_sshd_home
@@ -2803,6 +2833,7 @@ report() {
         print_version sway cat "$(stamp_path sway)"
         print_version sway-easyfocus sway-easyfocus --version
         print_version sway-audio-idle-inhibit cat "$(stamp_path sway-audio-idle-inhibit)"
+        print_version swaytiles cat "$(stamp_path swaytiles)"
         print_version fuzzel fuzzel --version
         print_version xwayland-satellite xwayland-satellite -version
         # kanshi has no --version.

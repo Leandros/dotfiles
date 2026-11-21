@@ -281,6 +281,7 @@ if has_category desktop-wayland; then
 else
     check_absent desktop-wayland "$HOME/.config/sway"
     check_absent desktop-wayland /usr/local/bin/sway-easyfocus
+    check_absent desktop-wayland /usr/local/bin/swaytiles
 fi
 if ! has_category desktop && ! has_category desktop-wayland; then
     check_absent "desktop or desktop-wayland" /usr/local/bin/alacritty
@@ -649,6 +650,26 @@ check_wayland() {
         ok "sway-audio-idle-inhibit libraries resolve"
     else
         fail "sway-audio-idle-inhibit libraries: $(grep -E 'pulse|not found' <<< "$saii_libs" | tr '\n' ' ')"
+    fi
+    # swaytiles at SWAYTILES_REF (no --version), precompiled, its launcher
+    # the repo's, and the user unit linked and enabled.
+    if [[ "$(cat /usr/local/share/bootstrap/swaytiles 2>/dev/null)" == "$SWAYTILES_REF" ]] &&
+        cmp -s "$D/wayland-session/swaytiles" /usr/local/bin/swaytiles &&
+        compgen -G '/usr/local/lib/swaytiles/__pycache__/swaytiles.*.pyc' >/dev/null; then
+        ok "swaytiles $SWAYTILES_REF"
+    else
+        fail "swaytiles: stamp, launcher or compiled module missing"
+    fi
+    if /usr/local/bin/swaytiles --help 2>&1 | grep -q 'usage: swaytiles'; then
+        ok "swaytiles starts"
+    else
+        fail "swaytiles: $(/usr/local/bin/swaytiles --help 2>&1 | head -n 2)"
+    fi
+    check_link "$HOME/.config/systemd/user/swaytiles.service" "$D/.config/systemd/user/swaytiles.service"
+    if [[ "$(systemctl --user is-enabled swaytiles.service 2>/dev/null || true)" == enabled ]]; then
+        ok "swaytiles user unit enabled"
+    else
+        fail "swaytiles user unit not enabled"
     fi
     # sway of the fork (custom pointer acceleration) in /usr/local, built
     # against the installed wlroots, with the file capability of Fedora's.

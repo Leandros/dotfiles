@@ -45,6 +45,14 @@ curl -fsSL "https://github.com/Leandros/sway/archive/$SWAY_REF.tar.gz" | tar -xz
 [ "$(readlink -f "$(command -v sway)")" = /usr/local/bin/sway ] && echo "ok:   sway of the fork ($(sway --version))" ||
     { echo "FAIL: sway is $(command -v sway)"; exit 1; }
 
+# swaytiles at SWAYTILES_REF, as bootstrap.sh installs it (install_swaytiles).
+[[ -n "${SWAYTILES_REF:-}" ]] || { echo "FAIL: SWAYTILES_REF missing in bootstrap.sh"; exit 1; }
+curl -fsSL "https://github.com/sertacartun/swaytiles/archive/$SWAYTILES_REF.tar.gz" | tar -xz -C /tmp &&
+    install -D -m 0644 "/tmp/swaytiles-$SWAYTILES_REF/swaytiles.py" /usr/local/lib/swaytiles/swaytiles.py &&
+    python3 -m py_compile /usr/local/lib/swaytiles/swaytiles.py &&
+    install -m 0755 /src/swaytiles /usr/local/bin/swaytiles ||
+    { echo "FAIL: swaytiles install"; exit 1; }
+
 FAILED=0
 ok()   { echo "ok:   $*"; }
 fail() { echo "FAIL: $*"; FAILED=1; }
@@ -70,7 +78,7 @@ printf '%s\n' "\$line" >> $CALLS
 S
     chmod +x "$1"
 }
-for c in fuzzel sway-easyfocus wdisplays amixer brightnessctl pkill swaynag systemctl kanshictl; do
+for c in fuzzel sway-easyfocus swaytiles wdisplays amixer brightnessctl pkill swaynag systemctl kanshictl; do
     stub "$H/stubs/$c"
 done
 for c in term clip-pick sway-autostart touchpad; do stub "$H/bin/$c"; done
@@ -366,6 +374,46 @@ def find(n):
 find(json.load(sys.stdin))"; }
 expect "inhibit idle when full screen" "fullscreen" "$(idle)"
 
+# --- swaytiles --------------------------------------------------------------
+# The daemon as its user unit starts it (ExecStart), with --no-keys: the
+# move, kill and float keys stay sway's own. Layouts only where picked: a
+# workspace without one is left to sway. The bindings: $mod+t the layout
+# menu (a stub on sway's PATH records it), $mod+Shift+Return swaps with the
+# master through a nop binding the daemon reads.
+key -M logo t -m logo
+expect "Mod+t: swaytiles layout menu in fuzzel" "swaytiles|menu|--launcher|fuzzel" "$(call_of swaytiles)"
+exec_start="$(sed -n 's/^ExecStart=//p' /src/swaytiles.service)"
+expect "unit: swaytiles without key takeover" "/usr/local/bin/swaytiles --no-keys" "$exec_start"
+# shellcheck disable=SC2086 # the unit's command line, split as systemd does
+as_t $exec_start > /tmp/swaytiles.log 2>&1 &
+sleep 1.5
+pgrep -u t -f '/usr/local/bin/swaytiles --no-keys' >/dev/null && ok "swaytiles daemon runs" ||
+    fail "swaytiles daemon: $(cat /tmp/swaytiles.log)"
+msg -q workspace number 7
+tiles() { msg -t get_tree | py '
+import json, sys
+def leaves(n):
+    if n.get("pid") and n.get("name"): yield n["name"]
+    for c in n.get("nodes", []): yield from leaves(c)
+tree = json.load(sys.stdin)
+ws = [w for o in tree["nodes"] for w in o["nodes"] if w.get("type") == "workspace" and w.get("num") == 7]
+print(" ".join(t for w in ws for t in leaves(w)))'; }
+as_t /usr/local/bin/swaytiles master
+as_t foot -T C sleep 600 >/dev/null 2>&1 & sleep 1
+as_t foot -T D sleep 600 >/dev/null 2>&1 & sleep 1
+expect "master layout: C master, D in the stack" "C D" "$(tiles)"
+msg -q '[title="^D$"] focus'
+key -M logo -M shift -k Return -m shift -m logo
+sleep 0.5
+expect "Mod+Shift+Return: D swaps with the master" "D C" "$(tiles)"
+as_t swaymsg -t subscribe -m '["binding"]' > /tmp/move-bindings 2>&1 &
+sleep 0.3
+key -M logo -M shift s -m shift -m logo
+grep -q '"command": "move right"' /tmp/move-bindings && ok "--no-keys: Mod+Shift+s is sway's move right" ||
+    fail "move key taken over: $(grep -o '"command": "[^"]*"' /tmp/move-bindings | head -3)"
+pkill -u t -f '/usr/local/bin/swaytiles --no-keys' || true
+msg -q '[title="^(C|D)$"] kill'
+
 # bin/theme writes theme.conf, which sway reads at login and on reload;
 # bootstrap links the swaybar block where eww is missing.
 light_theme
@@ -494,11 +542,13 @@ TMP="$(mktemp -d)"
 # The fork's commit and build dependencies, as bootstrap.sh pins them.
 sway_ref="$(sed -n 's/^readonly SWAY_REF="\(.*\)"$/\1/p' "$ROOT/bootstrap.sh")"
 sway_deps="$(sed -n 's/^readonly SWAY_BUILD_DEPS="\(.*\)"$/\1/p' "$ROOT/bootstrap.sh")"
+swaytiles_ref="$(sed -n 's/^readonly SWAYTILES_REF="\(.*\)"$/\1/p' "$ROOT/bootstrap.sh")"
 if [[ -z "$sway_ref" || -z "$sway_deps" ]]; then
     echo "FAIL: SWAY_REF or SWAY_BUILD_DEPS missing in bootstrap.sh"
     exit 1
 fi
-container="$(docker create --cap-add SYS_NICE -e SWAY_REF="$sway_ref" -e SWAY_BUILD_DEPS="$sway_deps" "$IMAGE" bash -c "$INNER")"
+container="$(docker create --cap-add SYS_NICE -e SWAY_REF="$sway_ref" -e SWAY_BUILD_DEPS="$sway_deps" \
+    -e SWAYTILES_REF="$swaytiles_ref" "$IMAGE" bash -c "$INNER")"
 trap 'docker rm -f "$container" >/dev/null 2>&1 || true; rm -rf "$TMP"' EXIT
 mkdir -p "$TMP/src"
 for dir in sway fuzzel sway-easyfocus; do
@@ -508,7 +558,8 @@ for dir in sway fuzzel sway-easyfocus; do
     fi
     cp -r "$ROOT/.config/$dir" "$TMP/src/"
 done
-cp "$ROOT/wayland-session/sway-session" "$ROOT/bin/sway-autostart" "$ROOT/bin/theme" "$ROOT/bin/wm-msg" "$TMP/src/"
+cp "$ROOT/wayland-session/sway-session" "$ROOT/bin/sway-autostart" "$ROOT/bin/theme" "$ROOT/bin/wm-msg" \
+    "$ROOT/wayland-session/swaytiles" "$ROOT/.config/systemd/user/swaytiles.service" "$TMP/src/"
 # docker cp, not a bind mount: SELinux hosts would deny the container.
 docker cp "$TMP/src" "$container:/src"
 docker start -a "$container"

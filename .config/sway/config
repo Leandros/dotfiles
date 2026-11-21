@@ -209,6 +209,15 @@ bindsym $mod+Ctrl+Right move workspace to output right
 bindsym $mod+m mark --toggle swap
 bindsym $mod+Shift+m swap container with mark swap; unmark swap
 
+# swaytiles (user unit swaytiles.service): a tiling layout per workspace,
+# only where one is picked; other workspaces keep sway's own. $mod+t picks
+# the layout of the focused workspace in fuzzel; $mod+Shift+Return swaps
+# the focused window with the master (a nop the daemon reads from the
+# binding event; without the daemon it does nothing). It runs with
+# --no-keys: the move, kill and float keys stay sway's own.
+bindsym $mod+t exec swaytiles menu --launcher fuzzel
+bindsym $mod+Shift+Return nop layout master
+
 # split in horizontal orientation
 bindsym $mod+v split h
 

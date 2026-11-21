@@ -146,6 +146,8 @@ same, except these:
 | `Mod+i` | Program menu (fuzzel) |
 | `Mod+c` | Clipboard history (cliphist in fuzzel); `Escape` keeps the clipboard |
 | `Mod+g` | Label every window (sway-easyfocus, `n r s g b e i t c o`); any other key cancels |
+| `Mod+t` | Tiling layout of this workspace (swaytiles, in fuzzel); workspaces without one stay sway's own |
+| `Mod+Shift+Return` | Swap the focused window with the master (swaytiles layouts) |
 | `Mod+Shift+a` | Reload config (sway has no restart) |
 | `Mod+Shift+u` | Exit sway (asks first) |
 | `Ctrl+Alt+Backspace` | Exit sway at once |
@@ -158,6 +160,7 @@ same, except these:
 | `kb us` / `de` / `bone2` | Keyboard layout of the sway session (also after a reload) |
 | `caffeinate` / `caffeinate display` | No idle suspend (and no lock) until Ctrl-C; `pwr sleep` is refused meanwhile |
 | `theme dark` / `light` / `toggle` | Also the sway colors and fuzzel, at once |
+| `swaytiles master` / `grid` / `default` / ... | Set the focused workspace's layout from a terminal (`default`: sway's own) |
 | `wdisplays` | Arrange monitors; save with `kanshi-save NAME` |
 
 Not in sway: xrdp (use the i3 session), CopyQ, mouse keys.

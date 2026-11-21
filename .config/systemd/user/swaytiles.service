@@ -1,0 +1,22 @@
+# swaytiles: per-workspace tiling layouts for sway ($mod+t picks one,
+# $mod+Shift+Return swaps with the master). Linked and enabled by
+# bootstrap.sh (install_swaytiles); ~/bin/sway-autostart starts
+# sway-session.target with SWAYSOCK imported, and stops it when sway ends.
+# --no-keys: the move, kill and float keys stay sway's own (swaytiles
+# would rebind them while it runs). Not upstream's --wait from
+# default.target: that would also run, waiting, in i3 sessions.
+# Errors: journalctl --user -u swaytiles
+[Unit]
+Description=Per-workspace tiling layouts for sway
+PartOf=sway-session.target
+After=sway-session.target
+
+[Service]
+ExecStart=/usr/local/bin/swaytiles --no-keys
+Restart=on-failure
+RestartSec=5
+# Exit status 2: wrong usage, a restart does not help.
+RestartPreventExitStatus=2
+
+[Install]
+WantedBy=sway-session.target
