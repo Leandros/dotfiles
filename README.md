@@ -79,6 +79,11 @@ for the web UI password (user: `SUNSHINE_USER`, default `$USER`). Test: `test/su
 On firewalld machines (Fedora, EL) the desktop setup enables sshd and allows ssh in the `home` zone.
 In sway, GTK 4 programs draw with GL (`GSK_RENDERER=ngl` in `sway-session`): their default Vulkan renderer
 wakes the NVIDIA GPU, a 1.5 s delay. Test: `test/sway-session/test.sh`.
+Where NVIDIA's EGL is installed, both sessions (`sway-session`, `.xprofile`) load EGL only from Mesa
+(`__EGL_VENDOR_LIBRARY_FILENAMES`): glvnd loads every EGL driver at a program's first EGL call, and
+NVIDIA's wakes the GPU (1.5 s for Electron apps, Firefox, Alacritty, Xwayland). To run a program on the
+NVIDIA GPU: `env -u __EGL_VENDOR_LIBRARY_FILENAMES __NV_PRIME_RENDER_OFFLOAD=1 <program>`. Tests:
+`test/sway-session/test.sh`, `test/xprofile/test.sh`.
 sway is built from <https://github.com/Leandros/sway/tree/v1.12> (1.12 with the custom pointer
 acceleration of sway PR #8592: the touchpad curve of X); `sway-session` starts Fedora's sway when
 that build does not load. Tests: `test/sway/test.sh`, `test/sway-session/test.sh`.

@@ -813,7 +813,13 @@ New link or system file: install function, `check_link` or `cmp` check in
   and Java hints, `GSK_RENDERER=ngl` (GTK 4's default Vulkan renderer
   enumerates every Vulkan driver, which wakes the runtime-suspended NVIDIA
   GPU: sway-easyfocus took 1.5 s to show its labels, 0.05 s with ngl,
-  2026-11-20), `DISPLAY` and `WLR_BACKENDS` for xwayland-satellite (see
+  2026-11-20), `__EGL_VENDOR_LIBRARY_FILENAMES` = Mesa's `50_mesa.json`
+  where `10_nvidia.json` exists (also in `.xprofile`; glvnd loads every EGL
+  vendor at the first EGL call, NVIDIA's wakes the GPU: 1.5 s, measured
+  2026-11-21; Electron, Firefox, Alacritty, Xwayland had it loaded;
+  `GLVND_EGL_VENDOR_DIR` for tests; offload: `env -u
+  __EGL_VENDOR_LIBRARY_FILENAMES __NV_PRIME_RENDER_OFFLOAD=1`), `DISPLAY` and
+  `WLR_BACKENDS` for xwayland-satellite (see
   below); not `QT_QPA_PLATFORM`: Qt picks Wayland from
   `XDG_SESSION_TYPE`, and old bundled Qt 5 aborts on a list). lightdm runs
   Wayland sessions through `/etc/X11/xinit/Xsession` too, so

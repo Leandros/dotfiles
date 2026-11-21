@@ -57,6 +57,7 @@ echo "theme \$*" >> "$CALLS"
 echo "qt \${QT_SCALE_FACTOR:-unset} \${QT_FONT_DPI:-unset}" >> "$CALLS"
 echo "lang \${LANG:-unset}" >> "$CALLS"
 echo "loaded \${XPROFILE_LOADED:-unset}" >> "$CALLS"
+echo "egl \${__EGL_VENDOR_LIBRARY_FILENAMES:-unset}" >> "$CALLS"
 EOF
     for cmd in kb input-restore bar pkill-display xrdp-keys idle-timeout; do
         printf '#!/bin/sh\necho "%s $*" >> "%s"\n' "$cmd" "$CALLS" > "$TMP/home/bin/$cmd"
@@ -99,7 +100,8 @@ run() {
     rm -f "$DEVICE"
     # Without the Qt variables of the session running the test. LANG as
     # lightdm sets it from the AccountsService language (German here).
-    env -u QT_SCALE_FACTOR -u QT_FONT_DPI LANG=de_DE.utf8 \
+    env -u QT_SCALE_FACTOR -u QT_FONT_DPI -u __EGL_VENDOR_LIBRARY_FILENAMES LANG=de_DE.utf8 \
+        GLVND_EGL_VENDOR_DIR="$TMP/egl_vendor.d" \
         HOME="$TMP/home" XDG_RUNTIME_DIR="$TMP/run" PATH="$STUBS" DISPLAY=:99 XFT_DPI="${XFT_DPI:-}" /bin/sh "$XPROFILE"
     wait 2>/dev/null || true
 }
@@ -182,6 +184,15 @@ main() {
     # English programs (arandr, pavucontrol, blueman), whatever language
     # lightdm took from AccountsService.
     expect "programs start in English" "lang en_US.UTF-8" "$(grep '^lang ' "$CALLS")"
+
+    # EGL only from Mesa where NVIDIA's EGL is installed: glvnd loads every
+    # vendor on the first EGL call, and NVIDIA's wakes the suspended GPU.
+    mkdir -p "$TMP/egl_vendor.d"
+    : > "$TMP/egl_vendor.d/50_mesa.json"
+    expect "no NVIDIA EGL: EGL left alone" "egl unset" "$(run; grep '^egl ' "$CALLS")"
+    : > "$TMP/egl_vendor.d/10_nvidia.json"
+    expect "NVIDIA EGL: EGL only from Mesa" "egl $TMP/egl_vendor.d/50_mesa.json" "$(run; grep '^egl ' "$CALLS")"
+    rm -r "$TMP/egl_vendor.d"
 
     # Qt scaling from Xft.dpi (bootstrap's scale): QT_SCALE_FACTOR plus
     # QT_FONT_DPI=96, or Qt 6 (already scaled by Xft.dpi) doubles and Qt 5

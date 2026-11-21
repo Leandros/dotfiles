@@ -126,6 +126,23 @@ check_wrapper() {
     expect "GTK 4 renderer GL" "ngl" "$(get GSK_RENDERER)"
     out="$(run_wrapper GSK_RENDERER=vulkan)"
     expect "GSK_RENDERER of the caller kept" "vulkan" "$(get GSK_RENDERER)"
+    # EGL only from Mesa where NVIDIA's EGL is installed: glvnd loads every
+    # vendor on the first EGL call, and NVIDIA's wakes the suspended GPU
+    # (1.5 s; Electron, Firefox, Alacritty, Xwayland). Tests set the
+    # vendor directory.
+    local vendors="$TMP/egl_vendor.d"
+    mkdir -p "$vendors"
+    : > "$vendors/50_mesa.json"
+    out="$(run_wrapper GLVND_EGL_VENDOR_DIR="$vendors")"
+    expect "no NVIDIA EGL: EGL left alone" "" "$(get __EGL_VENDOR_LIBRARY_FILENAMES)"
+    : > "$vendors/10_nvidia.json"
+    out="$(run_wrapper GLVND_EGL_VENDOR_DIR="$vendors")"
+    expect "NVIDIA EGL: EGL only from Mesa" "$vendors/50_mesa.json" "$(get __EGL_VENDOR_LIBRARY_FILENAMES)"
+    out="$(run_wrapper GLVND_EGL_VENDOR_DIR="$vendors" __EGL_VENDOR_LIBRARY_FILENAMES=/x.json)"
+    expect "EGL vendors of the caller kept" "/x.json" "$(get __EGL_VENDOR_LIBRARY_FILENAMES)"
+    rm "$vendors/50_mesa.json"
+    out="$(run_wrapper GLVND_EGL_VENDOR_DIR="$vendors")"
+    expect "no Mesa EGL: EGL left alone" "" "$(get __EGL_VENDOR_LIBRARY_FILENAMES)"
     # Qt 5.12+ and 6 select "wayland;xcb" from XDG_SESSION_TYPE; Qt before
     # 5.12 (bundled in some programs) aborts on a QT_QPA_PLATFORM list.
     expect "QT_QPA_PLATFORM not set" "" "$(get QT_QPA_PLATFORM)"

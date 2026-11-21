@@ -11,6 +11,20 @@ export LANG
 XPROFILE_LOADED=1
 export XPROFILE_LOADED
 
+# EGL only from Mesa where NVIDIA's EGL is installed: glvnd loads every
+# vendor on a program's first EGL call, and NVIDIA's wakes the suspended
+# GPU (1.5 s at the start of Electron, Firefox, Alacritty). The
+# screens are on the Intel GPU. To run a program on the NVIDIA GPU:
+#   env -u __EGL_VENDOR_LIBRARY_FILENAMES __NV_PRIME_RENDER_OFFLOAD=1 PROGRAM
+# Vulkan is not affected. The caller's value stays; tests set the
+# directory.
+egl_vendors="${GLVND_EGL_VENDOR_DIR:-/usr/share/glvnd/egl_vendor.d}"
+if [ -z "${__EGL_VENDOR_LIBRARY_FILENAMES:-}" ] && [ -e "$egl_vendors/10_nvidia.json" ] &&
+    [ -e "$egl_vendors/50_mesa.json" ]; then
+    __EGL_VENDOR_LIBRARY_FILENAMES="$egl_vendors/50_mesa.json"
+    export __EGL_VENDOR_LIBRARY_FILENAMES
+fi
+
 # Xft.dpi and font settings; i3 (pango) and wezterm read them from here.
 [ -f ~/.Xresources ] && xrdb -merge ~/.Xresources
 
