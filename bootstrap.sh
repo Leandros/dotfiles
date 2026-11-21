@@ -2482,24 +2482,46 @@ install_sway_audio_idle_inhibit() {
 # Python 3.10+) in $PREFIX/lib/swaytiles, precompiled, started by
 # wayland-session/swaytiles. The user unit runs it with --no-keys for the
 # sway session; layouts only on workspaces where one is picked.
+# patches/swaytiles-master-right-tabs.patch adds tabbed-master-right and
+# stacked-master-right (the master on the right, the stack as tabs or
+# stacked titles), offered upstream as a pull request; drop it once a
+# pinned commit has them. The stamp names the patch, so a machine with the
+# plain install updates once.
+readonly SWAYTILES_PATCH="master-right-tabs"
+
 install_swaytiles() {
-    local d="$DOTFILES_DIR" dir lib="$PREFIX/lib/swaytiles"
-    if ! is_current swaytiles "$SWAYTILES_REF" "$PREFIX/bin/swaytiles" ||
+    local d="$DOTFILES_DIR" dir lib="$PREFIX/lib/swaytiles" changed=0
+    local stamp="$SWAYTILES_REF+$SWAYTILES_PATCH"
+    if ! is_current swaytiles "$stamp" "$PREFIX/bin/swaytiles" ||
         ! cmp -s "$d/wayland-session/swaytiles" "$PREFIX/bin/swaytiles"; then
-        dir="$(fetch_unpack "$GITHUB/sertacartun/swaytiles/archive/$SWAYTILES_REF.tar.gz")"
-        $SUDO install -D -m 0644 "$(unpacked_root "$dir")/swaytiles.py" "$lib/swaytiles.py"
+        dir="$(unpacked_root "$(fetch_unpack "$GITHUB/sertacartun/swaytiles/archive/$SWAYTILES_REF.tar.gz")")"
+        patch -d "$dir" -p1 -s < "$d/patches/swaytiles-$SWAYTILES_PATCH.patch" ||
+            die "swaytiles: patch does not apply to $SWAYTILES_REF"
+        $SUDO install -D -m 0644 "$dir/swaytiles.py" "$lib/swaytiles.py"
         $SUDO python3 -m py_compile "$lib/swaytiles.py"
         $SUDO install -D -m 0755 "$d/wayland-session/swaytiles" "$PREFIX/bin/swaytiles"
         if have restorecon; then
             $SUDO restorecon -R "$lib" "$PREFIX/bin/swaytiles"
         fi
-        mark_current swaytiles "$SWAYTILES_REF"
+        mark_current swaytiles "$stamp"
+        changed=1
     fi
     link "$d/.config/systemd/user/swaytiles.service" "$HOME/.config/systemd/user/swaytiles.service"
     if have systemctl; then
         systemctl --user enable -q swaytiles.service
         if systemctl --user show-environment >/dev/null 2>&1; then
             systemctl --user daemon-reload
+            # In a running sway session the enabled unit would wait for the
+            # next login, and without the daemon the layout picked in the
+            # $mod+t menu goes nowhere. After an install or update a
+            # restart runs the new version.
+            if systemctl --user is-active -q sway-session.target; then
+                if [[ "$changed" == 1 ]]; then
+                    systemctl --user restart swaytiles.service
+                else
+                    systemctl --user start swaytiles.service
+                fi
+            fi
         fi
     fi
 }

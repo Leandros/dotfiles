@@ -651,17 +651,18 @@ check_wayland() {
     else
         fail "sway-audio-idle-inhibit libraries: $(grep -E 'pulse|not found' <<< "$saii_libs" | tr '\n' ' ')"
     fi
-    # swaytiles at SWAYTILES_REF (no --version), precompiled, its launcher
-    # the repo's, and the user unit linked and enabled.
-    if [[ "$(cat /usr/local/share/bootstrap/swaytiles 2>/dev/null)" == "$SWAYTILES_REF" ]] &&
+    # swaytiles at SWAYTILES_REF with the master-right-tabs patch (no
+    # --version), precompiled, its launcher the repo's, and the user unit
+    # linked and enabled.
+    if [[ "$(cat /usr/local/share/bootstrap/swaytiles 2>/dev/null)" == "$SWAYTILES_REF+master-right-tabs" ]] &&
         cmp -s "$D/wayland-session/swaytiles" /usr/local/bin/swaytiles &&
         compgen -G '/usr/local/lib/swaytiles/__pycache__/swaytiles.*.pyc' >/dev/null; then
-        ok "swaytiles $SWAYTILES_REF"
+        ok "swaytiles $SWAYTILES_REF+master-right-tabs"
     else
         fail "swaytiles: stamp, launcher or compiled module missing"
     fi
-    if /usr/local/bin/swaytiles --help 2>&1 | grep -q 'usage: swaytiles'; then
-        ok "swaytiles starts"
+    if /usr/local/bin/swaytiles --help 2>&1 | grep -q 'tabbed-master-right'; then
+        ok "swaytiles starts, with the patch's layouts"
     else
         fail "swaytiles: $(/usr/local/bin/swaytiles --help 2>&1 | head -n 2)"
     fi

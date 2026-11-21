@@ -235,17 +235,32 @@ New link or system file: install function, `check_link` or `cmp` check in
     compile's memory; ours points at `/usr/local/lib`). User unit
     `swaytiles.service`, `PartOf`/`WantedBy` `sway-session.target`, not
     upstream's `--wait` from `default.target` (would idle in i3 sessions).
+    Bootstrap starts it where `sway-session.target` is active (restart
+    after an install or update): enabling alone waits for the next login,
+    and without the daemon the `$mod+t` menu's choice (an IPC tick for the
+    daemon) is lost silently. Test: `test/swaytiles/test.sh` (stubs).
     `--no-keys` (the user's choice): without it the daemon rebinds the
     move, kill, float, scratchpad and move-to-workspace keys at runtime.
     No default layout (the user's choice): workspaces stay sway's own until
     one is picked (`swaytiles default LAYOUT` would change that; state in
     `~/.local/state/swaytiles.json`). It follows workspace renames
-    (`ws-pick --rename` is safe). `$mod+Shift+Return` is `nop layout
+    (`ws-pick --rename` is safe). Patched
+    (`patches/swaytiles-master-right-tabs.patch`, `SWAYTILES_PATCH`, stamp
+    `<ref>+master-right-tabs`): `tabbed-master-right` and
+    `stacked-master-right` (`tile(..., master_last=True)` entries in
+    `LAYOUTS`, `DESCRIPTIONS`, `LEADING`; the menu, its pictures and the
+    recognition of manual changes take them from the table). Offered
+    upstream as a pull request; drop the patch once a pinned commit has
+    them. Upstream's own suite (pytest, headless sway, wtype, GTK 4 with
+    `gobject-introspection`) has container-flaky multi-output tests: the
+    five `test_tabs_and_stacked_titles_take_a_window_where_sway_would`
+    cases fail unchanged too. `$mod+Shift+Return` is `nop layout
     master`, read by the daemon from binding events. Upstream suggests
     `$mod+m` for the swap: that is the mark key here. No `--version`:
     verify checks the stamp, the launcher and `--help`. Test: the
     swaytiles block of `test/sway/test.sh` (installs the pinned commit,
-    runs the unit's ExecStart, master layout, swap, `--no-keys`).
+    runs the unit's ExecStart, master layout, swap, `--no-keys`, the
+    patch's two layouts).
   - sway-audio-idle-inhibit (`SWAY_AUDIO_IDLE_INHIBIT_VERSION`, meson from
     the tag, `-Dwerror=false`; libpulse, libsystemd): no `--version` (stamp
     and `ldd`), no systemd unit; holds a logind idle lock (not Wayland), so
@@ -495,7 +510,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   `test/system-sleep/power-button-wake.sh`, `test/system-sleep/vmware-suspend.sh`,
   `test/sunshine-session/test.sh`, `test/sunshine-pin/test.sh`, `test/ghostty/test.sh`, `test/rio/test.sh`, `test/alacritty/test.sh`,
   `test/alacritty-patch/test.sh` (network, cargo, font and xcb headers),
-  `test/firefox-prefs/test.sh`, `test/mouse-accel/test.sh`, `test/zsh-clipboard/test.sh`, `test/lesskey/test.sh`, `test/kmscon-cursor/test.sh`, `test/nvidia-power/test.sh`, `test/term/test.sh`
+  `test/firefox-prefs/test.sh`, `test/mouse-accel/test.sh`, `test/swaytiles/test.sh`, `test/zsh-clipboard/test.sh`, `test/lesskey/test.sh`, `test/kmscon-cursor/test.sh`, `test/nvidia-power/test.sh`, `test/term/test.sh`
   (less in a pseudo terminal in fedora:45, debian:12, amazonlinux:2). Add new tests in this style.
 - X programs: Xorg dummy driver in a container. i3 bindings: Xvfb + i3 with
   the repo config in a Fedora image, `xdotool key super+j`, then read the

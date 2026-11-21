@@ -30,7 +30,7 @@ fi
 # Runs inside the container. Prints ok/FAIL lines; exits non-zero on a FAIL.
 read -r -d '' INNER <<'EOF' || true
 set -uo pipefail
-dnf install -y -q --setopt=install_weak_deps=False sway wtype foot fuzzel xterm xorg-x11-server-Xwayland \
+dnf install -y -q --setopt=install_weak_deps=False sway wtype foot fuzzel xterm patch xorg-x11-server-Xwayland \
     xwayland-satellite xrdb xdpyinfo libxkbcommon-utils python3 python3-pyyaml util-linux procps-ng >/dev/null 2>&1 ||
     { echo "FAIL: dnf install"; exit 1; }
 # sway of the fork (custom pointer acceleration), built as bootstrap.sh
@@ -48,6 +48,7 @@ curl -fsSL "https://github.com/Leandros/sway/archive/$SWAY_REF.tar.gz" | tar -xz
 # swaytiles at SWAYTILES_REF, as bootstrap.sh installs it (install_swaytiles).
 [[ -n "${SWAYTILES_REF:-}" ]] || { echo "FAIL: SWAYTILES_REF missing in bootstrap.sh"; exit 1; }
 curl -fsSL "https://github.com/sertacartun/swaytiles/archive/$SWAYTILES_REF.tar.gz" | tar -xz -C /tmp &&
+    patch -d "/tmp/swaytiles-$SWAYTILES_REF" -p1 -s < /src/swaytiles-master-right-tabs.patch &&
     install -D -m 0644 "/tmp/swaytiles-$SWAYTILES_REF/swaytiles.py" /usr/local/lib/swaytiles/swaytiles.py &&
     python3 -m py_compile /usr/local/lib/swaytiles/swaytiles.py &&
     install -m 0755 /src/swaytiles /usr/local/bin/swaytiles ||
@@ -411,8 +412,28 @@ sleep 0.3
 key -M logo -M shift s -m shift -m logo
 grep -q '"command": "move right"' /tmp/move-bindings && ok "--no-keys: Mod+Shift+s is sway's move right" ||
     fail "move key taken over: $(grep -o '"command": "[^"]*"' /tmp/move-bindings | head -3)"
+# The patch's layouts: the master on the right, the stack as tabs (and as
+# stacked titles) on the left.
+msg -q workspace number 8
+shape() { msg -t get_tree | py '
+import json, sys
+def show(n):
+    if n.get("pid"): return n["name"]
+    kids = " ".join(show(c) for c in n.get("nodes", []))
+    return {"splith": "H", "splitv": "V", "tabbed": "T", "stacked": "S"}.get(n["layout"], "?") + "[" + kids + "]"
+tree = json.load(sys.stdin)
+ws = [w for o in tree["nodes"] for w in o["nodes"] if w.get("type") == "workspace" and w.get("num") == 8]
+print(" ".join(show(c) for w in ws for c in w["nodes"]))'; }
+as_t /usr/local/bin/swaytiles tabbed-master-right
+as_t foot -T E sleep 600 >/dev/null 2>&1 & sleep 1
+as_t foot -T F sleep 600 >/dev/null 2>&1 & sleep 1
+as_t foot -T G sleep 600 >/dev/null 2>&1 & sleep 1
+expect "tabbed-master-right: tabs left, master E right" "T[F G] E" "$(shape)"
+as_t /usr/local/bin/swaytiles stacked-master-right
+sleep 0.5
+expect "stacked-master-right: stacked titles left, master E right" "S[F G] E" "$(shape)"
 pkill -u t -f '/usr/local/bin/swaytiles --no-keys' || true
-msg -q '[title="^(C|D)$"] kill'
+msg -q '[title="^(C|D|E|F|G)$"] kill'
 
 # bin/theme writes theme.conf, which sway reads at login and on reload;
 # bootstrap links the swaybar block where eww is missing.
@@ -559,7 +580,8 @@ for dir in sway fuzzel sway-easyfocus; do
     cp -r "$ROOT/.config/$dir" "$TMP/src/"
 done
 cp "$ROOT/wayland-session/sway-session" "$ROOT/bin/sway-autostart" "$ROOT/bin/theme" "$ROOT/bin/wm-msg" \
-    "$ROOT/wayland-session/swaytiles" "$ROOT/.config/systemd/user/swaytiles.service" "$TMP/src/"
+    "$ROOT/wayland-session/swaytiles" "$ROOT/.config/systemd/user/swaytiles.service" \
+    "$ROOT/patches/swaytiles-master-right-tabs.patch" "$TMP/src/"
 # docker cp, not a bind mount: SELinux hosts would deny the container.
 docker cp "$TMP/src" "$container:/src"
 docker start -a "$container"
