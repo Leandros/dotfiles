@@ -1,0 +1,233 @@
+diff --git a/src/xstate/selection.rs b/src/xstate/selection.rs
+index 8500a79..7d9179b 100644
+--- a/src/xstate/selection.rs
++++ b/src/xstate/selection.rs
+@@ -292,6 +292,8 @@ enum CurrentSelection<T: SelectionType> {
+ 
+ struct SelectionData<T: SelectionType> {
+     last_selection_timestamp: u32,
++    /// Server time at which we took the selection for a Wayland source.
++    wayland_owner_timestamp: u32,
+     atom: x::Atom,
+     targets_atom: x::Atom,
+     current_selection: Option<CurrentSelection<T>>,
+@@ -328,12 +330,14 @@ trait SelectionDataImpl {
+     ) -> bool;
+     fn atom(&self) -> x::Atom;
+     fn selection_clear(&mut self);
++    fn set_wayland_owner_timestamp(&mut self, timestamp: u32);
+ }
+ 
+ impl<T: SelectionType> SelectionData<T> {
+     fn new(atom: x::Atom, targets_atom: x::Atom) -> Self {
+         Self {
+             last_selection_timestamp: x::CURRENT_TIME,
++            wayland_owner_timestamp: x::CURRENT_TIME,
+             atom,
+             targets_atom,
+             current_selection: None,
+@@ -351,11 +355,16 @@ impl<T: SelectionType> SelectionDataImpl for SelectionData<T> {
+     fn atom(&self) -> x::Atom {
+         self.atom
+     }
++    fn set_wayland_owner_timestamp(&mut self, timestamp: u32) {
++        self.wayland_owner_timestamp = timestamp;
++    }
+     fn set_owner(&self, connection: &xcb::Connection, wm_window: x::Window) -> bool {
+         if let Err(e) = connection.send_and_check_request(&x::SetSelectionOwner {
+             owner: wm_window,
+             selection: self.atom,
+-            time: self.last_selection_timestamp,
++            // Now, not the last X11 owner's time: the Wayland selection is
++            // newer, and TIMESTAMP must say so.
++            time: x::CURRENT_TIME,
+         }) {
+             warn!(
+                 "Could not become owner of {}: {e:?}",
+@@ -540,6 +549,23 @@ impl<T: SelectionType> SelectionDataImpl for SelectionData<T> {
+         };
+ 
+         let req_target = request.target();
++        // Only CLIPBOARD has a TIMESTAMP: VMware Workstation takes the newer of
++        // CLIPBOARD and PRIMARY by it, else PRIMARY, and we take both at once.
++        if req_target == atoms.timestamp && self.atom == atoms.clipboard {
++            return match connection.send_and_check_request(&x::ChangeProperty {
++                mode: x::PropMode::Replace,
++                window: request.requestor(),
++                property: request.property(),
++                r#type: x::ATOM_INTEGER,
++                data: &[self.wayland_owner_timestamp],
++            }) {
++                Ok(_) => true,
++                Err(e) => {
++                    warn!("Failed to set timestamp for selection request: {e:?}");
++                    false
++                }
++            };
++        }
+         if req_target == atoms.targets {
+             let atoms: Box<[x::Atom]> = mimes.iter().map(|t| t.target).collect();
+ 
+@@ -903,12 +929,12 @@ impl XState {
+             xcb::Event::XFixes(xcb::xfixes::Event::SelectionNotify(e)) => match e.selection() {
+                 x if x == self.atoms.clipboard || x == self.atoms.primary => match e.subtype() {
+                     xcb::xfixes::SelectionEvent::SetSelectionOwner => {
++                        let data = get_selection_data!(x);
+                         if e.owner() == self.wm_window {
++                            data.set_wayland_owner_timestamp(e.selection_timestamp());
+                             return true;
+                         }
+ 
+-                        let data = get_selection_data!(x);
+-
+                         data.handle_new_owner(
+                             &self.connection,
+                             self.wm_window,
+diff --git a/tests/integration.rs b/tests/integration.rs
+index d35a065..85db3b1 100644
+--- a/tests/integration.rs
++++ b/tests/integration.rs
+@@ -1752,6 +1752,143 @@ fn wayland_then_x11_clipboard_owner() {
+     assert_eq!(request.target(), connection.atoms.targets);
+ }
+ 
++/// The next X event within a second, dispatching the compositor meanwhile:
++/// await_event waits 100 ms, and satellite answered later now and then.
++#[track_caller]
++fn await_event_patiently(f: &mut Fixture, connection: &mut Connection) -> xcb::Event {
++    for _ in 0..100 {
++        f.testwl.dispatch();
++        if let Some(event) = connection.poll_for_event().expect("Failed to poll for event") {
++            return event;
++        }
++        std::thread::sleep(std::time::Duration::from_millis(10));
++    }
++    panic!("No X11 event within a second");
++}
++
++/// VMware Workstation copies the host clipboard into the guest from the newer
++/// of CLIPBOARD and PRIMARY by their TIMESTAMP targets, and from PRIMARY when
++/// neither has one (open-vm-tools, copyPasteUIX11.cpp). So a clipboard taken
++/// from Wayland answers TIMESTAMP with the time we took it, which is later
++/// than the X client's that owned it before; PRIMARY gives none.
++#[test]
++fn clipboard_timestamp_from_wayland() {
++    let mut f = Fixture::new();
++    let mut connection = Connection::new(&f.display);
++    let window = connection.new_window(connection.root, 0, 0, 20, 20, false);
++    f.map_as_toplevel(&mut connection, window);
++    let timestamp = connection
++        .get_reply(&x::InternAtom {
++            only_if_exists: false,
++            name: b"TIMESTAMP",
++        })
++        .atom();
++
++    // An X client owns the clipboard first (VMware after a copy in the guest).
++    connection.get_selection_owner_change_events(true, window);
++    connection.set_selection_owner(window, connection.atoms.clipboard);
++    let x11_time = connection
++        .await_selection_owner_change()
++        .selection_timestamp();
++    let request = connection.await_selection_request();
++    assert_eq!(request.target(), connection.atoms.targets);
++    connection.set_property(
++        request.requestor(),
++        x::ATOM_ATOM,
++        request.property(),
++        &[connection.atoms.mime1],
++    );
++    connection.send_selection_notify(&request);
++    // Let satellite hand the X11 clipboard to the compositor.
++    for _ in 0..20 {
++        f.testwl.dispatch();
++        std::thread::sleep(std::time::Duration::from_millis(10));
++    }
++
++    std::thread::sleep(std::time::Duration::from_millis(20));
++    f.testwl.create_data_offer(vec![testwl::PasteData {
++        mime_type: "text/plain".into(),
++        data: b"from wayland".to_vec(),
++    }]);
++    // The X client loses the clipboard first.
++    match await_event_patiently(&mut f, &mut connection) {
++        xcb::Event::X(x::Event::SelectionClear(e)) => {
++            assert_eq!(e.selection(), connection.atoms.clipboard)
++        }
++        other => panic!("Expected SelectionClear, got {other:?}"),
++    }
++    let owned = match await_event_patiently(&mut f, &mut connection) {
++        xcb::Event::XFixes(xcb::xfixes::Event::SelectionNotify(e)) => e,
++        other => panic!("Expected XFixes SelectionNotify, got {other:?}"),
++    };
++    assert_eq!(owned.owner(), connection.wm_window);
++    connection.get_selection_owner_change_events(false, window);
++    let wayland_time = owned.selection_timestamp();
++    assert!(
++        wayland_time > x11_time,
++        "clipboard taken at {wayland_time}, not after the X client's {x11_time}"
++    );
++
++    connection
++        .send_and_check_request(&x::ConvertSelection {
++            requestor: window,
++            selection: connection.atoms.clipboard,
++            target: timestamp,
++            property: timestamp,
++            time: x::CURRENT_TIME,
++        })
++        .unwrap();
++    let notify = match await_event_patiently(&mut f, &mut connection) {
++        xcb::Event::X(x::Event::SelectionNotify(e)) => e,
++        other => panic!("Didn't get selection notify event, instead got {other:?}"),
++    };
++    assert_eq!(notify.property(), timestamp, "CLIPBOARD has no TIMESTAMP");
++    let reply = connection.get_reply(&x::GetProperty {
++        delete: true,
++        window,
++        property: timestamp,
++        r#type: x::ATOM_ANY,
++        long_offset: 0,
++        long_length: 1,
++    });
++    assert_eq!(reply.r#type(), x::ATOM_INTEGER);
++    assert_eq!(reply.value::<u32>(), &[wayland_time]);
++
++    f.testwl.create_primary_offer(vec![testwl::PasteData {
++        mime_type: "text/plain".into(),
++        data: b"selected".to_vec(),
++    }]);
++    // Taking PRIMARY sends nothing back to the compositor: wait on X.
++    let mut owner = x::WINDOW_NONE;
++    for _ in 0..100 {
++        f.testwl.dispatch();
++        owner = connection
++            .get_reply(&x::GetSelectionOwner {
++                selection: connection.atoms.primary,
++            })
++            .owner();
++        if owner == connection.wm_window {
++            break;
++        }
++        std::thread::sleep(std::time::Duration::from_millis(10));
++    }
++    assert_eq!(owner, connection.wm_window, "PRIMARY not taken from Wayland");
++    connection
++        .send_and_check_request(&x::ConvertSelection {
++            requestor: window,
++            selection: connection.atoms.primary,
++            target: timestamp,
++            property: timestamp,
++            time: x::CURRENT_TIME,
++        })
++        .unwrap();
++    let notify = match await_event_patiently(&mut f, &mut connection) {
++        xcb::Event::X(x::Event::SelectionNotify(e)) => e,
++        other => panic!("Didn't get selection notify event, instead got {other:?}"),
++    };
++    assert_eq!(notify.property(), x::ATOM_NONE, "PRIMARY gave a TIMESTAMP");
++}
++
+ #[test]
+ fn fake_selection_targets() {
+     let mut f = Fixture::new();

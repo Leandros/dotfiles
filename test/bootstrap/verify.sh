@@ -635,6 +635,15 @@ check_wayland() {
     else
         fail "sway-easyfocus not built with the title bar x patch"
     fi
+    # Built with patches/xwayland-satellite-clipboard-timestamp.patch (VMware
+    # took the highlighted text instead of the clipboard), ahead of Fedora's.
+    if [[ "$(cat /usr/local/share/bootstrap/xwayland-satellite 2>/dev/null)" == "$XWAYLAND_SATELLITE_VERSION+clipboard-timestamp" ]] &&
+        [[ "$(command -v xwayland-satellite)" == /usr/local/bin/xwayland-satellite ]]; then
+        ok "xwayland-satellite patched (clipboard timestamp)"
+    else
+        fail "xwayland-satellite not built with the clipboard timestamp patch, or not first in PATH"
+    fi
+    check_version xwayland-satellite "$XWAYLAND_SATELLITE_VERSION" xwayland-satellite -version
     if [[ "$(uname -m)" == x86_64 ]]; then
         check_version cliphist "$CLIPHIST_VERSION" cliphist version
     fi
@@ -661,10 +670,14 @@ check_wayland() {
     else
         fail "swaytiles: stamp, launcher or compiled module missing"
     fi
-    if /usr/local/bin/swaytiles --help 2>&1 | grep -q 'tabbed-master-right'; then
+    # --help prints the usage and the layouts and exits 2: captured first,
+    # as pipefail would fail the pipe on that status.
+    local help
+    help="$(/usr/local/bin/swaytiles --help 2>&1 || true)"
+    if grep -q 'tabbed-master-right' <<< "$help"; then
         ok "swaytiles starts, with the patch's layouts"
     else
-        fail "swaytiles: $(/usr/local/bin/swaytiles --help 2>&1 | head -n 2)"
+        fail "swaytiles: $(head -n 2 <<< "$help")"
     fi
     check_link "$HOME/.config/systemd/user/swaytiles.service" "$D/.config/systemd/user/swaytiles.service"
     if [[ "$(systemctl --user is-enabled swaytiles.service 2>/dev/null || true)" == enabled ]]; then

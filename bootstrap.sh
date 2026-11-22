@@ -132,6 +132,9 @@ readonly RRANDR_REF="d1677ca9b538d489b75a8760a1848d780733083a"
 # https://crates.io/crates/sway-easyfocus (sway desktop only;
 # patches/sway-easyfocus-title-bar-x.patch must apply)
 readonly SWAY_EASYFOCUS_VERSION="1.0.1"
+# https://github.com/Supreeeme/xwayland-satellite/releases (sway desktop
+# only; patches/xwayland-satellite-clipboard-timestamp.patch must apply)
+readonly XWAYLAND_SATELLITE_VERSION="0.8.3"
 # https://github.com/Leandros/sway/tree/v1.12 (sway desktop only): sway
 # 1.12 with pull request swaywm/sway#8592 (accel_profile custom). Built
 # against Fedora's wlroots; drop it once a sway release has the profile.
@@ -2426,6 +2429,35 @@ install_sway_easyfocus() {
     mark_current sway-easyfocus "$stamp"
 }
 
+# X11 programs under sway (sway-autostart starts it), built from the
+# release with patches/xwayland-satellite-clipboard-timestamp.patch into
+# /usr/local, which comes first in PATH; Fedora's package stays (Xwayland,
+# the fallback). VMware Workstation copies the host clipboard into the
+# guest from the newer of CLIPBOARD and PRIMARY by their TIMESTAMP, and
+# from PRIMARY when it gets none (open-vm-tools, copyPasteUIX11.cpp);
+# satellite answered no TIMESTAMP, so the guest got the highlighted text.
+# The patch answers it for CLIPBOARD only (satellite takes both selections
+# at once on every focus) and takes a selection at the current time, not
+# the last X owner's. Drop it once a release does this.
+readonly XWAYLAND_SATELLITE_PATCH="clipboard-timestamp"
+
+install_xwayland_satellite() {
+    local stamp="$XWAYLAND_SATELLITE_VERSION+$XWAYLAND_SATELLITE_PATCH" dir
+    is_current xwayland-satellite "$stamp" "$PREFIX/bin/xwayland-satellite" && return
+
+    # clang-devel: bindgen of xcb-util-cursor-sys.
+    $SUDO dnf install -y -q libxcb-devel xcb-util-cursor-devel clang-devel
+    dir="$(fetch_unpack "$GITHUB/Supreeeme/xwayland-satellite/archive/refs/tags/v$XWAYLAND_SATELLITE_VERSION.tar.gz")"
+    dir="$(unpacked_root "$dir")"
+    patch -d "$dir" -p1 -s < "$DOTFILES_DIR/patches/xwayland-satellite-$XWAYLAND_SATELLITE_PATCH.patch" ||
+        die "xwayland-satellite: patch does not apply to $XWAYLAND_SATELLITE_VERSION"
+    export CARGO_HOME="$CARGO_HOME_DIR" RUSTUP_HOME="$RUSTUP_HOME_DIR"
+    quiet "$CARGO_HOME_DIR/bin/cargo" "+$RUST_TOOLCHAIN" install -q --locked \
+        --root "$WORK_DIR/xwayland-satellite" --path "$dir"
+    install_bin "$WORK_DIR/xwayland-satellite/bin/xwayland-satellite" xwayland-satellite
+    mark_current xwayland-satellite "$stamp"
+}
+
 # sway with the custom pointer acceleration profile (the touchpad curve of
 # X; sway 1.12 has only adaptive and flat), built from the fork at
 # SWAY_REF into /usr/local, which comes first in PATH. Fedora's sway
@@ -2641,6 +2673,7 @@ setup_wayland() {
     install_sunshine
     install_nmrs_gui
     install_sway_easyfocus
+    install_xwayland_satellite
     install_sway_audio_idle_inhibit
     install_swaytiles
     install_eww
@@ -2857,7 +2890,8 @@ report() {
         print_version sway-audio-idle-inhibit cat "$(stamp_path sway-audio-idle-inhibit)"
         print_version swaytiles cat "$(stamp_path swaytiles)"
         print_version fuzzel fuzzel --version
-        print_version xwayland-satellite xwayland-satellite -version
+        # The stamp names the patch; -version prints only the version.
+        print_version xwayland-satellite cat "$(stamp_path xwayland-satellite)"
         # kanshi has no --version.
         print_version kanshi rpm -q kanshi
         # sed reads all lines: with head, a SIGPIPE fails the pipe.

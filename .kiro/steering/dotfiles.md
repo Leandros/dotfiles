@@ -8,8 +8,8 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 - The user commits. Do not commit. Commit subjects in the log are short,
   lower case, imperative ("install arandr and autorandr").
 - Red/green: write or extend a test, see it fail, then change the code.
-- Keep `README.md` in sync. It documents every desktop feature and every test
-  command.
+- Never edit `README.md`: it is the user's. Features, tests and their context
+  go into this file.
 - Keep `CHEATSHEET.md` in sync with key bindings in the i3, tmux and nvim
   configs.
 - `bootstrap.sh` is fetched from GitHub `master`. Changes reach a machine only
@@ -60,7 +60,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `xorg-conf/*.conf` | `/etc/X11/xorg.conf.d/` (root copy) |
 | `sshd-conf/50-color-scheme.conf` | `/etc/ssh/sshd_config.d/` (root copy, Linux, where sshd_config includes the directory; not AL2) |
 | `logind-conf/50-lid-suspend.conf` | `/etc/systemd/logind.conf.d/` (root copy, applies after reboot) |
-| `modprobe-conf/nvidia-power.conf` | `/etc/modprobe.d/` (root copy, both desktops, only with an NVIDIA display controller: PCI vendor `0x10de`, class `0x03*`; `install_nvidia_power` also enables the driver's suspend units where installed: `PreserveVideoMemoryAllocations` needs them; applies after reboot; `restorecon` on every run, also when the file is current: a copy made by hand kept `user_home_t`, which SELinux keeps from `systemd-modules-load`) |
+| `modprobe-conf/nvidia-power.conf` | `/etc/modprobe.d/` (root copy, both desktops, only with an NVIDIA display controller: PCI vendor `0x10de`, class `0x03*`; options: S0ix power management, runtime D3 (`NVreg_DynamicPowerManagement=0x02`), video memory saved to `/var/tmp` across suspend (`PreserveVideoMemoryAllocations`, `TemporaryFilePath`); `install_nvidia_power` also enables the driver's `nvidia-suspend`/`nvidia-resume`/`nvidia-hibernate` units where installed: `PreserveVideoMemoryAllocations` needs them; test `test/nvidia-power/test.sh`; applies after reboot; `restorecon` on every run, also when the file is current: a copy made by hand kept `user_home_t`, which SELinux keeps from `systemd-modules-load`) |
 | `system-sleep/{power-button-wake,vmware-suspend}` | `/usr/lib/systemd/system-sleep/` (root copies) |
 | `xinitrc-d/90-xprofile.sh` | `/etc/X11/xinit/xinitrc.d/` (root copy, Fedora/EL) |
 | `power-mode/*` | `/usr/local/libexec`, `/etc/systemd/system`, `/etc/udev/rules.d` (root copies, Fedora/EL) |
@@ -139,9 +139,9 @@ New tool: choose its category first. Version constant with URL, install
 function with stamp, `step` (basic) or `category_step` in `run_all`,
 `print_version` in `report` (in the category's block), `check_version` in
 `verify.sh` (dev tools in `check_devtools`, plus an absence check in
-`check_no_devtools`), README.
+`check_no_devtools`), this file.
 New link or system file: install function, `check_link` or `cmp` check in
-`verify.sh`, README.
+`verify.sh`, this file.
 
 ### Package quirks
 
@@ -228,6 +228,32 @@ New link or system file: install function, `check_link` or `cmp` check in
     dependency (`--locked`). Test: `test/sway-easyfocus-patch/test.sh`
     (crate download, patch, `cargo test`). Drop the patch once upstream
     releases a fix.
+  - xwayland-satellite (`install_xwayland_satellite`,
+    `XWAYLAND_SATELLITE_VERSION`, cargo from the GitHub release tarball;
+    libxcb-devel, xcb-util-cursor-devel, clang-devel for bindgen) in
+    `/usr/local/bin`, ahead of Fedora's package, which stays (Xwayland,
+    fallback). Patched (`patches/xwayland-satellite-clipboard-timestamp.patch`,
+    stamp `<version>+clipboard-timestamp`), 2026-11-22: VMware Workstation
+    copies the host clipboard into the guest when it grabs the input (the
+    mouse enters its window), from the newer of CLIPBOARD and PRIMARY by
+    their `TIMESTAMP` targets, else from PRIMARY (open-vm-tools
+    `copyPasteUIX11.cpp`, `LocalPrimTimestampCB`; checked with a logging X
+    selection owner). Satellite answered no `TIMESTAMP`, so the guest got
+    the highlighted text, or nothing. The patch answers it for CLIPBOARD
+    only (the time from satellite's own XFixes owner event; it takes both
+    selections at once on every focus, so PRIMARY must stay without one)
+    and takes a selection at `CurrentTime`, not the last X owner's time
+    (else the time equals the guest copy's and VMware takes PRIMARY).
+    Satellite gets the Wayland clipboard only while one of its windows has
+    the keyboard focus (`wl_data_device`, no data-control). The other
+    direction (guest to host) happens when the pointer leaves VMware's
+    window: a keyboard-only switch in sway leaves the copy in the guest.
+    VMware's Edit > Paste types the text as keys, mapped with the host's
+    Bone 2 layout. Test: `test/xwayland-satellite-patch/test.sh` (fedora:45,
+    release download, patch, build, the patch's integration test only:
+    upstream's other integration tests wait 50-100 ms for events and fail
+    or hang now and then, also unpatched). Drop the patch once a release
+    answers `TIMESTAMP`.
   - swaytiles (`SWAYTILES_REF`, a commit: no releases or tags; started
     2026-10, one author): per-workspace layouts, one Python file
     (standard library, 3.10+) in `/usr/local/lib/swaytiles`, precompiled
@@ -257,7 +283,8 @@ New link or system file: install function, `check_link` or `cmp` check in
     cases fail unchanged too. `$mod+Shift+Return` is `nop layout
     master`, read by the daemon from binding events. Upstream suggests
     `$mod+m` for the swap: that is the mark key here. No `--version`:
-    verify checks the stamp, the launcher and `--help`. Test: the
+    verify checks the stamp, the launcher and `--help` (prints the layouts,
+    exits 2: capture it before `grep -q`, pipefail). Test: the
     swaytiles block of `test/sway/test.sh` (installs the pinned commit,
     runs the unit's ExecStart, master layout, swap, `--no-keys`, the
     patch's two layouts).
@@ -503,6 +530,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   `test/pkill-display/test.sh`, `test/i3-bar/test.sh`, `test/xrdp/test.sh`,
   `test/xrdp-conf/test.sh`, `test/syncthing-status/test.sh`, `test/screenshot/test.sh`,
   `test/sway-easyfocus-patch/test.sh` (network, cargo, gtk4 headers),
+  `test/xwayland-satellite-patch/test.sh` (docker, network),
   `test/autorandr-hook/test.sh`,
   `test/input-restore/test.sh`,
   `test/fetch/test.sh` (`fetch_unpack` must die on a failed download: it runs
@@ -599,6 +627,14 @@ New link or system file: install function, `check_link` or `cmp` check in
   `vim.fn.maparg(lhs, "n", false, true).callback()`; `feedkeys` is unreliable
   with async UIs. A plugin prints a deprecation message without a newline;
   pipe output through `sed 's/information/information\n/'`.
+- Tests (need the plugins installed): `test/nvim-markdown-float/test.sh`
+  (LSP-style markdown float, `buftype nofile`: render-markdown renders it
+  but paints no background other than NormalFloat; code blocks, the
+  language line, inline code and headings had ColorColumn and Diff*
+  backgrounds), `test/nvim-rust-indent/test.sh` (a line after a comment
+  block with parentheses indents 4: rust.vim's indent finds comments by
+  regex syntax items, and with only tree-sitter highlighting it counted the
+  comment's `(` as code and indented 8).
 
 ## i3 and X
 
@@ -655,6 +691,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   (xrdp loads a fresh keymap per connect; xev has no mapping mask and gets
   no core MappingNotify under XKB). `bin/term` ($mod+Return, fuzzel):
   Alacritty (default) or wezterm, chosen with `term --use alacritty|wezterm`
+  (`term --show` prints the choice)
   (`$XDG_STATE_HOME/term`; the other one when the chosen is missing). Every
   window a process of its own: Alacritty is by default; wezterm `start
   --always-new-process` (`-e PROG` becomes `-- PROG`): joining the running
@@ -761,7 +798,8 @@ New link or system file: install function, `check_link` or `cmp` check in
   `workspace back_and_forth`; `$mod+comma` / `$mod+period`
   `workspace prev_on_output` / `next_on_output`; `$mod+e` `bin/ws-pick` (a menu of the
   workspaces: fuzzel in sway, dmenu in X; a bare number goes by `number`,
-  so 3 reaches "3: web", any other text to exactly that name, quoted),
+  so 3 reaches "3: web", any other text to exactly that name, quoted; a
+  new name creates the workspace; test `test/ws-pick/test.sh`),
   `$mod+Shift+e` `ws-pick --rename` (a number moves the workspace there);
   the eww bar's workspace click is `ws-pick --go '${ws.name}'` (a
   workspace without a number has num -1); `$mod+z` fullscreen;
@@ -796,6 +834,12 @@ New link or system file: install function, `check_link` or `cmp` check in
   `--scale 1.25`); elsewhere 144. `.xprofile` runs autorandr before it
   computes the Qt scale. Running apps keep their DPI; `autorandr --load`
   of the current profile skips hooks ("Config already loaded").
+- Media keys (volume and mic with amixer, brightness with brightnessctl,
+  players with playerctl) are bound in the i3 config alone: X lets one
+  client grab a key, and a second key daemon (xbindkeys) took them from i3;
+  its brightness binds needed sudo, which has no password prompt from a
+  hotkey. Test: `test/media-keys/test.sh` (no other grabber). The sway
+  config binds the same keys.
 - Key repeat is set in `xorg-conf/50-keyboard-repeat.conf`; `xset r rate` does
   not reach the xremap device.
 - Idle: `bin/idle-timeout start` (run by `.xprofile` and
@@ -807,6 +851,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   `idle-timeout set LOCK [SUSPEND]` keeps in `$XDG_STATE_HOME/idle-timeout`
   (bootstrap leaves it alone; `reset` removes it). `set` restarts the
   daemon of the calling session; from a tty it applies at the next login.
+  Bare `idle-timeout` shows the times in use.
   caffeinate disables its timers again every interval, as a restart turns
   them on. Test: `test/idle-timeout/test.sh`. xidlehook (cargo, desktop) runs both
   timers, `--not-when-audio --not-when-fullscreen --detect-sleep`: timer 0
@@ -950,7 +995,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   No config option avoids it (that path ignores
   `adjust_window_size_when_changing_font_size`); only scale 1 outputs,
   where the DPI stays 96, are spared.
-- X11 programs: xwayland-satellite (Fedora package; 0.8.3 on F45), not
+- X11 programs: xwayland-satellite (patched build, see Package quirks), not
   sway's Xwayland, which draws X windows at scale 1 and lets sway scale
   them up (blurry at 1.5; VMware). Switch: `xwayland disable` in the sway
   config (sway reads it only at start; comment it out to go back).
@@ -1092,7 +1137,9 @@ New link or system file: install function, `check_link` or `cmp` check in
   nothing. An empty clipboard falls back to the primary selection, then
   zsh's CUTBUFFER. Test: `test/zsh-clipboard/test.sh` (stubs). `~/.zshrc`
   is a rendered copy: changes need bootstrap (`write_zshrc`).
-- less keys: `.lesskey` (source format). less 582+ reads `~/.lesskey`
+- less keys: `.lesskey` (source format; Bone 2: `b`/`s` scroll left/right,
+  `n`/`r` a line, `(`/`)` a page, `?`/`-` next/previous match), linked on
+  every machine (`install_lesskey`). less 582+ reads `~/.lesskey`
   (`$XDG_CONFIG_HOME/lesskey` or `~/.config/lesskey` first) and ignores
   `~/.less`; older less (AL2: 458) reads only the binary `~/.less`, so
   `install_lesskey` runs `lesskey` there (`LESSKEY_SOURCE_MIN_VERSION`).
