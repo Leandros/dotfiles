@@ -570,7 +570,7 @@ check_desktop_shared() {
 # What only the sway desktop installs.
 check_wayland() {
     local name path pair mode scale_line bin sway_rt sway_bin saii_libs sway_libs
-    for name in sway-autostart kanshi-save clip-pick; do
+    for name in sway-autostart kanshi-save clip-pick vmware-ungrab; do
         check_link "$HOME/bin/$name" "$D/bin/$name"
     done
     check_link "$HOME/.config/sway" "$D/.config/sway"
@@ -623,6 +623,12 @@ check_wayland() {
         rfkill smbclient mount.cifs btop remmina; do
         if command -v "$bin" >/dev/null; then ok "wayland bin $bin"; else fail "wayland bin missing: $bin"; fi
     done
+    # ~/bin/vmware-ungrab releases VMware's grab with XTest.
+    if /usr/bin/python3 -I -c 'from Xlib.ext import xtest' 2>/dev/null; then
+        ok "python3-xlib (vmware-ungrab)"
+    else
+        fail "python3-xlib missing: vmware-ungrab cannot release VMware's grab"
+    fi
     if rpm -q xdg-desktop-portal-wlr xdg-desktop-portal-gtk >/dev/null; then
         ok "xdg-desktop-portal-wlr and -gtk installed"
     else

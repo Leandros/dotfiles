@@ -1,0 +1,124 @@
+#!/usr/bin/python3 -I
+"""vmware-ungrab - releases VMware Workstation's input grab when the focus
+leaves it in sway.
+
+VMware grabs the pointer and keyboard (an X11 grab) when you click into the
+guest, and lets go only when the pointer leaves its window. Leaving with
+the keyboard ($mod+digit, focus keys) moves no pointer over X, so VMware
+keeps the grab, and with it misses both clipboard copies: guest to host
+happens when it lets go, host to guest when it grabs again.
+
+  vmware-ungrab watch     follow sway's focus events (~/bin/sway-autostart)
+  vmware-ungrab release   move the X pointer outside VMware's windows
+
+release sends one XTest motion to a corner of the X screen that no VMware
+window covers: a grabbing client gets it wherever it goes, and VMware lets
+go. Xwayland ignores a plain pointer warp. With no such corner (VMware
+covers the whole screen) it does nothing. The real cursor stays where it
+is: X's pointer moves on the next motion over an X window.
+"""
+import json
+import os
+import subprocess
+import sys
+
+# VMware's X11 class; xwayland-satellite makes it the app_id.
+VMWARE_CLASS = "vmware"
+# Tests replace the release with a command.
+RELEASE_COMMAND = os.environ.get("VMWARE_UNGRAB_RELEASE")
+
+
+def is_vmware(node):
+    app_id = node.get("app_id") or ""
+    window_class = (node.get("window_properties") or {}).get("class") or ""
+    return VMWARE_CLASS in (app_id.lower(), window_class.lower())
+
+
+def focused_leaf(node):
+    """The focused window of a workspace tree, or None (empty workspace)."""
+    if node.get("focused"):
+        return None if node.get("type") == "workspace" else node
+    for child in node.get("nodes", []) + node.get("floating_nodes", []):
+        leaf = focused_leaf(child)
+        if leaf is not None:
+            return leaf
+    return None
+
+
+def focus_of(event):
+    """The newly focused window of a focus event; {} for none."""
+    if event.get("change") != "focus":
+        return None
+    if "container" in event:
+        return event["container"]
+    if "current" in event:
+        return focused_leaf(event["current"] or {}) or {}
+    return None
+
+
+def release():
+    if RELEASE_COMMAND:
+        subprocess.run([RELEASE_COMMAND], check=False)
+        return
+    from Xlib import X, display
+    from Xlib.ext import xtest
+
+    d = display.Display()
+    root = d.screen().root
+    geometry = root.get_geometry()
+    rects = []
+    for window in root.query_tree().children:
+        try:
+            wm_class = window.get_wm_class() or ()
+            if VMWARE_CLASS not in (c.lower() for c in wm_class):
+                continue
+            if window.get_attributes().map_state != X.IsViewable:
+                continue
+            g = window.get_geometry()
+        except Exception:  # the window went away meanwhile
+            continue
+        rects.append((g.x, g.y, g.x + g.width, g.y + g.height))
+    corners = [(geometry.width - 1, geometry.height - 1), (0, geometry.height - 1),
+               (geometry.width - 1, 0), (0, 0)]
+    for x, y in corners:
+        if not any(x0 <= x < x1 and y0 <= y < y1 for x0, y0, x1, y1 in rects):
+            xtest.fake_input(d, X.MotionNotify, x=x, y=y)
+            d.sync()
+            return
+    print("vmware-ungrab: VMware covers the whole X screen; grab kept", file=sys.stderr)
+
+
+def watch():
+    events = subprocess.Popen(["swaymsg", "-r", "-m", "-t", "subscribe", '["window","workspace"]'],
+                              stdout=subprocess.PIPE, text=True)
+    on_vmware = False
+    for line in events.stdout:
+        try:
+            focus = focus_of(json.loads(line))
+        except ValueError:
+            continue
+        if focus is None:
+            continue
+        now_vmware = is_vmware(focus)
+        if on_vmware and not now_vmware:
+            try:
+                release()
+            except Exception as error:  # no X server: keep watching
+                print(f"vmware-ungrab: {error}", file=sys.stderr)
+        on_vmware = now_vmware
+    return events.wait()
+
+
+def main():
+    command = sys.argv[1] if len(sys.argv) == 2 else ""
+    if command == "watch":
+        return watch()
+    if command == "release":
+        release()
+        return 0
+    print("usage: vmware-ungrab watch|release", file=sys.stderr)
+    return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())

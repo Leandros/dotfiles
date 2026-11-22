@@ -2380,13 +2380,13 @@ install_wayland_packages() {
     # xwayland-satellite: X11 programs (it starts Xwayland); sway's own
     # Xwayland, started on demand, where the sway config enables it.
     # util-linux: rfkill (flightmode); the container images have only
-    # util-linux-core.
+    # util-linux-core. python3-xlib: XTest for ~/bin/vmware-ungrab.
     $SUDO dnf install -y -q \
         sway swaybg swayidle swaylock xwayland-satellite xorg-x11-server-Xwayland xrdb \
         xdg-desktop-portal-wlr xdg-desktop-portal-gtk \
         kanshi wdisplays wl-clipboard fuzzel i3status blueman gobject-introspection \
         grim slurp dunst playerctl libnotify \
-        alsa-utils pavucontrol brightnessctl util-linux cifs-utils samba-client btop remmina remmina-plugins-rdp firewall-config lxpolkit jq syncthing easyeffects kbd terminus-fonts-console
+        alsa-utils pavucontrol brightnessctl util-linux python3-xlib cifs-utils samba-client btop remmina remmina-plugins-rdp firewall-config lxpolkit jq syncthing easyeffects kbd terminus-fonts-console
 }
 
 # Clipboard history (~/bin/clip-pick). Fedora packages it only from 44 on, so
@@ -2564,7 +2564,8 @@ link_wayland_dotfiles() {
     # Rio is installed by hand (no Fedora package); its config is ready.
     link "$d/.config/rio" "$HOME/.config/rio"
     for name in kb i3status-kb pwr theme flightmode touchpad charge caffeinate smb bar \
-        pkill-display term syncthing-status wm-msg ws-pick idle-timeout screenshot sway-autostart kanshi-save clip-pick; do
+        pkill-display term syncthing-status wm-msg ws-pick idle-timeout screenshot sway-autostart kanshi-save clip-pick \
+        vmware-ungrab; do
         link "$d/bin/$name" "$HOME/bin/$name"
     done
     link "$d/.config/sway" "$HOME/.config/sway"

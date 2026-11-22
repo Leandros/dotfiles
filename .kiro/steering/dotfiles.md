@@ -46,7 +46,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `.lesskey` | `~/.lesskey`, link, always (`install_lesskey` in `link_dotfiles`); less < 582 also gets `~/.less` compiled by `lesskey` |
 | `bin/{pbcopy,pbpaste}` | `~/bin`, links, Linux (macOS has its own) |
 | `.config/{sway,fuzzel,sway-easyfocus}`, `.config/systemd/user/sway-session.target`, `xkb` (as `~/.config/xkb`) | `$HOME`, links, desktop-wayland only |
-| `bin/{wm-msg,sway-autostart,kanshi-save,clip-pick}` | `~/bin`, links; `wm-msg` also for desktop (the eww scripts and i3status-kb use it) |
+| `bin/{wm-msg,sway-autostart,kanshi-save,clip-pick,vmware-ungrab}` | `~/bin`, links; `wm-msg` also for desktop (the eww scripts and i3status-kb use it) |
 | `bin/{sunshine-session,sunshine-pin}`, `.config/systemd/user/app-dev.lizardbyte.app.Sunshine.service.d/session.conf` | `~/bin`, `~/.config/systemd/user/...`, links, Fedora desktops (`install_sunshine`) |
 | `wayland-session/sway-session` | `/usr/local/bin/sway-session` (root copy, 0755; the lightdm session's wrapper) |
 | `wayland-session/swaytiles`, `.config/systemd/user/swaytiles.service` | `/usr/local/bin/swaytiles` (root copy, 0755; launcher of `/usr/local/lib/swaytiles/swaytiles.py`), user unit (link, enabled), desktop-wayland (`install_swaytiles`) |
@@ -245,9 +245,21 @@ New link or system file: install function, `check_link` or `cmp` check in
     and takes a selection at `CurrentTime`, not the last X owner's time
     (else the time equals the guest copy's and VMware takes PRIMARY).
     Satellite gets the Wayland clipboard only while one of its windows has
-    the keyboard focus (`wl_data_device`, no data-control). The other
-    direction (guest to host) happens when the pointer leaves VMware's
-    window: a keyboard-only switch in sway leaves the copy in the guest.
+    the keyboard focus (`wl_data_device`, no data-control). VMware copies
+    host to guest when it grabs the input (a click into the guest; not on
+    keyboard focus or pointer enter, tested), guest to host when it lets
+    go, and it lets go only when the X pointer leaves its window: after a
+    keyboard-only switch in sway it kept both X grabs (an `XGrabPointer`
+    of another client got `AlreadyGrabbed`), so neither copy happened.
+    `bin/vmware-ungrab watch` (started by `sway-autostart`, ends with
+    sway's subscription) follows window and workspace focus events; when
+    the focus leaves a VMware window (app_id or class `Vmware`) it runs
+    `release`: one XTest motion (`python3-xlib`) to a corner of the X
+    screen no VMware window covers; the grabbing VMware gets it and lets
+    go (tested live). Xwayland ignores `XWarpPointer` (`xdotool
+    mousemove`). No corner free (VMware covers the screen): nothing.
+    Test: `test/vmware-ungrab/test.sh` (fake swaymsg; Xvfb in fedora:45
+    with a grabbing client).
     VMware's Edit > Paste types the text as keys, mapped with the host's
     Bone 2 layout. Test: `test/xwayland-satellite-patch/test.sh` (fedora:45,
     release download, patch, build, the patch's integration test only:
@@ -531,6 +543,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   `test/xrdp-conf/test.sh`, `test/syncthing-status/test.sh`, `test/screenshot/test.sh`,
   `test/sway-easyfocus-patch/test.sh` (network, cargo, gtk4 headers),
   `test/xwayland-satellite-patch/test.sh` (docker, network),
+  `test/vmware-ungrab/test.sh` (docker for the X part),
   `test/autorandr-hook/test.sh`,
   `test/input-restore/test.sh`,
   `test/fetch/test.sh` (`fetch_unpack` must die on a failed download: it runs

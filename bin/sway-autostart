@@ -177,6 +177,12 @@ main() {
         lxpolkit >/dev/null 2>&1 &
     fi
 
+    # VMware Workstation keeps its input grab when the focus leaves it by
+    # keyboard, and misses the clipboard copies that happen at grab and
+    # release; the watcher releases it. It ends with sway (its swaymsg
+    # subscription does).
+    [[ -x ~/bin/vmware-ungrab ]] && { ~/bin/vmware-ungrab watch </dev/null >/dev/null 2>&1 & }
+
     # Notifications (~/bin/screenshot, notify-send). A Wayland client: it
     # ends with sway.
     if has dunst; then

@@ -61,7 +61,7 @@ write_stubs() {
         wl-paste cliphist blueman-applet lxpolkit dunst pkill "${X_ONLY[@]}"; do
         write_stub "$STUBS/$cmd" "$cmd"
     done
-    for cmd in theme kb bar pkill-display pwr idle-timeout; do
+    for cmd in theme kb bar pkill-display pwr idle-timeout vmware-ungrab; do
         write_stub "$FAKE_HOME/bin/$cmd" "$cmd"
     done
     # swaymsg: the subscription returns at once, and sway is gone.
@@ -189,6 +189,11 @@ main() {
     # The eww bar is the tray; the tray apps register with it.
     before "bar starts before blueman-applet" '^bar' '^blueman-applet'
     before "bar starts before lxpolkit" '^bar' '^lxpolkit'
+
+    # VMware keeps its input grab when the focus leaves by keyboard, and
+    # with it the clipboard copies; the watcher releases it. It ends with
+    # sway (its subscription does).
+    expect "VMware grab watcher starts" "vmware-ungrab|watch" "$(grep '^vmware-ungrab' "$CALLS")"
 
     # dunst: notifications (screenshot, notify-send); a Wayland client, so
     # it ends with sway.
