@@ -635,3 +635,79 @@ Navbuddy (`Space t`):
 | `:RebuildRustWorkspace` | Reload the Cargo workspace and rebuild proc macros (Rust buffers) |
 | `:NvimTreeKeepLayoutToggle` | Keep the split sizes around the tree on/off |
 | `:Lazy` | Plugins; `gr` resets a plugin to the lock file |
+
+## yazi
+
+File manager (`.config/yazi/keymap.toml`). `b n r s` go left / down / up /
+right as in the rest: `b` leaves a directory, `s` enters it. `, b` means:
+press `,`, then `b`; yazi shows the possible next keys after the first. `~`
+or `F1` lists every key.
+
+### Moving
+
+| Key | Action |
+|---|---|
+| `r` / `n` or `Up` / `Down` | Previous / next file |
+| `b` / `s` or `Left` / `Right` | Parent directory / enter directory |
+| `B` / `S` | Back / forward in the directory history |
+| `)` / `(` | Half page up / down (also `Shift+PageUp` / `Shift+PageDown`) |
+| `Ctrl+b` / `Ctrl+f` | Page up / down (also `PageUp` / `PageDown`) |
+| `g g` / `G` | Top / bottom |
+| `g h` / `g c` / `g d` | `~` / `~/.config` / `~/Downloads` |
+| `g Space` | Type a directory to go to |
+| `g f` | Follow the symlink under the cursor |
+| `z` / `Z` | Jump with fzf / zoxide |
+
+### Selecting and files
+
+| Key | Action |
+|---|---|
+| `Space` | Select / unselect, then next file |
+| `Ctrl+a` / `Ctrl+r` | Select all / invert the selection |
+| `v` / `V` | Visual mode: select / unselect a range |
+| `o` or `Enter` | Open (`O` or `Shift+Enter`: choose the program) |
+| `y` / `x` | Copy / cut the selection |
+| `p` / `P` | Paste / paste and overwrite |
+| `Y` or `X` | Forget the copy or cut |
+| `L` / `_` / `Ctrl+-` | Symlink (absolute / relative) / hard link the copied files here |
+| `d` / `D` | Move to the trash / delete permanently |
+| `a` | New file; a name ending in `/` makes a directory |
+| `A` | Rename (the cursor stops before the extension) |
+| `c c` / `c d` / `c f` / `c n` | Copy path / directory / file name / name without extension |
+| `;` / `:` | Shell command (`:` waits until it ends) |
+| `.` | Show / hide hidden files |
+| `Escape` or `Ctrl+[` | Leave visual mode, clear the selection, cancel a search |
+| `q` / `Q` | Quit / quit without changing the shell's directory |
+| `Ctrl+c` | Close the tab, quit on the last one |
+| `Ctrl+z` | Suspend |
+
+### Search and view
+
+| Key | Action |
+|---|---|
+| `t` / `T` | Search file names (fd) / file contents (ripgrep) |
+| `Ctrl+t` | Cancel the search |
+| `f` | Filter the list |
+| `/` / `F` | Find a name as you type, downwards / upwards |
+| `?` / `-` | Next / previous match of the last find |
+| `R` / `N` | Scroll the preview up / down |
+| `Tab` | Details of the file under the cursor (`Tab` or `Escape` closes) |
+| `, b` / `, B` | Sort by date created, oldest / newest first (the default is newest first) |
+| `, m` / `, M` | Sort by date modified / reversed |
+| `, n` / `, N` | Sort by name, numbers in order / reversed |
+| `, a` / `, A` | Sort alphabetically / reversed |
+| `, s` / `, S` | Sort by size / reversed |
+| `, e` / `, E` | Sort by extension / reversed |
+| `, r` | Random order |
+| `m g` | Right column: size and date modified (the default) |
+| `m s` / `m b` / `m m` / `m p` / `m o` / `m n` | Right column: size / date created / date modified / permissions / owner / nothing |
+
+### Tabs and tasks
+
+| Key | Action |
+|---|---|
+| `C` | New tab in the current directory |
+| `1` ... `9` | Tab 1 ... 9 |
+| `[` / `]` | Previous / next tab |
+| `{` / `}` | Move the tab left / right |
+| `w` | Tasks (copies, deletes); `Enter` shows one, `x` cancels it, `w` closes |

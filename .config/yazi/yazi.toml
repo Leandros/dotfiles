@@ -4,6 +4,7 @@
 
 [mgr]
 sort_by        = "btime"
+sort_reverse   = true
 show_hidden    = true
 sort_dir_first = false
 linemode       = "size_and_mtime"
