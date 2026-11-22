@@ -590,7 +590,7 @@ fi
 # ls replacements.
 if [ -x "$(command -v eza)" ]; then
     alias ls=' eza'
-    alias l=' eza -lah'
+    alias l=' eza -lah --sort=created --time=created'
 elif [[ "Linux" == "`uname`" ]]; then
     alias ls=' ls'
     alias l=' ls -lah'

@@ -192,6 +192,10 @@ for_window [instance="^pavucontrol$"] floating enable
 # WM_CLASS class "LANDrop" (its desktop file's StartupWMClass).
 for_window [class="^LANDrop$"] floating enable
 
+# install4j installers (JDownloader 2): a fixed-size wizard, cut off when
+# tiled. WM_CLASS class "install4j-Installer<number>", new per run.
+for_window [class="^install4j-"] floating enable
+
 # change focus between tiling / floating windows
 bindsym $mod+space focus mode_toggle
 

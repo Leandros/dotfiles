@@ -263,6 +263,14 @@ for_window [instance="^pavucontrol$"] floating enable
 for_window [app_id="(?i)^landrop"] floating enable
 for_window [class="^LANDrop$"] floating enable
 
+# install4j installers (JDownloader 2's JDownloader2Setup_unix_nojre.sh):
+# a fixed-size wizard that Java draws at its own size, cut off (no Cancel,
+# Next half hidden) when tiled. X11 (Java falls back from Wayland), WM_CLASS
+# class "install4j-Installer<number>", the number new per run:
+# xwayland-satellite gives it as app_id, sway's Xwayland as class.
+for_window [app_id="^install4j-"] floating enable
+for_window [class="^install4j-"] floating enable
+
 # No idle lock or suspend while a window is full screen (video).
 for_window [all] inhibit_idle fullscreen
 

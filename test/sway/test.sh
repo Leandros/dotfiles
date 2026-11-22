@@ -350,6 +350,9 @@ as_t xwayland-satellite "$DISPLAY" >/tmp/satellite.log 2>&1 &
 for _ in $(seq 1 50); do [ -e "/tmp/.X11-unix/X${DISPLAY#:}" ] && break; sleep 0.1; done
 start_x X-nmrs -class nmrs
 expect "satellite: X11 window is a Wayland window, app_id = class" "xdg_shell nmrs" "$(app_of X-nmrs)"
+# install4j installers (JDownloader 2): a fixed-size wizard, cut off when
+# tiled; the class ends in a number that changes per run.
+start_x X-install4j -class install4j-Installer378667612
 mode="$(msg -t get_outputs | py 'import json,sys; m=json.load(sys.stdin)[0]["current_mode"]; print("%dx%d" % (m["width"], m["height"]))')"
 expect "satellite: X screen in output pixels" "$mode" "$(as_t xdpyinfo 2>/dev/null | awk '/dimensions:/ { print $2 }')"
 # Text size: satellite sets Xft.dpi when a window gets the fractional scale.
@@ -360,7 +363,8 @@ for _ in $(seq 1 50); do
     [ "$(msg -t get_tree | grep -cE '"name": "W-')" -ge 8 ] && break
     sleep 0.2
 done
-for t in W-nmrs W-blueman-manager W-blueman-services W-org.pulseaudio.pavucontrol W-wdisplays W-landrop-v2-electron W-LANDrop X-nmrs; do
+for t in W-nmrs W-blueman-manager W-blueman-services W-org.pulseaudio.pavucontrol W-wdisplays W-landrop-v2-electron W-LANDrop X-nmrs \
+    X-install4j; do
     expect "$t floats" "floating_con" "$(floats "$t")"
 done
 expect "other windows tile" "con" "$(floats W-other)"
@@ -505,7 +509,8 @@ start_x X-nmrs -class nmrs
 start_x X-blueman -name blueman-manager
 start_x X-pavucontrol -name pavucontrol
 start_x X-landrop -class LANDrop
-for t in X-nmrs X-blueman X-pavucontrol X-landrop; do
+start_x X-install4j -class install4j-Installer378667612
+for t in X-nmrs X-blueman X-pavucontrol X-landrop X-install4j; do
     expect "switch: $t floats" "floating_con" "$(floats "$t")"
 done
 expect "switch: X11 window on Xwayland" "xwayland" "$(app_of X-nmrs | cut -d' ' -f1)"

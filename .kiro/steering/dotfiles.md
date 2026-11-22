@@ -670,7 +670,11 @@ New link or system file: install function, `check_link` or `cmp` check in
   copyq (`move position mouse`), arandr, rrandr and pavucontrol (`instance`),
   LANDrop (AppImage, not installed by bootstrap: class `LANDrop`; on sway
   also app_id `(?i)^landrop`, Electron's program or product name, not seen
-  on a real window yet).
+  on a real window yet), install4j installers (JDownloader 2's
+  `JDownloader2Setup_unix_nojre.sh`, 2026-11-21: Java 25's "Failed to open
+  Wayland display, fallback to X11" is harmless; tiled, the fixed-size
+  wizard was cut off: class `install4j-Installer<number>`, new per run, so
+  `^install4j-`; on sway app_id and class).
 - Bar: eww (`.config/eww`, linked; `install_eww`, desktop, commit
   `EWW_REF`, `--no-default-features --features x11`: release 0.6.0 pins
   Rust 1.76). `bin/bar` (run by `.xprofile` before the tray apps) starts the
