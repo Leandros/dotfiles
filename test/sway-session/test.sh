@@ -143,6 +143,20 @@ check_wrapper() {
     rm "$vendors/50_mesa.json"
     out="$(run_wrapper GLVND_EGL_VENDOR_DIR="$vendors")"
     expect "no Mesa EGL: EGL left alone" "" "$(get __EGL_VENDOR_LIBRARY_FILENAMES)"
+    # Vulkan without NVIDIA's driver where it is installed: the loader loads
+    # every driver on vkCreateInstance, and NVIDIA's wakes the suspended GPU
+    # (VMware's renderer ran on it and woke it every few seconds). Tests set
+    # the driver directory.
+    local icds="$TMP/icd.d"
+    mkdir -p "$icds"
+    : > "$icds/intel_icd.x86_64.json"
+    out="$(run_wrapper VULKAN_ICD_DIR="$icds")"
+    expect "no NVIDIA Vulkan: drivers left alone" "" "$(get VK_LOADER_DRIVERS_DISABLE)"
+    : > "$icds/nvidia_icd.x86_64.json"
+    out="$(run_wrapper VULKAN_ICD_DIR="$icds")"
+    expect "NVIDIA Vulkan: its driver disabled" "*nvidia*" "$(get VK_LOADER_DRIVERS_DISABLE)"
+    out="$(run_wrapper VULKAN_ICD_DIR="$icds" VK_LOADER_DRIVERS_DISABLE=x)"
+    expect "disabled drivers of the caller kept" "x" "$(get VK_LOADER_DRIVERS_DISABLE)"
     # Qt 5.12+ and 6 select "wayland;xcb" from XDG_SESSION_TYPE; Qt before
     # 5.12 (bundled in some programs) aborts on a QT_QPA_PLATFORM list.
     expect "QT_QPA_PLATFORM not set" "" "$(get QT_QPA_PLATFORM)"

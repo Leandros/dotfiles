@@ -40,14 +40,28 @@ GSK_RENDERER="${GSK_RENDERER:-ngl}"
 # GPU (1.5 s at the start of Electron, Firefox, Alacritty, Xwayland). The
 # screens are on the Intel GPU. To run a program on the NVIDIA GPU:
 #   env -u __EGL_VENDOR_LIBRARY_FILENAMES __NV_PRIME_RENDER_OFFLOAD=1 PROGRAM
-# Vulkan is not affected. The caller's value stays; tests set the
-# directory.
+# Vulkan: see below. The caller's value stays; tests set the directory.
 egl_vendors="${GLVND_EGL_VENDOR_DIR:-/usr/share/glvnd/egl_vendor.d}"
 if [ -z "${__EGL_VENDOR_LIBRARY_FILENAMES:-}" ] && [ -e "$egl_vendors/10_nvidia.json" ] &&
     [ -e "$egl_vendors/50_mesa.json" ]; then
     __EGL_VENDOR_LIBRARY_FILENAMES="$egl_vendors/50_mesa.json"
     export __EGL_VENDOR_LIBRARY_FILENAMES
 fi
+
+# Vulkan without NVIDIA's driver where it is installed: the loader loads
+# every driver on a program's vkCreateInstance, and NVIDIA's wakes the
+# suspended GPU (VMware Workstation's 3D renderer ran on it and woke it
+# every few seconds: the guest stuttered). Mesa's drivers (Intel, llvmpipe)
+# stay. To run a program on the NVIDIA GPU, also unset this:
+#   env -u __EGL_VENDOR_LIBRARY_FILENAMES -u VK_LOADER_DRIVERS_DISABLE PROGRAM
+# The caller's value stays; tests set the directory.
+for icd in "${VULKAN_ICD_DIR:-/usr/share/vulkan/icd.d}"/nvidia_icd*.json; do
+    if [ -e "$icd" ] && [ -z "${VK_LOADER_DRIVERS_DISABLE:-}" ]; then
+        VK_LOADER_DRIVERS_DISABLE='*nvidia*'
+        export VK_LOADER_DRIVERS_DISABLE
+    fi
+    break
+done
 
 # X11 programs: xwayland-satellite (~/bin/sway-autostart) listens on this
 # display when the sway config disables sway's own Xwayland. sway cannot

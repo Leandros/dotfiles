@@ -900,8 +900,16 @@ New link or system file: install function, `check_link` or `cmp` check in
   where `10_nvidia.json` exists (also in `.xprofile`; glvnd loads every EGL
   vendor at the first EGL call, NVIDIA's wakes the GPU: 1.5 s, measured
   2026-11-21; Electron, Firefox, Alacritty, Xwayland had it loaded;
-  `GLVND_EGL_VENDOR_DIR` for tests; offload: `env -u
-  __EGL_VENDOR_LIBRARY_FILENAMES __NV_PRIME_RENDER_OFFLOAD=1`), `DISPLAY` and
+  `GLVND_EGL_VENDOR_DIR` for tests), `VK_LOADER_DRIVERS_DISABLE='*nvidia*'`
+  where `nvidia_icd*.json` exists (also in `.xprofile`; the Vulkan loader
+  loads every driver on `vkCreateInstance`, NVIDIA's wakes the GPU; 2026-11-22
+  VMware Workstation's renderer `mksSandbox` was a compute process on it,
+  the GPU woke 1-3 times a minute and the guest felt slow; Mesa's Intel
+  and llvmpipe stay, unlike `VK_DRIVER_FILES` with Intel's file;
+  `VULKAN_ICD_DIR` for tests; checked with a ctypes device list: no
+  NVIDIA device and no NVIDIA library mapped), offload: `env -u
+  __EGL_VENDOR_LIBRARY_FILENAMES -u VK_LOADER_DRIVERS_DISABLE
+  __NV_PRIME_RENDER_OFFLOAD=1 PROGRAM`, `DISPLAY` and
   `WLR_BACKENDS` for xwayland-satellite (see
   below); not `QT_QPA_PLATFORM`: Qt picks Wayland from
   `XDG_SESSION_TYPE`, and old bundled Qt 5 aborts on a list). lightdm runs

@@ -58,6 +58,7 @@ echo "qt \${QT_SCALE_FACTOR:-unset} \${QT_FONT_DPI:-unset}" >> "$CALLS"
 echo "lang \${LANG:-unset}" >> "$CALLS"
 echo "loaded \${XPROFILE_LOADED:-unset}" >> "$CALLS"
 echo "egl \${__EGL_VENDOR_LIBRARY_FILENAMES:-unset}" >> "$CALLS"
+echo "vulkan \${VK_LOADER_DRIVERS_DISABLE:-unset}" >> "$CALLS"
 EOF
     for cmd in kb input-restore bar pkill-display xrdp-keys idle-timeout; do
         printf '#!/bin/sh\necho "%s $*" >> "%s"\n' "$cmd" "$CALLS" > "$TMP/home/bin/$cmd"
@@ -100,8 +101,8 @@ run() {
     rm -f "$DEVICE"
     # Without the Qt variables of the session running the test. LANG as
     # lightdm sets it from the AccountsService language (German here).
-    env -u QT_SCALE_FACTOR -u QT_FONT_DPI -u __EGL_VENDOR_LIBRARY_FILENAMES LANG=de_DE.utf8 \
-        GLVND_EGL_VENDOR_DIR="$TMP/egl_vendor.d" \
+    env -u QT_SCALE_FACTOR -u QT_FONT_DPI -u __EGL_VENDOR_LIBRARY_FILENAMES -u VK_LOADER_DRIVERS_DISABLE \
+        LANG=de_DE.utf8 GLVND_EGL_VENDOR_DIR="$TMP/egl_vendor.d" VULKAN_ICD_DIR="$TMP/icd.d" \
         HOME="$TMP/home" XDG_RUNTIME_DIR="$TMP/run" PATH="$STUBS" DISPLAY=:99 XFT_DPI="${XFT_DPI:-}" /bin/sh "$XPROFILE"
     wait 2>/dev/null || true
 }
@@ -193,6 +194,15 @@ main() {
     : > "$TMP/egl_vendor.d/10_nvidia.json"
     expect "NVIDIA EGL: EGL only from Mesa" "egl $TMP/egl_vendor.d/50_mesa.json" "$(run; grep '^egl ' "$CALLS")"
     rm -r "$TMP/egl_vendor.d"
+
+    # Vulkan without NVIDIA's driver where it is installed: the loader loads
+    # every driver on vkCreateInstance, and NVIDIA's wakes the suspended GPU.
+    mkdir -p "$TMP/icd.d"
+    : > "$TMP/icd.d/intel_icd.x86_64.json"
+    expect "no NVIDIA Vulkan: drivers left alone" "vulkan unset" "$(run; grep '^vulkan ' "$CALLS")"
+    : > "$TMP/icd.d/nvidia_icd.x86_64.json"
+    expect "NVIDIA Vulkan: its driver disabled" "vulkan *nvidia*" "$(run; grep '^vulkan ' "$CALLS")"
+    rm -r "$TMP/icd.d"
 
     # Qt scaling from Xft.dpi (bootstrap's scale): QT_SCALE_FACTOR plus
     # QT_FONT_DPI=96, or Qt 6 (already scaled by Xft.dpi) doubles and Qt 5
