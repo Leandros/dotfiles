@@ -214,9 +214,15 @@ test_cpu_info() {
     echo coretemp > "$sys/class/hwmon/hwmon3/name"
     echo "Package id 0" > "$sys/class/hwmon/hwmon3/temp1_label"
     echo 61000 > "$sys/class/hwmon/hwmon3/temp1_input"
+    # ThinkPad fans (thinkpad_acpi): two on the P14s Gen 6.
+    mkdir -p "$sys/class/hwmon/hwmon5"
+    echo thinkpad > "$sys/class/hwmon/hwmon5/name"
+    echo 2516 > "$sys/class/hwmon/hwmon5/fan1_input"
+    echo 2400 > "$sys/class/hwmon/hwmon5/fan2_input"
     # /proc/stat: the second sample adds 100 ticks per core, 25 and 100
     # of them busy. The fake sleep swaps the file between the samples.
     printf 'cpu  0 0 0 0 0 0 0 0\ncpu0 100 0 100 800 0 0 0 0\ncpu1 0 0 0 1000 0 0 0 0\n' > "$proc/stat"
+    cp "$proc/stat" "$TMP/stat-first"
     printf 'cpu  0 0 0 0 0 0 0 0\ncpu0 125 0 100 875 0 0 0 0\ncpu1 50 0 50 1000 0 0 0 0\n' > "$TMP/stat2"
     cat > "$STUBS/sleep" <<EOF
 #!/bin/sh
@@ -230,6 +236,17 @@ EOF
     expect "cpu-info: load 1, 5, 15 min" "0.52  0.61  0.70" "$(jq -r .load <<< "$json")"
     expect "cpu-info: cores in rows, with values" '[[{"name":"cpu0","pct":25},{"name":"cpu1","pct":100}]]' "$(jq -c .cores <<< "$json")"
     expect "cpu-info: package temperature" "61 °C" "$(jq -r .temp <<< "$json")"
+    expect "cpu-info: fan speeds" "2516, 2400 rpm" "$(jq -r .fan <<< "$json")"
+    # shellcheck disable=SC2016 # an eww expression, not the shell's.
+    if grep -qF 'Fan:  ${cpu_info?.fan}' "$YUCK"; then
+        ok "CPU tooltip shows the fans"
+    else
+        fail "CPU tooltip has no fan line"
+    fi
+    rm -r "$sys/class/hwmon/hwmon5"
+    cp "$TMP/stat-first" "$proc/stat"
+    json="$(CPU_INFO_PROC="$proc" CPU_INFO_SYSFS="$sys" run "$SCRIPTS/cpu-info")"
+    expect "cpu-info: no ThinkPad fans: empty" "" "$(jq -r .fan <<< "$json")"
 }
 
 test_mem_info() {

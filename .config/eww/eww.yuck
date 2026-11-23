@@ -40,7 +40,10 @@
 (defwidget cpu-tip []
   (box :orientation "v" :space-evenly false :spacing 4
     (label :halign "start" :text "Load:  ${cpu_info?.load ?: '…'}  (1, 5, 15 min)")
-    (label :halign "start" :text "Temp:  ${cpu_info?.temp ?: '…'}")
+    ;; Fan speeds next to the temperature, on ThinkPads only (~/bin/fan).
+    (box :space-evenly false :spacing 24
+      (label :halign "start" :text "Temp:  ${cpu_info?.temp ?: '…'}")
+      (label :halign "start" :visible {(cpu_info?.fan ?: "") != ""} :text "Fan:  ${cpu_info?.fan}"))
     ;; Each `for` in a box of its own: eww drew no widget after a `for`.
     (box :orientation "v" :space-evenly false
       (for row in {cpu_info?.cores ?: []}

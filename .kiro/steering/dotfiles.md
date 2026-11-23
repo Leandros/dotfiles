@@ -41,7 +41,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `.zshrc` | `~/.zshrc`, rendered copy (`##NEWHOME##`, `##NEWUSER##`) |
 | `.Xresources` | `~/.Xresources`, rendered copy (`##XFT_DPI##`) |
 | `.wezterm.lua`, `.xinitrc`, `.xprofile`, `.xsession`, `.Xmodmap`, `.config/{i3,i3status,xremap,picom,eww}`, `.config/autorandr/postswitch` (the file only: profiles are per machine), `.config/systemd/user/i3-session.target` | `$HOME`, links, Xorg only |
-| `bin/{kb,i3status-kb,pwr,theme,flightmode,touchpad,charge,caffeinate,smb,input-restore,bar,pkill-display,term,xrdp-keys,syncthing-status,screenshot,ws-pick,idle-timeout}` | `~/bin`, links, Xorg only |
+| `bin/{kb,i3status-kb,pwr,theme,flightmode,touchpad,charge,caffeinate,fan,smb,input-restore,bar,pkill-display,term,xrdp-keys,syncthing-status,screenshot,ws-pick,idle-timeout}` | `~/bin`, links, Xorg only |
 | `bin/fzf-cache` | `~/bin`, link, always |
 | `.lesskey` | `~/.lesskey`, link, always (`install_lesskey` in `link_dotfiles`); less < 582 also gets `~/.less` compiled by `lesskey` |
 | `bin/{pbcopy,pbpaste}` | `~/bin`, links, Linux (macOS has its own) |
@@ -61,6 +61,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `sshd-conf/50-color-scheme.conf` | `/etc/ssh/sshd_config.d/` (root copy, Linux, where sshd_config includes the directory; not AL2) |
 | `logind-conf/50-lid-suspend.conf` | `/etc/systemd/logind.conf.d/` (root copy, applies after reboot) |
 | `modprobe-conf/nvidia-power.conf` | `/etc/modprobe.d/` (root copy, both desktops, only with an NVIDIA display controller: PCI vendor `0x10de`, class `0x03*`; options: S0ix power management, runtime D3 (`NVreg_DynamicPowerManagement=0x02`), video memory saved to `/var/tmp` across suspend (`PreserveVideoMemoryAllocations`, `TemporaryFilePath`); `install_nvidia_power` also enables the driver's `nvidia-suspend`/`nvidia-resume`/`nvidia-hibernate` units where installed: `PreserveVideoMemoryAllocations` needs them; test `test/nvidia-power/test.sh`; applies after reboot; `restorecon` on every run, also when the file is current: a copy made by hand kept `user_home_t`, which SELinux keeps from `systemd-modules-load`) |
+| `modprobe-conf/thinkpad-fan.conf` | `/etc/modprobe.d/` (root copy, both desktops, ThinkPads only: `is_thinkpad`, DMI `product_version`; `options thinkpad_acpi fan_control=1` for `bin/fan`; applies after reboot; same `install_modprobe_conf` as nvidia-power.conf: install, then `restorecon` on every run) |
 | `system-sleep/{power-button-wake,vmware-suspend}` | `/usr/lib/systemd/system-sleep/` (root copies) |
 | `xinitrc-d/90-xprofile.sh` | `/etc/X11/xinit/xinitrc.d/` (root copy, Fedora/EL) |
 | `power-mode/*` | `/usr/local/libexec`, `/etc/systemd/system`, `/etc/udev/rules.d` (root copies, Fedora/EL) |
@@ -544,6 +545,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   `test/sway-easyfocus-patch/test.sh` (network, cargo, gtk4 headers),
   `test/xwayland-satellite-patch/test.sh` (docker, network),
   `test/vmware-ungrab/test.sh` (docker for the X part),
+  `test/thinkpad-fan/test.sh`,
   `test/autorandr-hook/test.sh`,
   `test/input-restore/test.sh`,
   `test/fetch/test.sh` (`fetch_unpack` must die on a failed download: it runs
@@ -781,6 +783,9 @@ New link or system file: install function, `check_link` or `cmp` check in
   them, and `* { all: unset; }` stripped their background; `menu` rules
   in eww.scss give them the tooltip look (test: `test_tray_menu_style`,
   GTK 3 from Python on the caller's display). Tray: StatusNotifierItem only (eww is the watcher).
+  The CPU tooltip shows the ThinkPad fan speeds next to the temperature
+  (`cpu-info` `fan`: thinkpad_acpi's hwmon `fan*_input`, "2516, 2400 rpm",
+  empty and the label hidden elsewhere).
   CPU, RAM and time have widget tooltips (`tooltip`: content built once,
   so the CPU `graph` keeps 5 min of history from the i3status value, via
   `replace(blocks?.cpu_usage?.full_text, ...)`, no extra polling). The
@@ -889,6 +894,18 @@ New link or system file: install function, `check_link` or `cmp` check in
   on battery (`--no-block`; the unit is ordered after it, so a boot on
   battery stops it). 2026-11: on battery it was a top wake-up source, and
   is reported to keep the GPU from runtime D3.
+- Fans: `bin/fan [show]|max|auto` (thinkpad_acpi, `/proc/acpi/ibm/fan`,
+  through sudo unless writable). `max` = `level full-speed` then
+  `watchdog 120` (the driver's maximum): without a further command the
+  firmware takes over after 120 s, so a forgotten max (or a fixed level
+  under load) cannot stay; run it again to extend. `auto` = `level auto`,
+  `watchdog 0`. Never `disengaged` (beyond the rating, unmonitored).
+  Levels need `fan_control=1` (`modprobe-conf/thinkpad-fan.conf`, read at
+  module load; before it the module option was `N` and writes failed);
+  `fan` says so when it is off. The P14s Gen 6 has two fans (hwmon
+  `fan1_input`, `fan2_input`); `level` sets both. Test:
+  `test/thinkpad-fan/test.sh` (bootstrap function with a fake DMI, the
+  script with fake proc/sysfs and a sudo stub).
 - Sleep hook: only LNXPWRBN, PNP0C0C, intel-hid and intel-vbtn may wake.
 - VMware sleep hook (`vmware-suspend`, `pre`): `runuser -u <owner> -- vmrun
   -T ws suspend <vmx> hard` for each `vmware-vmx` (vmx path = last argument),

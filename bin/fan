@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+#
+# fan - ThinkPad fan control through thinkpad_acpi.
+#
+# Usage: fan [show]   level and the speed of each fan
+#        fan max      full speed for 120 s, then the firmware's control
+#                     again; run it again to keep it longer
+#        fan auto     back to the firmware's control now
+#
+# max sets the driver's watchdog: when no fan command follows within
+# WATCHDOG_S, the firmware takes over again, so a forgotten max cannot
+# keep the fan at full speed (and a fixed level cannot let the laptop run
+# hot). Never "disengaged": that runs the fan beyond its rating,
+# unmonitored. Setting a level needs fan_control=1 (bootstrap.sh installs
+# /etc/modprobe.d/thinkpad-fan.conf; it applies after a reboot) and root:
+# the commands go through sudo unless the file is writable.
+#
+set -euo pipefail
+
+# Tests set the files.
+readonly PROC="${FAN_PROC:-/proc/acpi/ibm/fan}" SYSFS="${FAN_SYSFS:-/sys}"
+# The driver's maximum.
+readonly WATCHDOG_S=120
+
+usage() {
+    sed -n '/^# Usage:/,/^#$/{/^#$/d;s/^# \{0,1\}//;p}' "$0" >&2
+    exit 2
+}
+
+die() { printf 'fan: %s\n' "$*" >&2; exit 1; }
+
+# "2516, 2400 rpm" from the ThinkPad hwmon, or empty.
+speeds() {
+    local hw input rpms=()
+    for hw in "$SYSFS"/class/hwmon/hwmon*; do
+        [[ "$(cat "$hw/name" 2>/dev/null)" == thinkpad ]] || continue
+        for input in "$hw"/fan*_input; do
+            [[ -r "$input" ]] && rpms+=("$(cat "$input")")
+        done
+    done
+    ((${#rpms[@]})) || return 0
+    printf '%s' "${rpms[0]}"
+    printf ', %s' "${rpms[@]:1}"
+    echo " rpm"
+}
+
+show() {
+    [[ -r "$PROC" ]] || die "no ThinkPad fan ($PROC)"
+    local level line
+    level="$(awk -F'\t+' '$1 == "level:" { print $2 }' "$PROC")"
+    line="level ${level:-unknown}"
+    local rpm
+    rpm="$(speeds)"
+    [[ -n "$rpm" ]] && line="$line, $rpm"
+    echo "$line"
+}
+
+# Each command in a write of its own: the driver reads one per write.
+send() {
+    local cmd
+    for cmd in "$@"; do
+        if [[ -w "$PROC" ]]; then
+            printf '%s\n' "$cmd" >> "$PROC"
+        else
+            printf '%s\n' "$cmd" | sudo tee -a "$PROC" >/dev/null
+        fi
+    done
+}
+
+check_control() {
+    [[ -e "$PROC" ]] || die "no ThinkPad fan ($PROC)"
+    local param="$SYSFS/module/thinkpad_acpi/parameters/fan_control"
+    [[ "$(cat "$param" 2>/dev/null)" == Y ]] ||
+        die "fan control is off: needs 'options thinkpad_acpi fan_control=1' in /etc/modprobe.d (bootstrap.sh installs it) and a reboot"
+}
+
+main() {
+    case "${1:-show}" in
+        show)
+            [[ $# -le 1 ]] || usage
+            show
+            ;;
+        max)
+            [[ $# -le 1 ]] || usage
+            check_control
+            # The level first: the watchdog counts from the last command.
+            send "level full-speed" "watchdog $WATCHDOG_S"
+            show
+            ;;
+        auto)
+            [[ $# -le 1 ]] || usage
+            check_control
+            send "level auto" "watchdog 0"
+            show
+            ;;
+        *) usage ;;
+    esac
+}
+
+main "$@"

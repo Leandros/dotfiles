@@ -3,7 +3,8 @@
 # cpu-info - details for the CPU block tooltip, as one JSON object:
 # load (1, 5, 15 minutes; the kernel keeps no 30-minute average), cores
 # (rows of four {"name": "cpu0", "pct": 12}; the bar colors them by value)
-# and temp (CPU package).
+# temp (CPU package) and fan (ThinkPad fan speeds, "2516, 2400 rpm";
+# empty elsewhere).
 #
 # The eww bar runs it only while the block is hovered. Core usage is the
 # busy share of two /proc/stat samples SAMPLE_S apart.
@@ -62,15 +63,32 @@ temp() {
     done
 }
 
+# Fan speeds of thinkpad_acpi's hwmon (~/bin/fan sets the level), or
+# empty.
+fan() {
+    local hw input rpms=()
+    for hw in "$SYSFS"/class/hwmon/hwmon*; do
+        [[ "$(cat "$hw/name" 2>/dev/null)" == thinkpad ]] || continue
+        for input in "$hw"/fan*_input; do
+            [[ -r "$input" ]] && rpms+=("$(cat "$input")")
+        done
+    done
+    ((${#rpms[@]})) || return 0
+    printf '%s' "${rpms[0]}"
+    printf ', %s' "${rpms[@]:1}"
+    echo " rpm"
+}
+
 main() {
     local load
     read -r -a load < "$PROC/loadavg"
     cores | jq -cR -s \
         --arg load "${load[0]}  ${load[1]}  ${load[2]}" \
         --arg temp "$(temp)" \
+        --arg fan "$(fan)" \
         --argjson per_row "$PER_ROW" '
         [split("\n")[] | select(length > 0) | split(" ") | {name: .[0], pct: (.[1] | tonumber)}]
-        | {load: $load, temp: $temp, cores: [range(0; length; $per_row) as $i | .[$i:$i + $per_row]]}'
+        | {load: $load, temp: $temp, fan: $fan, cores: [range(0; length; $per_row) as $i | .[$i:$i + $per_row]]}'
 }
 
 main "$@"

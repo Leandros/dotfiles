@@ -291,7 +291,7 @@ fi
 check_desktop_shared() {
     local name theme_out idle_want idle_have pwr_out enabled pair font_line font_want
     local kmscon_font kmscon_font_want status_line kb_out keymap wezterm_stamp eww_libs bin bt_enabled
-    for name in kb i3status-kb pwr theme flightmode touchpad charge caffeinate smb bar \
+    for name in kb i3status-kb pwr theme flightmode touchpad charge caffeinate fan smb bar \
         pkill-display term syncthing-status wm-msg ws-pick idle-timeout screenshot; do
         check_link "$HOME/bin/$name" "$D/bin/$name"
     done
@@ -329,6 +329,18 @@ check_desktop_shared() {
         fail "modprobe.d/nvidia-power.conf installed without an NVIDIA GPU"
     else
         ok "no NVIDIA GPU: no nvidia-power.conf"
+    fi
+    # Fan control for ~/bin/fan, on ThinkPads only.
+    if grep -qs ThinkPad /sys/class/dmi/id/product_version; then
+        if cmp -s "$D/modprobe-conf/thinkpad-fan.conf" /etc/modprobe.d/thinkpad-fan.conf; then
+            ok "modprobe.d thinkpad-fan.conf installed"
+        else
+            fail "modprobe.d/thinkpad-fan.conf missing or differs (ThinkPad)"
+        fi
+    elif [[ -e /etc/modprobe.d/thinkpad-fan.conf ]]; then
+        fail "modprobe.d/thinkpad-fan.conf installed on a laptop that is no ThinkPad"
+    else
+        ok "no ThinkPad: no thinkpad-fan.conf"
     fi
     local hook
     for hook in power-button-wake vmware-suspend; do

@@ -2004,9 +2004,10 @@ has_nvidia_gpu() {
     return 1
 }
 
-install_nvidia_power() {
-    has_nvidia_gpu || return 0
-    local src="$DOTFILES_DIR/modprobe-conf/$NVIDIA_MODPROBE_CONF_NAME" dst="$MODPROBE_CONF_DIR/$NVIDIA_MODPROBE_CONF_NAME"
+# A modprobe-conf/ file as a root copy in modprobe.d; it applies when its
+# module loads next (after a reboot).
+install_modprobe_conf() {
+    local name="$1" src="$DOTFILES_DIR/modprobe-conf/$1" dst="$MODPROBE_CONF_DIR/$1"
     if ! cmp -s "$src" "$dst" 2>/dev/null; then
         $SUDO install -D -m 0644 "$src" "$dst"
         log "installed $dst; applies after a reboot"
@@ -2016,6 +2017,11 @@ install_nvidia_power() {
     if have restorecon; then
         $SUDO restorecon "$dst"
     fi
+}
+
+install_nvidia_power() {
+    has_nvidia_gpu || return 0
+    install_modprobe_conf "$NVIDIA_MODPROBE_CONF_NAME"
     local unit units=()
     for unit in nvidia-suspend.service nvidia-resume.service nvidia-hibernate.service; do
         [[ -e "$SYSTEMD_UNIT_DIR/$unit" ]] && units+=("$unit")
@@ -2127,8 +2133,19 @@ enable_autorandr() {
 # default.target): runs from login on, in no X session, so a second
 # session (xrdp) shares it. enable needs no running user manager; start
 # only where one answers (not in containers). Web UI on 127.0.0.1:8384.
+readonly DMI_ID_DIR="/sys/class/dmi/id"
+
 is_thinkpad() {
-    grep -qs ThinkPad /sys/class/dmi/id/product_version
+    grep -qs ThinkPad "$DMI_ID_DIR/product_version"
+}
+
+# Fan control for ~/bin/fan (modprobe-conf/thinkpad-fan.conf): without
+# fan_control=1 thinkpad_acpi only reports the fan speed. ThinkPads only.
+readonly THINKPAD_FAN_MODPROBE_CONF_NAME="thinkpad-fan.conf"
+
+install_thinkpad_fan() {
+    is_thinkpad || return 0
+    install_modprobe_conf "$THINKPAD_FAN_MODPROBE_CONF_NAME"
 }
 
 # Version of the installed EasyEffects package; fails without one.
@@ -2266,6 +2283,7 @@ link_xorg_dotfiles() {
     link "$d/bin/touchpad" "$HOME/bin/touchpad"
     link "$d/bin/charge" "$HOME/bin/charge"
     link "$d/bin/caffeinate" "$HOME/bin/caffeinate"
+    link "$d/bin/fan" "$HOME/bin/fan"
     link "$d/bin/smb" "$HOME/bin/smb"
     link "$d/bin/input-restore" "$HOME/bin/input-restore"
     link "$d/bin/bar" "$HOME/bin/bar"
@@ -2336,6 +2354,7 @@ setup_xorg() {
     enable_sshd_home
     install_sleep_hook
     install_nvidia_power
+    install_thinkpad_fan
     install_xprofile_hook
     install_power_modes
     enable_bluetooth
@@ -2563,7 +2582,7 @@ link_wayland_dotfiles() {
     link "$d/.wezterm.lua" "$HOME/.wezterm.lua"
     # Rio is installed by hand (no Fedora package); its config is ready.
     link "$d/.config/rio" "$HOME/.config/rio"
-    for name in kb i3status-kb pwr theme flightmode touchpad charge caffeinate smb bar \
+    for name in kb i3status-kb pwr theme flightmode touchpad charge caffeinate fan smb bar \
         pkill-display term syncthing-status wm-msg ws-pick idle-timeout screenshot sway-autostart kanshi-save clip-pick \
         vmware-ungrab; do
         link "$d/bin/$name" "$HOME/bin/$name"
@@ -2682,6 +2701,7 @@ setup_wayland() {
     enable_sshd_home
     install_sleep_hook
     install_nvidia_power
+    install_thinkpad_fan
     install_power_modes
     install_sway_session
     install_firefox_prefs

@@ -27,7 +27,7 @@ ok()   { printf 'ok:   %s\n' "$*"; }
 [[ -f "$ROOT/modprobe-conf/nvidia-power.conf" ]] || fail "modprobe-conf/nvidia-power.conf missing"
 grep -qE '^readonly NVIDIA_MODPROBE_CONF_NAME="nvidia-power.conf"$' "$ROOT/bootstrap.sh" \
     || fail "NVIDIA_MODPROBE_CONF_NAME missing"
-sed -n '/^has_nvidia_gpu() {$/,/^}$/p;/^install_nvidia_power() {$/,/^}$/p' "$ROOT/bootstrap.sh" >"$TMP/funcs.sh"
+sed -n '/^has_nvidia_gpu() {$/,/^}$/p;/^install_modprobe_conf() {$/,/^}$/p;/^install_nvidia_power() {$/,/^}$/p' "$ROOT/bootstrap.sh" >"$TMP/funcs.sh"
 
 # pci <name> <vendor> <class>
 pci() { mkdir -p "$TMP/pci/$1"; echo "$2" >"$TMP/pci/$1/vendor"; echo "$3" >"$TMP/pci/$1/class"; }
