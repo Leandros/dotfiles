@@ -726,7 +726,10 @@ New link or system file: install function, `check_link` or `cmp` check in
   `JDownloader2Setup_unix_nojre.sh`, 2026-11-21: Java 25's "Failed to open
   Wayland display, fallback to X11" is harmless; tiled, the fixed-size
   wizard was cut off: class `install4j-Installer<number>`, new per run, so
-  `^install4j-`; on sway app_id and class).
+  `^install4j-`; on sway app_id and class), 1Password (8.12, Electron;
+  `(?i)^(com\.onepassword\.|1password)`: its desktop file's
+  StartupWMClass is `com.onepassword.OnePassword`, older versions
+  `1Password`; on sway app_id and class; not seen on a real window yet).
 - Bar: eww (`.config/eww`, linked; `install_eww`, desktop, commit
   `EWW_REF`, `--no-default-features --features x11`: release 0.6.0 pins
   Rust 1.76). `bin/bar` (run by `.xprofile` before the tray apps) starts the

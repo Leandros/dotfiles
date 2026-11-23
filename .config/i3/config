@@ -196,6 +196,10 @@ for_window [class="^LANDrop$"] floating enable
 # tiled. WM_CLASS class "install4j-Installer<number>", new per run.
 for_window [class="^install4j-"] floating enable
 
+# 1Password (Electron): WM_CLASS class com.onepassword.OnePassword (its
+# desktop file's StartupWMClass), 1Password in older versions.
+for_window [class="(?i)^(com\.onepassword\.|1password)"] floating enable
+
 # change focus between tiling / floating windows
 bindsym $mod+space focus mode_toggle
 

@@ -271,6 +271,12 @@ for_window [class="^LANDrop$"] floating enable
 for_window [app_id="^install4j-"] floating enable
 for_window [class="^install4j-"] floating enable
 
+# 1Password (Electron): its desktop file's StartupWMClass is
+# com.onepassword.OnePassword, older versions use 1Password. On Wayland the
+# app_id, on X11 the class (xwayland-satellite makes it the app_id).
+for_window [app_id="(?i)^(com\.onepassword\.|1password)"] floating enable
+for_window [class="(?i)^(com\.onepassword\.|1password)"] floating enable
+
 # No idle lock or suspend while a window is full screen (video).
 for_window [all] inhibit_idle fullscreen
 

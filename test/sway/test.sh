@@ -322,7 +322,8 @@ def find(n):
     if n.get('name') == '$1' and n.get('pid'): print(n.get('shell'), n.get('app_id'))
     for c in n.get('nodes', []) + n.get('floating_nodes', []): find(c)
 find(json.load(sys.stdin))"; }
-for id in nmrs blueman-manager blueman-services org.pulseaudio.pavucontrol wdisplays landrop-v2-electron LANDrop; do
+for id in nmrs blueman-manager blueman-services org.pulseaudio.pavucontrol wdisplays landrop-v2-electron LANDrop \
+    com.onepassword.OnePassword 1Password; do
     as_t foot --app-id "$id" -T "W-$id" sleep 600 >/dev/null 2>&1 &
 done
 as_t foot --app-id other -T W-other sleep 600 >/dev/null 2>&1 &
@@ -353,6 +354,8 @@ expect "satellite: X11 window is a Wayland window, app_id = class" "xdg_shell nm
 # install4j installers (JDownloader 2): a fixed-size wizard, cut off when
 # tiled; the class ends in a number that changes per run.
 start_x X-install4j -class install4j-Installer378667612
+# 1Password (Electron) on X11: the class of its desktop file.
+start_x X-1password -class com.onepassword.OnePassword
 mode="$(msg -t get_outputs | py 'import json,sys; m=json.load(sys.stdin)[0]["current_mode"]; print("%dx%d" % (m["width"], m["height"]))')"
 expect "satellite: X screen in output pixels" "$mode" "$(as_t xdpyinfo 2>/dev/null | awk '/dimensions:/ { print $2 }')"
 # Text size: satellite sets Xft.dpi when a window gets the fractional scale.
@@ -360,11 +363,11 @@ for _ in $(seq 1 20); do [ "$(xft_dpi)" = 144 ] && break; sleep 0.2; done
 expect "satellite: Xft.dpi of scale 1.5" "144" "$(xft_dpi)"
 
 for _ in $(seq 1 50); do
-    [ "$(msg -t get_tree | grep -cE '"name": "W-')" -ge 8 ] && break
+    [ "$(msg -t get_tree | grep -cE '"name": "W-')" -ge 10 ] && break
     sleep 0.2
 done
 for t in W-nmrs W-blueman-manager W-blueman-services W-org.pulseaudio.pavucontrol W-wdisplays W-landrop-v2-electron W-LANDrop X-nmrs \
-    X-install4j; do
+    X-install4j W-com.onepassword.OnePassword W-1Password X-1password; do
     expect "$t floats" "floating_con" "$(floats "$t")"
 done
 expect "other windows tile" "con" "$(floats W-other)"
@@ -510,7 +513,8 @@ start_x X-blueman -name blueman-manager
 start_x X-pavucontrol -name pavucontrol
 start_x X-landrop -class LANDrop
 start_x X-install4j -class install4j-Installer378667612
-for t in X-nmrs X-blueman X-pavucontrol X-landrop X-install4j; do
+start_x X-1password -class com.onepassword.OnePassword
+for t in X-nmrs X-blueman X-pavucontrol X-landrop X-install4j X-1password; do
     expect "switch: $t floats" "floating_con" "$(floats "$t")"
 done
 expect "switch: X11 window on Xwayland" "xwayland" "$(app_of X-nmrs | cut -d' ' -f1)"
