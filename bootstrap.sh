@@ -1388,13 +1388,20 @@ xorg_supported() {
 install_xorg_packages() {
     case "$DISTRO" in
         debian|ubuntu)
+            # Debian only: Firefox (the ESR; Ubuntu 22.04's firefox package
+            # installs the snap, which bootstrap leaves out) and EasyEffects
+            # (not in Ubuntu 22.04, which has only PulseEffects).
+            local debian_only=""
+            [[ "$DISTRO" == "debian" ]] && debian_only="firefox-esr easyeffects"
+            # shellcheck disable=SC2086 # $debian_only: words to split
             $SUDO env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
                 -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold \
                 xorg xinit x11-xserver-utils \
                 i3 i3status suckless-tools i3lock xss-lock blueman arandr autorandr \
                 alsa-utils pavucontrol brightnessctl xclip xinput rfkill cifs-utils smbclient btop remmina remmina-plugin-rdp picom lxpolkit jq \
                 maim dunst playerctl libnotify-bin \
-                xrdp xorgxrdp syncthing easyeffects \
+                feh vlc okular $debian_only \
+                xrdp xorgxrdp syncthing \
                 kbd console-data console-setup
             ;;
         fedora)
@@ -1409,7 +1416,8 @@ install_xorg_packages() {
                 i3 i3status dmenu i3lock xss-lock blueman gobject-introspection copyq \
                 arandr autorandr gtk3 \
                 alsa-utils pavucontrol brightnessctl xclip xinput picom cifs-utils samba-client btop remmina remmina-plugins-rdp firewall-config lxpolkit jq xrdp xorgxrdp-glamor syncthing easyeffects kbd terminus-fonts-console \
-                maim dunst playerctl libnotify
+                maim dunst playerctl libnotify \
+                feh vlc okular firefox
             ;;
         rhel)
             $SUDO dnf install -y -q epel-release
@@ -1419,12 +1427,13 @@ install_xorg_packages() {
             # tolerates their absence. Without them there is no lock before
             # suspend, no Bluetooth GUI, no saved monitor layouts, no polkit
             # password prompt, no file sync and no speaker preset; ~/bin/pwr
-            # still locks.
+            # still locks. feh is not in EPEL 9 either.
             $SUDO dnf install -y -q \
                 xorg-x11-server-Xorg xorg-x11-xinit xset xsetroot setxkbmap xmodmap \
                 i3 i3status dmenu i3lock copyq \
                 alsa-utils pavucontrol brightnessctl xclip xorg-x11-server-utils cifs-utils samba-client btop remmina remmina-plugins-rdp jq xrdp xorgxrdp-glamor kbd terminus-fonts-console \
-                maim playerctl libnotify
+                maim playerctl libnotify \
+                vlc okular firefox
             ;;
     esac
     install_copyq_deb

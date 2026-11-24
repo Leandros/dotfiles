@@ -522,9 +522,9 @@ check_desktop_shared() {
             fail "syncthing user unit not enabled"
         fi
     fi
-    # EasyEffects: the distro package (not in EPEL 9); on a ThinkPad the
-    # speaker preset where EasyEffects is 7 or newer (Ubuntu 22.04 has 6).
-    if [[ "$os_id" != rocky ]]; then
+    # EasyEffects: the distro package (not in EPEL 9 or Ubuntu 22.04); on a
+    # ThinkPad the speaker preset where EasyEffects is 7 or newer.
+    if [[ "$os_id" != rocky && "$os_id" != ubuntu ]]; then
         local ee_version ee_dir
         if [[ "$os_id" == fedora ]]; then
             ee_version="$(rpm -q --qf '%{VERSION}' easyeffects 2>/dev/null || true)"
@@ -856,6 +856,18 @@ if [[ $xorg_expected -eq 1 ]]; then
     fi
     for bin in i3 i3status dmenu xsetroot xset setxkbmap xmodmap amixer pavucontrol brightnessctl xinput rfkill smbclient mount.cifs btop remmina startx xclip i3lock jq maim playerctl notify-send; do
         if command -v "$bin" >/dev/null; then ok "xorg bin $bin"; else fail "xorg bin missing: $bin"; fi
+    done
+    # Desktop apps. Debian has only Firefox ESR, Ubuntu 22.04 only the snap
+    # (not installed), EL9 no feh.
+    desktop_apps="vlc okular"
+    case "$os_id" in
+        debian) desktop_apps+=" feh firefox-esr" ;;
+        ubuntu) desktop_apps+=" feh" ;;
+        fedora) desktop_apps+=" feh firefox" ;;
+        *)      desktop_apps+=" firefox" ;;
+    esac
+    for bin in $desktop_apps; do
+        if command -v "$bin" >/dev/null; then ok "desktop app $bin"; else fail "desktop app missing: $bin"; fi
     done
     # Not packaged for EL9.
     if grep -qE '^ID=(debian|ubuntu|fedora)$' /etc/os-release; then
