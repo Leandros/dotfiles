@@ -72,6 +72,15 @@ In X, xremap swaps the left Alt and Ctrl keys; in sway, the XKB option
 | `Mod+Shift+k` | Move window to the scratchpad |
 | `Mod+k` | Show / hide / cycle scratchpad windows |
 
+### Workspace mode
+
+`Mod+w` starts workspace mode; each key below ends it. `Return`, `Escape` or `Mod+w` stops it. While it is on, the bar shows each workspace's key right after its number (`4e`).
+
+| Key | Action |
+|---|---|
+| The home-row key below the digit: `c` `t` `i` `e` `o` / `b` `n` `r` `s` `g` | Go to workspace 1 ... 5 / 6 ... 10 |
+| `Shift` + the same keys | Move window to workspace 1 ... 10 |
+
 ### Resize mode
 
 `Mod+a` starts resize mode. `Return` or `Escape` stops it.

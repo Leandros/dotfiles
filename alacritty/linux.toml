@@ -11,9 +11,12 @@
 # Alt is the physical Ctrl key: XKB (sway) and xremap (i3) swap left Alt
 # and Ctrl, and Super belongs to the window manager (wezterm's `ctrlkey`).
 
-# i3 and sway draw the window frames.
+# i3 and sway draw the window frames: "Full" asks for that (server-side
+# decorations on Wayland). "None" asked sway for client-side ones, which
+# Alacritty does not draw: sway gives tiled windows its border anyway, but
+# a floating one (the scratchpad) had none (border csd).
 [window]
-decorations = "None"
+decorations = "Full"
 
 # sway's scroll_factor (touchpad 0.1, mice 0.5) shrinks the scroll deltas.
 # Alacritty has one multiplier for both (default 3): 5 scrolls the touchpad

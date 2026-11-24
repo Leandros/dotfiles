@@ -6,7 +6,9 @@
 ;; (scripts/block-click).
 
 (deflisten blocks :initial "{}" "scripts/status-blocks")
-(deflisten workspaces :initial "[]" "scripts/i3-workspaces")
+;; list: the workspaces, each with key, its key in the workspace mode ("" in
+;; other modes); keymap: that mode is on (scripts/i3-workspaces).
+(deflisten workspaces :initial '{"keymap":false,"list":[]}' "scripts/i3-workspaces")
 ;; i3's binding mode (resize); empty in the default mode.
 (deflisten i3_mode :initial "" "scripts/i3-mode")
 (deflisten theme :initial "dark" "scripts/theme-mode")
@@ -28,14 +30,21 @@
 ;; reads every 5 s anyway: the graph needs no polling of its own.
 
 ;; Workspaces of this output. i3bar: focused, active (visible on another
-;; output), urgent, inactive.
+;; output), urgent, inactive. In the workspace mode each numbered workspace
+;; shows its key right after the number ("4e: mail"); 10 has the key of 0.
+;; The key comes with the list: eww updates widgets in a `for` only when
+;; the list changes, not on another variable (i3_mode).
 (defwidget workspace-buttons [output]
   (box :class "workspaces" :space-evenly false :halign "start"
-    (for ws in workspaces
+    (for ws in {workspaces.list}
       (button :visible {ws.output == output}
               :class "ws ${ws.focused ? 'focused' : ws.visible ? 'active' : ''} ${ws.urgent ? 'urgent' : ''}"
               :onclick "~/bin/ws-pick --go '${ws.name}'"
-        "${ws.name}"))))
+        (box :space-evenly false
+          (label :text {ws.num >= 0 ? "${ws.num}" : ws.name})
+          (label :class "ws-key" :visible {ws.key != ""} :text {ws.key})
+          (label :visible {ws.num >= 0 && ws.name != "${ws.num}"}
+                 :text {substring(ws.name, strlength("${ws.num}"), strlength(ws.name))}))))))
 
 (defwidget cpu-tip []
   (box :orientation "v" :space-evenly false :spacing 4
@@ -150,7 +159,8 @@
     ;; The mode after the workspaces, as i3bar shows it.
     (box :space-evenly false :halign "start"
       (workspace-buttons :output output)
-      (label :visible {i3_mode != ""} :class "mode" :text i3_mode))
+      ;; Not for the workspace mode: its keys are on the workspaces.
+      (label :visible {i3_mode != "" && !workspaces.keymap} :class "mode" :text i3_mode))
     (box)
     (box :space-evenly false :halign "end"
       (status)

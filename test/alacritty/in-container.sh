@@ -56,7 +56,7 @@ check_config() {
     python3 -I -c '
 import json, sys
 c = json.load(sys.stdin)
-want_bg, want_dec = sys.argv[1], "None"
+want_bg, want_dec = sys.argv[1], "Full"
 bg = c["colors"]["primary"]["background"]
 dec = c["window"]["decorations"]
 hints = len(c["hints"]["enabled"])

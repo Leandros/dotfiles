@@ -295,6 +295,23 @@ key -M ctrl 1 -m ctrl
 expect "Ctrl+1: no workspace switch" "3" "$(focused_ws)"
 key -M logo 1 -m logo
 expect "Mod+1: workspace 1" "1" "$(focused_ws)"
+
+# Workspace mode: Mod+w, then the home-row key below a digit
+# (c t i e o b n r s g = 1 ... 0); the mode's name is that key map.
+binding_mode() { msg -t get_binding_state | py 'import json,sys; print(json.load(sys.stdin)["name"])'; }
+key -M logo w -m logo
+expect "Mod+w: workspace mode, named by its keys" "1c 2t 3i 4e 5o 6b 7n 8r 9s 0g" "$(binding_mode)"
+key g
+expect "workspace mode: g goes to workspace 10" "10" "$(focused_ws)"
+expect "workspace mode: ends after the jump" "default" "$(binding_mode)"
+key -M logo w -m logo
+key e
+expect "workspace mode: e goes to workspace 4" "4" "$(focused_ws)"
+key -M logo w -m logo
+key -k Escape
+expect "workspace mode: Escape ends it" "default" "$(binding_mode)"
+expect "workspace mode: Escape stays" "4" "$(focused_ws)"
+msg -q workspace number 1
 msg -q '[title="^A$"] focus'
 key -M ctrl -M shift 2 -m shift -m ctrl
 ws_of() { msg -t get_tree | py "

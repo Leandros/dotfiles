@@ -288,10 +288,13 @@ EOF
 
 test_i3_workspaces() {
     # One round: the list, one event and the list again; then X is gone.
+    # Each workspace gets the key the binding mode gives its number: none
+    # in the default mode.
     cat > "$STUBS/i3-msg" <<'EOF'
 #!/bin/sh
 case "$2" in
     get_workspaces) echo '[{"num":1}]' ;;
+    get_binding_state) echo '{"name":"default"}' ;;
     subscribe) echo '{"change":"focus"}' ;;
 esac
 EOF
@@ -302,14 +305,20 @@ touch "$TMP/x-gone"
 EOF
     chmod +x "$STUBS/i3-msg" "$STUBS/xset"
     rm -f "$TMP/x-gone"
-    expect "i3-workspaces: list, again on a change, ends with X" '[{"num":1}];[{"num":1}]' \
+    local plain='{"keymap":false,"list":[{"num":1,"key":""}]}'
+    expect "i3-workspaces: list, again on a change, ends with X" "$plain;$plain" \
         "$(I3_WORKSPACES_RETRY_S=0 run timeout 5 "$SCRIPTS/i3-workspaces" | paste -sd ';')"
 
-    # sway prints the list on many lines; eww reads one value per line.
+    # sway prints the list on many lines; eww reads one value per line. A
+    # mode named as a key map (the workspace mode, "1c 2t ... 0g") gives
+    # each numbered workspace its key; 10 has the key of 0.
     sway_stub
-    printf '[\n  {\n    "num": 1\n  }\n]\n' > "$STUBS/swaymsg.get_workspaces"
-    echo '{ "change": "focus", "current": { "num": 1 } }' > "$STUBS/swaymsg.events"
-    expect "sway: list on one line, again on a change, ends with sway" '[{"num":1}];[{"num":1}]' \
+    printf '[\n  {\n    "num": 1\n  },\n  {\n    "num": 10\n  },\n  {\n    "num": -1\n  }\n]\n' \
+        > "$STUBS/swaymsg.get_workspaces"
+    printf '{\n  "name": "1c 2t 0g"\n}\n' > "$STUBS/swaymsg.get_binding_state"
+    echo '{ "change": "1c 2t 0g", "pango_markup": false }' > "$STUBS/swaymsg.events"
+    local keyed='{"keymap":true,"list":[{"num":1,"key":"c"},{"num":10,"key":"g"},{"num":-1,"key":""}]}'
+    expect "sway: list with the mode's keys on one line, again on a change, ends with sway" "$keyed;$keyed" \
         "$(I3_WORKSPACES_RETRY_S=0 run_sway timeout 5 "$SCRIPTS/i3-workspaces" | paste -sd ';')"
 }
 

@@ -364,7 +364,10 @@ New link or system file: install function, `check_link` or `cmp` check in
   its symbols (`$ ^ % { } * # ? ( )`) arrive without Shift, and the vi
   defaults for them require Shift (us, de), so linux.toml binds each
   vi-mode symbol key with and without Shift. Hints: URL (Alt+Shift+o, click) and copy (Alt+Shift+t,
-  QuickSelect). `[scrolling] multiplier = 5` in linux.toml (sway's scroll_factor:
+  QuickSelect). `decorations = "Full"` (2026-11-24): "None" asked sway
+  for client-side decorations, so a floating Alacritty (the scratchpad)
+  had no border (`border csd`); tiled ones get sway's anyway.
+  `[scrolling] multiplier = 5` in linux.toml (sway's scroll_factor:
   touchpad 0.1, mice 0.5; one multiplier for both, default 3). Alacritty
   0.17 ignores the multiplier in mouse mode (Claude Code, nvim, less read
   the wheel), so a touchpad swipe there gave a report or two:
@@ -984,6 +987,26 @@ New link or system file: install function, `check_link` or `cmp` check in
   layout menu, `$mod+Shift+Return` swap with the master),
   wdisplays (XF86Display), `$mod+Shift+a` reloads, swaynag exit,
   `Ctrl+Alt+BackSpace` exits.
+- Workspace mode (both desktops, 2026-11-24): `$mod+w`, then the Bone 2
+  home-row key below a digit (`c t i e o b n r s g` = 1 ... 0, the
+  finger of `$mod+digit`) goes to workspace number 1 ... 10, with Shift
+  moves the window there; each key ends the mode, as do Return, Escape
+  and `$mod+w`. The mode's name is the key map (`1c 2t 3i 4e 5o 6b 7n 8r
+  9s 0g`): eww's `scripts/i3-workspaces` (also subscribed to mode
+  events) gives each numbered workspace `key` (the key of its last digit;
+  `keymap` true while such a mode is on), and the bar draws it right after
+  the number ("4e", "3i: web"; class `ws-key`, the mode colors) instead of
+  the mode label. Only existing workspaces are in the bar, so only they
+  show a key. The key must come with the list: eww does not update widgets
+  inside a `for` when another variable changes (a separate `i3_mode`
+  JSON never showed; the resize label outside the `for` did). Wrongly
+  blamed on repainting first (2026-11-24): `output * dpms on` after each
+  mode change only seemed to help (its output event makes `bar watch`
+  reopen the bars), flickered the screen and looped every 2-3 s. For the
+  far digits (the user: hard to reach). Other options weighed: Bone 2's
+  level-5 numpad (three-key chord, absent on firmware-Bone 2 keyboards), swayr
+  (window switcher, one more cargo tool), workspace groups (no custom
+  names).
 - Workspaces switch only with `$mod+digit` (`$mod+Shift+digit` moves), in
   both desktops: Ctrl+digit (physical Alt+digit after the swap) goes to the
   application. Before, sway bound `Ctrl+N` and xremap mapped it to Super.

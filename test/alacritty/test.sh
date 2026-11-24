@@ -140,8 +140,8 @@ if [h.get("binding", {}).get("key") for h in hints] == ["O", "T"] and hints[1].g
     ok("hints: open (Alt+Shift+o), copy (Alt+Shift+t)")
 else:
     fail(f"hints: {hints}")
-if linux["window"]["decorations"] == "None":
-    ok("no window decorations")
+if linux["window"]["decorations"] == "Full":
+    ok("window decorations from i3 and sway (Full)")
 else:
     fail("decorations")
 if linux.get("scrolling", {}).get("multiplier") == 5:

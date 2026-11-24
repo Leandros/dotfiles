@@ -382,6 +382,41 @@ mode "resize" {
 
 bindsym $mod+a mode "resize"
 
+# Workspace mode: $mod+w, then the home-row key below a digit goes to
+# that workspace (c t i e o | b n r s g = 1 ... 5 | 6 ... 0, the finger of
+# $mod+digit one row down); with Shift it moves the window there. Each ends
+# the mode, as do Return, Escape and $mod+w. The mode's name, shown in the
+# bar while it is on, is the key map.
+mode "1c 2t 3i 4e 5o 6b 7n 8r 9s 0g" {
+        bindsym c workspace number 1; mode "default"
+        bindsym t workspace number 2; mode "default"
+        bindsym i workspace number 3; mode "default"
+        bindsym e workspace number 4; mode "default"
+        bindsym o workspace number 5; mode "default"
+        bindsym b workspace number 6; mode "default"
+        bindsym n workspace number 7; mode "default"
+        bindsym r workspace number 8; mode "default"
+        bindsym s workspace number 9; mode "default"
+        bindsym g workspace number 10; mode "default"
+
+        bindsym Shift+c move container to workspace number 1; mode "default"
+        bindsym Shift+t move container to workspace number 2; mode "default"
+        bindsym Shift+i move container to workspace number 3; mode "default"
+        bindsym Shift+e move container to workspace number 4; mode "default"
+        bindsym Shift+o move container to workspace number 5; mode "default"
+        bindsym Shift+b move container to workspace number 6; mode "default"
+        bindsym Shift+n move container to workspace number 7; mode "default"
+        bindsym Shift+r move container to workspace number 8; mode "default"
+        bindsym Shift+s move container to workspace number 9; mode "default"
+        bindsym Shift+g move container to workspace number 10; mode "default"
+
+        bindsym Return mode "default"
+        bindsym Escape mode "default"
+        bindsym $mod+w mode "default"
+}
+
+bindsym $mod+w mode "1c 2t 3i 4e 5o 6b 7n 8r 9s 0g"
+
 # The programs of the session (the bar, idle, clipboard history, ...); sway
 # runs it once, not on reload.
 exec ~/bin/sway-autostart

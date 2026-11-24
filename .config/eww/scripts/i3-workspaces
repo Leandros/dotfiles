@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
 #
-# i3-workspaces - the workspaces of i3 or sway as a JSON array, again on
-# every change.
+# i3-workspaces - the workspaces of i3 or sway as JSON, again on every
+# change: {"keymap": bool, "list": [...]}.
 #
-# For the eww bar: num, name, focused, visible, urgent and output of each
-# workspace, from `wm-msg -t get_workspaces`, on one line (swaymsg prints
-# many; eww reads one value per line). Connects again after an i3
-# restart; ends with the session.
+# For the eww bar: list has num, name, focused, visible, urgent and output
+# of each workspace, from `wm-msg -t get_workspaces`, on one line (swaymsg
+# prints many; eww reads one value per line), plus key: the key of the
+# workspace mode. A binding mode named as a key map ("1c 2t ... 0g") gives
+# each numbered workspace the key of its last digit (keymap true); else
+# key is "". The keys are in the list, not a variable of their own: eww
+# does not update widgets inside a `for` when another variable changes,
+# only when the list does. Connects again after an i3 restart; ends with
+# the session.
 #
 set -euo pipefail
 
@@ -23,11 +28,20 @@ session_alive() {
     xset q >/dev/null 2>&1
 }
 
-workspaces() { "$WM_MSG" -t get_workspaces 2>/dev/null | jq -c .; }
+workspaces() {
+    local mode
+    mode="$("$WM_MSG" -t get_binding_state 2>/dev/null | jq -r .name)" || return
+    "$WM_MSG" -t get_workspaces 2>/dev/null | jq -c --arg mode "$mode" '
+        ($mode | test("^[0-9][a-z]( [0-9][a-z])*$")) as $keymap
+        | (if $keymap then [$mode | splits(" ") | {key: .[0:1], value: .[1:2]}] | from_entries
+           else {} end) as $keys
+        | {keymap: $keymap,
+           list: map(. + {key: (if .num >= 0 then ($keys[.num % 10 | tostring] // "") else "" end)})}'
+}
 
 while session_alive; do
     if workspaces; then
-        "$WM_MSG" -t subscribe -m '["workspace","output"]' 2>/dev/null | while read -r _; do
+        "$WM_MSG" -t subscribe -m '["workspace","output","mode"]' 2>/dev/null | while read -r _; do
             workspaces
         done
     fi
