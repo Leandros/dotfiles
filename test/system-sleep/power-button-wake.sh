@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #
 # Runs system-sleep/power-button-wake against a fake sysfs tree. Before sleep
-# every wakeup source except the power buttons must end disabled; after
-# sleep nothing may change.
+# every wakeup source except the power buttons and e1000e Ethernet must end
+# disabled; after sleep nothing may change.
 #
 # Usage: test/system-sleep/power-button-wake.sh
 #
@@ -22,6 +22,7 @@ readonly KEPT=(
     "platform/INTC1078:00"
     "$ACPI/INTC1078:00"
     "platform/INT33D6:00"
+    "pci0000:00/0000:00:1f.6"
 )
 readonly DISABLED=(
     "$ACPI/PNP0C0D:00"
@@ -31,7 +32,7 @@ readonly DISABLED=(
     "platform/i8042/serio1"
     "pci0000:00/0000:00:14.0"
     "pci0000:00/0000:00:14.0/usb1/1-3"
-    "pci0000:00/0000:00:1f.6"
+    "pci0000:00/0000:00:1c.0/0000:03:00.0"
     "pnp0/00:01"
 )
 
@@ -59,6 +60,9 @@ build_tree() {
     done
     bind_driver "platform/INTC1078:00" intel-hid
     bind_driver "platform/INT33D6:00" intel-vbtn
+    # I219: with wakeup disabled, e1000e keeps it powered and blocks S0ix.
+    bind_driver "pci0000:00/0000:00:1f.6" e1000e
+    bind_driver "pci0000:00/0000:00:1c.0/0000:03:00.0" r8169
     # The ACPI companion of intel-hid points at its platform device.
     ln -s "$FAKE/devices/platform/INTC1078:00" "$FAKE/devices/$ACPI/INTC1078:00/physical_node"
     # Not wakeup capable: an empty attribute must stay untouched.
@@ -82,12 +86,12 @@ main() {
 
     POWER_BUTTON_WAKE_SYSFS="$FAKE" "$HOOK" pre suspend || fail "pre: exit $?"
     check_states pre
-    [[ $FAILED -eq 0 ]] && ok "pre: only power buttons can wake"
+    [[ $FAILED -eq 0 ]] && ok "pre: only power buttons and e1000e can wake"
 
     # After resume the hook must not touch anything.
-    add_device "pci0000:00/0000:00:1f.6" enabled
+    add_device "pci0000:00/0000:00:14.0" enabled
     POWER_BUTTON_WAKE_SYSFS="$FAKE" "$HOOK" post suspend || fail "post: exit $?"
-    if [[ "$(wakeup_of "pci0000:00/0000:00:1f.6")" == enabled ]]; then
+    if [[ "$(wakeup_of "pci0000:00/0000:00:14.0")" == enabled ]]; then
         ok "post: no change"
     else
         fail "post: changed a wakeup source"

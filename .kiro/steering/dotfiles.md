@@ -909,7 +909,16 @@ New link or system file: install function, `check_link` or `cmp` check in
   `fan1_input`, `fan2_input`); `level` sets both. Test:
   `test/thinkpad-fan/test.sh` (bootstrap function with a fake DMI, the
   script with fake proc/sysfs and a sudo stub).
-- Sleep hook: only LNXPWRBN, PNP0C0C, intel-hid and intel-vbtn may wake.
+- Sleep hook: only LNXPWRBN, PNP0C0C, intel-hid and intel-vbtn may wake,
+  plus e1000e (the I219-LM): with its wakeup disabled, or Wake-on-LAN off
+  (`ethtool wol d`), e1000e leaves it powered in suspend (`GBE_PGD0_PG_STS`
+  unmet in `pmc_core/substate_requirements`) and the SoC gets no S0ix:
+  2026-11-24, P14s Gen 6 on battery, 0 s of 60 s, 48 s with wakeup and
+  `wol g`; overnight it drew 0.8 W (10 % in 9 h). So a magic packet on a
+  wired network can wake it. Check S0ix over a sleep with the delta of
+  `/sys/kernel/debug/pmc_core/slp_s0_residency_usec` (root);
+  `suspend_stats/total_hw_sleep` stays 0 on this machine. On AC the
+  USB-C charger also kept S0ix off in a test.
 - VMware sleep hook (`vmware-suspend`, `pre`): `runuser -u <owner> -- vmrun
   -T ws suspend <vmx> hard` for each `vmware-vmx` (vmx path = last argument),
   60 s timeout each. Cause: at resume from s2idle the host TSC has counted

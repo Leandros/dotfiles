@@ -4,10 +4,16 @@
 # the machine from suspend or hibernation.
 #
 # Before every sleep it disables all other wakeup sources: lid, keyboard,
-# TrackPoint, touchpad, USB, Bluetooth, Wake-on-LAN, AC adapter and RTC
-# alarms. It runs at each sleep because drivers and tools (ethtool, NetworkManager)
-# can enable a source again at any time. The setting only affects system
-# sleep; USB runtime autosuspend does not depend on it.
+# TrackPoint, touchpad, USB, Bluetooth, AC adapter and RTC alarms. It runs
+# at each sleep because drivers and tools (ethtool, NetworkManager) can
+# enable a source again at any time. The setting only affects system sleep;
+# USB runtime autosuspend does not depend on it.
+#
+# Exception: Intel I219 Ethernet (e1000e) keeps its wakeup, and with it
+# Wake-on-LAN (magic packet, `ethtool ... wol g`). Without an armed wake,
+# e1000e leaves the controller powered in suspend, which keeps the SoC out
+# of S0ix: 0 s of 60 s on a ThinkPad P14s Gen 6, 48 s with it (2026-11-24;
+# measured with /sys/kernel/debug/pmc_core/slp_s0_residency_usec).
 #
 # Installed to /usr/lib/systemd/system-sleep/ by bootstrap.sh.
 #
@@ -19,6 +25,8 @@ readonly SYSFS="${POWER_BUTTON_WAKE_SYSFS:-/sys}"
 readonly POWER_BUTTON_IDS=(LNXPWRBN PNP0C0C)
 # Intel drivers that report the power button during suspend-to-idle.
 readonly POWER_BUTTON_DRIVERS=(intel-hid intel-vbtn)
+# Drivers whose devices block S0ix without their wakeup (see above).
+readonly S0IX_WAKE_DRIVERS=(e1000e)
 
 driver_of() {
     local link
@@ -45,6 +53,15 @@ is_power_button() {
     return 1
 }
 
+needs_wake_for_s0ix() {
+    local driver name
+    driver="$(driver_of "$1")"
+    for name in "${S0IX_WAKE_DRIVERS[@]}"; do
+        [[ "$driver" == "$name" ]] && return 0
+    done
+    return 1
+}
+
 main() {
     [[ "${1:-}" == "pre" ]] || exit 0
 
@@ -54,6 +71,7 @@ main() {
         [[ "$state" == "enabled" ]] || continue
         dev="${wakeup%/power/wakeup}"
         is_power_button "$dev" && continue
+        needs_wake_for_s0ix "$dev" && continue
 
         if echo disabled > "$wakeup"; then
             echo "power-button-wake: disabled wakeup for ${dev#"$SYSFS"/}"
