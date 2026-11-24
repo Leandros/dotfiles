@@ -145,6 +145,11 @@ bindsym $mod+Ctrl+Down move workspace to output down
 bindsym $mod+Ctrl+Up move workspace to output up
 bindsym $mod+Ctrl+Right move workspace to output right
 
+# focus the screen left / right ($mod+Mod1: physical Super+Ctrl, Alt and
+# Ctrl are swapped)
+bindsym $mod+Mod1+b focus output left
+bindsym $mod+Mod1+s focus output right
+
 # swap two windows: mark one ($mod+m again unmarks; the title shows
 # [swap], which i3 hides for marks starting with "_"), focus the other,
 # then swap them

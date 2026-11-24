@@ -485,6 +485,20 @@ key -k Return
 sleep 1
 expect "fuzzel: terminal programs in ~/bin/term" "term|-e|termtest-prog|--flag|a b" "$(grep '^term|' "$CALLS")"
 
+# Mod+Alt+b / Mod+Alt+s: focus the screen left / right. Last before the
+# exit: the second output could disturb the tests after it.
+focused_output() { msg -t get_outputs | py 'import json,sys; print(*[o["name"] for o in json.load(sys.stdin) if o["focused"]])'; }
+first_output="$(focused_output)"
+msg -q create_output
+second_output="$(msg -t get_outputs | py "import json,sys; print(*[o['name'] for o in json.load(sys.stdin) if o['name'] != '$first_output'])")"
+msg -q output "$first_output" pos 0 0
+msg -q output "$second_output" pos 4000 0
+msg -q focus output "$first_output"
+key -M logo -M alt s -m alt -m logo
+expect "Mod+Alt+s: screen right" "$second_output" "$(focused_output)"
+key -M logo -M alt b -m alt -m logo
+expect "Mod+Alt+b: screen left" "$first_output" "$(focused_output)"
+
 # The X session's Ctrl+Alt+Backspace (terminate:ctrl_alt_bksp).
 pid="$(pgrep -u t -x sway)"
 key -M ctrl -M alt -k BackSpace -m alt -m ctrl
