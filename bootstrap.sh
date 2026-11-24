@@ -915,15 +915,25 @@ install_zoxide() {
     mark_current zoxide "$ZOXIDE_VERSION"
 }
 
+# The glibc build needs glibc 2.39. Only it has birth times (btime: sort and
+# linemode): Rust's std reads them with statx on glibc only, so the musl
+# build (older distros) gets none.
+readonly YAZI_GNU_MIN_GLIBC="2.39"
+
 install_yazi() {
-    is_current yazi "$YAZI_VERSION" "$PREFIX/bin/yazi" && return
     local target="$RUST_TARGET_LINUX_MUSL"
-    [[ "$OS" == "macos" ]] && target="$RUST_TARGET_DARWIN"
+    if [[ "$OS" == "macos" ]]; then
+        target="$RUST_TARGET_DARWIN"
+    elif version_ge "$GLIBC" "$YAZI_GNU_MIN_GLIBC"; then
+        target="$ARCH-unknown-linux-gnu"
+    fi
+    # The target is in the stamp: machines with the musl build switch once.
+    is_current yazi "$YAZI_VERSION+$target" "$PREFIX/bin/yazi" && return
     local dir
     dir="$(fetch_unpack "$GITHUB/sxyazi/yazi/releases/download/v$YAZI_VERSION/yazi-$target.zip")"
     install_bin_from "$dir" yazi
     install_bin_from "$dir" ya
-    mark_current yazi "$YAZI_VERSION"
+    mark_current yazi "$YAZI_VERSION+$target"
 }
 
 install_lazygit() {

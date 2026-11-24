@@ -9,3 +9,5 @@ tags
 # Build files
 *.o
 *.d
+
+**/.claude/settings.local.json

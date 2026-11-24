@@ -79,6 +79,16 @@ check_version nvim    "NVIM v$NVIM_VERSION" nvim --version
 check_version fzf     "$FZF_VERSION" fzf --version
 check_version zoxide  "zoxide $ZOXIDE_VERSION" zoxide --version
 check_version yazi    "Version: $YAZI_VERSION" yazi --version
+# Birth times need the glibc build (Rust's std uses statx only with glibc).
+if [[ "$(uname -s)" == Linux ]]; then
+    glibc="$(getconf GNU_LIBC_VERSION | awk '{print $2}')"
+    yazi_libs="$(ldd "$(command -v yazi)" 2>&1 || true)"
+    if [[ "$(printf '%s\n' 2.39 "$glibc" | sort -V | head -n 1)" == 2.39 ]]; then
+        if [[ "$yazi_libs" == *libc.so.6* ]]; then ok "yazi: glibc build (btime)"
+        else fail "yazi: not the glibc build on glibc $glibc (no btime)"; fi
+    elif [[ "$yazi_libs" != *libc.so.6* ]]; then ok "yazi: musl build on glibc $glibc"
+    else fail "yazi: glibc build on glibc $glibc"; fi
+fi
 check_version uv      "uv $UV_VERSION" uv --version
 check_version fd      "fd $FD_VERSION" fd --version
 check_version dua     "dua $DUA_VERSION" dua --version

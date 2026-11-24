@@ -498,6 +498,12 @@ New link or system file: install function, `check_link` or `cmp` check in
   `xkb_options`. Tests: `test/kmscon-conf/test.sh`, `test/kb/test.sh`,
   `test/xprofile/test.sh`.
 - tree-sitter CLI: built with cargo; release binaries need glibc 2.39.
+- yazi: the release's glibc build where glibc >= 2.39 (`YAZI_GNU_MIN_GLIBC`,
+  Fedora 43+), else musl (Debian 12, Ubuntu 22.04, EL9, AL2, AL2023). Rust's
+  std reads birth times with statx only on glibc: in the musl build
+  `cha.btime` is nil, so `sort btime` (the config's default) ordered
+  nothing and `linemode btime` was empty. Stamp `<version>+<target>`.
+  verify.sh checks the build with `ldd`.
 - Rust is not pinned: `install_rust` runs `rustup toolchain install stable`
   (installs or updates) and `rustup default stable` on every run. The
   `rust-analyzer` in `~/.cargo/bin` is a rustup proxy that runs the default
