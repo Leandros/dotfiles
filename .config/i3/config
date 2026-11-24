@@ -205,6 +205,9 @@ for_window [class="^install4j-"] floating enable
 # desktop file's StartupWMClass), 1Password in older versions.
 for_window [class="(?i)^(com\.onepassword\.|1password)"] floating enable
 
+# Thunar: WM_CLASS class Thunar.
+for_window [class="^Thunar$"] floating enable
+
 # change focus between tiling / floating windows
 bindsym $mod+space focus mode_toggle
 

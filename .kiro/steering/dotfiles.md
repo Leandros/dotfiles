@@ -742,7 +742,8 @@ New link or system file: install function, `check_link` or `cmp` check in
   `^install4j-`; on sway app_id and class), 1Password (8.12, Electron;
   `(?i)^(com\.onepassword\.|1password)`: its desktop file's
   StartupWMClass is `com.onepassword.OnePassword`, older versions
-  `1Password`; on sway app_id and class; not seen on a real window yet).
+  `1Password`; on sway app_id and class; not seen on a real window yet),
+  Thunar (app_id and class `Thunar`, 4.20, seen on real windows).
 - Bar: eww (`.config/eww`, linked; `install_eww`, desktop, commit
   `EWW_REF`, `--no-default-features --features x11`: release 0.6.0 pins
   Rust 1.76). `bin/bar` (run by `.xprofile` before the tray apps) starts the

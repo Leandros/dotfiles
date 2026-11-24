@@ -282,6 +282,10 @@ for_window [class="^install4j-"] floating enable
 for_window [app_id="(?i)^(com\.onepassword\.|1password)"] floating enable
 for_window [class="(?i)^(com\.onepassword\.|1password)"] floating enable
 
+# Thunar (GTK 3): app_id Thunar on Wayland, class Thunar on X11.
+for_window [app_id="^Thunar$"] floating enable
+for_window [class="^Thunar$"] floating enable
+
 # No idle lock or suspend while a window is full screen (video).
 for_window [all] inhibit_idle fullscreen
 
