@@ -57,6 +57,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `wayland-session/sway-dotfiles.desktop` | `/usr/share/wayland-sessions/` (root copy, 0644; lightdm reads only `/usr/share`) |
 | `~/.config/sway.d/` | real directory, never a link: `output.conf` (bootstrap), `theme.conf` (`bin/theme`), `kb.conf` (`bin/kb`) |
 | `xkb/symbols/bone2` | generated from `.Xmodmap` by `xkb/xmodmap-to-xkb.py`; regenerate when `.Xmodmap` changes |
+| `xkb/symbols/usuml` | hand-written: `us(basic)` plus ä ö ü (Shift: Ä Ö Ü) on right Alt + a, o, u (`level3(ralt_switch)`); for the ErgoDox, which sends US keys (2026-11-25) |
 | `xorg-conf/*.conf` | `/etc/X11/xorg.conf.d/` (root copy) |
 | `sshd-conf/50-color-scheme.conf` | `/etc/ssh/sshd_config.d/` (root copy, Linux, where sshd_config includes the directory; not AL2) |
 | `logind-conf/50-lid-suspend.conf` | `/etc/systemd/logind.conf.d/` (root copy, applies after reboot) |
@@ -592,7 +593,10 @@ New link or system file: install function, `check_link` or `cmp` check in
   after an output change. `test/sway-session/test.sh` (lightdm's Xsession
   wrapper runs sway in English; `~/.xprofile` does not run).
   `test/xkb-bone2/test.sh` (regenerate check, libxkbcommon levels against
-  `.Xmodmap`). Stub tests: `test/sway-autostart`, `test/wm-msg`,
+  `.Xmodmap`). `test/xkb-usuml/test.sh` (libxkbcommon: umlaut levels,
+  every ASCII character as in us; X: the real `kb usuml` on Xorg's dummy
+  driver, keymap equal to us but a, o, u and right Alt, which equals de's
+  AltGr; Xvfb ignores every keymap change, also `setxkbmap de`). Stub tests: `test/sway-autostart`, `test/wm-msg`,
   `test/kanshi-save`, `test/clip-pick`, `test/pwr-lock`, `test/ws-pick`,
   `test/idle-timeout`.
 - Headless sway in a container: `WLR_BACKENDS=headless WLR_RENDERER=pixman
@@ -667,12 +671,16 @@ New link or system file: install function, `check_link` or `cmp` check in
 ## i3 and X
 
 - `$mod` is Mod4. xremap swaps left Alt and Ctrl for all layouts. `kb`
-  switches `us de bone2`: inside X only the session's X keyboard, with
+  switches `us de bone2 usuml`: inside X only the session's X keyboard, with
   `--console` also the console; on a tty (no DISPLAY) only the console
   (kmscon: `localectl` with `de(bone)`, which is also the X server default:
   login screen, added keyboards; fbcon: `loadkeys`). Some of the user's
   keyboards make bone2 in firmware: never use XKB groups. Test:
-  `test/kb/test.sh`. Login layout is `de`: `.xprofile` starts xremap, waits (max
+  `test/kb/test.sh`. `usuml` (`xkb/symbols/usuml`) is in no system xkb
+  directory: on X `setxkbmap -I<repo>/xkb ... -print | xkbcomp -I<repo>/xkb
+  - $DISPLAY` (that leaves the rules names, so `detect_x` finds it by ä on
+  keycode 38); sway reads `~/.config/xkb`; consoles get plain `us`.
+  Login layout is `de`: `.xprofile` starts xremap, waits (max
   3 s) for its virtual keyboard in `xinput`, then runs `kb de`. A keyboard
   added later gets the server default from `00-keyboard.conf` (`kb` changes
   it only with `--console` or on a tty), not kb's layout, and the bar would

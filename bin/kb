@@ -11,14 +11,17 @@
 # fbcon consoles share the kernel keymap (loadkeys). So a session must not
 # change it by itself.
 #
+# usuml is us with ä ö ü on right Alt + a, o, u (xkb/symbols/usuml), for
+# keyboards that send US keys (the ErgoDox); the consoles get plain us.
+#
 # Usage: kb [--console]            interactive menu
-#        kb [--console] us|de|bone2
+#        kb [--console] us|de|bone2|usuml
 #        kb [--console] next|prev  cycle through the layouts
 #        kb show                   print the session's layout
 #
 set -euo pipefail
 
-readonly LAYOUTS=(us de bone2)
+readonly LAYOUTS=(us de bone2 usuml)
 # sway also sets DISPLAY (Xwayland), so SWAYSOCK decides first.
 if [[ -n "${SWAYSOCK:-}" ]]; then
     SESSION="sway"
@@ -41,6 +44,9 @@ readonly XMODMAP_FILE="$HOME/.Xmodmap"
 DOTFILES_DIR="$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)"
 readonly DOTFILES_DIR
 readonly BONE2_CONSOLE_MAP="$DOTFILES_DIR/console/bone2.map"
+# The dotfiles' XKB layouts (bone2, usuml); sway reads them from
+# ~/.config/xkb, a link to it.
+readonly XKB_DIR="$DOTFILES_DIR/xkb"
 # xmodmap sends one request per key and every client reloads its keymap each
 # time, which takes seconds on a busy desktop. The resulting keymap is dumped
 # once and reloaded in a single xkbcomp request afterwards.
@@ -84,6 +90,10 @@ apply_x() {
         us)    setxkbmap -layout us -option "" -option "$XKB_OPTIONS" ;;
         de)    setxkbmap -layout de -option "" -option "$XKB_OPTIONS" ;;
         bone2) apply_x_bone2 ;;
+        # Not in the system's xkb directory, so setxkbmap cannot load it:
+        # it only names the components, xkbcomp compiles and loads them.
+        usuml) setxkbmap -I"$XKB_DIR" -layout usuml -option "" -option "$XKB_OPTIONS" -print \
+                   | xkbcomp -w0 -I"$XKB_DIR" - "$DISPLAY" ;;
     esac
 }
 
@@ -112,6 +122,7 @@ layout_of_name() {
         "English (US)")      echo us ;;
         "German")            echo de ;;
         "Bone 2 (dotfiles)") echo bone2 ;;
+        "English (US, umlauts on AltGr)") echo usuml ;;
         *)                   return 1 ;;
     esac
 }
@@ -137,7 +148,7 @@ kmscon_active() {
 apply_console_kmscon() {
     local args
     case "$1" in
-        us)    args=(us "" "" "$CONSOLE_XKB_OPTIONS") ;;
+        us|usuml) args=(us "" "" "$CONSOLE_XKB_OPTIONS") ;;
         de)    args=(de "" "" "$CONSOLE_XKB_OPTIONS") ;;
         bone2) args=(de "" bone "$CONSOLE_XKB_OPTIONS") ;;
     esac
@@ -152,7 +163,7 @@ apply_console_kmscon() {
 apply_console_fbcon() {
     local keymap
     case "$1" in
-        us)    keymap="us" ;;
+        us|usuml) keymap="us" ;;
         de)    keymap="de-latin1" ;;
         bone2) keymap="$BONE2_CONSOLE_MAP" ;;
     esac
@@ -209,12 +220,18 @@ apply() {
 }
 
 # Without a state file (first call after login) read the X server: bone2 puts
-# j on keycode 24, where us and de have q.
+# j on keycode 24, where us and de have q; usuml has ä on a (keycode 38).
+# xkbcomp leaves the layout names that setxkbmap -query reads.
 detect_x() {
     [[ -n "${DISPLAY:-}" ]] || return 1
-    # No grep -q: it would exit early and pipefail would report xmodmap's SIGPIPE.
-    if xmodmap -pke 2>/dev/null | grep '^keycode  24 = j ' >/dev/null; then
+    local keys
+    keys="$(xmodmap -pke 2>/dev/null)" || true
+    if [[ "$keys" == *$'\nkeycode  24 = j '* ]]; then
         echo bone2
+        return
+    fi
+    if [[ "$keys" == *$'\nkeycode  38 = a A a A adiaeresis '* ]]; then
+        echo usuml
         return
     fi
     setxkbmap -query 2>/dev/null | awk '/^layout:/ { print $2 }' | cut -d, -f1 | grep .
@@ -282,7 +299,7 @@ main() {
     for arg in "$@"; do
         case "$arg" in
             --console) CONSOLE=1 ;;
-            -*) die "unknown option: $arg (usage: kb [--console] [us|de|bone2|next|prev|show])" ;;
+            -*) die "unknown option: $arg (usage: kb [--console] [us|de|bone2|usuml|next|prev|show])" ;;
             *) args+=("$arg") ;;
         esac
     done

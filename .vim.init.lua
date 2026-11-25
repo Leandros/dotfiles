@@ -4775,18 +4775,22 @@ inoremap("<c-a>", "<c-r>")
 nnoremap("<C-d>", ":noh<return>")
 
 -- Deleting or changing with d/D/c/C never touches registers or the clipboard.
--- Use xx (lines), x (visual) or y to keep text.
+-- Use xx (lines), X (to end of line), x (visual) or y to keep text.
 vim.keymap.set({ "n", "x" }, "d", '"_d', { noremap = true, desc = "Delete (black hole)" })
 vim.keymap.set({ "n", "x" }, "D", '"_D', { noremap = true, desc = "Delete to EOL (black hole)" })
 vim.keymap.set({ "n", "x" }, "c", '"_c', { noremap = true, desc = "Change (black hole)" })
 vim.keymap.set({ "n", "x" }, "C", '"_C', { noremap = true, desc = "Change to EOL (black hole)" })
-vim.keymap.set("n", "xx", function()
-  -- yankstack's y map saves the old register on its stack (Alt+p), as its d
-  -- map did for dd.
-  local yank = vim.fn.maparg("y", "n", false, true)
-  if yank.expr == 1 then vim.fn.eval((yank.rhs:gsub("<SID>", "<SNR>" .. yank.sid .. "_"))) end
-  return "dd"
-end, { expr = true, desc = "Delete line (yank)" })
+-- A cut that yanks: yankstack's y map saves the old register on its stack
+-- (Alt+p) first, as its d map did for dd.
+local function cut(keys)
+  return function()
+    local yank = vim.fn.maparg("y", "n", false, true)
+    if yank.expr == 1 then vim.fn.eval((yank.rhs:gsub("<SID>", "<SNR>" .. yank.sid .. "_"))) end
+    return keys
+  end
+end
+vim.keymap.set("n", "xx", cut("dd"), { expr = true, desc = "Delete line (yank)" })
+vim.keymap.set("n", "X", cut("D"), { expr = true, desc = "Delete to EOL (yank)" })
 
 -- Reselect visual blocks after movement
 vnoremap("<", "<gv")

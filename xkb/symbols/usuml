@@ -1,0 +1,18 @@
+// US layout with the German umlauts on right Alt (AltGr), for keyboards
+// that send US keys (the ErgoDox): RAlt+a ä, RAlt+o ö, RAlt+u ü, with
+// Shift Ä Ö Ü. Everything else is us(basic); right Alt selects level 3
+// instead of being Alt_R.
+// sway: input type:keyboard xkb_layout usuml (found in ~/.config/xkb);
+// X: bin/kb compiles it with xkbcomp -I.
+
+default partial alphanumeric_keys modifier_keys
+xkb_symbols "basic" {
+    name[Group1]= "English (US, umlauts on AltGr)";
+    augment "us(basic)"
+
+    include "level3(ralt_switch)"
+
+    key <AC01> { [ a, A, adiaeresis, Adiaeresis ] };
+    key <AD09> { [ o, O, odiaeresis, Odiaeresis ] };
+    key <AD07> { [ u, U, udiaeresis, Udiaeresis ] };
+};

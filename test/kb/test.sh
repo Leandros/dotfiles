@@ -129,6 +129,14 @@ main() {
     expect "X: bone2 loads the xmodmap" "xmodmap $TMP/home/.Xmodmap" "$(calls xmodmap)"
     expect "X: bone2 leaves the console" "" "$(calls loadkeys)$(calls localectl)"
 
+    # usuml (xkb/symbols/usuml) is no system layout: compiled with the repo's xkb directory.
+    local xkb_dir
+    xkb_dir="$(cd "$HERE/../.." && pwd)/xkb"
+    run x usuml
+    expect "X: usuml from the repo's xkb directory" "setxkbmap -I$xkb_dir -layout usuml -option  -option terminate:ctrl_alt_bksp -print" "$(calls setxkbmap)"
+    expect "X: usuml loaded with xkbcomp" "xkbcomp -w0 -I$xkb_dir - :99" "$(calls xkbcomp)"
+    expect "X: usuml state" "usuml" "$(cat "$STATE")"
+
     # Inside X with --console: X and the console (fbcon: loadkeys).
     run x --console de
     expect "X --console: X layout" "setxkbmap -layout de -option  -option terminate:ctrl_alt_bksp" "$(calls setxkbmap)"
@@ -163,6 +171,13 @@ main() {
     expect "tty: the X state is kept" "de" "$(cat "$STATE")"
     run tty --console us
     expect "tty --console: console only" "loadkeys -u -q us" "$(calls loadkeys)"
+    # No console keymap has the umlauts on right Alt: plain us.
+    run tty usuml
+    expect "tty: usuml is us on fbcon" "loadkeys -u -q us" "$(calls loadkeys)"
+    touch "$TMP/kmscon"
+    run tty usuml
+    expect "tty: usuml is us on kmscon" "localectl --no-convert set-x11-keymap us   ctrl:swap_lalt_lctl" "$(calls localectl)"
+    rm -f "$TMP/kmscon"
 
     # sway: its keyboards only, even with DISPLAY (Xwayland) set.
     run sway bone2
@@ -205,7 +220,7 @@ main() {
     # Without a state file (first call after login) kb show asks sway: the
     # first keyboard with a layout name.
     local pair name
-    for pair in "English (US)=us" "German=de" "Bone 2 (dotfiles)=bone2" "French=?"; do
+    for pair in "English (US)=us" "German=de" "Bone 2 (dotfiles)=bone2" "English (US, umlauts on AltGr)=usuml" "French=?"; do
         name="${pair%=*}"
         rm -f "$SWAY_STATE"
         inputs "$name"
@@ -218,6 +233,8 @@ main() {
     expect "sway show keeps the detected layout" "de" "$(cat "$SWAY_STATE" 2>/dev/null)"
     run sway next
     expect "sway next after de" "swaymsg input type:keyboard xkb_layout bone2" "$(calls swaymsg)"
+    run sway next
+    expect "sway next after bone2" "swaymsg input type:keyboard xkb_layout usuml" "$(calls swaymsg)"
 
     run x --bogus de
     if grep -q '^rc=' "$CALLS"; then ok "unknown option rejected"; else fail "unknown option accepted"; fi

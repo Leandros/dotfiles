@@ -296,6 +296,7 @@ which-key shows the possible next keys after a short wait.
 | `u` / `j` | Undo / redo |
 | `d` `D` `c` `C` | Delete / change; registers and clipboard do not change |
 | `xx` | Cut the line (old `dd`; count: `3xx`) |
+| `X` | Cut to end of line (old `D`) |
 | `x` (visual) | Cut |
 | `y` / `Y` | Copy / copy to end of line |
 | `Alt+p` / `Alt+P` | After a paste: use the older / newer copy instead |
