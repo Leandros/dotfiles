@@ -17,7 +17,7 @@
 ;; i3status alone.
 (defvar hover "")
 (defpoll net_info :interval "2s" :initial "{}" :run-while {hover == "wireless" || hover == "ethernet"} "scripts/net-info")
-(defpoll tooltips :interval "5s" :initial "{}" :run-while {hover == "battery" || hover == "vpn"} "scripts/block-tooltips")
+(defpoll tooltips :interval "5s" :initial "{}" :run-while {hover == "battery" || hover == "volume" || hover == "vpn"} "scripts/block-tooltips")
 (defpoll syncthing_info :interval "3s" :initial "" :run-while {hover == "syncthing"} "~/bin/syncthing-status --details")
 (defpoll disk_info :interval "10s" :initial "[]" :run-while {hover == "disk_info"} "scripts/disk-info")
 (defpoll cpu_info :interval "2s" :initial "{}" :run-while {hover == "cpu_usage"} "scripts/cpu-info")
@@ -183,7 +183,7 @@
          :style "color: ${blocks?.[name]?.color ?: 'inherit'}"
          :text "${blocks?.[name]?.full_text ?: ''}"))
 
-;; Text details (network: net_info, battery and VPN: tooltips); "…" until
+;; Text details (network: net_info, battery, volume and VPN: tooltips); "…" until
 ;; the first poll. A widget tooltip, not the label's :tooltip text: with
 ;; that the bar sometimes came up 0 px high.
 (defwidget text-tip [name]
@@ -205,7 +205,7 @@
     (block :name "wireless" (tooltip (text-tip :name "wireless") (block-label :name "wireless")))
     (block :name "ethernet" (tooltip (text-tip :name "ethernet") (block-label :name "ethernet")))
     (block :name "battery" (tooltip (text-tip :name "battery") (block-label :name "battery")))
-    (block :name "volume" (block-label :name "volume"))
+    (block :name "volume" (tooltip (text-tip :name "volume") (block-label :name "volume")))
     (block :name "cpu_usage" (tooltip (cpu-tip) (block-label :name "cpu_usage")))
     (block :name "memory" (tooltip (mem-tip) (block-label :name "memory")))
     (block :name "disk_info" (tooltip (disk-tip) (block-label :name "disk_info")))

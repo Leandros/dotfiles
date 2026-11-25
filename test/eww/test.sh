@@ -139,17 +139,33 @@ case "$1" in
 esac
 EOF
     printf '#!/bin/sh\necho 100.64.0.1\n' > "$STUBS/tailscale"
-    chmod +x "$STUBS/upower" "$STUBS/tailscale"
+    # The default output among several sinks (pactl of PipeWire).
+    cat > "$STUBS/pactl" <<'EOF'
+#!/bin/sh
+case "$*" in
+    get-default-sink) echo alsa_output.speaker ;;
+    "list sinks") printf 'Sink #1\n\tName: alsa_output.hdmi\n\tDescription: HDMI 1 Output\nSink #2\n\tName: alsa_output.speaker\n\tDescription: HD Audio Speaker\n' ;;
+esac
+EOF
+    chmod +x "$STUBS/upower" "$STUBS/tailscale" "$STUBS/pactl"
     mkdir -p "$TMP/sys/class/power_supply/BAT0"
     echo 80 > "$TMP/sys/class/power_supply/BAT0/charge_control_end_threshold"
 
     local json
     json="$(BLOCK_TOOLTIPS_SYSFS="$TMP/sys" run "$SCRIPTS/block-tooltips")"
-    expect "block-tooltips: battery and VPN only" "battery,vpn" "$(jq -r 'keys | join(",")' <<< "$json")"
+    expect "block-tooltips: battery, volume and VPN only" "battery,volume,vpn" "$(jq -r 'keys | join(",")' <<< "$json")"
     expect "battery tooltip" \
         "State:    discharging|Power:    7.5 W|Time to empty: 3.2 hours|Health:   95%|Limit:    80%" \
         "$(jq -r .battery <<< "$json" | paste -sd '|')"
     expect "vpn tooltip" "Tailscale: 100.64.0.1" "$(jq -r .vpn <<< "$json")"
+    expect "volume tooltip: the default output" "Output: HD Audio Speaker" "$(jq -r .volume <<< "$json")"
+    if grep -qF '(block :name "volume" (tooltip (text-tip :name "volume")' "$YUCK" &&
+        grep -qF 'hover == "volume"' "$YUCK"; then
+        ok "volume block has the tooltip"
+    else
+        fail "volume block has no tooltip"
+    fi
+    rm -f "$STUBS/pactl"
 }
 
 test_net_info() {

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# block-tooltips - hover text for the battery and VPN blocks, as one JSON
-# object keyed by block name. A block without details is left out. The
-# network blocks have net-info. The eww bar runs it only while one of the
-# two is hovered.
+# block-tooltips - hover text for the battery, volume and VPN blocks, as
+# one JSON object keyed by block name. A block without details is left
+# out. The network blocks have net-info. The eww bar runs it only while one
+# of the three is hovered.
 #
 set -euo pipefail
 
@@ -33,9 +33,20 @@ vpn_tooltip() {
     [[ -n "$ips" ]] && printf 'Tailscale: %s\n' "$ips"
 }
 
+# The default output device (sink), by its description.
+volume_tooltip() {
+    command -v pactl >/dev/null || return 0
+    local sink
+    sink="$(timeout "$TIMEOUT_S" pactl get-default-sink 2>/dev/null)" || return 0
+    timeout "$TIMEOUT_S" pactl list sinks 2>/dev/null | awk -v sink="$sink" '
+        /^\tName: / { this = substr($0, 8) }
+        /^\tDescription: / && this == sink { print "Output: " substr($0, 15); exit }' || true
+}
+
 main() {
     jq -cn \
         --arg battery "$(battery_tooltip)" \
+        --arg volume "$(volume_tooltip)" \
         --arg vpn "$(vpn_tooltip)" \
         '$ARGS.named | with_entries(select(.value != ""))'
 }

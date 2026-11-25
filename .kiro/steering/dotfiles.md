@@ -783,7 +783,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   blocks: eww rebuilds a `for` body on every update, so a tooltip graph lost
   its history every 5 s, and a widget after a `for` in the same box was not
   drawn. `block-click` repeats its clicks, `block-tooltips` (battery,
-  VPN) is one JSON object per block name (`BLOCK_TOOLTIPS_SYSFS` for tests),
+  volume: the default sink's description from `pactl`, VPN) is one JSON object per block name (`BLOCK_TOOLTIPS_SYSFS` for tests),
   `net-info` (network blocks: addresses, down/up rate from two
   `/sys/class/net/*/statistics` samples), `disk-info` (`df`, one entry per
   device: btrfs `/` and `/home` share one), `theme-mode` follows gsettings (class `bar dark|light`), `i3-workspaces`
