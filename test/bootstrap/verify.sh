@@ -457,6 +457,7 @@ check_desktop_shared() {
     check_link "$HOME/.config/eww" "$D/.config/eww"
     check_link "$HOME/.wezterm.lua" "$D/.wezterm.lua"
     check_link "$HOME/.config/rio" "$D/.config/rio"
+    check_link "$HOME/.config/feh" "$D/.config/feh"
     # Alacritty (cargo): the shared config, its Linux part and the theme
     # follower, with the first theme link made by bootstrap (dark: no desktop).
     check_version alacritty "alacritty $ALACRITTY_VERSION" alacritty --version
@@ -642,7 +643,7 @@ check_wayland() {
     fi
     for bin in sway swaybg swayidle swaylock swaymsg xrdb grim slurp dunst playerctl notify-send kanshi wdisplays fuzzel cliphist wl-copy wl-paste \
         sway-easyfocus sway-audio-idle-inhibit Xwayland xwayland-satellite i3status jq amixer brightnessctl pavucontrol \
-        rfkill smbclient mount.cifs btop remmina; do
+        rfkill smbclient mount.cifs btop remmina feh; do
         if command -v "$bin" >/dev/null; then ok "wayland bin $bin"; else fail "wayland bin missing: $bin"; fi
     done
     # ~/bin/vmware-ungrab releases VMware's grab with XTest.

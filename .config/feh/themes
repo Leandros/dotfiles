@@ -1,0 +1,3 @@
+# feh loads the theme named feh on every start: fit each image to the
+# window, larger ones down and smaller ones up, also after a resize.
+feh --scale-down --auto-zoom

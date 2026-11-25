@@ -2292,6 +2292,8 @@ link_xorg_dotfiles() {
     link "$d/.wezterm.lua" "$HOME/.wezterm.lua"
     # Rio is installed by hand (no Fedora package); its config is ready.
     link "$d/.config/rio" "$HOME/.config/rio"
+    # feh: images fit the window.
+    link "$d/.config/feh" "$HOME/.config/feh"
     # Layout switcher: `kb` (us, de, bone2) for X and the console; ~/bin is on
     # PATH in .zshrc. The bone2 console map is read from the clone.
     link "$d/bin/kb" "$HOME/bin/kb"
@@ -2424,7 +2426,7 @@ install_wayland_packages() {
         xdg-desktop-portal-wlr xdg-desktop-portal-gtk \
         kanshi wdisplays wl-clipboard fuzzel i3status blueman gobject-introspection \
         grim slurp dunst playerctl libnotify \
-        alsa-utils pavucontrol brightnessctl util-linux python3-xlib cifs-utils samba-client btop remmina remmina-plugins-rdp firewall-config lxpolkit jq syncthing easyeffects kbd terminus-fonts-console
+        alsa-utils pavucontrol brightnessctl util-linux python3-xlib cifs-utils samba-client btop remmina remmina-plugins-rdp feh firewall-config lxpolkit jq syncthing easyeffects kbd terminus-fonts-console
 }
 
 # Clipboard history (~/bin/clip-pick). Fedora packages it only from 44 on, so
@@ -2601,6 +2603,8 @@ link_wayland_dotfiles() {
     link "$d/.wezterm.lua" "$HOME/.wezterm.lua"
     # Rio is installed by hand (no Fedora package); its config is ready.
     link "$d/.config/rio" "$HOME/.config/rio"
+    # feh: images fit the window.
+    link "$d/.config/feh" "$HOME/.config/feh"
     for name in kb i3status-kb pwr theme flightmode touchpad charge caffeinate fan smb bar \
         pkill-display term syncthing-status wm-msg ws-pick idle-timeout screenshot sway-autostart kanshi-save clip-pick \
         vmware-ungrab; do

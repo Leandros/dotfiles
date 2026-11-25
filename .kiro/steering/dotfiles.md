@@ -52,6 +52,7 @@ Read before changes to `bootstrap.sh`, its tests, or any tool config. The
 | `wayland-session/swaytiles`, `.config/systemd/user/swaytiles.service` | `/usr/local/bin/swaytiles` (root copy, 0755; launcher of `/usr/local/lib/swaytiles/swaytiles.py`), user unit (link, enabled), desktop-wayland (`install_swaytiles`) |
 | `firefox/autoconfig.js`, `firefox/dotfiles.cfg` | `/usr/lib64/firefox/defaults/pref/dotfiles-autoconfig.js`, `/usr/lib64/firefox/dotfiles.cfg` (root copies, 0644, desktop-wayland: `install_firefox_prefs`) |
 | `.config/rio` | `~/.config/rio`, link, Linux desktops (Rio installed by hand) |
+| `.config/feh` | `~/.config/feh`, link, both desktops (feh installed on both; not on EL9); `themes` holds the theme `feh`, which feh loads on every start: `--scale-down --auto-zoom` (images fit the window); `buttons`: Ctrl+wheel zooms (the wheel alone still changes the image). Test: `test/feh/test.sh` (Xorg dummy driver, zoom from the `%z` title) |
 | `.config/alacritty/{alacritty.toml,themes}`, `alacritty/linux.toml`, `bin/alacritty-theme`, `.config/systemd/user/alacritty-theme.service` | `~/.config/alacritty/{alacritty.toml,themes,linux.toml}`, `~/bin`, `~/.config/systemd/user`, links, both desktops (`install_alacritty`); `alacritty.toml` is shared with macOS (linked by hand there) |
 | `.config/ghostty/{config,themes}`, `ghostty/linux.conf` | `~/.config/ghostty/{config,themes,linux.conf}`, links, Fedora desktops (`install_ghostty`); not linked on macOS (the user links it by hand there) |
 | `wayland-session/sway-dotfiles.desktop` | `/usr/share/wayland-sessions/` (root copy, 0644; lightdm reads only `/usr/share`) |
@@ -567,7 +568,7 @@ New link or system file: install function, `check_link` or `cmp` check in
   `test/system-sleep/power-button-wake.sh`, `test/system-sleep/vmware-suspend.sh`,
   `test/sunshine-session/test.sh`, `test/sunshine-pin/test.sh`, `test/ghostty/test.sh`, `test/rio/test.sh`, `test/alacritty/test.sh`,
   `test/alacritty-patch/test.sh` (network, cargo, font and xcb headers),
-  `test/firefox-prefs/test.sh`, `test/mouse-accel/test.sh`, `test/swaytiles/test.sh`, `test/zsh-clipboard/test.sh`, `test/lesskey/test.sh`, `test/kmscon-cursor/test.sh`, `test/nvidia-power/test.sh`, `test/term/test.sh`
+  `test/firefox-prefs/test.sh`, `test/feh/test.sh`, `test/mouse-accel/test.sh`, `test/swaytiles/test.sh`, `test/zsh-clipboard/test.sh`, `test/lesskey/test.sh`, `test/kmscon-cursor/test.sh`, `test/nvidia-power/test.sh`, `test/term/test.sh`
   (less in a pseudo terminal in fedora:45, debian:12, amazonlinux:2). Add new tests in this style.
 - X programs: Xorg dummy driver in a container. i3 bindings: Xvfb + i3 with
   the repo config in a Fedora image, `xdotool key super+j`, then read the

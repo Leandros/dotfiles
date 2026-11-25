@@ -1,0 +1,4 @@
+# Ctrl+wheel zooms (the wheel alone still goes to the previous or next
+# image). feh matches the modifiers exactly.
+zoom_in C-4
+zoom_out C-5
