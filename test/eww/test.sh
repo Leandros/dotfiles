@@ -2,8 +2,8 @@
 #
 # Tests the eww bar scripts (.config/eww/scripts) and ~/bin/bar with stubs:
 # status-blocks drops the i3bar framing and keys the blocks by name, block-click does i3status-kb's
-# clicks, block-tooltips (battery, VPN) and net-info build one JSON object
-# per block, disk-info one entry per device, theme-mode and
+# clicks, block-tooltips gives one block's text (battery, volume, VPN),
+# net-info one JSON object per block, disk-info one entry per device, theme-mode and
 # i3-workspaces follow changes, and bar opens one bar per output (tray on
 # the primary one, height for Xft.dpi) and reopens them on output changes. cpu-info,
 # cpu-usage and mem-info read fake /proc and /sys files. Under sway (swaymsg stub with
@@ -151,21 +151,25 @@ EOF
     mkdir -p "$TMP/sys/class/power_supply/BAT0"
     echo 80 > "$TMP/sys/class/power_supply/BAT0/charge_control_end_threshold"
 
-    local json
-    json="$(BLOCK_TOOLTIPS_SYSFS="$TMP/sys" run "$SCRIPTS/block-tooltips")"
-    expect "block-tooltips: battery, volume and VPN only" "battery,volume,vpn" "$(jq -r 'keys | join(",")' <<< "$json")"
     expect "battery tooltip" \
         "State:    discharging|Power:    7.5 W|Time to empty: 3.2 hours|Health:   95%|Limit:    80%" \
-        "$(jq -r .battery <<< "$json" | paste -sd '|')"
-    expect "vpn tooltip" "Tailscale: 100.64.0.1" "$(jq -r .vpn <<< "$json")"
-    expect "volume tooltip: the default output" "Output: HD Audio Speaker" "$(jq -r .volume <<< "$json")"
-    if grep -qF '(block :name "volume" (tooltip (text-tip :name "volume")' "$YUCK" &&
-        grep -qF 'hover == "volume"' "$YUCK"; then
-        ok "volume block has the tooltip"
+        "$(BLOCK_TOOLTIPS_SYSFS="$TMP/sys" run "$SCRIPTS/block-tooltips" battery | paste -sd '|')"
+    expect "vpn tooltip" "Tailscale: 100.64.0.1" "$(run "$SCRIPTS/block-tooltips" vpn)"
+    expect "volume tooltip: the default output" "Output: HD Audio Speaker" "$(run "$SCRIPTS/block-tooltips" volume)"
+    # One block asks only its own program.
+    : > "$CALLS"
+    for prog in upower tailscale; do
+        printf '#!/bin/sh\necho "%s $*" >> "%s"\n' "$prog" "$CALLS" > "$STUBS/$prog"
+    done
+    run "$SCRIPTS/block-tooltips" volume >/dev/null
+    expect "volume tooltip runs neither upower nor tailscale" "" "$(cat "$CALLS")"
+    if grep -qF '(block :name "volume" (tooltip (text-tip :text volume_tip)' "$YUCK" &&
+        grep -qF ':run-while {hover == "volume"} "scripts/block-tooltips volume")' "$YUCK"; then
+        ok "volume block has the tooltip, polled only while hovered"
     else
-        fail "volume block has no tooltip"
+        fail "volume block has no tooltip polled while hovered"
     fi
-    rm -f "$STUBS/pactl"
+    rm -f "$STUBS/pactl" "$STUBS/upower" "$STUBS/tailscale"
 }
 
 test_net_info() {
@@ -266,8 +270,10 @@ rm -r "$proc/40"
 EOF
     chmod +x "$STUBS/sleep"
 
-    local json
-    json="$(CPU_INFO_PROC="$proc" CPU_INFO_SYSFS="$sys" run "$SCRIPTS/cpu-info")"
+    # No saved sample yet: two, SAMPLE_S apart (the fake sleep).
+    local json state="$TMP/cpu-info.sample"
+    rm -f "$state"
+    json="$(CPU_INFO_PROC="$proc" CPU_INFO_SYSFS="$sys" CPU_INFO_STATE="$state" run "$SCRIPTS/cpu-info")"
     rm -f "$STUBS/sleep"
     expect "cpu-info: load 1, 5, 15 min, yellow and red per core count" \
         '[{"v":"0.52","lvl":""},{"v":"3.00","lvl":"mid"},{"v":"4.10","lvl":"high"}]' "$(jq -c .load <<< "$json")"
@@ -280,10 +286,31 @@ EOF
         '[{"name":"Web Content","cpu":"150.0","mem":"12.0M","lvl":"high"},{"name":"a) b","cpu":"60.0","mem":"1.1G","lvl":"mid"},{"name":"kworker/0:1","cpu":"0.0","mem":"0B","lvl":""}]' \
         "$(jq -c .procs <<< "$json")"
 
+    # The next poll compares with the sample the last one saved, here 2 s
+    # old: one sample, no wait. Since then core 0: 50 of 100 ticks busy,
+    # process 10: 20 ticks.
+    printf 'cpu  0 0 0 0 0 0 0 0\ncpu0 175 0 100 925 0 0 0 0\ncpu1 50 0 50 1100 0 0 0 0\ncpu2 50 0 0 150 0 0 0 0\ncpu3 0 0 0 200 0 0 0 0\n' \
+        > "$proc/stat"
+    proc_stat 10 "Web Content" 1110 560 3072 > "$proc/10/stat"
+    printf '#!/bin/sh\necho "sleep $*" >> "%s"\n' "$CALLS" > "$STUBS/sleep"
+    chmod +x "$STUBS/sleep"
+    sed -i "1s/.*/@ $((EPOCHSECONDS - 2))/" "$state"
+    : > "$CALLS"
+    json="$(CPU_INFO_PROC="$proc" CPU_INFO_SYSFS="$sys" CPU_INFO_STATE="$state" run "$SCRIPTS/cpu-info")"
+    expect "cpu-info: against the last poll's sample: cores" "50 0 0 0" "$(jq -r '[.cores[].pct] | join(" ")' <<< "$json")"
+    expect "cpu-info: against the last poll's sample: processes" "Web Content 20.0" "$(jq -r '.procs[0] | "\(.name) \(.cpu)"' <<< "$json")"
+    expect "cpu-info: against the last poll's sample: no wait" "" "$(cat "$CALLS")"
+    # A sample older than MAX_AGE_S (the popup was closed): two again.
+    sed -i "1s/.*/@ $((EPOCHSECONDS - 60))/" "$state"
+    json="$(CPU_INFO_PROC="$proc" CPU_INFO_SYSFS="$sys" CPU_INFO_STATE="$state" run "$SCRIPTS/cpu-info")"
+    expect "cpu-info: an old sample: waits for a new one" "sleep 0.5" "$(cat "$CALLS")"
+    expect "cpu-info: leaves only its sample" "cpu-info.sample" "$(cd "$TMP" && ls -d cpu-info.sample*)"
+    rm -f "$STUBS/sleep" "$state"
+
     # No fans, no core types (not hybrid): fans empty, every core "p".
     rm -r "$sys/class/hwmon/hwmon5" "$sys/devices" "$proc"
     cp -r "$TMP/proc-first" "$proc"
-    json="$(CPU_INFO_PROC="$proc" CPU_INFO_SYSFS="$sys" CPU_INFO_SAMPLE_S=0 run "$SCRIPTS/cpu-info")"
+    json="$(CPU_INFO_PROC="$proc" CPU_INFO_SYSFS="$sys" CPU_INFO_STATE="$state" CPU_INFO_SAMPLE_S=0 run "$SCRIPTS/cpu-info")"
     expect "cpu-info: no ThinkPad fans: empty" "" "$(jq -r .fans.v <<< "$json")"
     expect "cpu-info: no core types: performance" "p p p p" "$(jq -r '[.cores[].type] | join(" ")' <<< "$json")"
 
@@ -606,6 +633,14 @@ EOF
 # set of its backend. Workspace clicks through i3 or sway.
 test_yuck() {
     local window prop
+    # Popup details are fetched only while their block is hovered: every
+    # poll has :run-while. In the background only the bar's own feeds and
+    # the CPU graph's.
+    local polls listens
+    polls="$(grep -c '^(defpoll ' "$YUCK")"
+    expect "every poll runs only while hovered" "$polls" "$(grep -c '^(defpoll .*:run-while {hover == ' "$YUCK")"
+    listens="$(grep -o '^(deflisten [a-z_0-9]*' "$YUCK" | cut -d' ' -f2 | sort | paste -sd ' ')"
+    expect "background feeds: the bar's and the CPU graph's" "blocks cpu_usage i3_mode theme workspaces" "$listens"
     window="$(sed -n '/^(defwindow bar /,/^  (centerbox/p' "$YUCK")"
     for prop in ':windowtype "dock"' ':reserve (struts :side "top"' ':exclusive true' ':focusable "none"' \
         ':namespace "eww-bar"'; do

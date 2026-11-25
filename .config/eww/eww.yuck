@@ -17,7 +17,9 @@
 ;; i3status alone.
 (defvar hover "")
 (defpoll net_info :interval "2s" :initial "{}" :run-while {hover == "wireless" || hover == "ethernet"} "scripts/net-info")
-(defpoll tooltips :interval "5s" :initial "{}" :run-while {hover == "battery" || hover == "volume" || hover == "vpn"} "scripts/block-tooltips")
+(defpoll battery_tip :interval "5s" :initial "" :run-while {hover == "battery"} "scripts/block-tooltips battery")
+(defpoll volume_tip :interval "5s" :initial "" :run-while {hover == "volume"} "scripts/block-tooltips volume")
+(defpoll vpn_tip :interval "5s" :initial "" :run-while {hover == "vpn"} "scripts/block-tooltips vpn")
 (defpoll syncthing_info :interval "3s" :initial "" :run-while {hover == "syncthing"} "~/bin/syncthing-status --details")
 (defpoll disk_info :interval "10s" :initial "[]" :run-while {hover == "disk_info"} "scripts/disk-info")
 (defpoll cpu_info :interval "2s" :initial "{}" :run-while {hover == "cpu_usage"} "scripts/cpu-info")
@@ -183,11 +185,11 @@
          :style "color: ${blocks?.[name]?.color ?: 'inherit'}"
          :text "${blocks?.[name]?.full_text ?: ''}"))
 
-;; Text details (network: net_info, battery, volume and VPN: tooltips); "…" until
+;; Text details (network: net_info, battery, volume and VPN: *_tip); "…" until
 ;; the first poll. A widget tooltip, not the label's :tooltip text: with
 ;; that the bar sometimes came up 0 px high.
-(defwidget text-tip [name]
-  (label :halign "start" :text {net_info?.[name] ?: tooltips?.[name] ?: "…"}))
+(defwidget text-tip [text]
+  (label :halign "start" :text {text != "" ? text : "…"}))
 
 ;; Syncthing: state, rates, needed files and bytes, errors, devices,
 ;; folders (~/bin/syncthing-status --details).
@@ -200,12 +202,12 @@
     (block :name "kb" (block-label :name "kb" :first true))
     (block :name "power_mode" (block-label :name "power_mode"))
     (block :name "backlight" (block-label :name "backlight"))
-    (block :name "vpn" (tooltip (text-tip :name "vpn") (block-label :name "vpn")))
+    (block :name "vpn" (tooltip (text-tip :text vpn_tip) (block-label :name "vpn")))
     (block :name "syncthing" (tooltip (syncthing-tip) (block-label :name "syncthing")))
-    (block :name "wireless" (tooltip (text-tip :name "wireless") (block-label :name "wireless")))
-    (block :name "ethernet" (tooltip (text-tip :name "ethernet") (block-label :name "ethernet")))
-    (block :name "battery" (tooltip (text-tip :name "battery") (block-label :name "battery")))
-    (block :name "volume" (tooltip (text-tip :name "volume") (block-label :name "volume")))
+    (block :name "wireless" (tooltip (text-tip :text {net_info?.wireless ?: ""}) (block-label :name "wireless")))
+    (block :name "ethernet" (tooltip (text-tip :text {net_info?.ethernet ?: ""}) (block-label :name "ethernet")))
+    (block :name "battery" (tooltip (text-tip :text battery_tip) (block-label :name "battery")))
+    (block :name "volume" (tooltip (text-tip :text volume_tip) (block-label :name "volume")))
     (block :name "cpu_usage" (tooltip (cpu-tip) (block-label :name "cpu_usage")))
     (block :name "memory" (tooltip (mem-tip) (block-label :name "memory")))
     (block :name "disk_info" (tooltip (disk-tip) (block-label :name "disk_info")))

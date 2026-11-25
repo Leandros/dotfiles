@@ -782,8 +782,11 @@ New link or system file: install function, `check_link` or `cmp` check in
   its own widget, in i3status order, hidden while missing. No `for` over
   blocks: eww rebuilds a `for` body on every update, so a tooltip graph lost
   its history every 5 s, and a widget after a `for` in the same box was not
-  drawn. `block-click` repeats its clicks, `block-tooltips` (battery,
-  volume: the default sink's description from `pactl`, VPN) is one JSON object per block name (`BLOCK_TOOLTIPS_SYSFS` for tests),
+  drawn. `block-click` repeats its clicks, `block-tooltips BLOCK` (battery,
+  volume: the default sink's description from `pactl`, vpn) prints one
+  block's text, polled per block (`battery_tip`, `volume_tip`, `vpn_tip`):
+  one poll for all three ran upower, tailscale and pactl whichever was
+  hovered (`BLOCK_TOOLTIPS_SYSFS` for tests),
   `net-info` (network blocks: addresses, down/up rate from two
   `/sys/class/net/*/statistics` samples), `disk-info` (`df`, one entry per
   device: btrfs `/` and `/home` share one), `theme-mode` follows gsettings (class `bar dark|light`), `i3-workspaces`
@@ -808,13 +811,24 @@ New link or system file: install function, `check_link` or `cmp` check in
   all performance without them), Load Average, Temperature, Fans
   (thinkpad_acpi's hwmon `fan*_input`, hidden elsewhere), Top Processes
   (15, CPU in percent of one core as top, resident memory; from
-  `/proc/<pid>/stat` deltas over the same 0.5 s as the cores). Values
+  `/proc/<pid>/stat` deltas over the same interval as the cores). Values
   above the norm yellow (`mid`) or red (`high`), decided by `cpu-info`:
   cores 50/80 %, load 0.7/1 per core, package 80/95 °C, fans 4000/5500
   rpm (a guess: hwmon reports no maximum), processes 50/90 %. The graph's
   data comes from `scripts/cpu-usage` (deflisten, all the time: a graph
   keeps history only while it gets values; one `read` of `/proc/stat`
-  every 2 s), not i3status (no user/system split).
+  and one `sleep` every 5 s, as i3status before), not i3status (no
+  user/system split). eww CPU (2026-11-25, the user: it had grown): idle
+  about 0.2 % of a core plus `cpu-usage`; hovered, the popup's script
+  dominates: `cpu-info` 0.24 s CPU per 2 s poll before (a `cat` per
+  sensor file, jq over every process), 0.11 s after (builtin `read`s, one
+  `cat` per sample, the top 15 picked in awk), then about half: the kernel
+  has only CPU time totals, so usage needs two samples, and each run saves
+  its sample (`$XDG_RUNTIME_DIR/eww-cpu-info.sample`, renamed into place:
+  one bar per display) and compares with the last run's, 2 s before (as
+  top); only without one 1 to `MAX_AGE_S` (5) s old, the first poll of a
+  hover, two samples 0.5 s apart. `test_yuck` checks that every
+  `defpoll` has `:run-while {hover == ...}` and lists the deflistens.
   RAM popup (2026-11-25, the user's pick of two designs), in the CPU
   popup's look (shared class `info-tip`): Memory (a bar of used, cached
   and free adding up to 100 %, its cached part the rest of available,

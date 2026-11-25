@@ -14,38 +14,58 @@
 #          "12.1M" (resident), "lvl"}, ...]
 # lvl is "", "mid" (the bar draws it yellow) or "high" (red).
 #
-# The eww bar runs it only while the block is hovered. Usage is from two
-# samples of /proc/stat and /proc/<pid>/stat SAMPLE_S apart.
+# The eww bar runs it only while the block is hovered, every 2 s. The
+# kernel counts CPU time only as totals (since boot, since a process
+# started), so usage is the change between two samples of /proc/stat and
+# /proc/<pid>/stat: each run saves its sample in STATE and compares with
+# the one the last run saved (the last 2 s, as top). Without one from 1 to
+# MAX_AGE_S seconds ago (the first poll of a hover) it takes two, SAMPLE_S
+# apart.
 #
 set -euo pipefail
 
 readonly PROC="${CPU_INFO_PROC:-/proc}" SYSFS="${CPU_INFO_SYSFS:-/sys}"
-readonly SAMPLE_S="${CPU_INFO_SAMPLE_S:-0.5}" TOP_PROCS=15
+readonly SAMPLE_S="${CPU_INFO_SAMPLE_S:-0.5}" TOP_PROCS=15 MAX_AGE_S=5
+readonly STATE="${CPU_INFO_STATE:-${XDG_RUNTIME_DIR:-/tmp}/eww-cpu-info.sample}"
+# This run's sample and, without a saved one, the first of its two.
+readonly NEW="$STATE.$$" FIRST="$STATE.$$.first"
+trap 'rm -f "$NEW" "$FIRST"' EXIT
 # Yellow from, red from.
 readonly CORE_MID=50 CORE_HIGH=80 TEMP_MID=80 TEMP_HIGH=95 FAN_MID=4000 FAN_HIGH=5500
 readonly PROC_MID=50 PROC_HIGH=90
 # Load per core.
 readonly LOAD_MID=0.7 LOAD_HIGH=1
 
-# The cpu lines of /proc/stat, then a stat line per process. A process can
-# end between the glob and the read.
-sample() {
-    grep '^cpu[0-9]' "$PROC/stat"
-    cat "$PROC"/[0-9]*/stat 2>/dev/null || true
+# /proc/stat, then a stat line per process, in one process (it runs every
+# 2 s while the popup is open). A process can end between the glob and the
+# read.
+sample() { cat "$PROC/stat" "$PROC"/[0-9]*/stat 2>/dev/null || true; }
+
+# Cpu list of a hybrid PMU ("0-5"), empty without one. Reads with
+# builtins here and below: no process per file.
+cpus_of() {
+    local list=""
+    [[ -r "$SYSFS/devices/$1/cpus" ]] && read -r list < "$SYSFS/devices/$1/cpus"
+    echo "$list"
 }
 
-# Cpu list of a hybrid PMU ("0-5"), empty without one.
-cpus_of() { cat "$SYSFS/devices/$1/cpus" 2>/dev/null || true; }
-
 # "core N percent type" per core and "proc cpu-percent cpu-text mem name"
-# per process that was in both samples, tab-separated.
+# for the TOP_PROCS processes with the most CPU of those in both samples,
+# tab-separated.
+# A sample file: "@ <epoch seconds>" (awk skips it), then sample's lines.
+save_sample() { { echo "@ $EPOCHSECONDS"; sample; } > "$1"; }
+
 usage() {
-    local before after
-    before="$(sample)"
-    sleep "$SAMPLE_S"
-    after="$(sample)"
+    local before="$STATE" _ at=0
+    [[ -r "$STATE" ]] && read -r _ at < "$STATE"
+    if ((EPOCHSECONDS - at < 1 || EPOCHSECONDS - at > MAX_AGE_S)); then
+        save_sample "$FIRST"
+        sleep "$SAMPLE_S"
+        before="$FIRST"
+    fi
+    save_sample "$NEW"
     awk -v e="$(cpus_of cpu_atom)" -v lp="$(cpus_of cpu_lowpower)" \
-        -v page="$(getconf PAGESIZE)" '
+        -v page="$(getconf PAGESIZE)" -v top="$TOP_PROCS" '
         function add_cpus(list, type,   parts, n, i, r) {
             n = split(list, parts, ",")
             for (i = 1; i <= n; i++) {
@@ -82,7 +102,7 @@ usage() {
             pct[n] = dt > 0 ? int(100 * (busy - cbusy[n]) / dt + 0.5) : 0
             next
         }
-        {
+        /^[0-9]/ {
             parse($0)
             if (FNR == NR) { pticks[$1] = ticks; next }
             if (!($1 in pticks)) next
@@ -93,34 +113,49 @@ usage() {
                 printf "core\t%d\t%d\t%s\n", n, pct[n], (n in types ? types[n] : "p")
             # Ticks of one core in the sample time.
             per_core = ncores ? elapsed / ncores : 0
-            for (p in pname) {
-                c = per_core > 0 ? 100 * pdelta[p] / per_core : 0
-                printf "proc\t%s\t%.1f\t%s\t%s\n", c, c, size(prss[p] * page), pname[p]
+            # The top ones by repeated maximum: no sort process.
+            for (i = 0; i < top; i++) {
+                best = ""
+                for (p in pdelta) if (best == "" || pdelta[p] > pdelta[best]) best = p
+                if (best == "") break
+                c = per_core > 0 ? 100 * pdelta[best] / per_core : 0
+                printf "proc\t%s\t%.1f\t%s\t%s\n", c, c, size(prss[best] * page), pname[best]
+                delete pdelta[best]
             }
-        }' <(echo "$before") <(echo "$after")
+        }' "$before" "$NEW"
+    # Renamed: another bar's run (one per display) reads a whole file.
+    mv -f "$NEW" "$STATE"
 }
 
 # Package temperature in °C: coretemp (Intel) "Package id 0", k10temp
 # (AMD) Tctl, else the x86_pkg_temp thermal zone. Empty without a sensor.
 temp() {
-    local hw label zone
+    local hw label zone name value
     for hw in "$SYSFS"/class/hwmon/hwmon*; do
-        case "$(cat "$hw/name" 2>/dev/null)" in
+        name=""
+        [[ -r "$hw/name" ]] && read -r name < "$hw/name"
+        case "$name" in
             coretemp|k10temp) ;;
             *) continue ;;
         esac
         for label in "$hw"/temp*_label; do
-            case "$(cat "$label" 2>/dev/null)" in
+            name=""
+            [[ -r "$label" ]] && read -r name < "$label"
+            case "$name" in
                 "Package id 0"|Tctl)
-                    echo "$(($(cat "${label%_label}_input") / 1000))"
+                    read -r value < "${label%_label}_input"
+                    echo "$((value / 1000))"
                     return
                     ;;
             esac
         done
     done
     for zone in "$SYSFS"/class/thermal/thermal_zone*; do
-        if [[ "$(cat "$zone/type" 2>/dev/null)" == x86_pkg_temp ]]; then
-            echo "$(($(cat "$zone/temp") / 1000))"
+        name=""
+        [[ -r "$zone/type" ]] && read -r name < "$zone/type"
+        if [[ "$name" == x86_pkg_temp ]]; then
+            read -r value < "$zone/temp"
+            echo "$((value / 1000))"
             return
         fi
     done
@@ -129,11 +164,13 @@ temp() {
 # Fan speeds of thinkpad_acpi's hwmon (~/bin/fan sets the level), one per
 # line; nothing elsewhere.
 fans() {
-    local hw input
+    local hw input name rpm
     for hw in "$SYSFS"/class/hwmon/hwmon*; do
-        [[ "$(cat "$hw/name" 2>/dev/null)" == thinkpad ]] || continue
+        name=""
+        [[ -r "$hw/name" ]] && read -r name < "$hw/name"
+        [[ "$name" == thinkpad ]] || continue
         for input in "$hw"/fan*_input; do
-            [[ -r "$input" ]] && cat "$input"
+            [[ -r "$input" ]] && read -r rpm < "$input" && echo "$rpm"
         done
     done
     return 0
@@ -144,7 +181,6 @@ main() {
     read -r -a load < "$PROC/loadavg"
     usage | jq -R -s -c \
         --arg loads "${load[*]:0:3}" --arg temp "$(temp)" --arg fans "$(fans)" \
-        --argjson top "$TOP_PROCS" \
         --argjson core_lvl "[$CORE_MID, $CORE_HIGH]" --argjson temp_lvl "[$TEMP_MID, $TEMP_HIGH]" \
         --argjson fan_lvl "[$FAN_MID, $FAN_HIGH]" --argjson proc_lvl "[$PROC_MID, $PROC_HIGH]" \
         --argjson load_lvl "[$LOAD_MID, $LOAD_HIGH]" '
@@ -162,7 +198,7 @@ main() {
                    | {v: join(" / "), lvl: (map(tonumber) | max // 0 | lvl($fan_lvl))}),
             procs: [$rows[] | select(.[0] == "proc")
                     | {sort: (.[1] | tonumber), name: .[4], cpu: .[2], mem: .[3]}]
-                   | sort_by(-.sort) | .[:$top]
+                   | sort_by(-.sort)
                    | map({name, cpu, mem, lvl: (.sort | lvl($proc_lvl))})
           }'
 }

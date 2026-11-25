@@ -5,34 +5,33 @@
 # /proc/stat samples. user includes nice, system irq and softirq.
 #
 # For the eww bar's CPU graph, which keeps its history only while it gets
-# values: so it runs all the time, not only while the popup is open (a
-# read of one file per interval). Ends with eww (its parent).
+# values: so it runs all the time, not only while the popup is open: one
+# `sleep` per interval, the rest builtins (i3status, the graph's source
+# before, also read every 5 s). Ends with eww (its parent).
 #
 set -euo pipefail
 
-readonly PROC="${CPU_USAGE_PROC:-/proc}" INTERVAL_S="${CPU_USAGE_INTERVAL_S:-2}"
+readonly PROC="${CPU_USAGE_PROC:-/proc}" INTERVAL_S="${CPU_USAGE_INTERVAL_S:-5}"
 
-# "user system total" in ticks, from the aggregate cpu line; no fork.
+# S_USER S_SYSTEM S_TOTAL in ticks, from the aggregate cpu line; builtins only.
 sample() {
-    local _cpu user nice system idle iowait irq softirq steal
+    local _cpu user nice system idle iowait irq softirq steal _
     read -r _cpu user nice system idle iowait irq softirq steal _ < "$PROC/stat"
-    echo "$((user + nice)) $((system + irq + softirq)) $((user + nice + system + idle + iowait + irq + softirq + steal))"
+    S_USER=$((user + nice)) S_SYSTEM=$((system + irq + softirq))
+    S_TOTAL=$((user + nice + system + idle + iowait + irq + softirq + steal))
 }
 
 main() {
-    local parent=$PPID before after
-    local -a b a
-    before="$(sample)"
+    local parent=$PPID user system total dt
+    sample
     while kill -0 "$parent" 2>/dev/null; do
+        user=$S_USER system=$S_SYSTEM total=$S_TOTAL
         sleep "$INTERVAL_S"
-        after="$(sample)"
-        read -r -a b <<< "$before"
-        read -r -a a <<< "$after"
-        local dt=$((a[2] - b[2]))
+        sample
+        dt=$((S_TOTAL - total))
         if ((dt > 0)); then
-            echo "{\"user\":$(((100 * (a[0] - b[0]) + dt / 2) / dt)),\"system\":$(((100 * (a[1] - b[1]) + dt / 2) / dt))}"
+            echo "{\"user\":$(((100 * (S_USER - user) + dt / 2) / dt)),\"system\":$(((100 * (S_SYSTEM - system) + dt / 2) / dt))}"
         fi
-        before="$after"
     done
 }
 

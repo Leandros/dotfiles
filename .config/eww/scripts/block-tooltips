@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# block-tooltips - hover text for the battery, volume and VPN blocks, as
-# one JSON object keyed by block name. A block without details is left
-# out. The network blocks have net-info. The eww bar runs it only while one
-# of the three is hovered.
+# block-tooltips BLOCK - hover text of the battery, volume or vpn block,
+# empty without details. The network blocks have net-info. The eww bar
+# runs it only while that block is hovered, for that block alone (each
+# block asks other programs: upower, pactl, tailscale).
 #
 set -euo pipefail
 
@@ -44,11 +44,12 @@ volume_tooltip() {
 }
 
 main() {
-    jq -cn \
-        --arg battery "$(battery_tooltip)" \
-        --arg volume "$(volume_tooltip)" \
-        --arg vpn "$(vpn_tooltip)" \
-        '$ARGS.named | with_entries(select(.value != ""))'
+    case "${1:-}" in
+        battery) battery_tooltip ;;
+        volume) volume_tooltip ;;
+        vpn) vpn_tooltip ;;
+        *) echo "usage: block-tooltips battery|volume|vpn" >&2; exit 2 ;;
+    esac
 }
 
 main "$@"
