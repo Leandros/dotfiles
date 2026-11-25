@@ -154,8 +154,9 @@ keymap = [
 	{ on = "w", run = "tasks:show", desc = "Show task manager" },
 
 	# Help
-	{ on = "~",    run = "help", desc = "Open help" },
-	{ on = "<F1>", run = "help", desc = "Open help" },
+	{ on = "~",          run = "help", desc = "Open help" },
+	{ on = "<F1>",       run = "help", desc = "Open help" },
+	{ on = [ "g", "?" ], run = "help", desc = "Open help" },
 ]
 
 [tasks]
