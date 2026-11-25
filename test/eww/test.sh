@@ -297,25 +297,35 @@ EOF
 
 test_mem_info() {
     local proc="$TMP/proc-mem"
-    mkdir -p "$proc"
-    # In kB: 16 GiB total, 6 available (10 used), 2 free, 4 cache, swap 1 of
-    # 8 GiB used.
+    mkdir -p "$proc"/{10,20,30}
+    # In kB: 16 GiB total, 3 available (13 used: yellow from 75 %), 1 free,
+    # 4 cache, swap 3 of 8 GiB used (yellow from 25 %).
     cat > "$proc/meminfo" <<'EOF'
 MemTotal:       16777216 kB
-MemFree:         2097152 kB
-MemAvailable:    6291456 kB
+MemFree:         1048576 kB
+MemAvailable:    3145728 kB
 Buffers:         1048576 kB
 Cached:          3145728 kB
-Unevictable:      524288 kB
-SUnreclaim:       262144 kB
-KernelStack:      131072 kB
-PageTables:       131072 kB
 SwapTotal:       8388608 kB
-SwapFree:        7340032 kB
+SwapFree:        5242880 kB
 EOF
-    expect "mem-info: used, available, cache, free, swap" \
-        '{"used":"10.0 GiB","available":"6.0 GiB","cache":"4.0 GiB","free":"2.0 GiB","swap":"1.0 GiB / 8.0 GiB"}' \
-        "$(MEM_INFO_PROC="$proc" run "$SCRIPTS/mem-info")"
+    # Resident pages: 4 GiB (red from 25 % of the memory), 12 MiB, none (a
+    # kernel thread: left out).
+    proc_stat 10 "Web Content" 0 0 1048576 > "$proc/10/stat"
+    proc_stat 20 "a) b" 0 0 3072 > "$proc/20/stat"
+    proc_stat 30 "kworker/0:1" 0 0 0 > "$proc/30/stat"
+    local json
+    json="$(MEM_INFO_PROC="$proc" run "$SCRIPTS/mem-info")"
+    expect "mem-info: total" '"16.0 GiB"' "$(jq -c .total <<< "$json")"
+    expect "mem-info: used, available, cached, free with percent of the total" \
+        '[{"key":"Used","v":"13.0 GiB","pct":81,"lvl":"mid"},{"key":"Available","v":"3.0 GiB","pct":19,"lvl":""},{"key":"Cached","v":"4.0 GiB","pct":25,"lvl":""},{"key":"Free","v":"1.0 GiB","pct":6,"lvl":""}]' \
+        "$(jq -c .rows <<< "$json")"
+    expect "mem-info: bar of used, reclaimable, free (100 %)" '{"used":81,"cached":13,"free":6}' "$(jq -c .stack <<< "$json")"
+    expect "mem-info: swap" '{"v":"3.0 GiB","total":"8.0 GiB","pct":38,"lvl":"mid"}' "$(jq -c .swap <<< "$json")"
+    expect "mem-info: processes by resident memory, percent of the total" \
+        '[{"name":"Web Content","mem":"4.0G","pct":"25.0","lvl":"high"},{"name":"a) b","mem":"12.0M","pct":"0.1","lvl":""}]' \
+        "$(jq -c .procs <<< "$json")"
+    if grep -qF '"scripts/mem-info")' "$YUCK"; then ok "RAM popup: scripts/mem-info"; else fail "RAM popup does not read scripts/mem-info"; fi
 }
 
 test_theme_mode() {

@@ -55,7 +55,7 @@
 ;; Numbers above the norm get class mid (yellow) or high (red); cpu-info
 ;; decides (lvl).
 (defwidget cpu-tip []
-  (box :class "cpu-tip" :orientation "v" :space-evenly false :spacing 4 :width 340
+  (box :class "info-tip cpu-tip" :orientation "v" :space-evenly false :spacing 4 :width 340
     (tip-heading :title "CPU Usage" :first true)
     ;; Two graphs over each other: user (blue) and system (red). Size set
     ;; here: a graph asks GTK only for its line thickness.
@@ -115,13 +115,39 @@
           (label :class "value ${proc.lvl}" :width 70 :xalign 1 :text {proc.cpu})
           (label :width 70 :xalign 1 :text {proc.mem}))))))
 
+;; RAM popup: one bar of the whole memory (used, cached, free), a bar for
+;; swap, and the processes with the most memory.
 (defwidget mem-tip []
-  (box :orientation "v" :space-evenly false :spacing 2
-    (label :halign "start" :text "Used:       ${mem_info?.used ?: '…'}")
-    (label :halign "start" :text "Available:  ${mem_info?.available ?: '…'}")
-    (label :halign "start" :text "Cached:     ${mem_info?.cache ?: '…'}")
-    (label :halign "start" :text "Free:       ${mem_info?.free ?: '…'}")
-    (label :halign "start" :text "Swap:       ${mem_info?.swap ?: '…'}")))
+  (box :class "info-tip mem-tip" :orientation "v" :space-evenly false :spacing 4 :width 280
+    (tip-heading :title "Memory" :first true)
+    (box :class "mem-stack" :space-evenly false
+      (box :class "used" :width {round((mem_info?.stack?.used ?: 0) * 2.8, 0)} :height 12)
+      (box :class "cached" :width {round((mem_info?.stack?.cached ?: 0) * 2.8, 0)} :height 12)
+      (box :class "free" :hexpand true :height 12))
+    (box :orientation "v" :space-evenly false
+      (for row in {mem_info?.rows ?: []}
+        (box :space-evenly false
+          (label :class "swatch ${row.key}" :width 18 :xalign 0 :text "■")
+          (label :class "key" :hexpand true :xalign 0 :text {row.key})
+          (label :class "value ${row.lvl}" :width 90 :xalign 1 :text {row.v})
+          (label :class "value ${row.lvl}" :width 60 :xalign 1 :text "${row.pct}%"))))
+    (label :class "dim" :halign "end" :text "of ${mem_info?.total ?: '…'}")
+
+    (tip-heading :title "Swap")
+    (progress :class "level ${mem_info?.swap?.lvl ?: ''}" :value {mem_info?.swap?.pct ?: 0})
+    (box :space-evenly false
+      (label :class "key" :hexpand true :xalign 0 :text "Used")
+      (label :class "value ${mem_info?.swap?.lvl ?: ''}" :xalign 1
+             :text "${mem_info?.swap?.v ?: '…'} / ${mem_info?.swap?.total ?: '…'}")
+      (label :class "value ${mem_info?.swap?.lvl ?: ''}" :width 60 :xalign 1 :text "${mem_info?.swap?.pct ?: '…'}%"))
+
+    (tip-heading :title "Top Processes")
+    (box :class "procs" :orientation "v" :space-evenly false
+      (for proc in {mem_info?.procs ?: []}
+        (box :space-evenly false :spacing 8
+          (label :hexpand true :xalign 0 :limit-width 18 :text {proc.name})
+          (label :width 70 :xalign 1 :text {proc.mem})
+          (label :class "value ${proc.lvl}" :width 50 :xalign 1 :text "${proc.pct}%"))))))
 
 ;; One usage bar per disk (device), as disk-info lists them.
 (defwidget disk-tip []

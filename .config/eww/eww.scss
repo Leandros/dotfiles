@@ -65,10 +65,10 @@ menu arrow { min-width: 16px; min-height: 16px; -gtk-icon-source: -gtk-icontheme
 .tip-heading.first { margin-top: 0; }
 .tip-heading .rule { min-height: 3px; background-color: $blue; }
 .tip-heading .title { font-weight: bold; color: $blue; }
-.cpu-tip .dim { color: #93a1a1; }
-.cpu-tip .key { font-weight: bold; }
-.cpu-tip .mid { color: $yellow; font-weight: bold; }
-.cpu-tip .high { color: $red; font-weight: bold; }
+.info-tip .dim { color: #93a1a1; }
+.info-tip .key { font-weight: bold; }
+.info-tip .mid { color: $yellow; font-weight: bold; }
+.info-tip .high { color: $red; font-weight: bold; }
 // Usage graph: user blue, system red, over each other.
 .cpu-graph.user { color: $blue; background-color: rgba(38, 139, 210, 0.15); }
 .cpu-graph.system { color: $red; background-color: transparent; }
@@ -86,6 +86,21 @@ menu arrow { min-width: 16px; min-height: 16px; -gtk-icon-source: -gtk-icontheme
 .core .pct, .core .num { font-size: 0.8em; }
 .core .num { color: #93a1a1; }
 .procs.head label { font-weight: bold; color: #93a1a1; }
+// Memory popup.
+.mem-stack { border-radius: 3px; }
+.mem-stack .used { background-color: $blue; }
+.mem-stack .cached { background-color: $cyan; }
+.mem-stack .free { background-color: rgba(147, 161, 161, 0.35); }
+.swatch.Used { color: $blue; }
+.swatch.Cached { color: $cyan; }
+.swatch.Free { color: rgba(147, 161, 161, 0.6); }
+.swatch.Available { color: transparent; }
+.mem-tip progress, .mem-tip trough { min-height: 6px; border-radius: 3px; }
+.mem-tip trough { background-color: rgba(147, 161, 161, 0.25); }
+.mem-tip progress { background-color: $blue; }
+.mem-tip .level progress { background-color: $green; }
+.mem-tip .level.mid progress { background-color: $yellow; }
+.mem-tip .level.high progress { background-color: $red; }
 .disk trough { min-height: 6px; min-width: 280px; background-color: rgba(147, 161, 161, 0.25); border-radius: 3px; }
 .disk progress { min-height: 6px; border-radius: 3px; }
 .disk.low progress { background-color: $green; }

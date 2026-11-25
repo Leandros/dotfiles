@@ -1,28 +1,80 @@
 #!/usr/bin/env bash
 #
-# mem-info - details for the RAM block tooltip, as one JSON object of
-# GiB strings: used (total - available), available (what programs can get
-# without swapping, cache included), cache (page cache and buffers, freed
-# on demand), free (not used at all), swap ("used / total").
+# mem-info - details for the RAM popup of the eww bar, as one JSON object:
+#   total  "31.0 GiB"
+#   rows   Used (total - available), Available (what programs can get
+#          without swapping, cache included), Cached (page cache and
+#          buffers, freed on demand), Free (not used at all):
+#          [{"key": "Used", "v": "10.0 GiB", "pct": 63, "lvl": ""}, ...],
+#          pct of the total
+#   stack  the bar of the whole memory in percent, adding up to 100: used,
+#          cached (the rest of available: what can be reclaimed), free
+#   swap   {"v": "1.0 GiB", "total": "8.0 GiB", "pct": 13, "lvl": ""}
+#   procs  the 15 processes with the most resident memory,
+#          [{"name", "mem": "12.1M", "pct": "0.1" (of the total), "lvl"}]
+# lvl is "", "mid" (the bar draws it yellow) or "high" (red).
 #
 # The eww bar runs it only while the block is hovered.
 #
 set -euo pipefail
 
-readonly PROC="${MEM_INFO_PROC:-/proc}"
+readonly PROC="${MEM_INFO_PROC:-/proc}" TOP_PROCS=15
+# Yellow from, red from, in percent of the total (swap: of the swap).
+readonly USED_MID=75 USED_HIGH=90 SWAP_MID=25 SWAP_HIGH=50 PROC_MID=10 PROC_HIGH=25
+
+# "bytes<TAB>name" of the TOP_PROCS processes with the most resident
+# memory; kernel threads (none) left out. A process can end between the
+# glob and the read.
+procs() {
+    { cat "$PROC"/[0-9]*/stat 2>/dev/null || true; } | awk -v page="$(getconf PAGESIZE)" '
+        # comm is in parentheses and may hold spaces and ")": up to the last.
+        {
+            op = index($0, "(")
+            cl = 0
+            while ((k = index(substr($0, cl + 1), ")")) > 0) cl += k
+            split(substr($0, cl + 2), f, " ")
+            if (f[22] > 0) printf "%d\t%s\n", f[22] * page, substr($0, op + 1, cl - op - 1)
+        }' | sort -t "$(printf '\t')" -k1,1nr | head -n "$TOP_PROCS"
+}
 
 main() {
-    awk '
-        { kb[$1] = $2 }
-        function gib(k) { return sprintf("%.1f GiB", k / 1048576) }
-        END {
-            printf "{\"used\":\"%s\",\"available\":\"%s\",\"cache\":\"%s\",\"free\":\"%s\",\"swap\":\"%s / %s\"}\n",
-                gib(kb["MemTotal:"] - kb["MemAvailable:"]),
-                gib(kb["MemAvailable:"]),
-                gib(kb["Buffers:"] + kb["Cached:"]),
-                gib(kb["MemFree:"]),
-                gib(kb["SwapTotal:"] - kb["SwapFree:"]), gib(kb["SwapTotal:"])
-        }' "$PROC/meminfo"
+    local kb
+    # "name kB" of the meminfo lines.
+    kb="$(awk '{ sub(":", "", $1); print $1, $2 }' "$PROC/meminfo")"
+    procs | jq -R -s -c --arg kb "$kb" \
+        --argjson used_lvl "[$USED_MID, $USED_HIGH]" --argjson swap_lvl "[$SWAP_MID, $SWAP_HIGH]" \
+        --argjson proc_lvl "[$PROC_MID, $PROC_HIGH]" '
+        def lvl($t): if . >= $t[1] then "high" elif . >= $t[0] then "mid" else "" end;
+        def gib: "\(. / 1048576 * 10 | round / 10 | tostring | if test("\\.") then . else . + ".0" end) GiB";
+        def size: if . >= 1073741824 then "\(. / 1073741824 * 10 | round / 10)G"
+                  elif . >= 1048576 then "\(. / 1048576 * 10 | round / 10)M"
+                  elif . >= 1024 then "\(. / 1024 * 10 | round / 10)K"
+                  else "\(.)B" end
+                  | sub("^(?<n>[0-9]+)(?<u>[GMK])$"; "\(.n).0\(.u)");
+        def pct($of): if $of > 0 then 100 * . / $of | round else 0 end;
+        ([$kb | split("\n")[] | split(" ") | {key: .[0], value: (.[1] | tonumber)}] | from_entries) as $m
+        | $m.MemTotal as $total
+        | ($total - $m.MemAvailable) as $used
+        | ($m.SwapTotal - $m.SwapFree) as $swap
+        | ($used | pct($total)) as $used_pct
+        | ($m.MemFree | pct($total)) as $free_pct
+        | {
+            total: ($total | gib),
+            rows: [
+              {key: "Used", v: ($used | gib), pct: $used_pct, lvl: ($used_pct | lvl($used_lvl))},
+              {key: "Available", v: ($m.MemAvailable | gib), pct: ($m.MemAvailable | pct($total)), lvl: ""},
+              {key: "Cached", v: ($m.Buffers + $m.Cached | gib), pct: ($m.Buffers + $m.Cached | pct($total)), lvl: ""},
+              {key: "Free", v: ($m.MemFree | gib), pct: $free_pct, lvl: ""}
+            ],
+            stack: {used: $used_pct, cached: (100 - $used_pct - $free_pct), free: $free_pct},
+            swap: (($swap | pct($m.SwapTotal)) as $p
+                   | {v: ($swap | gib), total: ($m.SwapTotal | gib), pct: $p, lvl: ($p | lvl($swap_lvl))}),
+            procs: [split("\n")[] | select(length > 0) | split("\t")
+                    | (.[0] | tonumber) as $b | (100 * $b / ($total * 1024)) as $p
+                    | {name: .[1], mem: ($b | size),
+                       pct: ($p * 10 | round / 10 | tostring | if test("\\.") then . else . + ".0" end),
+                       lvl: ($p | lvl($proc_lvl))}]
+          }'
 }
 
 main "$@"

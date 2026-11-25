@@ -815,6 +815,14 @@ New link or system file: install function, `check_link` or `cmp` check in
   data comes from `scripts/cpu-usage` (deflisten, all the time: a graph
   keeps history only while it gets values; one `read` of `/proc/stat`
   every 2 s), not i3status (no user/system split).
+  RAM popup (2026-11-25, the user's pick of two designs), in the CPU
+  popup's look (shared class `info-tip`): Memory (a bar of used, cached
+  and free adding up to 100 %, its cached part the rest of available,
+  what can be reclaimed; rows Used, Available, Cached (buffers and page
+  cache), Free with GiB and percent of the total), Swap (bar, used /
+  total, percent), Top Processes (15 by resident memory, size,
+  percent of the total; no bars, the user's choice). Yellow/red: used 75/90 %,
+  swap 25/50 %, a process 10/25 % of the memory.
   CPU, RAM and time have widget tooltips (`tooltip`: content built once,
   so the graphs keep 5 min of history). A
   graph needs `:width`/`:height` (it requests only its line thickness; CSS
