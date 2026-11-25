@@ -1,45 +1,109 @@
 #!/usr/bin/env bash
 #
-# cpu-info - details for the CPU block tooltip, as one JSON object:
-# load (1, 5, 15 minutes; the kernel keeps no 30-minute average), cores
-# (rows of four {"name": "cpu0", "pct": 12}; the bar colors them by value)
-# temp (CPU package) and fan (ThinkPad fan speeds, "2516, 2400 rpm";
-# empty elsewhere).
+# cpu-info - details for the CPU popup of the eww bar, as one JSON object:
+#   load   1, 5 and 15 minutes (the kernel keeps no 30-minute average),
+#          [{"v": "0.84", "lvl": ""}, ...]
+#   cores  [{"n": 0, "pct": 12, "type": "p", "lvl": ""}, ...]; type p
+#          (performance), e (efficiency) or lp (low-power efficiency) from
+#          the hybrid PMUs' cpu lists, p on CPUs without them
+#   temp   CPU package, {"v": "61", "lvl": ""} (°C); v empty without a sensor
+#   fans   ThinkPad fan speeds, {"v": "2516 / 2400", "lvl": ""} (rpm); v
+#          empty elsewhere
+#   procs  the 15 processes with the most CPU,
+#          [{"name", "cpu": "2.6" (percent of one core, as top), "mem":
+#          "12.1M" (resident), "lvl"}, ...]
+# lvl is "", "mid" (the bar draws it yellow) or "high" (red).
 #
-# The eww bar runs it only while the block is hovered. Core usage is the
-# busy share of two /proc/stat samples SAMPLE_S apart.
+# The eww bar runs it only while the block is hovered. Usage is from two
+# samples of /proc/stat and /proc/<pid>/stat SAMPLE_S apart.
 #
 set -euo pipefail
 
 readonly PROC="${CPU_INFO_PROC:-/proc}" SYSFS="${CPU_INFO_SYSFS:-/sys}"
-readonly SAMPLE_S="${CPU_INFO_SAMPLE_S:-0.5}" PER_ROW=4
+readonly SAMPLE_S="${CPU_INFO_SAMPLE_S:-0.5}" TOP_PROCS=15
+# Yellow from, red from.
+readonly CORE_MID=50 CORE_HIGH=80 TEMP_MID=80 TEMP_HIGH=95 FAN_MID=4000 FAN_HIGH=5500
+readonly PROC_MID=50 PROC_HIGH=90
+# Load per core.
+readonly LOAD_MID=0.7 LOAD_HIGH=1
 
-# "cpuN busy total" per core; busy is all but idle and iowait.
-stat_sample() {
-    awk '/^cpu[0-9]+ / {
-        total = 0; for (i = 2; i <= NF; i++) total += $i
-        print $1, total - $5 - $6, total
-    }' "$PROC/stat"
+# The cpu lines of /proc/stat, then a stat line per process. A process can
+# end between the glob and the read.
+sample() {
+    grep '^cpu[0-9]' "$PROC/stat"
+    cat "$PROC"/[0-9]*/stat 2>/dev/null || true
 }
 
-# "cpuN percent" per core.
-cores() {
+# Cpu list of a hybrid PMU ("0-5"), empty without one.
+cpus_of() { cat "$SYSFS/devices/$1/cpus" 2>/dev/null || true; }
+
+# "core N percent type" per core and "proc cpu-percent cpu-text mem name"
+# per process that was in both samples, tab-separated.
+usage() {
     local before after
-    before="$(stat_sample)"
+    before="$(sample)"
     sleep "$SAMPLE_S"
-    after="$(stat_sample)"
-    awk '
-        NR == FNR { busy[$1] = $2; total[$1] = $3; next }
+    after="$(sample)"
+    awk -v e="$(cpus_of cpu_atom)" -v lp="$(cpus_of cpu_lowpower)" \
+        -v page="$(getconf PAGESIZE)" '
+        function add_cpus(list, type,   parts, n, i, r) {
+            n = split(list, parts, ",")
+            for (i = 1; i <= n; i++) {
+                if (split(parts[i], r, "-") == 1) r[2] = r[1]
+                for (c = r[1]; c <= r[2]; c++) types[c] = type
+            }
+        }
+        function size(b) {
+            if (b >= 1073741824) return sprintf("%.1fG", b / 1073741824)
+            if (b >= 1048576) return sprintf("%.1fM", b / 1048576)
+            if (b >= 1024) return sprintf("%.1fK", b / 1024)
+            return b "B"
+        }
+        # comm is in parentheses and may hold spaces and ")": up to the last.
+        function parse(line,   op, cl, k, f) {
+            op = index(line, "(")
+            cl = 0
+            while ((k = index(substr(line, cl + 1), ")")) > 0) cl += k
+            name = substr(line, op + 1, cl - op - 1)
+            split(substr(line, cl + 2), f, " ")
+            ticks = f[12] + f[13]
+            rss = f[22]
+        }
+        BEGIN { add_cpus(e, "e"); add_cpus(lp, "lp"); FS = " " }
+        /^cpu[0-9]/ {
+            n = substr($1, 4) + 0
+            total = 0
+            for (i = 2; i <= NF; i++) total += $i
+            busy = total - $5 - $6
+            if (FNR == NR) { cbusy[n] = busy; ctotal[n] = total; next }
+            dt = total - ctotal[n]
+            elapsed += dt
+            ncores++
+            pct[n] = dt > 0 ? int(100 * (busy - cbusy[n]) / dt + 0.5) : 0
+            next
+        }
         {
-            dt = $3 - total[$1]
-            printf "%s %d\n", $1, (dt > 0 ? 100 * ($2 - busy[$1]) / dt : 0) + 0.5
+            parse($0)
+            if (FNR == NR) { pticks[$1] = ticks; next }
+            if (!($1 in pticks)) next
+            pname[$1] = name; pdelta[$1] = ticks - pticks[$1]; prss[$1] = rss
+        }
+        END {
+            for (n = 0; n < ncores; n++)
+                printf "core\t%d\t%d\t%s\n", n, pct[n], (n in types ? types[n] : "p")
+            # Ticks of one core in the sample time.
+            per_core = ncores ? elapsed / ncores : 0
+            for (p in pname) {
+                c = per_core > 0 ? 100 * pdelta[p] / per_core : 0
+                printf "proc\t%s\t%.1f\t%s\t%s\n", c, c, size(prss[p] * page), pname[p]
+            }
         }' <(echo "$before") <(echo "$after")
 }
 
-# Package temperature: coretemp (Intel) "Package id 0", k10temp (AMD)
-# Tctl, else the x86_pkg_temp thermal zone. Empty without a sensor.
+# Package temperature in °C: coretemp (Intel) "Package id 0", k10temp
+# (AMD) Tctl, else the x86_pkg_temp thermal zone. Empty without a sensor.
 temp() {
-    local hw label input zone
+    local hw label zone
     for hw in "$SYSFS"/class/hwmon/hwmon*; do
         case "$(cat "$hw/name" 2>/dev/null)" in
             coretemp|k10temp) ;;
@@ -48,8 +112,7 @@ temp() {
         for label in "$hw"/temp*_label; do
             case "$(cat "$label" 2>/dev/null)" in
                 "Package id 0"|Tctl)
-                    input="${label%_label}_input"
-                    echo "$(($(cat "$input") / 1000)) °C"
+                    echo "$(($(cat "${label%_label}_input") / 1000))"
                     return
                     ;;
             esac
@@ -57,38 +120,51 @@ temp() {
     done
     for zone in "$SYSFS"/class/thermal/thermal_zone*; do
         if [[ "$(cat "$zone/type" 2>/dev/null)" == x86_pkg_temp ]]; then
-            echo "$(($(cat "$zone/temp") / 1000)) °C"
+            echo "$(($(cat "$zone/temp") / 1000))"
             return
         fi
     done
 }
 
-# Fan speeds of thinkpad_acpi's hwmon (~/bin/fan sets the level), or
-# empty.
-fan() {
-    local hw input rpms=()
+# Fan speeds of thinkpad_acpi's hwmon (~/bin/fan sets the level), one per
+# line; nothing elsewhere.
+fans() {
+    local hw input
     for hw in "$SYSFS"/class/hwmon/hwmon*; do
         [[ "$(cat "$hw/name" 2>/dev/null)" == thinkpad ]] || continue
         for input in "$hw"/fan*_input; do
-            [[ -r "$input" ]] && rpms+=("$(cat "$input")")
+            [[ -r "$input" ]] && cat "$input"
         done
     done
-    ((${#rpms[@]})) || return 0
-    printf '%s' "${rpms[0]}"
-    printf ', %s' "${rpms[@]:1}"
-    echo " rpm"
+    return 0
 }
 
 main() {
     local load
     read -r -a load < "$PROC/loadavg"
-    cores | jq -cR -s \
-        --arg load "${load[0]}  ${load[1]}  ${load[2]}" \
-        --arg temp "$(temp)" \
-        --arg fan "$(fan)" \
-        --argjson per_row "$PER_ROW" '
-        [split("\n")[] | select(length > 0) | split(" ") | {name: .[0], pct: (.[1] | tonumber)}]
-        | {load: $load, temp: $temp, fan: $fan, cores: [range(0; length; $per_row) as $i | .[$i:$i + $per_row]]}'
+    usage | jq -R -s -c \
+        --arg loads "${load[*]:0:3}" --arg temp "$(temp)" --arg fans "$(fans)" \
+        --argjson top "$TOP_PROCS" \
+        --argjson core_lvl "[$CORE_MID, $CORE_HIGH]" --argjson temp_lvl "[$TEMP_MID, $TEMP_HIGH]" \
+        --argjson fan_lvl "[$FAN_MID, $FAN_HIGH]" --argjson proc_lvl "[$PROC_MID, $PROC_HIGH]" \
+        --argjson load_lvl "[$LOAD_MID, $LOAD_HIGH]" '
+        def lvl($t): if . >= $t[1] then "high" elif . >= $t[0] then "mid" else "" end;
+        [split("\n")[] | select(length > 0) | split("\t")] as $rows
+        | [$rows[] | select(.[0] == "core")
+           | {n: (.[1] | tonumber), pct: (.[2] | tonumber), type: .[3]}
+           | . + {lvl: (.pct | lvl($core_lvl))}] as $cores
+        | ($cores | length) as $ncores
+        | {
+            load: [$loads | split(" ")[] | {v: ., lvl: (tonumber | lvl($load_lvl | map(. * $ncores)))}],
+            cores: $cores,
+            temp: {v: $temp, lvl: (if $temp == "" then "" else $temp | tonumber | lvl($temp_lvl) end)},
+            fans: ($fans | split("\n") | map(select(length > 0))
+                   | {v: join(" / "), lvl: (map(tonumber) | max // 0 | lvl($fan_lvl))}),
+            procs: [$rows[] | select(.[0] == "proc")
+                    | {sort: (.[1] | tonumber), name: .[4], cpu: .[2], mem: .[3]}]
+                   | sort_by(-.sort) | .[:$top]
+                   | map({name, cpu, mem, lvl: (.sort | lvl($proc_lvl))})
+          }'
 }
 
 main "$@"

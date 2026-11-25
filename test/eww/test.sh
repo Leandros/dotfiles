@@ -5,8 +5,8 @@
 # clicks, block-tooltips (battery, VPN) and net-info build one JSON object
 # per block, disk-info one entry per device, theme-mode and
 # i3-workspaces follow changes, and bar opens one bar per output (tray on
-# the primary one, height for Xft.dpi) and reopens them on output changes. cpu-info and
-# mem-info read fake /proc and /sys files. Under sway (swaymsg stub with
+# the primary one, height for Xft.dpi) and reopens them on output changes. cpu-info,
+# cpu-usage and mem-info read fake /proc and /sys files. Under sway (swaymsg stub with
 # answers of sway 1.12) the scripts and bar do the same through wm-msg.
 #
 # Usage: test/eww/test.sh
@@ -207,46 +207,92 @@ EOF
     rm -f "$STUBS/df"
 }
 
+# A /proc/<pid>/stat line: pid, comm, utime, stime, rss (pages).
+proc_stat() {
+    echo "$1 ($2) S 1 1 1 0 -1 0 0 0 0 0 $3 $4 0 0 20 0 1 0 100 0 $5"
+}
+
 test_cpu_info() {
     local proc="$TMP/proc" sys="$TMP/sys"
-    mkdir -p "$proc" "$sys/class/hwmon/hwmon3"
-    echo "0.52 0.61 0.70 2/300 1234" > "$proc/loadavg"
+    mkdir -p "$proc"/{10,20,30,40} "$sys/class/hwmon/hwmon3" "$sys/devices"/cpu_{core,atom,lowpower}
+    # Four cores: 0-1 performance, 2 efficiency, 3 low-power efficiency.
+    echo 0-1 > "$sys/devices/cpu_core/cpus"
+    echo 2 > "$sys/devices/cpu_atom/cpus"
+    echo 3 > "$sys/devices/cpu_lowpower/cpus"
+    # Load: yellow from 0.7 per core (2.8), red from one per core (4).
+    echo "0.52 3.00 4.10 2/300 1234" > "$proc/loadavg"
     echo coretemp > "$sys/class/hwmon/hwmon3/name"
     echo "Package id 0" > "$sys/class/hwmon/hwmon3/temp1_label"
-    echo 61000 > "$sys/class/hwmon/hwmon3/temp1_input"
+    echo 84000 > "$sys/class/hwmon/hwmon3/temp1_input"
     # ThinkPad fans (thinkpad_acpi): two on the P14s Gen 6.
     mkdir -p "$sys/class/hwmon/hwmon5"
     echo thinkpad > "$sys/class/hwmon/hwmon5/name"
     echo 2516 > "$sys/class/hwmon/hwmon5/fan1_input"
-    echo 2400 > "$sys/class/hwmon/hwmon5/fan2_input"
-    # /proc/stat: the second sample adds 100 ticks per core, 25 and 100
-    # of them busy. The fake sleep swaps the file between the samples.
-    printf 'cpu  0 0 0 0 0 0 0 0\ncpu0 100 0 100 800 0 0 0 0\ncpu1 0 0 0 1000 0 0 0 0\n' > "$proc/stat"
-    cp "$proc/stat" "$TMP/stat-first"
-    printf 'cpu  0 0 0 0 0 0 0 0\ncpu0 125 0 100 875 0 0 0 0\ncpu1 50 0 50 1000 0 0 0 0\n' > "$TMP/stat2"
+    echo 5900 > "$sys/class/hwmon/hwmon5/fan2_input"
+    # /proc/stat: the second sample adds 100 ticks per core, 25, 100, 50
+    # and 0 of them busy. Processes: 150 and 60 ticks in that time (per
+    # core: 150 % and 60 %), 0; 40 ends between the samples. The fake
+    # sleep swaps the files between the samples.
+    printf 'cpu  0 0 0 0 0 0 0 0\ncpu0 100 0 100 800 0 0 0 0\ncpu1 0 0 0 1000 0 0 0 0\ncpu2 0 0 0 0 0 0 0 0\ncpu3 0 0 0 0 0 0 0 0\n' \
+        > "$proc/stat"
+    proc_stat 10 "Web Content" 1000 500 3072 > "$proc/10/stat"
+    proc_stat 20 "a) b" 10 0 300000 > "$proc/20/stat"
+    proc_stat 30 "kworker/0:1" 0 0 0 > "$proc/30/stat"
+    proc_stat 40 gone 0 0 0 > "$proc/40/stat"
+    cp -r "$proc" "$TMP/proc-first"
     cat > "$STUBS/sleep" <<EOF
 #!/bin/sh
-cp "$TMP/stat2" "$proc/stat"
+printf 'cpu  0 0 0 0 0 0 0 0\ncpu0 125 0 100 875 0 0 0 0\ncpu1 50 0 50 1000 0 0 0 0\ncpu2 50 0 0 50 0 0 0 0\ncpu3 0 0 0 100 0 0 0 0\n' > "$proc/stat"
+$(declare -f proc_stat)
+proc_stat 10 "Web Content" 1100 550 3072 > "$proc/10/stat"
+proc_stat 20 "a) b" 70 0 300000 > "$proc/20/stat"
+rm -r "$proc/40"
 EOF
     chmod +x "$STUBS/sleep"
 
     local json
     json="$(CPU_INFO_PROC="$proc" CPU_INFO_SYSFS="$sys" run "$SCRIPTS/cpu-info")"
     rm -f "$STUBS/sleep"
-    expect "cpu-info: load 1, 5, 15 min" "0.52  0.61  0.70" "$(jq -r .load <<< "$json")"
-    expect "cpu-info: cores in rows, with values" '[[{"name":"cpu0","pct":25},{"name":"cpu1","pct":100}]]' "$(jq -c .cores <<< "$json")"
-    expect "cpu-info: package temperature" "61 °C" "$(jq -r .temp <<< "$json")"
-    expect "cpu-info: fan speeds" "2516, 2400 rpm" "$(jq -r .fan <<< "$json")"
-    # shellcheck disable=SC2016 # an eww expression, not the shell's.
-    if grep -qF 'Fan:  ${cpu_info?.fan}' "$YUCK"; then
-        ok "CPU tooltip shows the fans"
-    else
-        fail "CPU tooltip has no fan line"
-    fi
-    rm -r "$sys/class/hwmon/hwmon5"
-    cp "$TMP/stat-first" "$proc/stat"
-    json="$(CPU_INFO_PROC="$proc" CPU_INFO_SYSFS="$sys" run "$SCRIPTS/cpu-info")"
-    expect "cpu-info: no ThinkPad fans: empty" "" "$(jq -r .fan <<< "$json")"
+    expect "cpu-info: load 1, 5, 15 min, yellow and red per core count" \
+        '[{"v":"0.52","lvl":""},{"v":"3.00","lvl":"mid"},{"v":"4.10","lvl":"high"}]' "$(jq -c .load <<< "$json")"
+    expect "cpu-info: cores with type and level" \
+        '[{"n":0,"pct":25,"type":"p","lvl":""},{"n":1,"pct":100,"type":"p","lvl":"high"},{"n":2,"pct":50,"type":"e","lvl":"mid"},{"n":3,"pct":0,"type":"lp","lvl":""}]' \
+        "$(jq -c .cores <<< "$json")"
+    expect "cpu-info: package temperature, yellow from 80" '{"v":"84","lvl":"mid"}' "$(jq -c .temp <<< "$json")"
+    expect "cpu-info: fan speeds, red from 5500 rpm" '{"v":"2516 / 5900","lvl":"high"}' "$(jq -c .fans <<< "$json")"
+    expect "cpu-info: processes by CPU (per core), resident memory" \
+        '[{"name":"Web Content","cpu":"150.0","mem":"12.0M","lvl":"high"},{"name":"a) b","cpu":"60.0","mem":"1.1G","lvl":"mid"},{"name":"kworker/0:1","cpu":"0.0","mem":"0B","lvl":""}]' \
+        "$(jq -c .procs <<< "$json")"
+
+    # No fans, no core types (not hybrid): fans empty, every core "p".
+    rm -r "$sys/class/hwmon/hwmon5" "$sys/devices" "$proc"
+    cp -r "$TMP/proc-first" "$proc"
+    json="$(CPU_INFO_PROC="$proc" CPU_INFO_SYSFS="$sys" CPU_INFO_SAMPLE_S=0 run "$SCRIPTS/cpu-info")"
+    expect "cpu-info: no ThinkPad fans: empty" "" "$(jq -r .fans.v <<< "$json")"
+    expect "cpu-info: no core types: performance" "p p p p" "$(jq -r '[.cores[].type] | join(" ")' <<< "$json")"
+
+    # The popup reads the real scripts, the graph user and system.
+    local want
+    for want in '"scripts/cpu-info")' '"scripts/cpu-usage")' ':value {cpu_usage.user}' ':value {cpu_usage.system}'; do
+        if grep -qF -- "$want" "$YUCK"; then ok "CPU popup: $want"; else fail "CPU popup misses $want"; fi
+    done
+}
+
+# User and system share of all cores between two /proc/stat samples, one
+# JSON line per interval.
+test_cpu_usage() {
+    local proc="$TMP/proc-usage"
+    mkdir -p "$proc"
+    printf 'cpu  100 0 50 850 0 0 0 0 0 0\ncpu0 100 0 50 850 0 0 0 0 0 0\n' > "$proc/stat"
+    # user + nice 40, system + irq + softirq 10, idle 50: of 100.
+    cat > "$STUBS/sleep" <<EOF
+#!/bin/sh
+printf 'cpu  130 10 55 900 0 2 3 0 0 0\ncpu0 130 10 55 900 0 2 3 0 0 0\n' > "$proc/stat"
+EOF
+    chmod +x "$STUBS/sleep"
+    expect "cpu-usage: user and system percent" '{"user":40,"system":10}' \
+        "$(CPU_USAGE_PROC="$proc" run timeout 5 "$SCRIPTS/cpu-usage" | head -n 1)"
+    rm -f "$STUBS/sleep"
 }
 
 test_mem_info() {
@@ -651,6 +697,7 @@ main() {
     test_net_info
     test_disk_info
     test_cpu_info
+    test_cpu_usage
     test_mem_info
     test_theme_mode
     test_i3_workspaces

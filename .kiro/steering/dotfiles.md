@@ -800,16 +800,26 @@ New link or system file: install function, `check_link` or `cmp` check in
   them, and `* { all: unset; }` stripped their background; `menu` rules
   in eww.scss give them the tooltip look (test: `test_tray_menu_style`,
   GTK 3 from Python on the caller's display). Tray: StatusNotifierItem only (eww is the watcher).
-  The CPU tooltip shows the ThinkPad fan speeds next to the temperature
-  (`cpu-info` `fan`: thinkpad_acpi's hwmon `fan*_input`, "2516, 2400 rpm",
-  empty and the label hidden elsewhere).
+  CPU popup (2026-11-25, the user's design): sections under headings in a
+  line across the popup (`tip-heading`, an empty line above each): CPU
+  Usage (user blue and system red, two `graph`s in an `overlay`; a
+  vertical bar per core, colored by type: performance blue, efficiency
+  cyan, low-power violet, from `/sys/devices/cpu_{core,atom,lowpower}/cpus`,
+  all performance without them), Load Average, Temperature, Fans
+  (thinkpad_acpi's hwmon `fan*_input`, hidden elsewhere), Top Processes
+  (15, CPU in percent of one core as top, resident memory; from
+  `/proc/<pid>/stat` deltas over the same 0.5 s as the cores). Values
+  above the norm yellow (`mid`) or red (`high`), decided by `cpu-info`:
+  cores 50/80 %, load 0.7/1 per core, package 80/95 °C, fans 4000/5500
+  rpm (a guess: hwmon reports no maximum), processes 50/90 %. The graph's
+  data comes from `scripts/cpu-usage` (deflisten, all the time: a graph
+  keeps history only while it gets values; one `read` of `/proc/stat`
+  every 2 s), not i3status (no user/system split).
   CPU, RAM and time have widget tooltips (`tooltip`: content built once,
-  so the CPU `graph` keeps 5 min of history from the i3status value, via
-  `replace(blocks?.cpu_usage?.full_text, ...)`, no extra polling). The
+  so the graphs keep 5 min of history). A
   graph needs `:width`/`:height` (it requests only its line thickness; CSS
   min-width does not apply); 0-100 %, not scaled to the peak (the user's
-  choice). Cores are colored by value (green, yellow from 50 %, red from
-  80 %), disks by usage (75 %, 90 %). Every tooltip is a widget tooltip:
+  choice). Disks are colored by usage (75 %, 90 %). Every tooltip is a widget tooltip:
   with a label `:tooltip` text the bar sometimes came up 0 px high, and the
   reopen guard reopening too early made it worse (`BAR_SIZE_CHECK_S`).
   Each `for` sits in a box of its own (no widget after it). All details,

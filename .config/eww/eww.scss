@@ -6,6 +6,8 @@ $green: #859900;
 $orange: #cb4b16;
 $yellow: #b58900;
 $red: #dc322f;
+$cyan: #2aa198;
+$violet: #6c71c4;
 
 * { all: unset; font-family: "Menlo", monospace; font-size: 10pt; }
 // sway: outputs at scale 1 below 4k (bin/bar's small=true), about 110 ppi
@@ -57,12 +59,33 @@ menu arrow { min-width: 16px; min-height: 16px; -gtk-icon-source: -gtk-icontheme
 
 // Widget tooltips (CPU, RAM, time).
 .tip { padding: 2px; }
-.cpu-graph { color: $blue; background-color: rgba(38, 139, 210, 0.15); }
-// Core and disk usage: green, yellow from 50 % (disks 75 %), red from
-// 80 % (disks 90 %).
-.core.low label { color: $green; }
-.core.mid label { color: $yellow; }
-.core.high label { color: $red; }
+// CPU popup: section headings in a line across the popup, an empty line
+// above each but the first.
+.tip-heading { margin-top: 12px; }
+.tip-heading.first { margin-top: 0; }
+.tip-heading .rule { min-height: 3px; background-color: $blue; }
+.tip-heading .title { font-weight: bold; color: $blue; }
+.cpu-tip .dim { color: #93a1a1; }
+.cpu-tip .key { font-weight: bold; }
+.cpu-tip .mid { color: $yellow; font-weight: bold; }
+.cpu-tip .high { color: $red; font-weight: bold; }
+// Usage graph: user blue, system red, over each other.
+.cpu-graph.user { color: $blue; background-color: rgba(38, 139, 210, 0.15); }
+.cpu-graph.system { color: $red; background-color: transparent; }
+.legend .user { color: $blue; }
+.legend .system { color: $red; }
+// Core bars by type: performance blue, efficiency cyan, low-power violet.
+.cores progress, .cores trough { min-width: 14px; border-radius: 2px; }
+.cores trough { min-height: 60px; background-color: rgba(147, 161, 161, 0.2); }
+.core.p progress { background-color: $blue; }
+.core.e progress { background-color: $cyan; }
+.core.lp progress { background-color: $violet; }
+.legend .p { color: $blue; }
+.legend .e { color: $cyan; }
+.legend .lp { color: $violet; }
+.core .pct, .core .num { font-size: 0.8em; }
+.core .num { color: #93a1a1; }
+.procs.head label { font-weight: bold; color: #93a1a1; }
 .disk trough { min-height: 6px; min-width: 280px; background-color: rgba(147, 161, 161, 0.25); border-radius: 3px; }
 .disk progress { min-height: 6px; border-radius: 3px; }
 .disk.low progress { background-color: $green; }

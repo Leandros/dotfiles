@@ -21,13 +21,12 @@
 (defpoll syncthing_info :interval "3s" :initial "" :run-while {hover == "syncthing"} "~/bin/syncthing-status --details")
 (defpoll disk_info :interval "10s" :initial "[]" :run-while {hover == "disk_info"} "scripts/disk-info")
 (defpoll cpu_info :interval "2s" :initial "{}" :run-while {hover == "cpu_usage"} "scripts/cpu-info")
+;; User and system CPU usage for the graph, always: the graph keeps its history.
+(deflisten cpu_usage :initial '{"user":0,"system":0}' "scripts/cpu-usage")
 (defpoll mem_info :interval "2s" :initial "{}" :run-while {hover == "memory"} "scripts/mem-info")
 (defpoll uptime :interval "60s" :initial "" :run-while {hover == "time"} "uptime -p")
 (defpoll today :interval "60s" :initial "{}" :run-while {hover == "time"}
   "date '+{\"day\":%-d,\"month\":%-m,\"year\":%Y}'")
-
-;; CPU usage in percent from the status block ("C: 12%"), which i3status
-;; reads every 5 s anyway: the graph needs no polling of its own.
 
 ;; Workspaces of this output. i3bar: focused, active (visible on another
 ;; output), urgent, inactive. In the workspace mode each numbered workspace
@@ -46,30 +45,75 @@
           (label :visible {ws.num >= 0 && ws.name != "${ws.num}"}
                  :text {substring(ws.name, strlength("${ws.num}"), strlength(ws.name))}))))))
 
+;; A section title in a line across the popup ("━━ Load Average ━━━━").
+(defwidget tip-heading [title ?first]
+  (box :class "tip-heading ${first == true ? 'first' : ''}" :space-evenly false :spacing 6
+    (box :class "rule" :width 12 :valign "center")
+    (label :class "title" :text title)
+    (box :class "rule" :hexpand true :valign "center")))
+
+;; Numbers above the norm get class mid (yellow) or high (red); cpu-info
+;; decides (lvl).
 (defwidget cpu-tip []
-  (box :orientation "v" :space-evenly false :spacing 4
-    (label :halign "start" :text "Load:  ${cpu_info?.load ?: '…'}  (1, 5, 15 min)")
-    ;; Fan speeds next to the temperature, on ThinkPads only (~/bin/fan).
-    (box :space-evenly false :spacing 24
-      (label :halign "start" :text "Temp:  ${cpu_info?.temp ?: '…'}")
-      (label :halign "start" :visible {(cpu_info?.fan ?: "") != ""} :text "Fan:  ${cpu_info?.fan}"))
-    ;; Each `for` in a box of its own: eww drew no widget after a `for`.
-    (box :orientation "v" :space-evenly false
-      (for row in {cpu_info?.cores ?: []}
+  (box :class "cpu-tip" :orientation "v" :space-evenly false :spacing 4 :width 340
+    (tip-heading :title "CPU Usage" :first true)
+    ;; Two graphs over each other: user (blue) and system (red). Size set
+    ;; here: a graph asks GTK only for its line thickness.
+    (overlay
+      (graph :class "cpu-graph user" :width 340 :height 60 :min 0 :max 100 :dynamic false
+             :time-range "5m" :thickness 2 :line-style "round" :value {cpu_usage.user})
+      (graph :class "cpu-graph system" :width 340 :height 60 :min 0 :max 100 :dynamic false
+             :time-range "5m" :thickness 2 :line-style "round" :value {cpu_usage.system}))
+    (box :class "legend" :space-evenly false :spacing 12 :halign "start"
+      (label :class "user" :text "■ user ${cpu_usage.user}%")
+      (label :class "system" :text "■ system ${cpu_usage.system}%")
+      (label :class "dim" :text "last 5 min"))
+    ;; One bar per core, colored by type: performance, efficiency,
+    ;; low-power efficiency. Each `for` in a box of its own: eww drew no
+    ;; widget after a `for`.
+    (box :class "cores" :space-evenly false :spacing 4 :halign "center"
+      (for core in {cpu_info?.cores ?: []}
+        (box :class "core ${core.type}" :orientation "v" :space-evenly false :spacing 2
+          (progress :orientation "v" :flipped true :value {core.pct} :height 60 :halign "center")
+          (label :class "pct ${core.lvl}" :text "${core.pct}")
+          (label :class "num" :text "${core.n}"))))
+    (box :class "legend" :space-evenly false :spacing 12 :halign "center"
+      (label :class "p" :text "■ performance")
+      (label :class "e" :text "■ efficiency")
+      (label :class "lp" :text "■ low-power"))
+
+    (tip-heading :title "Load Average")
+    (box :space-evenly false :spacing 6
+      (label :class "value ${cpu_info?.load?.[0]?.lvl ?: ''}" :text {cpu_info?.load?.[0]?.v ?: "…"})
+      (label :class "dim" :text "/")
+      (label :class "value ${cpu_info?.load?.[1]?.lvl ?: ''}" :text {cpu_info?.load?.[1]?.v ?: "…"})
+      (label :class "dim" :text "/")
+      (label :class "value ${cpu_info?.load?.[2]?.lvl ?: ''}" :text {cpu_info?.load?.[2]?.v ?: "…"})
+      (label :class "dim" :hexpand true :xalign 1 :text "1 / 5 / 15 min"))
+
+    (tip-heading :title "Temperature")
+    (box :space-evenly false
+      (label :class "key" :hexpand true :xalign 0 :text "CPU Temp")
+      (label :class "value ${cpu_info?.temp?.lvl ?: ''}" :text "${cpu_info?.temp?.v ?: '…'} °C"))
+
+    ;; ThinkPads only (~/bin/fan).
+    (box :orientation "v" :space-evenly false :spacing 4 :visible {(cpu_info?.fans?.v ?: "") != ""}
+      (tip-heading :title "Fans")
+      (box :space-evenly false
+        (label :class "key" :hexpand true :xalign 0 :text "Speed")
+        (label :class "value ${cpu_info?.fans?.lvl ?: ''}" :text "${cpu_info?.fans?.v ?: ''} rpm")))
+
+    (tip-heading :title "Top Processes")
+    (box :class "procs head" :space-evenly false
+      (label :width 200 :xalign 0 :text "Process")
+      (label :width 70 :xalign 1 :text "CPU%")
+      (label :width 70 :xalign 1 :text "MEM"))
+    (box :class "procs" :orientation "v" :space-evenly false
+      (for proc in {cpu_info?.procs ?: []}
         (box :space-evenly false
-          ;; Name and value in fixed widths, the value right-aligned: the
-          ;; percentages line up in columns (cpu9 / cpu10, 7% / 100%).
-          (for core in row
-            (box :space-evenly false :class "core ${core.pct >= 80 ? 'high' : core.pct >= 50 ? 'mid' : 'low'}"
-              (label :width 70 :xalign 0 :text "${core.name}")
-              (label :width 55 :xalign 1 :text "${core.pct}%")
-              (label :width 24 :text ""))))))
-    (label :halign "start" :text "Usage, last 5 min:")
-    ;; Size set here: the graph asks GTK only for its line thickness, and
-    ;; CSS min-width does not apply to it.
-    (graph :class "cpu-graph" :width 320 :height 60 :min 0 :max 100 :dynamic false
-           :time-range "5m" :thickness 2 :line-style "round"
-           :value {replace(blocks?.cpu_usage?.full_text ?: "0", "[^0-9]", "")})))
+          (label :width 200 :xalign 0 :limit-width 22 :text {proc.name})
+          (label :class "value ${proc.lvl}" :width 70 :xalign 1 :text {proc.cpu})
+          (label :width 70 :xalign 1 :text {proc.mem}))))))
 
 (defwidget mem-tip []
   (box :orientation "v" :space-evenly false :spacing 2
