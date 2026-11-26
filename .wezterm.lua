@@ -476,9 +476,11 @@ dark_scheme.ansi = {
     base3,   -- white
 }
 
--- brights are just bold ...
+-- brights are just bold ..., except black: base02 is nearly the
+-- background (1.2:1), and zsh highlighting draws comments bold black.
+-- base01, Solarized's comment color (2.8:1).
 dark_scheme.brights = {
-    base02,  -- black
+    base01,  -- black
     red,     -- red
     green,   -- green
     yellow,  -- yellow

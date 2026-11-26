@@ -1,5 +1,6 @@
 # The dark scheme of .wezterm.lua (Solarized, with its changes): the bright
-# colors are the normal ones (bold only). Imported by ../alacritty.toml.
+# colors are the normal ones (bold only), except black: base01, readable
+# (zsh comments are bold black). Imported by ../alacritty.toml.
 
 [colors.primary]
 background = "#002b36"
@@ -28,7 +29,7 @@ cyan = "#2aa198"
 white = "#fdf6e3"
 
 [colors.bright]
-black = "#073642"
+black = "#586e75"
 red = "#dc322f"
 green = "#859900"
 yellow = "#b58900"

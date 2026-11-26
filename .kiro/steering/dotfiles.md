@@ -341,7 +341,9 @@ New link or system file: install function, `check_link` or `cmp` check in
   (`activate_key_table`, `catch_all=ignore`), `adjust_selection` needs a
   selection, search with `/ ? -`; no QuickSelect, no launcher, no
   runtime theme toggle (`theme = dark:...,light:...` follows the
-  desktop). Themes match `.wezterm.lua` (dark brights = normal colors).
+  desktop). Themes match `.wezterm.lua` (dark brights = normal colors, except
+  bright black: base01, since 2026-11-26; base02 on the background was
+  1.2:1 and zsh fast-syntax-highlighting draws comments bold black).
   `mouse-scroll-multiplier precision:5` for sway's scroll_factor 0.1.
   `ghostty --version` prints several lines: report reads the stamp.
   Test: `test/ghostty/test.sh` (copr in fedora:45, `+validate-config`,

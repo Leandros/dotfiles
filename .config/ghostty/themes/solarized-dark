@@ -14,8 +14,8 @@ palette = 5=#d33682
 palette = 6=#2aa198
 # white
 palette = 7=#fdf6e3
-# bright black: wezterm's brights are the normal colors (bold only)
-palette = 8=#073642
+# bright black: base01 (readable; the other brights are the normal colors)
+palette = 8=#586e75
 # bright red
 palette = 9=#dc322f
 # bright green
