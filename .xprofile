@@ -77,6 +77,10 @@ fi
 # (xinitrc.d/50-systemd-user.sh runs before this file). The i3 exit binding
 # stops it.
 systemctl --user --no-block start i3-session.target >/dev/null 2>&1
+# A portal from an earlier session (the user manager outlives a logout)
+# keeps that session's environment and backends; it reads them only at
+# start.
+systemctl --user --no-block try-restart xdg-desktop-portal.service >/dev/null 2>&1
 
 # Solarized dark or light (the saved choice): i3 colors as X resources, and
 # the color-scheme Firefox reads. Before i3, which reads the resources once.

@@ -146,6 +146,8 @@ main() {
     fi
 
     # picom: tear-free drawing (vsync); a re-login replaces the old one.
+    expect "restarts a running xdg-desktop-portal (an earlier session's)" \
+        "systemctl --user --no-block try-restart xdg-desktop-portal.service" "$(grep 'try-restart' "$CALLS")"
     expect "picom starts as a daemon" "picom -b" "$(grep '^picom' "$CALLS")"
     if grep -qx 'pkill-display -x picom' "$CALLS"; then ok "the old picom is stopped"; else fail "no pkill-display -x picom"; fi
 

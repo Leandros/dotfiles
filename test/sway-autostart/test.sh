@@ -138,6 +138,12 @@ main() {
         "systemctl|--user|--no-block|start|sway-session.target" "$(grep -m 1 '|start|' "$CALLS")"
     before "environment before the session target" '^systemctl\|--user\|import' '\|start\|sway-session'
     before "D-Bus environment before the session target" '^dbus-update' '\|start\|sway-session'
+    # A portal left from an earlier session (the user manager outlives a
+    # logout) keeps the old environment and has lost its wlr backend: no
+    # screens to share. try-restart: only a running one.
+    expect "restarts a running xdg-desktop-portal" \
+        "systemctl|--user|--no-block|try-restart|xdg-desktop-portal.service" "$(grep -m 1 'try-restart' "$CALLS")"
+    before "the portal restarts with the new environment" '^dbus-update' 'try-restart'
 
     # When sway ends (the stub's subscription returns, get_version fails),
     # the user manager forgets the session: it outlives a logout while an

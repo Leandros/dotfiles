@@ -1091,7 +1091,11 @@ New link or system file: install function, `check_link` or `cmp` check in
 - `bin/sway-autostart` is the `.xprofile` of sway: imports
   `WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_TYPE DISPLAY`
   into systemd and D-Bus, starts `sway-session.target` (graphical-session
-  for xdg-desktop-portal), theme restore, `kb de`, kanshi (only with
+  for xdg-desktop-portal), `try-restart xdg-desktop-portal` (also in
+  `.xprofile`; 2026-11-26: a portal left from an earlier sway session kept
+  its environment and had lost its wlr backend with the old sway, so
+  `ScreenCast.AvailableSourceTypes` was 0 and OBS had no screen capture;
+  the portal picks backends only at start), theme restore, `kb de`, kanshi (only with
   `~/.config/kanshi/config`), swayidle, sway-audio-idle-inhibit, `wl-paste
   --watch cliphist store`, xwayland-satellite (where no X server listens
   on `DISPLAY`), the bar, blueman-applet, lxpolkit. A watcher

@@ -55,6 +55,11 @@ start_session() {
     if has dbus-update-activation-environment; then
         try dbus-update-activation-environment --systemd "${SESSION_VARS[@]}"
     fi
+    # A portal from an earlier session (see below: the user manager
+    # outlives a logout) keeps that session's environment, and its wlr
+    # backend ended with the old sway: OBS and browsers found no screen to
+    # share. It reads the environment and picks its backends only at start.
+    try systemctl --user --no-block try-restart xdg-desktop-portal.service
 
     # graphical-session.target for user services that require it, such as
     # xdg-desktop-portal (Fedora 45+). The exit bindings stop it.
