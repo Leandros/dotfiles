@@ -249,6 +249,25 @@ test_cpu_info() {
     echo thinkpad > "$sys/class/hwmon/hwmon5/name"
     echo 2516 > "$sys/class/hwmon/hwmon5/fan1_input"
     echo 5900 > "$sys/class/hwmon/hwmon5/fan2_input"
+    # thinkpad_acpi's temperatures: CPU and GPU labelled, the rest not.
+    echo CPU > "$sys/class/hwmon/hwmon5/temp1_label"
+    echo 62000 > "$sys/class/hwmon/hwmon5/temp1_input"
+    echo GPU > "$sys/class/hwmon/hwmon5/temp2_label"
+    echo 78000 > "$sys/class/hwmon/hwmon5/temp2_input"
+    echo 46000 > "$sys/class/hwmon/hwmon5/temp3_input"
+    # SSD (Composite, not its other sensors), two RAM modules, Wi-Fi.
+    mkdir -p "$sys/class/hwmon"/hwmon{4,7,8,11}
+    echo nvme > "$sys/class/hwmon/hwmon4/name"
+    echo Composite > "$sys/class/hwmon/hwmon4/temp1_label"
+    echo 31850 > "$sys/class/hwmon/hwmon4/temp1_input"
+    echo "Sensor 1" > "$sys/class/hwmon/hwmon4/temp2_label"
+    echo 90000 > "$sys/class/hwmon/hwmon4/temp2_input"
+    echo spd5118 > "$sys/class/hwmon/hwmon7/name"
+    echo 41000 > "$sys/class/hwmon/hwmon7/temp1_input"
+    echo spd5118 > "$sys/class/hwmon/hwmon8/name"
+    echo 72000 > "$sys/class/hwmon/hwmon8/temp1_input"
+    echo iwlwifi_1 > "$sys/class/hwmon/hwmon11/name"
+    echo 52000 > "$sys/class/hwmon/hwmon11/temp1_input"
     # /proc/stat: the second sample adds 100 ticks per core, 25, 100, 50
     # and 0 of them busy. Processes: 150 and 60 ticks in that time (per
     # core: 150 % and 60 %), 0; 40 ends between the samples. The fake
@@ -280,7 +299,9 @@ EOF
     expect "cpu-info: cores with type and level" \
         '[{"n":0,"pct":25,"type":"p","lvl":""},{"n":1,"pct":100,"type":"p","lvl":"high"},{"n":2,"pct":50,"type":"e","lvl":"mid"},{"n":3,"pct":0,"type":"lp","lvl":""}]' \
         "$(jq -c .cores <<< "$json")"
-    expect "cpu-info: package temperature, yellow from 80" '{"v":"84","lvl":"mid"}' "$(jq -c .temp <<< "$json")"
+    expect "cpu-info: temperatures, each value as read" \
+        '[{"name":"CPU Package","v":"84","lvl":"mid"},{"name":"CPU (ThinkPad)","v":"62","lvl":""},{"name":"GPU (ThinkPad)","v":"78","lvl":"mid"},{"name":"SSD","v":"31","lvl":""},{"name":"RAM","v":"41 / 72","lvl":"mid"},{"name":"Wi-Fi","v":"52","lvl":""}]' \
+        "$(jq -c .temps <<< "$json")"
     expect "cpu-info: fan speeds, red from 5500 rpm" '{"v":"2516 / 5900","lvl":"high"}' "$(jq -c .fans <<< "$json")"
     expect "cpu-info: processes by CPU (per core), resident memory" \
         '[{"name":"Web Content","cpu":"150.0","mem":"12.0M","lvl":"high"},{"name":"a) b","cpu":"60.0","mem":"1.1G","lvl":"mid"},{"name":"kworker/0:1","cpu":"0.0","mem":"0B","lvl":""}]' \
@@ -312,6 +333,14 @@ EOF
     cp -r "$TMP/proc-first" "$proc"
     json="$(CPU_INFO_PROC="$proc" CPU_INFO_SYSFS="$sys" CPU_INFO_STATE="$state" CPU_INFO_SAMPLE_S=0 run "$SCRIPTS/cpu-info")"
     expect "cpu-info: no ThinkPad fans: empty" "" "$(jq -r .fans.v <<< "$json")"
+    expect "cpu-info: no ThinkPad sensors: no rows for them" "CPU Package SSD RAM Wi-Fi" \
+        "$(jq -r '[.temps[].name] | join(" ")' <<< "$json")"
+    # A sensor that cannot be read (here a directory; the GPU asleep gives
+    # ENXIO): "off", no level.
+    rm "$sys/class/hwmon/hwmon11/temp1_input"
+    mkdir "$sys/class/hwmon/hwmon11/temp1_input"
+    json="$(CPU_INFO_PROC="$proc" CPU_INFO_SYSFS="$sys" CPU_INFO_STATE="$state" CPU_INFO_SAMPLE_S=0 run "$SCRIPTS/cpu-info")"
+    expect "cpu-info: an unreadable sensor: off" '{"name":"Wi-Fi","v":"off","lvl":""}' "$(jq -c '.temps[-1]' <<< "$json")"
     expect "cpu-info: no core types: performance" "p p p p" "$(jq -r '[.cores[].type] | join(" ")' <<< "$json")"
 
     # The popup reads the real scripts, the graph user and system.

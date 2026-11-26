@@ -826,12 +826,19 @@ New link or system file: install function, `check_link` or `cmp` check in
   Usage (user blue and system red, two `graph`s in an `overlay`; a
   vertical bar per core, colored by type: performance blue, efficiency
   cyan, low-power violet, from `/sys/devices/cpu_{core,atom,lowpower}/cpus`,
-  all performance without them), Load Average, Temperature, Fans
+  all performance without them), Load Average, Temperature (2026-11-26:
+  one row per sensor present, each value as read, not averaged: CPU
+  package, thinkpad_acpi's CPU and GPU (the embedded controller's; the
+  GPU sensor fails with ENXIO while the NVIDIA GPU sleeps: "off"), SSD
+  (nvme Composite), RAM (spd5118, one value per module), Wi-Fi (iwlwifi,
+  "off" while unreadable); the package value jumps 10-30 °C on
+  millisecond turbo bursts at a few percent load, real), Fans
   (thinkpad_acpi's hwmon `fan*_input`, hidden elsewhere), Top Processes
   (15, CPU in percent of one core as top, resident memory; from
   `/proc/<pid>/stat` deltas over the same interval as the cores). Values
   above the norm yellow (`mid`) or red (`high`), decided by `cpu-info`:
-  cores 50/80 %, load 0.7/1 per core, package 80/95 °C, fans 4000/5500
+  cores 50/80 %, load 0.7/1 per core, CPU 80/95 °C, GPU 75/87, SSD
+  60/70, RAM 70/85, Wi-Fi 70/90 (`TEMP_LEVELS`), fans 4000/5500
   rpm (a guess: hwmon reports no maximum), processes 50/90 %. The graph's
   data comes from `scripts/cpu-usage` (deflisten, all the time: a graph
   keeps history only while it gets values; one `read` of `/proc/stat`

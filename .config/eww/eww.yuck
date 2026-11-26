@@ -94,9 +94,12 @@
       (label :class "dim" :hexpand true :xalign 1 :text "1 / 5 / 15 min"))
 
     (tip-heading :title "Temperature")
-    (box :space-evenly false
-      (label :class "key" :hexpand true :xalign 0 :text "CPU Temp")
-      (label :class "value ${cpu_info?.temp?.lvl ?: ''}" :text "${cpu_info?.temp?.v ?: '…'} °C"))
+    ;; Each value as the sensor reads it, not averaged.
+    (box :orientation "v" :space-evenly false :spacing 4
+      (for t in {cpu_info?.temps ?: []}
+        (box :space-evenly false
+          (label :class "key" :hexpand true :xalign 0 :text {t.name})
+          (label :class "value ${t.lvl}" :text {t.v == "off" ? "off" : "${t.v} °C"}))))
 
     ;; ThinkPads only (~/bin/fan).
     (box :orientation "v" :space-evenly false :spacing 4 :visible {(cpu_info?.fans?.v ?: "") != ""}

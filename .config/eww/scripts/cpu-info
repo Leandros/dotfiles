@@ -6,7 +6,11 @@
 #   cores  [{"n": 0, "pct": 12, "type": "p", "lvl": ""}, ...]; type p
 #          (performance), e (efficiency) or lp (low-power efficiency) from
 #          the hybrid PMUs' cpu lists, p on CPUs without them
-#   temp   CPU package, {"v": "61", "lvl": ""} (°C); v empty without a sensor
+#   temps  [{"name": "CPU Package", "v": "61", "lvl": ""}, ...] (°C), one
+#          row per sensor present: CPU package, the ThinkPad embedded
+#          controller's CPU and GPU, SSD, RAM, Wi-Fi; each value as read
+#          (not averaged), several of a kind (RAM modules) "41 / 44";
+#          "off" for a sensor that cannot be read (the GPU asleep)
 #   fans   ThinkPad fan speeds, {"v": "2516 / 2400", "lvl": ""} (rpm); v
 #          empty elsewhere
 #   procs  the 15 processes with the most CPU,
@@ -31,7 +35,10 @@ readonly STATE="${CPU_INFO_STATE:-${XDG_RUNTIME_DIR:-/tmp}/eww-cpu-info.sample}"
 readonly NEW="$STATE.$$" FIRST="$STATE.$$.first"
 trap 'rm -f "$NEW" "$FIRST"' EXIT
 # Yellow from, red from.
-readonly CORE_MID=50 CORE_HIGH=80 TEMP_MID=80 TEMP_HIGH=95 FAN_MID=4000 FAN_HIGH=5500
+readonly CORE_MID=50 CORE_HIGH=80 FAN_MID=4000 FAN_HIGH=5500
+# Temperatures (°C) by kind: the CPU throttles at 100, NVIDIA laptop GPUs
+# at about 87, NVMe drives warn at about 70, DDR5 throttles at 85.
+readonly TEMP_LEVELS='{"cpu": [80, 95], "gpu": [75, 87], "ssd": [60, 70], "ram": [70, 85], "wifi": [70, 90]}'
 readonly PROC_MID=50 PROC_HIGH=90
 # Load per core.
 readonly LOAD_MID=0.7 LOAD_HIGH=1
@@ -127,38 +134,70 @@ usage() {
     mv -f "$NEW" "$STATE"
 }
 
-# Package temperature in °C: coretemp (Intel) "Package id 0", k10temp
-# (AMD) Tctl, else the x86_pkg_temp thermal zone. Empty without a sensor.
-temp() {
-    local hw label zone name value
+# The °C of an hwmon temp*_input, "off" where it cannot be read: the
+# ThinkPad's GPU sensor while the NVIDIA GPU sleeps (runtime D3), Wi-Fi
+# while the card is off.
+celsius() {
+    local value
+    if read -r value < "$1" 2>/dev/null; then echo "$((value / 1000))"; else echo off; fi
+}
+
+# The °C of the sensor of hwmon $1 labelled $2 or $3; fails without one.
+labelled() {
+    local label name
+    for label in "$1"/temp*_label; do
+        name=""
+        [[ -r "$label" ]] && read -r name < "$label"
+        if [[ "$name" == "$2" || "$name" == "${3-$2}" ]]; then
+            celsius "${label%_label}_input"
+            return
+        fi
+    done
+    return 1
+}
+
+# "name<TAB>°C[ / °C ...]<TAB>kind" per sensor present, in a fixed order:
+# CPU package (coretemp "Package id 0", k10temp Tctl, else the
+# x86_pkg_temp thermal zone), thinkpad_acpi's CPU and GPU, SSDs (nvme
+# Composite), RAM modules (spd5118), Wi-Fi (iwlwifi).
+temps() {
+    local hw name zone v pkg="" cpu="" gpu="" ssd=() ram=() wifi=()
     for hw in "$SYSFS"/class/hwmon/hwmon*; do
         name=""
         [[ -r "$hw/name" ]] && read -r name < "$hw/name"
         case "$name" in
-            coretemp|k10temp) ;;
-            *) continue ;;
+            coretemp|k10temp) v="$(labelled "$hw" "Package id 0" Tctl)" && pkg="$v" ;;
+            thinkpad)
+                v="$(labelled "$hw" CPU)" && cpu="$v"
+                v="$(labelled "$hw" GPU)" && gpu="$v"
+                ;;
+            nvme) v="$(labelled "$hw" Composite)" && ssd+=("$v") ;;
+            spd5118) v="$(celsius "$hw/temp1_input")" && ram+=("$v") ;;
+            iwlwifi*) v="$(celsius "$hw/temp1_input")" && wifi+=("$v") ;;
         esac
-        for label in "$hw"/temp*_label; do
+    done
+    if [[ -z "$pkg" ]]; then
+        for zone in "$SYSFS"/class/thermal/thermal_zone*; do
             name=""
-            [[ -r "$label" ]] && read -r name < "$label"
-            case "$name" in
-                "Package id 0"|Tctl)
-                    read -r value < "${label%_label}_input"
-                    echo "$((value / 1000))"
-                    return
-                    ;;
-            esac
+            [[ -r "$zone/type" ]] && read -r name < "$zone/type"
+            [[ "$name" == x86_pkg_temp ]] && v="$(celsius "$zone/temp")" && pkg="$v" && break
         done
-    done
-    for zone in "$SYSFS"/class/thermal/thermal_zone*; do
-        name=""
-        [[ -r "$zone/type" ]] && read -r name < "$zone/type"
-        if [[ "$name" == x86_pkg_temp ]]; then
-            read -r value < "$zone/temp"
-            echo "$((value / 1000))"
-            return
-        fi
-    done
+    fi
+    row "CPU Package" cpu "$pkg"
+    row "CPU (ThinkPad)" cpu "$cpu"
+    row "GPU (ThinkPad)" gpu "$gpu"
+    row SSD ssd ${ssd[@]+"${ssd[@]}"}
+    row RAM ram ${ram[@]+"${ram[@]}"}
+    row Wi-Fi wifi ${wifi[@]+"${wifi[@]}"}
+}
+
+# One temps line: name, kind, the values (none or empty: no line).
+row() {
+    local name="$1" kind="$2" IFS=/
+    shift 2
+    [[ $# -gt 0 && -n "$1" ]] || return 0
+    local joined="$*"
+    printf '%s\t%s\t%s\n' "$name" "${joined//\//' / '}" "$kind"
 }
 
 # Fan speeds of thinkpad_acpi's hwmon (~/bin/fan sets the level), one per
@@ -180,8 +219,8 @@ main() {
     local load
     read -r -a load < "$PROC/loadavg"
     usage | jq -R -s -c \
-        --arg loads "${load[*]:0:3}" --arg temp "$(temp)" --arg fans "$(fans)" \
-        --argjson core_lvl "[$CORE_MID, $CORE_HIGH]" --argjson temp_lvl "[$TEMP_MID, $TEMP_HIGH]" \
+        --arg loads "${load[*]:0:3}" --arg temps "$(temps)" --arg fans "$(fans)" \
+        --argjson core_lvl "[$CORE_MID, $CORE_HIGH]" --argjson temp_lvl "$TEMP_LEVELS" \
         --argjson fan_lvl "[$FAN_MID, $FAN_HIGH]" --argjson proc_lvl "[$PROC_MID, $PROC_HIGH]" \
         --argjson load_lvl "[$LOAD_MID, $LOAD_HIGH]" '
         def lvl($t): if . >= $t[1] then "high" elif . >= $t[0] then "mid" else "" end;
@@ -193,7 +232,10 @@ main() {
         | {
             load: [$loads | split(" ")[] | {v: ., lvl: (tonumber | lvl($load_lvl | map(. * $ncores)))}],
             cores: $cores,
-            temp: {v: $temp, lvl: (if $temp == "" then "" else $temp | tonumber | lvl($temp_lvl) end)},
+            temps: [$temps | split("\n")[] | select(length > 0) | split("\t")
+                    | . as $r
+                    | {name: $r[0], v: $r[1],
+                       lvl: ([$r[1] | split(" / ")[] | tonumber?] | max // 0 | lvl($temp_lvl[$r[2]]))}],
             fans: ($fans | split("\n") | map(select(length > 0))
                    | {v: join(" / "), lvl: (map(tonumber) | max // 0 | lvl($fan_lvl))}),
             procs: [$rows[] | select(.[0] == "proc")
