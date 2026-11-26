@@ -658,11 +658,11 @@ check_wayland() {
         fail "xdg-desktop-portal-wlr or -gtk missing"
     fi
     check_version sway-easyfocus "sway-easyfocus $SWAY_EASYFOCUS_VERSION" sway-easyfocus --version
-    # Built with patches/sway-easyfocus-title-bar-x.patch (labels off-screen).
-    if [[ "$(cat /usr/local/share/bootstrap/sway-easyfocus 2>/dev/null)" == "$SWAY_EASYFOCUS_VERSION+title-bar-x" ]]; then
-        ok "sway-easyfocus patched (title bar x)"
+    # Built with patches/sway-easyfocus-labels.patch (labels off-screen or on each other).
+    if [[ "$(cat /usr/local/share/bootstrap/sway-easyfocus 2>/dev/null)" == "$SWAY_EASYFOCUS_VERSION+labels" ]]; then
+        ok "sway-easyfocus patched (labels)"
     else
-        fail "sway-easyfocus not built with the title bar x patch"
+        fail "sway-easyfocus not built with the labels patch"
     fi
     # Built with patches/xwayland-satellite-clipboard-timestamp.patch (VMware
     # took the highlighted text instead of the clipboard), ahead of Fedora's.

@@ -130,7 +130,7 @@ readonly XIDLEHOOK_VERSION="0.10.0"
 # so a commit)
 readonly RRANDR_REF="d1677ca9b538d489b75a8760a1848d780733083a"
 # https://crates.io/crates/sway-easyfocus (sway desktop only;
-# patches/sway-easyfocus-title-bar-x.patch must apply)
+# patches/sway-easyfocus-labels.patch must apply)
 readonly SWAY_EASYFOCUS_VERSION="1.0.1"
 # https://github.com/Supreeeme/xwayland-satellite/releases (sway desktop
 # only; patches/xwayland-satellite-clipboard-timestamp.patch must apply)
@@ -2446,12 +2446,13 @@ install_cliphist() {
 
 # Window hints for $mod+q in sway (wmfocus in i3). No distro packages it, so
 # cargo builds it. It draws with GTK 4 on a layer-shell surface.
-# Built from the crate with patches/sway-easyfocus-title-bar-x.patch: 1.0.1
+# Built from the crate with patches/sway-easyfocus-labels.patch: 1.0.1
 # adds sway's deco_rect.x, which is relative to the parent, to the absolute
 # rect.x, and labels of windows right of x = 0 land too far right, often off
-# the output (upstream issue 24). The stamp names the patch, so a machine
-# with the plain build rebuilds once.
-readonly SWAY_EASYFOCUS_PATCH="title-bar-x"
+# the output (upstream issue 24); labels of windows in a tab, one title row
+# below the tab bar, covered the tab labels. The stamp names the patch, so a
+# machine with another build rebuilds once.
+readonly SWAY_EASYFOCUS_PATCH="labels"
 
 install_sway_easyfocus() {
     local stamp="$SWAY_EASYFOCUS_VERSION+$SWAY_EASYFOCUS_PATCH" dir

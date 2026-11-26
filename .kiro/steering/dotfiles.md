@@ -221,14 +221,23 @@ New link or system file: install function, `check_link` or `cmp` check in
     gtk4-layer-shell-devel; Rust edition 2024). 1.0.1 ignores its whole
     yaml on an unknown key or without `show_confirmation`; colors come on
     the command line from sway variables. Built from the `.crate`
-    (static.crates.io) with `patches/sway-easyfocus-title-bar-x.patch`,
-    stamp `<version>+title-bar-x`: 1.0.1 added sway's `deco_rect.x`
+    (static.crates.io) with `patches/sway-easyfocus-labels.patch`
+    (`SWAY_EASYFOCUS_PATCH`, stamp `<version>+labels`; `+title-bar-x`
+    until 2026-11-26): 1.0.1 added sway's `deco_rect.x`
     (relative to the parent, or the workspace for its direct and floating
     children) to the absolute `rect.x`, so labels of windows right of
     x = 0 went off the output (upstream issue #24, open). The patch makes
     `deco_rect.x` absolute in `get_all_windows` (zero `deco_rect`: no title
-    bar, `rect.x`) and adds Rust tests with real trees; it adds no
-    dependency (`--locked`). Test: `test/sway-easyfocus-patch/test.sh`
+    bar, `rect.x`). Windows inside a tab have title bars one row (25 px)
+    below the tab bar, and the 48 px font labels are taller than a row: their
+    labels start at their tab where it lies on their title bar, and
+    `spread_labels` moves any label that would cover one above or left of
+    it to the right past it (sizes measured by GTK; workspace 7, 2026-11-26:
+    tabbed `[VMware, splith: [term, term]]`, the left terminal's label
+    covered VMware's). Rust tests with real trees; it adds no
+    dependency (`--locked`). Source: `~/github/sway-easyfocus` (working
+    tree on 1.0.1 = `b954062`; regenerate with `git add -N tests/fixtures
+    && git diff b954062 -- src tests`). Test: `test/sway-easyfocus-patch/test.sh`
     (crate download, patch, `cargo test`). Drop the patch once upstream
     releases a fix.
   - xwayland-satellite (`install_xwayland_satellite`,

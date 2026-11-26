@@ -1,0 +1,1957 @@
+diff --git a/src/sway.rs b/src/sway.rs
+index 23a8420..26d3803 100644
+--- a/src/sway.rs
++++ b/src/sway.rs
+@@ -34,22 +34,78 @@ pub fn find_focused_workspace(output: &Node) -> Option<Node> {
+         .find_focused(|n| n.node_type == swayipc::NodeType::Workspace)
+ }
+ 
++// sway reports deco_rect relative to the parent container (to the workspace
++// for its direct children and for floating windows), while rect is absolute.
++// Makes deco_rect.x absolute. Without a title bar deco_rect is all zero and
++// stays so.
++fn make_title_bar_x_absolute(child: &mut Node, parent: &Node) {
++    if child.deco_rect.height > 0 {
++        child.deco_rect.x += parent.rect.x;
++    }
++}
++
++// The x where a window's label starts: on its title bar, or at the left of
++// the window without one.
++fn title_x(window: &Node) -> i32 {
++    if window.deco_rect.height > 0 {
++        window.deco_rect.x
++    } else {
++        window.rect.x
++    }
++}
++
++// The right end of the title bar of `title_x`.
++fn title_end(window: &Node) -> i32 {
++    if window.deco_rect.height > 0 {
++        window.deco_rect.x + window.deco_rect.width
++    } else {
++        window.rect.x + window.rect.width
++    }
++}
++
++// Windows in a container that is a tab (or a stacked entry) have title bars
++// of their own at the left of the tabbed container, one row below the tab
++// bar, under the labels of the tabs to the left. Their labels start at
++// their tab instead, where that is still on their title bar.
++fn start_label_at_tab(window: &mut Node, tab_x: i32) {
++    if title_x(window) < tab_x && tab_x < title_end(window) {
++        window.deco_rect.x = tab_x;
++    }
++}
++
++// The windows of a workspace. Their deco_rect.x is where their label starts
++// (calculate_geometry): absolute, and at their tab where they are nested in
++// one.
+ pub fn get_all_windows(workspace: &Node) -> Vec<Node> {
+     let mut nodes = Vec::new();
+     let mut q = VecDeque::new();
+ 
+-    q.push_back(workspace.clone());
+-    while let Some(node) = q.pop_back() {
++    // Each node with the x of the tab it is nested in, if any.
++    q.push_back((workspace.clone(), i32::MIN));
++    while let Some((mut node, tab_x)) = q.pop_back() {
+         // if we have a window
+         if (node.node_type == NodeType::Con || node.node_type == NodeType::FloatingCon)
+             && node.nodes.is_empty()
+         {
++            if node.deco_rect.height == 0 {
++                node.deco_rect.x = node.rect.x;
++            }
++            start_label_at_tab(&mut node, tab_x);
+             nodes.push(node.clone());
+         }
+ 
++        let tabbed = node.node_type == NodeType::Con
++            && matches!(node.layout, NodeLayout::Tabbed | NodeLayout::Stacked);
++
+         // tiled/tabbed/stacked nodes
+         for child in &node.nodes {
+             let mut c = child.clone();
++            make_title_bar_x_absolute(&mut c, &node);
++            let child_tab_x = if tabbed && !c.nodes.is_empty() {
++                title_x(&c)
++            } else {
++                tab_x
++            };
+             // a bit of a hack to keep track of stacked/tabbed layouts:
+             // if we're stacked, we set our childrens' layouts to stacked and change the decorator
+             // height.
+@@ -59,12 +115,14 @@ pub fn get_all_windows(workspace: &Node) -> Vec<Node> {
+                 // the stacked container.
+                 c.deco_rect.height *= node.nodes.len() as i32;
+             }
+-            q.push_back(c);
++            q.push_back((c, child_tab_x));
+         }
+ 
+         // floating nodes
+         for child in &node.floating_nodes {
+-            q.push_back(child.clone());
++            let mut c = child.clone();
++            make_title_bar_x_absolute(&mut c, &node);
++            q.push_back((c, i32::MIN));
+         }
+     }
+ 
+diff --git a/src/ui.rs b/src/ui.rs
+index 0bc4999..96f3bc5 100644
+--- a/src/ui.rs
++++ b/src/ui.rs
+@@ -22,7 +22,9 @@ fn calculate_geometry(
+     let anchor_x = output.rect.x;
+     let anchor_y = output.rect.y;
+ 
+-    let rel_x = rect.x + window_rect.x + deco_rect.x + opts.label_margin_x;
++    // deco_rect.x is where the label starts, absolute
++    // (sway::get_all_windows): at the window's title bar or tab.
++    let rel_x = deco_rect.x + window_rect.x + opts.label_margin_x;
+     let rel_y = rect.y - (deco_rect.height - opts.label_margin_y)
+         + if window.layout == swayipc::NodeLayout::Stacked {
+             deco_rect.y
+@@ -33,6 +35,31 @@ fn calculate_geometry(
+     (rel_x - anchor_x, rel_y - anchor_y)
+ }
+ 
++// Label boxes (x, y, width, height). Labels are taller than a title bar,
++// so a label one row below another (a window in a tab, under the tab bar)
++// covers it: moves each label right past the ones above and left of it
++// that it would cover, `gap` apart.
++fn spread_labels(boxes: &mut [(i32, i32, i32, i32)], gap: i32) {
++    let mut order: Vec<usize> = (0..boxes.len()).collect();
++    order.sort_by_key(|&i| (boxes[i].1, boxes[i].0));
++    for (n, &i) in order.iter().enumerate() {
++        let mut b = boxes[i];
++        // x only grows, so this ends.
++        while let Some(o) = order[..n]
++            .iter()
++            .map(|&j| boxes[j])
++            .find(|&o| overlap(b, o))
++        {
++            b.0 = o.0 + o.2 + gap;
++        }
++        boxes[i] = b;
++    }
++}
++
++fn overlap(a: (i32, i32, i32, i32), b: (i32, i32, i32, i32)) -> bool {
++    a.0 < b.0 + b.2 && b.0 < a.0 + a.2 && a.1 < b.1 + b.3 && b.1 < a.1 + a.3
++}
++
+ fn handle_keypress(
+     conn: &mut swayipc::Connection,
+     keys_to_con_ids: &HashMap<char, i64>,
+@@ -61,7 +88,7 @@ fn handle_keypress(
+                         println!("{}", con_id);
+                         Ok(Some(c))
+                     }
+-                }
++                };
+             }
+         }
+     }
+@@ -185,11 +212,16 @@ fn build_ui(
+         }
+ 
+         let fixed = gtk4::Fixed::new();
++        // In the window before the labels: they get the CSS (font size) of
++        // their display only there, and are measured with it.
++        window.set_child(Some(&fixed));
+ 
+         if let Some(workspace) = sway::find_focused_workspace(output) {
+             let client_windows = sway::get_all_windows(&workspace);
+ 
+             // Create labels for windows
++            let mut labels = Vec::new();
++            let mut boxes = Vec::new();
+             for client in client_windows.iter() {
+                 let (x, y) = calculate_geometry(client, &output, opts);
+                 let label = gtk4::Label::new(Some(""));
+@@ -201,7 +233,11 @@ fn build_ui(
+                 label.set_halign(gtk4::Align::Center);
+                 label.set_valign(gtk4::Align::Center);
+ 
+-                fixed.put(&label, x as f64, y as f64);
++                fixed.put(&label, 0.0, 0.0);
++                let (_, width, _, _) = label.measure(gtk4::Orientation::Horizontal, -1);
++                let (_, height, _, _) = label.measure(gtk4::Orientation::Vertical, width);
++                labels.push(label.clone());
++                boxes.push((x, y, width, height));
+ 
+                 if client.focused {
+                     label.add_css_class("focused");
+@@ -209,9 +245,13 @@ fn build_ui(
+ 
+                 keys_to_con_ids.insert(letter, client.id);
+             }
++
++            spread_labels(&mut boxes, opts.label_margin_x);
++            for (label, (x, y, _, _)) in labels.iter().zip(&boxes) {
++                fixed.move_(label, *x as f64, *y as f64);
++            }
+         }
+ 
+-        window.set_child(Some(&fixed));
+         windows.push(window);
+     }
+ 
+@@ -284,3 +324,121 @@ impl From<swayipc::Error> for Error {
+         Self::SwayIpcError(value)
+     }
+ }
++
++#[cfg(test)]
++mod tests {
++    use figment::{
++        Figment,
++        providers::{Format, Yaml},
++    };
++
++    use super::calculate_geometry;
++    use crate::{options::Options, sway};
++
++    // A workspace as `swaymsg -t get_tree` prints it (JSON is YAML too).
++    fn parse(json: &str) -> swayipc::Node {
++        Figment::from(Yaml::string(json))
++            .extract()
++            .expect("valid tree")
++    }
++
++    // The label x of each window, relative to the workspace's output
++    // (the workspace stands in for the output; both start at x = 0).
++    fn label_xs(workspace: &swayipc::Node) -> Vec<i32> {
++        let opts = Options::default();
++        let mut xs: Vec<i32> = sway::get_all_windows(workspace)
++            .iter()
++            .map(|w| calculate_geometry(w, workspace, &opts).0)
++            .collect();
++        xs.sort();
++        xs
++    }
++
++    // splith: [splitv: [A, B], C]. C is a direct child of the workspace,
++    // so sway reports its deco_rect.x (1024) relative to the workspace,
++    // like its rect.x (1024): the label must not land at 2048 + margin,
++    // off a 2048 px wide output.
++    #[test]
++    fn split_labels_stay_on_their_windows() {
++        let ws = parse(include_str!("../tests/fixtures/split-workspace.json"));
++        // rect.x + window_rect.x (border 2) + label_margin_x (4).
++        assert_eq!(label_xs(&ws), vec![6, 6, 1030]);
++    }
++
++    // Tabbed: both children share the parent's rect; deco_rect.x is the
++    // tab offset, which the label needs.
++    #[test]
++    fn tabbed_labels_follow_their_tabs() {
++        let ws = parse(include_str!("../tests/fixtures/tabbed-workspace.json"));
++        assert_eq!(label_xs(&ws), vec![6, 1030]);
++    }
++
++    // Tabbed: [A, splitv: [B, C]]. B and C have title bars of their own at
++    // the left of the tabbed container, one row below A's tab: their labels
++    // start at their tab, else B's label covers A's.
++    #[test]
++    fn labels_in_a_nested_tab_follow_their_tab() {
++        let ws = parse(include_str!(
++            "../tests/fixtures/tabbed-nested-workspace.json"
++        ));
++        assert_eq!(label_xs(&ws), vec![1030, 1542, 1542]);
++    }
++
++    // Tabbed: [A, splith: [B, C]] on a 3840 px output, both tabs 1920 px
++    // wide. B's title bar starts at x = 0 one row (25 px) below A's tab:
++    // with 60 px high labels, B's label covered A's.
++    #[test]
++    fn labels_in_a_nested_split_do_not_cover_the_tab_labels() {
++        let ws = parse(include_str!(
++            "../tests/fixtures/tabbed-nested-splith-workspace.json"
++        ));
++        let opts = Options::default();
++        let mut boxes: Vec<(i32, i32, i32, i32)> = sway::get_all_windows(&ws)
++            .iter()
++            .map(|w| {
++                let (x, y) = calculate_geometry(w, &ws, &opts);
++                (x, y, 40, 60)
++            })
++            .collect();
++        assert_eq!(boxes.len(), 3);
++        super::spread_labels(&mut boxes, opts.label_margin_x);
++        for (i, a) in boxes.iter().enumerate() {
++            for b in &boxes[i + 1..] {
++                assert!(!super::overlap(*a, *b), "{:?} covers {:?}", a, b);
++            }
++        }
++        // Each label stays on its window's title bar row.
++        let mut xs: Vec<i32> = boxes.iter().map(|b| b.0).collect();
++        xs.sort();
++        assert_eq!(xs, vec![6, 6 + 40 + 4, 1926]);
++    }
++
++    // Labels apart from each other stay where they are; one is moved past
++    // every label it would cover, also one it reaches only after a move.
++    #[test]
++    fn spread_moves_only_covering_labels() {
++        let mut boxes = vec![
++            (0, 0, 40, 60),
++            (60, 0, 40, 60),
++            (0, 25, 40, 60),
++            (500, 25, 40, 60),
++        ];
++        super::spread_labels(&mut boxes, 4);
++        assert_eq!(
++            boxes,
++            vec![
++                (0, 0, 40, 60),
++                (60, 0, 40, 60),
++                (104, 25, 40, 60),
++                (500, 25, 40, 60)
++            ]
++        );
++    }
++
++    // Without a title bar sway reports a zero deco_rect.
++    #[test]
++    fn labels_without_title_bars() {
++        let ws = parse(include_str!("../tests/fixtures/no-titlebar-workspace.json"));
++        assert_eq!(label_xs(&ws), vec![6, 6, 1030]);
++    }
++}
+diff --git a/tests/fixtures/no-titlebar-workspace.json b/tests/fixtures/no-titlebar-workspace.json
+new file mode 100644
+index 0000000..5c37446
+--- /dev/null
++++ b/tests/fixtures/no-titlebar-workspace.json
+@@ -0,0 +1,332 @@
++{
++  "id": 4,
++  "type": "workspace",
++  "orientation": "horizontal",
++  "percent": null,
++  "urgent": false,
++  "marks": [],
++  "focused": false,
++  "layout": "splith",
++  "border": "none",
++  "current_border_width": 0,
++  "rect": {
++    "x": 0,
++    "y": 23,
++    "width": 2048,
++    "height": 1257
++  },
++  "deco_rect": {
++    "x": 0,
++    "y": 0,
++    "width": 0,
++    "height": 0
++  },
++  "window_rect": {
++    "x": 0,
++    "y": 0,
++    "width": 0,
++    "height": 0
++  },
++  "geometry": {
++    "x": 0,
++    "y": 0,
++    "width": 0,
++    "height": 0
++  },
++  "name": "1",
++  "window": null,
++  "nodes": [
++    {
++      "id": 28,
++      "type": "con",
++      "orientation": "vertical",
++      "percent": 0.5,
++      "urgent": false,
++      "marks": [],
++      "focused": false,
++      "layout": "splitv",
++      "border": "none",
++      "current_border_width": 0,
++      "rect": {
++        "x": 0,
++        "y": 23,
++        "width": 1024,
++        "height": 1257
++      },
++      "deco_rect": {
++        "x": 0,
++        "y": 0,
++        "width": 0,
++        "height": 0
++      },
++      "window_rect": {
++        "x": 0,
++        "y": 0,
++        "width": 0,
++        "height": 0
++      },
++      "geometry": {
++        "x": 0,
++        "y": 0,
++        "width": 0,
++        "height": 0
++      },
++      "name": null,
++      "window": null,
++      "nodes": [
++        {
++          "id": 5,
++          "type": "con",
++          "orientation": "none",
++          "percent": 0.50039777247414474,
++          "urgent": false,
++          "marks": [],
++          "focused": true,
++          "layout": "none",
++          "border": "normal",
++          "current_border_width": 2,
++          "rect": {
++            "x": 0,
++            "y": 48,
++            "width": 1024,
++            "height": 604
++          },
++          "deco_rect": {
++            "x": 0,
++            "y": 0,
++            "width": 0,
++            "height": 0
++          },
++          "window_rect": {
++            "x": 2,
++            "y": 0,
++            "width": 1020,
++            "height": 602
++          },
++          "geometry": {
++            "x": 0,
++            "y": 0,
++            "width": 820,
++            "height": 524
++          },
++          "name": "wezterm",
++          "window": null,
++          "nodes": [],
++          "floating_nodes": [],
++          "focus": [],
++          "fullscreen_mode": 0,
++          "sticky": false,
++          "floating": "auto_off",
++          "scratchpad_state": "none",
++          "pid": 24177,
++          "app_id": "org.wezfurlong.wezterm",
++          "foreign_toplevel_identifier": "39fa580094cbd07bf29e735960251671",
++          "visible": true,
++          "max_render_time": 0,
++          "allow_tearing": false,
++          "shell": "xdg_shell",
++          "inhibit_idle": false,
++          "sandbox_engine": null,
++          "sandbox_app_id": null,
++          "sandbox_instance_id": null,
++          "tag": null,
++          "idle_inhibitors": {
++            "user": "fullscreen",
++            "application": "none"
++          }
++        },
++        {
++          "id": 71,
++          "type": "con",
++          "orientation": "vertical",
++          "percent": 0.4996022275258552,
++          "urgent": false,
++          "marks": [],
++          "focused": false,
++          "layout": "splitv",
++          "border": "none",
++          "current_border_width": 0,
++          "rect": {
++            "x": 0,
++            "y": 652,
++            "width": 1024,
++            "height": 628
++          },
++          "deco_rect": {
++            "x": 0,
++            "y": 0,
++            "width": 0,
++            "height": 0
++          },
++          "window_rect": {
++            "x": 0,
++            "y": 0,
++            "width": 0,
++            "height": 0
++          },
++          "geometry": {
++            "x": 0,
++            "y": 0,
++            "width": 0,
++            "height": 0
++          },
++          "name": null,
++          "window": null,
++          "nodes": [
++            {
++              "id": 29,
++              "type": "con",
++              "orientation": "none",
++              "percent": 1.0,
++              "urgent": false,
++              "marks": [],
++              "focused": false,
++              "layout": "none",
++              "border": "normal",
++              "current_border_width": 2,
++              "rect": {
++                "x": 0,
++                "y": 677,
++                "width": 1024,
++                "height": 603
++              },
++              "deco_rect": {
++                "x": 0,
++                "y": 0,
++                "width": 0,
++                "height": 0
++              },
++              "window_rect": {
++                "x": 2,
++                "y": 0,
++                "width": 1020,
++                "height": 601
++              },
++              "geometry": {
++                "x": 0,
++                "y": 0,
++                "width": 820,
++                "height": 524
++              },
++              "name": "wezterm",
++              "window": null,
++              "nodes": [],
++              "floating_nodes": [],
++              "focus": [],
++              "fullscreen_mode": 0,
++              "sticky": false,
++              "floating": "auto_off",
++              "scratchpad_state": "none",
++              "pid": 24177,
++              "app_id": "org.wezfurlong.wezterm",
++              "foreign_toplevel_identifier": "1639fd432cd08f50c783f2646c20beab",
++              "visible": true,
++              "max_render_time": 0,
++              "allow_tearing": false,
++              "shell": "xdg_shell",
++              "inhibit_idle": false,
++              "sandbox_engine": null,
++              "sandbox_app_id": null,
++              "sandbox_instance_id": null,
++              "tag": null,
++              "idle_inhibitors": {
++                "user": "fullscreen",
++                "application": "none"
++              }
++            }
++          ],
++          "floating_nodes": [],
++          "focus": [
++            29
++          ],
++          "fullscreen_mode": 0,
++          "sticky": false,
++          "floating": "auto_off",
++          "scratchpad_state": "none"
++        }
++      ],
++      "floating_nodes": [],
++      "focus": [
++        5,
++        71
++      ],
++      "fullscreen_mode": 0,
++      "sticky": false,
++      "floating": "auto_off",
++      "scratchpad_state": "none"
++    },
++    {
++      "id": 6,
++      "type": "con",
++      "orientation": "none",
++      "percent": 0.5,
++      "urgent": false,
++      "marks": [],
++      "focused": false,
++      "layout": "none",
++      "border": "normal",
++      "current_border_width": 2,
++      "rect": {
++        "x": 1024,
++        "y": 48,
++        "width": 1024,
++        "height": 1232
++      },
++      "deco_rect": {
++        "x": 0,
++        "y": 0,
++        "width": 0,
++        "height": 0
++      },
++      "window_rect": {
++        "x": 2,
++        "y": 0,
++        "width": 1020,
++        "height": 1230
++      },
++      "geometry": {
++        "x": 0,
++        "y": 0,
++        "width": 820,
++        "height": 524
++      },
++      "name": "wezterm",
++      "window": null,
++      "nodes": [],
++      "floating_nodes": [],
++      "focus": [],
++      "fullscreen_mode": 0,
++      "sticky": false,
++      "floating": "auto_off",
++      "scratchpad_state": "none",
++      "pid": 24177,
++      "app_id": "org.wezfurlong.wezterm",
++      "foreign_toplevel_identifier": "ca5de3c595ff02ebc9505a2085f2f5a1",
++      "visible": true,
++      "max_render_time": 0,
++      "allow_tearing": false,
++      "shell": "xdg_shell",
++      "inhibit_idle": false,
++      "sandbox_engine": null,
++      "sandbox_app_id": null,
++      "sandbox_instance_id": null,
++      "tag": null,
++      "idle_inhibitors": {
++        "user": "fullscreen",
++        "application": "none"
++      }
++    }
++  ],
++  "floating_nodes": [],
++  "focus": [
++    28,
++    6
++  ],
++  "fullscreen_mode": 1,
++  "sticky": false,
++  "floating": null,
++  "scratchpad_state": null,
++  "num": 1,
++  "output": "eDP-1",
++  "representation": "H[V[org.wezfurlong.wezterm V[org.wezfurlong.wezterm]] org.wezfurlong.wezterm]"
++}
+diff --git a/tests/fixtures/split-workspace.json b/tests/fixtures/split-workspace.json
+new file mode 100644
+index 0000000..75d2a6d
+--- /dev/null
++++ b/tests/fixtures/split-workspace.json
+@@ -0,0 +1,332 @@
++{
++  "id": 4,
++  "type": "workspace",
++  "orientation": "horizontal",
++  "percent": null,
++  "urgent": false,
++  "marks": [],
++  "focused": false,
++  "layout": "splith",
++  "border": "none",
++  "current_border_width": 0,
++  "rect": {
++    "x": 0,
++    "y": 23,
++    "width": 2048,
++    "height": 1257
++  },
++  "deco_rect": {
++    "x": 0,
++    "y": 0,
++    "width": 0,
++    "height": 0
++  },
++  "window_rect": {
++    "x": 0,
++    "y": 0,
++    "width": 0,
++    "height": 0
++  },
++  "geometry": {
++    "x": 0,
++    "y": 0,
++    "width": 0,
++    "height": 0
++  },
++  "name": "1",
++  "window": null,
++  "nodes": [
++    {
++      "id": 28,
++      "type": "con",
++      "orientation": "vertical",
++      "percent": 0.5,
++      "urgent": false,
++      "marks": [],
++      "focused": false,
++      "layout": "splitv",
++      "border": "none",
++      "current_border_width": 0,
++      "rect": {
++        "x": 0,
++        "y": 23,
++        "width": 1024,
++        "height": 1257
++      },
++      "deco_rect": {
++        "x": 0,
++        "y": 0,
++        "width": 0,
++        "height": 0
++      },
++      "window_rect": {
++        "x": 0,
++        "y": 0,
++        "width": 0,
++        "height": 0
++      },
++      "geometry": {
++        "x": 0,
++        "y": 0,
++        "width": 0,
++        "height": 0
++      },
++      "name": null,
++      "window": null,
++      "nodes": [
++        {
++          "id": 5,
++          "type": "con",
++          "orientation": "none",
++          "percent": 0.50039777247414474,
++          "urgent": false,
++          "marks": [],
++          "focused": true,
++          "layout": "none",
++          "border": "normal",
++          "current_border_width": 2,
++          "rect": {
++            "x": 0,
++            "y": 48,
++            "width": 1024,
++            "height": 604
++          },
++          "deco_rect": {
++            "x": 0,
++            "y": 0,
++            "width": 1024,
++            "height": 25
++          },
++          "window_rect": {
++            "x": 2,
++            "y": 0,
++            "width": 1020,
++            "height": 602
++          },
++          "geometry": {
++            "x": 0,
++            "y": 0,
++            "width": 820,
++            "height": 524
++          },
++          "name": "wezterm",
++          "window": null,
++          "nodes": [],
++          "floating_nodes": [],
++          "focus": [],
++          "fullscreen_mode": 0,
++          "sticky": false,
++          "floating": "auto_off",
++          "scratchpad_state": "none",
++          "pid": 24177,
++          "app_id": "org.wezfurlong.wezterm",
++          "foreign_toplevel_identifier": "39fa580094cbd07bf29e735960251671",
++          "visible": true,
++          "max_render_time": 0,
++          "allow_tearing": false,
++          "shell": "xdg_shell",
++          "inhibit_idle": false,
++          "sandbox_engine": null,
++          "sandbox_app_id": null,
++          "sandbox_instance_id": null,
++          "tag": null,
++          "idle_inhibitors": {
++            "user": "fullscreen",
++            "application": "none"
++          }
++        },
++        {
++          "id": 71,
++          "type": "con",
++          "orientation": "vertical",
++          "percent": 0.4996022275258552,
++          "urgent": false,
++          "marks": [],
++          "focused": false,
++          "layout": "splitv",
++          "border": "none",
++          "current_border_width": 0,
++          "rect": {
++            "x": 0,
++            "y": 652,
++            "width": 1024,
++            "height": 628
++          },
++          "deco_rect": {
++            "x": 0,
++            "y": 0,
++            "width": 0,
++            "height": 0
++          },
++          "window_rect": {
++            "x": 0,
++            "y": 0,
++            "width": 0,
++            "height": 0
++          },
++          "geometry": {
++            "x": 0,
++            "y": 0,
++            "width": 0,
++            "height": 0
++          },
++          "name": null,
++          "window": null,
++          "nodes": [
++            {
++              "id": 29,
++              "type": "con",
++              "orientation": "none",
++              "percent": 1.0,
++              "urgent": false,
++              "marks": [],
++              "focused": false,
++              "layout": "none",
++              "border": "normal",
++              "current_border_width": 2,
++              "rect": {
++                "x": 0,
++                "y": 677,
++                "width": 1024,
++                "height": 603
++              },
++              "deco_rect": {
++                "x": 0,
++                "y": 0,
++                "width": 1024,
++                "height": 25
++              },
++              "window_rect": {
++                "x": 2,
++                "y": 0,
++                "width": 1020,
++                "height": 601
++              },
++              "geometry": {
++                "x": 0,
++                "y": 0,
++                "width": 820,
++                "height": 524
++              },
++              "name": "wezterm",
++              "window": null,
++              "nodes": [],
++              "floating_nodes": [],
++              "focus": [],
++              "fullscreen_mode": 0,
++              "sticky": false,
++              "floating": "auto_off",
++              "scratchpad_state": "none",
++              "pid": 24177,
++              "app_id": "org.wezfurlong.wezterm",
++              "foreign_toplevel_identifier": "1639fd432cd08f50c783f2646c20beab",
++              "visible": true,
++              "max_render_time": 0,
++              "allow_tearing": false,
++              "shell": "xdg_shell",
++              "inhibit_idle": false,
++              "sandbox_engine": null,
++              "sandbox_app_id": null,
++              "sandbox_instance_id": null,
++              "tag": null,
++              "idle_inhibitors": {
++                "user": "fullscreen",
++                "application": "none"
++              }
++            }
++          ],
++          "floating_nodes": [],
++          "focus": [
++            29
++          ],
++          "fullscreen_mode": 0,
++          "sticky": false,
++          "floating": "auto_off",
++          "scratchpad_state": "none"
++        }
++      ],
++      "floating_nodes": [],
++      "focus": [
++        5,
++        71
++      ],
++      "fullscreen_mode": 0,
++      "sticky": false,
++      "floating": "auto_off",
++      "scratchpad_state": "none"
++    },
++    {
++      "id": 6,
++      "type": "con",
++      "orientation": "none",
++      "percent": 0.5,
++      "urgent": false,
++      "marks": [],
++      "focused": false,
++      "layout": "none",
++      "border": "normal",
++      "current_border_width": 2,
++      "rect": {
++        "x": 1024,
++        "y": 48,
++        "width": 1024,
++        "height": 1232
++      },
++      "deco_rect": {
++        "x": 1024,
++        "y": 0,
++        "width": 1024,
++        "height": 25
++      },
++      "window_rect": {
++        "x": 2,
++        "y": 0,
++        "width": 1020,
++        "height": 1230
++      },
++      "geometry": {
++        "x": 0,
++        "y": 0,
++        "width": 820,
++        "height": 524
++      },
++      "name": "wezterm",
++      "window": null,
++      "nodes": [],
++      "floating_nodes": [],
++      "focus": [],
++      "fullscreen_mode": 0,
++      "sticky": false,
++      "floating": "auto_off",
++      "scratchpad_state": "none",
++      "pid": 24177,
++      "app_id": "org.wezfurlong.wezterm",
++      "foreign_toplevel_identifier": "ca5de3c595ff02ebc9505a2085f2f5a1",
++      "visible": true,
++      "max_render_time": 0,
++      "allow_tearing": false,
++      "shell": "xdg_shell",
++      "inhibit_idle": false,
++      "sandbox_engine": null,
++      "sandbox_app_id": null,
++      "sandbox_instance_id": null,
++      "tag": null,
++      "idle_inhibitors": {
++        "user": "fullscreen",
++        "application": "none"
++      }
++    }
++  ],
++  "floating_nodes": [],
++  "focus": [
++    28,
++    6
++  ],
++  "fullscreen_mode": 1,
++  "sticky": false,
++  "floating": null,
++  "scratchpad_state": null,
++  "num": 1,
++  "output": "eDP-1",
++  "representation": "H[V[org.wezfurlong.wezterm V[org.wezfurlong.wezterm]] org.wezfurlong.wezterm]"
++}
+diff --git a/tests/fixtures/tabbed-nested-splith-workspace.json b/tests/fixtures/tabbed-nested-splith-workspace.json
+new file mode 100644
+index 0000000..544267c
+--- /dev/null
++++ b/tests/fixtures/tabbed-nested-splith-workspace.json
+@@ -0,0 +1,335 @@
++{
++  "id": 361,
++  "type": "workspace",
++  "orientation": "horizontal",
++  "percent": null,
++  "urgent": false,
++  "marks": [],
++  "focused": false,
++  "layout": "splith",
++  "border": "none",
++  "current_border_width": 0,
++  "rect": {
++    "x": 0,
++    "y": 23,
++    "width": 3840,
++    "height": 2137
++  },
++  "deco_rect": {
++    "x": 0,
++    "y": 0,
++    "width": 0,
++    "height": 0
++  },
++  "window_rect": {
++    "x": 0,
++    "y": 0,
++    "width": 0,
++    "height": 0
++  },
++  "geometry": {
++    "x": 0,
++    "y": 0,
++    "width": 0,
++    "height": 0
++  },
++  "name": "7",
++  "window": null,
++  "nodes": [
++    {
++      "id": 399,
++      "type": "con",
++      "orientation": "none",
++      "percent": 1.0,
++      "urgent": false,
++      "marks": [],
++      "focused": false,
++      "layout": "tabbed",
++      "border": "none",
++      "current_border_width": 0,
++      "rect": {
++        "x": 0,
++        "y": 23,
++        "width": 3840,
++        "height": 2137
++      },
++      "deco_rect": {
++        "x": 0,
++        "y": 0,
++        "width": 0,
++        "height": 0
++      },
++      "window_rect": {
++        "x": 0,
++        "y": 0,
++        "width": 0,
++        "height": 0
++      },
++      "geometry": {
++        "x": 0,
++        "y": 0,
++        "width": 0,
++        "height": 0
++      },
++      "name": null,
++      "window": null,
++      "nodes": [
++        {
++          "id": 379,
++          "type": "con",
++          "orientation": "none",
++          "percent": 1.0,
++          "urgent": false,
++          "marks": [],
++          "focused": false,
++          "layout": "none",
++          "border": "normal",
++          "current_border_width": 2,
++          "rect": {
++            "x": 0,
++            "y": 48,
++            "width": 3840,
++            "height": 2112
++          },
++          "deco_rect": {
++            "x": 0,
++            "y": 0,
++            "width": 1920,
++            "height": 25
++          },
++          "window_rect": {
++            "x": 2,
++            "y": 0,
++            "width": 3836,
++            "height": 2110
++          },
++          "geometry": {
++            "x": 0,
++            "y": 0,
++            "width": 3066,
++            "height": 1845
++          },
++          "name": "A",
++          "window": null,
++          "nodes": [],
++          "floating_nodes": [],
++          "focus": [],
++          "fullscreen_mode": 0,
++          "sticky": false,
++          "floating": "auto_off",
++          "scratchpad_state": "none",
++          "pid": 1,
++          "app_id": "foot",
++          "foreign_toplevel_identifier": "71d99d78a00588358ae332a2aab520ca",
++          "visible": false,
++          "max_render_time": 0,
++          "allow_tearing": false,
++          "shell": "xdg_shell",
++          "inhibit_idle": false,
++          "sandbox_engine": null,
++          "sandbox_app_id": null,
++          "sandbox_instance_id": null,
++          "tag": null,
++          "idle_inhibitors": {
++            "user": "fullscreen",
++            "application": "none"
++          },
++          "window_properties": null
++        },
++        {
++          "id": 400,
++          "type": "con",
++          "orientation": "horizontal",
++          "percent": 0.98830135704258304,
++          "urgent": false,
++          "marks": [],
++          "focused": false,
++          "layout": "splith",
++          "border": "none",
++          "current_border_width": 0,
++          "rect": {
++            "x": 0,
++            "y": 73,
++            "width": 3840,
++            "height": 2087
++          },
++          "deco_rect": {
++            "x": 1920,
++            "y": 25,
++            "width": 1920,
++            "height": 25
++          },
++          "window_rect": {
++            "x": 0,
++            "y": 0,
++            "width": 0,
++            "height": 0
++          },
++          "geometry": {
++            "x": 0,
++            "y": 0,
++            "width": 0,
++            "height": 0
++          },
++          "name": null,
++          "window": null,
++          "nodes": [
++            {
++              "id": 392,
++              "type": "con",
++              "orientation": "none",
++              "percent": 0.5,
++              "urgent": false,
++              "marks": [],
++              "focused": false,
++              "layout": "none",
++              "border": "normal",
++              "current_border_width": 2,
++              "rect": {
++                "x": 0,
++                "y": 73,
++                "width": 1920,
++                "height": 2087
++              },
++              "deco_rect": {
++                "x": 0,
++                "y": 0,
++                "width": 1920,
++                "height": 25
++              },
++              "window_rect": {
++                "x": 2,
++                "y": 0,
++                "width": 1916,
++                "height": 2085
++              },
++              "geometry": {
++                "x": 0,
++                "y": 0,
++                "width": 1100,
++                "height": 680
++              },
++              "name": "B",
++              "window": null,
++              "nodes": [],
++              "floating_nodes": [],
++              "focus": [],
++              "fullscreen_mode": 0,
++              "sticky": false,
++              "floating": "auto_off",
++              "scratchpad_state": "none",
++              "pid": 1,
++              "app_id": "foot",
++              "foreign_toplevel_identifier": "eb1b251791b09a4e8d0fa976ba98fe3d",
++              "visible": false,
++              "max_render_time": 0,
++              "allow_tearing": false,
++              "shell": "xdg_shell",
++              "inhibit_idle": false,
++              "sandbox_engine": null,
++              "sandbox_app_id": null,
++              "sandbox_instance_id": null,
++              "tag": null,
++              "idle_inhibitors": {
++                "user": "fullscreen",
++                "application": "none"
++              },
++              "window_properties": null
++            },
++            {
++              "id": 401,
++              "type": "con",
++              "orientation": "none",
++              "percent": 0.5,
++              "urgent": false,
++              "marks": [],
++              "focused": false,
++              "layout": "none",
++              "border": "normal",
++              "current_border_width": 2,
++              "rect": {
++                "x": 1920,
++                "y": 73,
++                "width": 1920,
++                "height": 2087
++              },
++              "deco_rect": {
++                "x": 1920,
++                "y": 0,
++                "width": 1920,
++                "height": 25
++              },
++              "window_rect": {
++                "x": 2,
++                "y": 0,
++                "width": 1916,
++                "height": 2085
++              },
++              "geometry": {
++                "x": 0,
++                "y": 0,
++                "width": 1100,
++                "height": 680
++              },
++              "name": "C",
++              "window": null,
++              "nodes": [],
++              "floating_nodes": [],
++              "focus": [],
++              "fullscreen_mode": 0,
++              "sticky": false,
++              "floating": "auto_off",
++              "scratchpad_state": "none",
++              "pid": 1,
++              "app_id": "foot",
++              "foreign_toplevel_identifier": "c6807e36e4f464503455f73682e2fd95",
++              "visible": false,
++              "max_render_time": 0,
++              "allow_tearing": false,
++              "shell": "xdg_shell",
++              "inhibit_idle": false,
++              "sandbox_engine": null,
++              "sandbox_app_id": null,
++              "sandbox_instance_id": null,
++              "tag": null,
++              "idle_inhibitors": {
++                "user": "fullscreen",
++                "application": "none"
++              },
++              "window_properties": null
++            }
++          ],
++          "floating_nodes": [],
++          "focus": [
++            401,
++            392
++          ],
++          "fullscreen_mode": 0,
++          "sticky": false,
++          "floating": "auto_off",
++          "scratchpad_state": "none"
++        }
++      ],
++      "floating_nodes": [],
++      "focus": [
++        400,
++        379
++      ],
++      "fullscreen_mode": 0,
++      "sticky": false,
++      "floating": "auto_off",
++      "scratchpad_state": "none"
++    }
++  ],
++  "floating_nodes": [],
++  "focus": [
++    399
++  ],
++  "fullscreen_mode": 1,
++  "sticky": false,
++  "floating": null,
++  "scratchpad_state": null,
++  "num": 7,
++  "output": "DP-2",
++  "representation": "H[T[Vmware H[Alacritty Alacritty]]]"
++}
+diff --git a/tests/fixtures/tabbed-nested-workspace.json b/tests/fixtures/tabbed-nested-workspace.json
+new file mode 100644
+index 0000000..f5bcf4d
+--- /dev/null
++++ b/tests/fixtures/tabbed-nested-workspace.json
+@@ -0,0 +1,380 @@
++{
++  "id": 12,
++  "type": "workspace",
++  "orientation": "horizontal",
++  "percent": null,
++  "urgent": false,
++  "marks": [],
++  "focused": false,
++  "layout": "splith",
++  "border": "none",
++  "current_border_width": 0,
++  "rect": {
++    "x": 0,
++    "y": 23,
++    "width": 2048,
++    "height": 1257
++  },
++  "deco_rect": {
++    "x": 0,
++    "y": 0,
++    "width": 0,
++    "height": 0
++  },
++  "window_rect": {
++    "x": 0,
++    "y": 0,
++    "width": 0,
++    "height": 0
++  },
++  "geometry": {
++    "x": 0,
++    "y": 0,
++    "width": 0,
++    "height": 0
++  },
++  "name": "3",
++  "window": null,
++  "nodes": [
++    {
++      "id": 53,
++      "type": "con",
++      "orientation": "vertical",
++      "percent": 0.5,
++      "urgent": false,
++      "marks": [],
++      "focused": false,
++      "layout": "splitv",
++      "border": "none",
++      "current_border_width": 0,
++      "rect": {
++        "x": 1024,
++        "y": 23,
++        "width": 1024,
++        "height": 1257
++      },
++      "deco_rect": {
++        "x": 0,
++        "y": 0,
++        "width": 0,
++        "height": 0
++      },
++      "window_rect": {
++        "x": 0,
++        "y": 0,
++        "width": 0,
++        "height": 0
++      },
++      "geometry": {
++        "x": 0,
++        "y": 0,
++        "width": 0,
++        "height": 0
++      },
++      "name": null,
++      "window": null,
++      "nodes": [
++        {
++          "id": 43,
++          "type": "con",
++          "orientation": "none",
++          "percent": 1.0,
++          "urgent": false,
++          "marks": [],
++          "focused": false,
++          "layout": "tabbed",
++          "border": "none",
++          "current_border_width": 0,
++          "rect": {
++            "x": 1024,
++            "y": 23,
++            "width": 1024,
++            "height": 1257
++          },
++          "deco_rect": {
++            "x": 0,
++            "y": 0,
++            "width": 0,
++            "height": 0
++          },
++          "window_rect": {
++            "x": 0,
++            "y": 0,
++            "width": 0,
++            "height": 0
++          },
++          "geometry": {
++            "x": 0,
++            "y": 0,
++            "width": 0,
++            "height": 0
++          },
++          "name": null,
++          "window": null,
++          "nodes": [
++            {
++              "id": 51,
++              "type": "con",
++              "orientation": "none",
++              "percent": 1.0,
++              "urgent": false,
++              "marks": [],
++              "focused": false,
++              "layout": "none",
++              "border": "normal",
++              "current_border_width": 2,
++              "rect": {
++                "x": 1024,
++                "y": 48,
++                "width": 1024,
++                "height": 1232
++              },
++              "deco_rect": {
++                "x": 0,
++                "y": 0,
++                "width": 512,
++                "height": 25
++              },
++              "window_rect": {
++                "x": 2,
++                "y": 0,
++                "width": 1020,
++                "height": 1230
++              },
++              "geometry": {
++                "x": 0,
++                "y": 0,
++                "width": 2044,
++                "height": 1230
++              },
++              "name": "window 51",
++              "window": null,
++              "nodes": [],
++              "floating_nodes": [],
++              "focus": [],
++              "fullscreen_mode": 0,
++              "sticky": false,
++              "floating": "auto_off",
++              "scratchpad_state": "none",
++              "pid": 1,
++              "app_id": "foot",
++              "foreign_toplevel_identifier": "12c4e1dbcfe451468eb3e7427449d44d",
++              "visible": false,
++              "max_render_time": 0,
++              "allow_tearing": false,
++              "shell": "xdg_shell",
++              "inhibit_idle": false,
++              "sandbox_engine": null,
++              "sandbox_app_id": null,
++              "sandbox_instance_id": null,
++              "tag": null,
++              "idle_inhibitors": {
++                "user": "none",
++                "application": "none"
++              }
++            },
++            {
++              "id": 55,
++              "type": "con",
++              "orientation": "vertical",
++              "percent": 0.98011137629276057,
++              "urgent": false,
++              "marks": [],
++              "focused": false,
++              "layout": "splitv",
++              "border": "none",
++              "current_border_width": 0,
++              "rect": {
++                "x": 1024,
++                "y": 73,
++                "width": 1024,
++                "height": 1207
++              },
++              "deco_rect": {
++                "x": 512,
++                "y": 25,
++                "width": 512,
++                "height": 25
++              },
++              "window_rect": {
++                "x": 0,
++                "y": 0,
++                "width": 0,
++                "height": 0
++              },
++              "geometry": {
++                "x": 0,
++                "y": 0,
++                "width": 0,
++                "height": 0
++              },
++              "name": null,
++              "window": null,
++              "nodes": [
++                {
++                  "id": 13,
++                  "type": "con",
++                  "orientation": "none",
++                  "percent": 2.0779220779220777,
++                  "urgent": false,
++                  "marks": [],
++                  "focused": true,
++                  "layout": "none",
++                  "border": "normal",
++                  "current_border_width": 2,
++                  "rect": {
++                    "x": 1024,
++                    "y": 73,
++                    "width": 1024,
++                    "height": 591
++                  },
++                  "deco_rect": {
++                    "x": 0,
++                    "y": 0,
++                    "width": 1024,
++                    "height": 25
++                  },
++                  "window_rect": {
++                    "x": 2,
++                    "y": 0,
++                    "width": 1020,
++                    "height": 589
++                  },
++                  "geometry": {
++                    "x": 0,
++                    "y": 0,
++                    "width": 1020,
++                    "height": 589
++                  },
++                  "name": "window 13",
++                  "window": null,
++                  "nodes": [],
++                  "floating_nodes": [],
++                  "focus": [],
++                  "fullscreen_mode": 0,
++                  "sticky": false,
++                  "floating": "auto_off",
++                  "scratchpad_state": "none",
++                  "pid": 1,
++                  "app_id": "foot",
++                  "foreign_toplevel_identifier": "73078f74928ab3f93a9b0cb48f21a5ba",
++                  "visible": true,
++                  "max_render_time": 0,
++                  "allow_tearing": false,
++                  "shell": "xdg_shell",
++                  "inhibit_idle": true,
++                  "sandbox_engine": null,
++                  "sandbox_app_id": null,
++                  "sandbox_instance_id": null,
++                  "tag": null,
++                  "idle_inhibitors": {
++                    "user": "none",
++                    "application": "none"
++                  }
++                },
++                {
++                  "id": 56,
++                  "type": "con",
++                  "orientation": "none",
++                  "percent": 0.5,
++                  "urgent": false,
++                  "marks": [],
++                  "focused": false,
++                  "layout": "none",
++                  "border": "normal",
++                  "current_border_width": 2,
++                  "rect": {
++                    "x": 1024,
++                    "y": 689,
++                    "width": 1024,
++                    "height": 591
++                  },
++                  "deco_rect": {
++                    "x": 0,
++                    "y": 616,
++                    "width": 1024,
++                    "height": 25
++                  },
++                  "window_rect": {
++                    "x": 2,
++                    "y": 0,
++                    "width": 1020,
++                    "height": 589
++                  },
++                  "geometry": {
++                    "x": 0,
++                    "y": 0,
++                    "width": 820,
++                    "height": 524
++                  },
++                  "name": "window 56",
++                  "window": null,
++                  "nodes": [],
++                  "floating_nodes": [],
++                  "focus": [],
++                  "fullscreen_mode": 0,
++                  "sticky": false,
++                  "floating": "auto_off",
++                  "scratchpad_state": "none",
++                  "pid": 1,
++                  "app_id": "foot",
++                  "foreign_toplevel_identifier": "42de2eec953e4e57b1cde749c9aef26b",
++                  "visible": false,
++                  "max_render_time": 0,
++                  "allow_tearing": false,
++                  "shell": "xdg_shell",
++                  "inhibit_idle": false,
++                  "sandbox_engine": null,
++                  "sandbox_app_id": null,
++                  "sandbox_instance_id": null,
++                  "tag": null,
++                  "idle_inhibitors": {
++                    "user": "none",
++                    "application": "none"
++                  }
++                }
++              ],
++              "floating_nodes": [],
++              "focus": [
++                13,
++                56
++              ],
++              "fullscreen_mode": 0,
++              "sticky": false,
++              "floating": "auto_off",
++              "scratchpad_state": "none"
++            }
++          ],
++          "floating_nodes": [],
++          "focus": [
++            55,
++            51
++          ],
++          "fullscreen_mode": 0,
++          "sticky": false,
++          "floating": "auto_off",
++          "scratchpad_state": "none"
++        }
++      ],
++      "floating_nodes": [],
++      "focus": [
++        43
++      ],
++      "fullscreen_mode": 0,
++      "sticky": false,
++      "floating": "auto_off",
++      "scratchpad_state": "none"
++    }
++  ],
++  "floating_nodes": [],
++  "focus": [
++    53
++  ],
++  "fullscreen_mode": 0,
++  "sticky": false,
++  "floating": null,
++  "scratchpad_state": null,
++  "num": 3,
++  "output": "eDP-1",
++  "representation": "H[V[T[foot V[foot foot]]]]"
++}
+diff --git a/tests/fixtures/tabbed-workspace.json b/tests/fixtures/tabbed-workspace.json
+new file mode 100644
+index 0000000..fa0e598
+--- /dev/null
++++ b/tests/fixtures/tabbed-workspace.json
+@@ -0,0 +1,223 @@
++{
++  "id": 4,
++  "type": "workspace",
++  "orientation": "horizontal",
++  "percent": null,
++  "urgent": false,
++  "marks": [],
++  "focused": false,
++  "layout": "splith",
++  "border": "none",
++  "current_border_width": 0,
++  "rect": {
++    "x": 0,
++    "y": 23,
++    "width": 2048,
++    "height": 1257
++  },
++  "deco_rect": {
++    "x": 0,
++    "y": 0,
++    "width": 0,
++    "height": 0
++  },
++  "window_rect": {
++    "x": 0,
++    "y": 0,
++    "width": 0,
++    "height": 0
++  },
++  "geometry": {
++    "x": 0,
++    "y": 0,
++    "width": 0,
++    "height": 0
++  },
++  "name": "1",
++  "window": null,
++  "nodes": [
++    {
++      "id": 28,
++      "type": "con",
++      "orientation": "vertical",
++      "percent": 0.5,
++      "urgent": false,
++      "marks": [],
++      "focused": false,
++      "layout": "tabbed",
++      "border": "none",
++      "current_border_width": 0,
++      "rect": {
++        "x": 0,
++        "y": 23,
++        "width": 2048,
++        "height": 1257
++      },
++      "deco_rect": {
++        "x": 0,
++        "y": 0,
++        "width": 0,
++        "height": 0
++      },
++      "window_rect": {
++        "x": 0,
++        "y": 0,
++        "width": 0,
++        "height": 0
++      },
++      "geometry": {
++        "x": 0,
++        "y": 0,
++        "width": 0,
++        "height": 0
++      },
++      "name": null,
++      "window": null,
++      "nodes": [
++        {
++          "id": 5,
++          "type": "con",
++          "orientation": "none",
++          "percent": 0.50039777247414474,
++          "urgent": false,
++          "marks": [],
++          "focused": true,
++          "layout": "none",
++          "border": "normal",
++          "current_border_width": 2,
++          "rect": {
++            "x": 0,
++            "y": 48,
++            "width": 2048,
++            "height": 1232
++          },
++          "deco_rect": {
++            "x": 0,
++            "y": 0,
++            "width": 1024,
++            "height": 25
++          },
++          "window_rect": {
++            "x": 2,
++            "y": 0,
++            "width": 1020,
++            "height": 602
++          },
++          "geometry": {
++            "x": 0,
++            "y": 0,
++            "width": 820,
++            "height": 524
++          },
++          "name": "wezterm",
++          "window": null,
++          "nodes": [],
++          "floating_nodes": [],
++          "focus": [],
++          "fullscreen_mode": 0,
++          "sticky": false,
++          "floating": "auto_off",
++          "scratchpad_state": "none",
++          "pid": 24177,
++          "app_id": "org.wezfurlong.wezterm",
++          "foreign_toplevel_identifier": "39fa580094cbd07bf29e735960251671",
++          "visible": true,
++          "max_render_time": 0,
++          "allow_tearing": false,
++          "shell": "xdg_shell",
++          "inhibit_idle": false,
++          "sandbox_engine": null,
++          "sandbox_app_id": null,
++          "sandbox_instance_id": null,
++          "tag": null,
++          "idle_inhibitors": {
++            "user": "fullscreen",
++            "application": "none"
++          }
++        },
++        {
++          "id": 29,
++          "type": "con",
++          "orientation": "none",
++          "percent": 1.0,
++          "urgent": false,
++          "marks": [],
++          "focused": false,
++          "layout": "none",
++          "border": "normal",
++          "current_border_width": 2,
++          "rect": {
++            "x": 0,
++            "y": 48,
++            "width": 2048,
++            "height": 1232
++          },
++          "deco_rect": {
++            "x": 1024,
++            "y": 0,
++            "width": 1024,
++            "height": 25
++          },
++          "window_rect": {
++            "x": 2,
++            "y": 0,
++            "width": 1020,
++            "height": 601
++          },
++          "geometry": {
++            "x": 0,
++            "y": 0,
++            "width": 820,
++            "height": 524
++          },
++          "name": "wezterm",
++          "window": null,
++          "nodes": [],
++          "floating_nodes": [],
++          "focus": [],
++          "fullscreen_mode": 0,
++          "sticky": false,
++          "floating": "auto_off",
++          "scratchpad_state": "none",
++          "pid": 24177,
++          "app_id": "org.wezfurlong.wezterm",
++          "foreign_toplevel_identifier": "1639fd432cd08f50c783f2646c20beab",
++          "visible": true,
++          "max_render_time": 0,
++          "allow_tearing": false,
++          "shell": "xdg_shell",
++          "inhibit_idle": false,
++          "sandbox_engine": null,
++          "sandbox_app_id": null,
++          "sandbox_instance_id": null,
++          "tag": null,
++          "idle_inhibitors": {
++            "user": "fullscreen",
++            "application": "none"
++          }
++        }
++      ],
++      "floating_nodes": [],
++      "focus": [
++        5,
++        71
++      ],
++      "fullscreen_mode": 0,
++      "sticky": false,
++      "floating": "auto_off",
++      "scratchpad_state": "none"
++    }
++  ],
++  "floating_nodes": [],
++  "focus": [
++    28,
++    6
++  ],
++  "fullscreen_mode": 1,
++  "sticky": false,
++  "floating": null,
++  "scratchpad_state": null,
++  "num": 1,
++  "output": "eDP-1",
++  "representation": "H[V[org.wezfurlong.wezterm V[org.wezfurlong.wezterm]] org.wezfurlong.wezterm]"
++}

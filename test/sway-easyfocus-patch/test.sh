@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 #
-# patches/sway-easyfocus-title-bar-x.patch against the pinned crate
-# (SWAY_EASYFOCUS_VERSION in bootstrap.sh): it applies, and the crate's
-# tests pass, among them the patch's own (labels of split, tabbed and
-# untitled windows, from a real sway tree). Without the patch the label of
-# a window at x = 1024 lands at 2054, off a 2048 px output.
+# patches/sway-easyfocus-<SWAY_EASYFOCUS_PATCH>.patch against the pinned
+# crate (SWAY_EASYFOCUS_VERSION in bootstrap.sh): it applies, and the
+# crate's tests pass, among them the patch's own (labels of split, tabbed,
+# nested and untitled windows, from real sway trees). Without the patch the
+# label of a window at x = 1024 lands at 2054, off a 2048 px output, and a
+# window's label in a tab covers the tab label above it.
 #
 # Needs network (crates.io), cargo, and the gtk4 and gtk4-layer-shell
 # development files; skips without them.
@@ -15,7 +16,8 @@ set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly REPO="$HERE/../.."
-readonly PATCH="$REPO/patches/sway-easyfocus-title-bar-x.patch"
+PATCH="$REPO/patches/sway-easyfocus-$(sed -n 's/^readonly SWAY_EASYFOCUS_PATCH="\(.*\)"$/\1/p' "$REPO/bootstrap.sh").patch"
+readonly PATCH
 TMP="$(mktemp -d)"
 readonly TMP
 trap 'rm -rf "$TMP"' EXIT
