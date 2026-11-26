@@ -3,7 +3,8 @@
 # Runs bin/ws-pick with stubs for wm-msg (in a fake HOME), fuzzel and dmenu
 # and checks the commands it sends: the menu (fuzzel under sway, dmenu
 # under X) lists the workspaces, a pick goes there (a number by number, a
-# name exactly, quoted), --rename renames the focused workspace, --go is
+# name exactly, quoted), --rename renames the focused workspace, --new
+# goes to the typed name (creating it), --go is
 # the bar's click, and a cancel sends nothing.
 #
 # Usage: test/ws-pick/test.sh
@@ -126,6 +127,19 @@ main() {
     expect "--go NAME: exactly" 'wm-msg <-q> <workspace "mail">' "$(sent)"
     run sway --go "3: web" > /dev/null
     expect "--go: a numbered name exactly" 'wm-msg <-q> <workspace "3: web">' "$(sent)"
+
+    echo "notes" > "$PICK"
+    expect "new: exit 0, quiet" "0" "$(run sway --new)"
+    expect "new: a prompt, no list" "1" "$(grep -c '^fuzzel --dmenu --prompt-only=new workspace: ' "$CALLS")"
+    expect "new: empty menu input" "" "$(cat "$MENU")"
+    expect "new: the workspace of that name" 'wm-msg <-q> <workspace "notes">' "$(sent)"
+    echo 3 > "$PICK"
+    run x --new > /dev/null
+    expect "X new: dmenu" "1" "$(grep -c '^dmenu ' "$CALLS")"
+    expect "X new: a number as a name" 'wm-msg <-q> <workspace "3">' "$(sent)"
+    rm "$PICK"
+    run sway --new > /dev/null
+    expect "new cancelled: nothing sent" "" "$(sent)"
 
     expect "unknown option: usage, exit 2" "2" "$(run sway --nope | cut -d' ' -f1)"
 

@@ -84,9 +84,13 @@ bindsym XF86AudioNext exec --no-startup-id playerctl next
 bindsym XF86AudioPrev exec --no-startup-id playerctl previous
 
 # Screenshot to ~/Pictures/Screenshots and the clipboard: the screen, or an
-# area chosen with the mouse (Escape cancels).
+# area chosen with the mouse (Escape cancels). With $mod a video recording
+# to ~/Videos/Screencasts (no sound; `screenshot --video --audio` adds it):
+# the same key stops it.
 bindsym Print exec --no-startup-id ~/bin/screenshot
 bindsym Shift+Print exec --no-startup-id ~/bin/screenshot --area
+bindsym $mod+Print exec --no-startup-id ~/bin/screenshot --video
+bindsym $mod+Shift+Print exec --no-startup-id ~/bin/screenshot --video --area
 
 # Lock the screen.
 bindsym $mod+Escape exec --no-startup-id ~/bin/pwr lock
@@ -257,9 +261,10 @@ bindsym $mod+Tab workspace back_and_forth
 
 # Go to a workspace by name or number, from a menu of them (ws-pick:
 # fuzzel in sway, dmenu in X); rename the focused one (a number moves it
-# there, with its windows).
+# there, with its windows); create one with a typed name.
 bindsym $mod+e exec --no-startup-id ~/bin/ws-pick
 bindsym $mod+Shift+e exec --no-startup-id ~/bin/ws-pick --rename
+bindsym $mod+y exec --no-startup-id ~/bin/ws-pick --new
 
 
 # Previous / next workspace of this screen (left / right in the bar).

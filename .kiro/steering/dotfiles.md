@@ -893,6 +893,8 @@ New link or system file: install function, `check_link` or `cmp` check in
   so 3 reaches "3: web", any other text to exactly that name, quoted; a
   new name creates the workspace; test `test/ws-pick/test.sh`),
   `$mod+Shift+e` `ws-pick --rename` (a number moves the workspace there);
+  `$mod+y` `ws-pick --new` (a prompt; goes to exactly the typed name,
+  creating it: "3" is a workspace named 3, not "3: web");
   the eww bar's workspace click is `ws-pick --go '${ws.name}'` (a
   workspace without a number has num -1); `$mod+z` fullscreen;
   `$mod+k` / `$mod+Shift+k` scratchpad show / move; `$mod+Ctrl+direction` `move workspace to

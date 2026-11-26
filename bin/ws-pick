@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
-# ws-pick - go to a workspace, or rename the focused one, by name or number
-# (i3 and sway).
+# ws-pick - go to a workspace, create one, or rename the focused one, by
+# name or number (i3 and sway).
 #
 # The menu is fuzzel under sway, dmenu under X. It lists the workspaces;
 # typed text that matches none goes to (creates) a workspace of that name.
@@ -12,6 +12,8 @@
 # Usage: ws-pick            pick a workspace and go there ($mod+e)
 #        ws-pick --rename   rename the focused workspace ($mod+Shift+e;
 #                           a number moves it, with its windows, there)
+#        ws-pick --new      go to a workspace of the typed name, creating
+#                           it ($mod+y; a number is a name here too)
 #        ws-pick --go NAME  go to NAME, no menu (the eww bar's click)
 #
 set -euo pipefail
@@ -64,6 +66,10 @@ main() {
         --rename)
             pick="$(menu "rename to" 1 < /dev/null)"
             [[ -z "$pick" ]] || "$WM_MSG" -q "rename workspace to $(quote "$pick")"
+            ;;
+        --new)
+            pick="$(menu "new workspace" 1 < /dev/null)"
+            [[ -z "$pick" ]] || "$WM_MSG" -q "workspace $(quote "$pick")"
             ;;
         --go)
             [[ $# -eq 2 && -n "$2" ]] || usage

@@ -63,6 +63,7 @@ In X, xremap swaps the left Alt and Ctrl keys; in sway, the XKB option
 | `Mod+,` / `Mod+.` | Previous / next workspace on this screen |
 | `Mod+e` | Go to a workspace: type or pick its name or number (fuzzel in sway, dmenu in X); a new name creates it |
 | `Mod+Shift+e` | Rename the workspace; a number moves it (and its windows) there |
+| `Mod+y` | New workspace: type its name (fuzzel in sway, dmenu in X) |
 | Click a workspace in the bar | Go there |
 
 ### Scratchpad
@@ -122,6 +123,7 @@ In X, xremap swaps the left Alt and Ctrl keys; in sway, the XKB option
 | Mic mute | Selected microphone mute on/off |
 | Play/Pause, Next, Previous | Media player (playerctl) |
 | `Print` / `Shift+Print` | Screenshot of the screen / of an area to `~/Pictures/Screenshots` and the clipboard |
+| `Mod+Print` / `Mod+Shift+Print` | Start a video recording of the screen (sway: the focused output) / of an area to `~/Videos/Screencasts`, no sound; the same key stops it. With sound: `screenshot --video --audio` |
 | Display | Monitor layout (arandr) |
 | Brightness up / down | Screen brightness |
 | Keyboard light up / down | Keyboard backlight |
