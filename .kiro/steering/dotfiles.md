@@ -886,7 +886,20 @@ New link or system file: install function, `check_link` or `cmp` check in
   `pwr lock`; `Print` / `Shift+Print` `bin/screenshot [--area]` (sway:
   grim, slurp, wl-copy; X: maim, xclip; `~/Pictures/Screenshots`, then
   notify-send; a cancelled selection saves nothing; test
-  `test/screenshot/test.sh`); media keys `playerctl`; `$mod+Tab`
+  `test/screenshot/test.sh`); `$mod+Print` / `$mod+Shift+Print`
+  `screenshot --video [--area]` (2026-11-26): a toggle, the same key stops;
+  `--audio` (default output's monitor, AAC; not bound) adds sound. sway:
+  wf-recorder (focused output: without `-o` it asks on stdin); X: ffmpeg
+  x11grab (slop area, even size for H.264). `h264_vaapi` on the boot GPU's
+  render node where a one-frame test encode works (0.1 s; NVIDIA stays
+  asleep), else libx264, else libopenh264 (ffmpeg-free). Recorder detached
+  with `setsid`, pid and file in `$XDG_RUNTIME_DIR/screenshot-video`;
+  stop is SIGTERM (non-interactive bash starts background jobs with
+  SIGINT ignored, and shell stubs cannot trap it) and a wait. Never use
+  `_` as a loop variable: bash sets it to each command's last argument.
+  Packages: wf-recorder, `/usr/bin/ffmpeg` and `/usr/bin/pactl` by path
+  (ffmpeg-free and RPM Fusion's ffmpeg conflict), slop; EL9 has no
+  ffmpeg; media keys `playerctl`; `$mod+Tab`
   `workspace back_and_forth`; `$mod+comma` / `$mod+period`
   `workspace prev_on_output` / `next_on_output`; `$mod+e` `bin/ws-pick` (a menu of the
   workspaces: fuzzel in sway, dmenu in X; a bare number goes by `number`,

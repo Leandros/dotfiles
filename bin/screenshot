@@ -1,35 +1,56 @@
 #!/usr/bin/env bash
 #
-# screenshot - a PNG of the screen (or of an area) in sway and in X.
+# screenshot - a PNG of the screen (or of an area) in sway and in X, or a
+# video recording.
 #
 # Saves to ~/Pictures/Screenshots/<date>_<time>.png, copies it to the
 # clipboard and shows a notification. sway: grim (slurp for the area),
 # wl-copy; X: maim (-s for the area), xclip. A cancelled area selection
 # (Escape) saves nothing.
 #
-# Usage: screenshot           the outputs (X: the whole screen)
-#        screenshot --area    an area chosen with the mouse
+# --video records to ~/Videos/Screencasts/<date>_<time>.mp4 until the same
+# command runs again. sway: wf-recorder (the focused output, or a slurp
+# area); X: ffmpeg x11grab (the whole screen, or a slop area). H.264 on the
+# boot GPU (VAAPI, so the NVIDIA GPU stays asleep) where a test encode
+# works, else libx264, else libopenh264 (Fedora's ffmpeg-free has no
+# libx264). --audio adds the sound of the default output (its PulseAudio
+# monitor), not the microphone. The recorder runs detached; its pid and
+# file are in $XDG_RUNTIME_DIR/screenshot-video, its output in
+# screenshot-video.log there. Stopping sends SIGTERM (both recorders then
+# finish the file) and waits for it to exit.
+#
+# Usage: screenshot                           the outputs (X: the whole screen)
+#        screenshot --area                    an area chosen with the mouse
+#        screenshot --video [--area] [--audio]
+#                                             start a recording, or stop the
+#                                             running one
 #
 set -euo pipefail
 
-readonly DIR="$HOME/Pictures/Screenshots"
+readonly DIR="$HOME/Pictures/Screenshots" VIDEO_DIR="$HOME/Videos/Screencasts"
+readonly RUN_DIR="${XDG_RUNTIME_DIR:-/tmp}"
+readonly STATE="$RUN_DIR/screenshot-video" LOG="$RUN_DIR/screenshot-video.log"
+readonly SYSFS="${SCREENSHOT_SYSFS:-/sys}"
+# A recorder still running this long after its start has started.
+readonly START_CHECK_S=1 STOP_WAIT_S=10
+readonly FRAMERATE=30
 
 die() { printf 'screenshot: %s\n' "$*" >&2; exit 2; }
 
-main() {
-    local area=0
-    case "${1:-}" in
-        "") ;;
-        --area) area=1 ;;
-        *) die "usage: screenshot [--area]" ;;
-    esac
+notify() {
+    if command -v notify-send >/dev/null; then
+        notify-send -a screenshot "$@" || true
+    fi
+}
 
+is_sway() { [[ -n "${SWAYSOCK:-}" ]]; }
+
+# sway sets DISPLAY too (Xwayland): check SWAYSOCK first.
+screenshot() {
+    local area="$1" file geometry
     mkdir -p "$DIR"
-    local file geometry
     file="$DIR/$(date +%Y-%m-%d_%H-%M-%S).png"
-
-    # sway sets DISPLAY too (Xwayland): check SWAYSOCK first.
-    if [[ -n "${SWAYSOCK:-}" ]]; then
+    if is_sway; then
         if [[ "$area" -eq 1 ]]; then
             geometry="$(slurp)" || exit 0
             grim -g "$geometry" "$file"
@@ -45,9 +66,141 @@ main() {
         fi
         xclip -selection clipboard -t image/png < "$file"
     fi
+    notify Screenshot "$file"
+}
 
-    if command -v notify-send >/dev/null; then
-        notify-send -a screenshot Screenshot "$file" || true
+# /dev/dri/renderD<N> of the boot GPU (the one driving the screen), if any.
+render_node() {
+    local node boot
+    for node in "$SYSFS"/class/drm/renderD*; do
+        boot=""
+        [[ -r "$node/device/boot_vga" ]] && read -r boot < "$node/device/boot_vga"
+        if [[ "$boot" == 1 ]]; then
+            echo "/dev/dri/${node##*/}"
+            return
+        fi
+    done
+}
+
+# The H.264 encoder: "h264_vaapi <node>" when one frame encodes on the boot
+# GPU (driver and ffmpeg build support it), else libx264 or libopenh264.
+encoder() {
+    local node
+    node="$(render_node)"
+    if [[ -n "$node" ]] && ffmpeg -hide_banner -loglevel error -vaapi_device "$node" \
+        -f lavfi -i color=size=64x64 -frames:v 1 -vf format=nv12,hwupload -c:v h264_vaapi \
+        -f null - >/dev/null 2>&1; then
+        echo "h264_vaapi $node"
+    elif ffmpeg -hide_banner -encoders 2>/dev/null | grep -q ' libx264 '; then
+        echo libx264
+    else
+        echo libopenh264
+    fi
+}
+
+# The PulseAudio source with the default output's sound.
+audio_source() {
+    local sink
+    sink="$(pactl get-default-sink)" || die "no default audio output (pactl)"
+    echo "$sink.monitor"
+}
+
+even() { echo $(($1 / 2 * 2)); }
+
+stop_video() {
+    local pid file i
+    read -r pid file < "$STATE"
+    kill -TERM "$pid" 2>/dev/null || true
+    for ((i = 0; i < STOP_WAIT_S * 10; i++)); do
+        kill -0 "$pid" 2>/dev/null || break
+        sleep 0.1
+    done
+    rm -f "$STATE"
+    notify "Recording saved" "$file"
+}
+
+start_video() {
+    local area="$1" audio="$2" file codec node="" geometry x y w h
+    local -a cmd
+    mkdir -p "$VIDEO_DIR"
+    file="$VIDEO_DIR/$(date +%Y-%m-%d_%H-%M-%S).mp4"
+    read -r codec node <<< "$(encoder)"
+
+    if is_sway; then
+        cmd=(wf-recorder -y -f "$file")
+        if [[ "$area" -eq 1 ]]; then
+            geometry="$(slurp)" || exit 0
+            # H.264 needs an even size: "x,y WxH".
+            IFS=', x' read -r x y w h <<< "$geometry"
+            cmd+=(-g "$x,$y $(even "$w")x$(even "$h")")
+        else
+            cmd+=(-o "$(swaymsg -t get_outputs | jq -r '.[] | select(.focused).name')")
+        fi
+        cmd+=(-c "$codec")
+        [[ -n "$node" ]] && cmd+=(-d "$node")
+        [[ "$audio" -eq 1 ]] && cmd+=("--audio=$(audio_source)" -C aac)
+    else
+        cmd=(ffmpeg -hide_banner -loglevel error -y)
+        [[ -n "$node" ]] && cmd+=(-vaapi_device "$node")
+        cmd+=(-f x11grab -framerate "$FRAMERATE")
+        if [[ "$area" -eq 1 ]]; then
+            geometry="$(slop -f '%x %y %w %h')" || exit 0
+            read -r x y w h <<< "$geometry"
+            cmd+=(-video_size "$(even "$w")x$(even "$h")" -i "$DISPLAY+$x,$y")
+        else
+            cmd+=(-i "$DISPLAY")
+        fi
+        [[ "$audio" -eq 1 ]] && cmd+=(-f pulse -i "$(audio_source)" -c:a aac)
+        if [[ -n "$node" ]]; then
+            cmd+=(-vf "format=nv12,hwupload" -c:v "$codec")
+        else
+            cmd+=(-c:v "$codec" -pix_fmt yuv420p)
+        fi
+        cmd+=("$file")
+    fi
+
+    setsid "${cmd[@]}" < /dev/null > "$LOG" 2>&1 &
+    local pid=$!
+    echo "$pid $file" > "$STATE"
+    sleep "$START_CHECK_S"
+    if ! kill -0 "$pid" 2>/dev/null; then
+        rm -f "$STATE"
+        notify "Recording failed" "$(tail -n 3 "$LOG")"
+        exit 1
+    fi
+    notify Recording "$file (run again to stop)"
+}
+
+# Whether a recording of ours runs: the state file's pid is alive.
+recording() {
+    local pid _
+    [[ -s "$STATE" ]] || return 1
+    read -r pid _ < "$STATE"
+    kill -0 "$pid" 2>/dev/null
+}
+
+main() {
+    local area=0 video=0 audio=0
+    while (($#)); do
+        case "$1" in
+            --area) area=1 ;;
+            --video) video=1 ;;
+            --audio) audio=1 ;;
+            *) die "usage: screenshot [--area] | --video [--area] [--audio]" ;;
+        esac
+        shift
+    done
+    ((audio && !video)) && die "--audio needs --video"
+
+    if ((video)); then
+        if recording; then
+            stop_video
+        else
+            rm -f "$STATE"
+            start_video "$area" "$audio"
+        fi
+    else
+        screenshot "$area"
     fi
 }
 

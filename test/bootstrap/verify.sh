@@ -641,7 +641,7 @@ check_wayland() {
             ok "no swaybar (eww is the bar)"
         fi
     fi
-    for bin in sway swaybg swayidle swaylock swaymsg xrdb grim slurp dunst playerctl notify-send kanshi wdisplays fuzzel cliphist wl-copy wl-paste \
+    for bin in sway swaybg swayidle swaylock swaymsg xrdb grim slurp wf-recorder ffmpeg pactl dunst playerctl notify-send kanshi wdisplays fuzzel cliphist wl-copy wl-paste \
         sway-easyfocus sway-audio-idle-inhibit Xwayland xwayland-satellite i3status jq amixer brightnessctl pavucontrol \
         rfkill smbclient mount.cifs btop remmina feh; do
         if command -v "$bin" >/dev/null; then ok "wayland bin $bin"; else fail "wayland bin missing: $bin"; fi
@@ -872,7 +872,8 @@ if [[ $xorg_expected -eq 1 ]]; then
     done
     # Not packaged for EL9.
     if grep -qE '^ID=(debian|ubuntu|fedora)$' /etc/os-release; then
-        for bin in xss-lock picom dunst; do
+        # ffmpeg (screen recording, ~/bin/screenshot --video): not in EPEL 9.
+        for bin in xss-lock picom dunst ffmpeg slop pactl; do
             if command -v "$bin" >/dev/null; then ok "xorg bin $bin"; else fail "xorg bin missing: $bin"; fi
         done
         # The tray needs no primary output; arandr and autorandr use xrandr.
