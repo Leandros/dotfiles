@@ -1,0 +1,26 @@
+{
+  "configurations": {
+    "launch": {
+      "adapter": "CodeLLDB",
+      "filetypes": [ "rust" ],
+      "configuration": {
+        "request": "launch",
+        "program": "${workspaceRoot}/target/debug/<my-executable>",
+        "args": ["<arg1>", "<arg2>", "..."],
+        "sourceLanguages": [ "rust" ],
+        "sourceMap": { "from_path" : "to_path" }
+      }
+    },
+    "attach": {
+      "adapter": "CodeLLDB",
+      "filetypes": [ "rust", "c", "cpp", "jai" ],
+      "configuration": {
+        "request": "attach",
+        "program": "${workspaceRoot}/${fileBasenameNoExtension}",
+        "PID": "${PID}",
+        "sourceLanguages": [ "rust" ],
+        "sourceMap": { "from_path" : "to_path" }
+      }
+    }
+  }
+}
