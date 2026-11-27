@@ -2,8 +2,9 @@
 #
 # bin/screenshot with stubs: in sway grim (and slurp for an area), in X
 # maim (-s for an area); the PNG goes to ~/Pictures/Screenshots and to the
-# clipboard (wl-copy or xclip), with a notification. A cancelled area
-# selection saves nothing and is no error.
+# clipboard (wl-copy or xclip), with a notification. In sway slurp gets
+# the visible windows' contents as boxes on stdin (a click takes one). A
+# cancelled area selection saves nothing and is no error.
 # --video starts a recording (sway: wf-recorder, the focused output or a
 # slurp area; X: ffmpeg x11grab, the screen or a slop area) into
 # ~/Videos/Screencasts and the same command stops it (SIGTERM, then a
@@ -40,9 +41,11 @@ write_stubs() {
 echo "grim \$*" >> "$CALLS"
 for f; do :; done; echo png > "\$f"
 EOF
+    # slurp keeps its stdin (the window boxes) in TMP/slurp-in.
     cat > "$STUBS/slurp" <<EOF
 #!/bin/sh
 echo "slurp \$*" >> "$CALLS"
+cat > "$TMP/slurp-in"
 [ -e "$TMP/cancel" ] && exit 1
 echo "10,20 300x200"
 EOF
@@ -82,9 +85,20 @@ echo "slop \$*" >> "$CALLS"
 echo "11 21 301 201"
 EOF
     printf '#!/bin/sh\necho alsa_output.pci\n' > "$STUBS/pactl"
+    # Outputs, or a tree: a visible window (border 2, title bar 25), a
+    # hidden tab, a visible floating window, and containers without a pid.
     cat > "$STUBS/swaymsg" <<'EOF'
 #!/bin/sh
-echo '[{"name":"DP-2","focused":false},{"name":"eDP-1","focused":true}]'
+case "$*" in
+    *get_tree*) cat <<'JSON' ;;
+{"type":"root","nodes":[{"type":"output","name":"eDP-1","nodes":[{"type":"workspace","name":"1","nodes":[
+ {"type":"con","layout":"tabbed","rect":{"x":0,"y":23,"width":1000,"height":700},"nodes":[
+  {"type":"con","pid":10,"visible":true,"rect":{"x":0,"y":48,"width":1000,"height":675},"window_rect":{"x":2,"y":0,"width":996,"height":673}},
+  {"type":"con","pid":11,"visible":false,"rect":{"x":0,"y":48,"width":1000,"height":675},"window_rect":{"x":2,"y":0,"width":996,"height":673}}]}],
+ "floating_nodes":[{"type":"floating_con","pid":12,"visible":true,"rect":{"x":100,"y":200,"width":400,"height":300},"window_rect":{"x":2,"y":25,"width":396,"height":273}}]}]}]}
+JSON
+    *) echo '[{"name":"DP-2","focused":false},{"name":"eDP-1","focused":true}]' ;;
+esac
 EOF
     # The boot GPU's render node.
     mkdir -p "$TMP/sys/class/drm/renderD128/device" "$TMP/sys/class/drm/renderD129/device"
@@ -138,6 +152,7 @@ test_video() {
     has "sway video area with audio, software H.264" "$(grep '^wf-recorder' "$CALLS")" \
         "-g 10,20 300x200" "-c libx264" "--audio=alsa_output.pci.monitor" "-C aac"
     expect "sway video area: slurp" 1 "$(grep -c '^slurp' "$CALLS")"
+    expect "sway video area: the window boxes too" 2 "$(wc -l < "$TMP/slurp-in")"
     run sway --video >/dev/null
     rm "$TMP/x264"
 
@@ -181,6 +196,8 @@ main() {
     expect "sway: saved" png "$(cat "$file" 2>/dev/null)"
 
     run sway --area >/dev/null
+    expect "sway area: slurp gets the visible windows' contents" $'2,48 996x673\n102,225 396x273' \
+        "$(cat "$TMP/slurp-in")"
     expect "sway area: slurp, then grim -g" "slurp ;grim -g 10,20 300x200 $file" \
         "$(grep -E '^(slurp|grim)' "$CALLS" | paste -sd ';')"
 

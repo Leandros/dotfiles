@@ -889,7 +889,12 @@ New link or system file: install function, `check_link` or `cmp` check in
   grim, slurp, wl-copy; X: maim, xclip; `~/Pictures/Screenshots`, then
   notify-send; a cancelled selection saves nothing; test
   `test/screenshot/test.sh`); `$mod+Print` / `$mod+Shift+Print`
-  `screenshot --video [--area]` (2026-11-26): a toggle, the same key stops;
+  `screenshot --video [--area]` (2026-11-26): a toggle. Areas: drag, or
+  click a window: in sway slurp gets the visible windows' contents
+  (`rect` + `window_rect`, no border or title bar) as boxes on stdin (a
+  snapshot: it does not follow a moved window; the ScreenCast portal
+  would, but returns a PipeWire stream neither recorder reads); X's slop
+  takes the window under a click on its own, the same key stops;
   `--audio` (default output's monitor, AAC; not bound) adds sound. sway:
   wf-recorder (focused output: without `-o` it asks on stdin); X: ffmpeg
   x11grab (slop area, even size for H.264). `h264_vaapi` on the boot GPU's

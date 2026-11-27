@@ -122,8 +122,8 @@ In X, xremap swaps the left Alt and Ctrl keys; in sway, the XKB option
 | Mute | Mute on/off |
 | Mic mute | Selected microphone mute on/off |
 | Play/Pause, Next, Previous | Media player (playerctl) |
-| `Print` / `Shift+Print` | Screenshot of the screen / of an area to `~/Pictures/Screenshots` and the clipboard |
-| `Mod+Print` / `Mod+Shift+Print` | Start a video recording of the screen (sway: the focused output) / of an area to `~/Videos/Screencasts`, no sound; the same key stops it. With sound: `screenshot --video --audio` |
+| `Print` / `Shift+Print` | Screenshot of the screen / of an area (drag) or a window (click) to `~/Pictures/Screenshots` and the clipboard |
+| `Mod+Print` / `Mod+Shift+Print` | Start a video recording of the screen (sway: the focused output) / of an area or a window to `~/Videos/Screencasts`, no sound; the same key stops it. With sound: `screenshot --video --audio` |
 | Display | Monitor layout (arandr) |
 | Brightness up / down | Screen brightness |
 | Keyboard light up / down | Keyboard backlight |

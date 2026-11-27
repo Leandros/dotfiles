@@ -6,7 +6,9 @@
 # Saves to ~/Pictures/Screenshots/<date>_<time>.png, copies it to the
 # clipboard and shows a notification. sway: grim (slurp for the area),
 # wl-copy; X: maim (-s for the area), xclip. A cancelled area selection
-# (Escape) saves nothing.
+# (Escape) saves nothing. An area is dragged, or a click takes a window:
+# slurp snaps to the visible windows' contents (without border and title
+# bar); maim's and ffmpeg's slop takes the window under a click.
 #
 # --video records to ~/Videos/Screencasts/<date>_<time>.mp4 until the same
 # command runs again. sway: wf-recorder (the focused output, or a slurp
@@ -45,6 +47,14 @@ notify() {
 
 is_sway() { [[ -n "${SWAYSOCK:-}" ]]; }
 
+# An area in sway, "x,y WxH": dragged, or a window clicked (slurp reads the
+# visible windows' contents as boxes). Fails when cancelled.
+sway_area() {
+    swaymsg -t get_tree | jq -r '.. | objects | select(.pid? and .visible)
+        | "\(.rect.x + .window_rect.x),\(.rect.y + .window_rect.y) \(.window_rect.width)x\(.window_rect.height)"' |
+        slurp
+}
+
 # sway sets DISPLAY too (Xwayland): check SWAYSOCK first.
 screenshot() {
     local area="$1" file geometry
@@ -52,7 +62,7 @@ screenshot() {
     file="$DIR/$(date +%Y-%m-%d_%H-%M-%S).png"
     if is_sway; then
         if [[ "$area" -eq 1 ]]; then
-            geometry="$(slurp)" || exit 0
+            geometry="$(sway_area)" || exit 0
             grim -g "$geometry" "$file"
         else
             grim "$file"
@@ -129,7 +139,7 @@ start_video() {
     if is_sway; then
         cmd=(wf-recorder -y -f "$file")
         if [[ "$area" -eq 1 ]]; then
-            geometry="$(slurp)" || exit 0
+            geometry="$(sway_area)" || exit 0
             # H.264 needs an even size: "x,y WxH".
             IFS=', x' read -r x y w h <<< "$geometry"
             cmd+=(-g "$x,$y $(even "$w")x$(even "$h")")
